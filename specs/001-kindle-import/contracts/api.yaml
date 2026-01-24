@@ -1,0 +1,640 @@
+openapi: 3.1.0
+info:
+  title: Mastery Kindle Import API
+  description: |
+    Supabase Edge Functions API for Kindle highlight import and sync.
+    All endpoints require authentication via Supabase Auth JWT.
+  version: 1.0.0
+
+servers:
+  - url: https://{project}.supabase.co/functions/v1
+    variables:
+      project:
+        default: your-project-id
+        description: Supabase project ID
+
+security:
+  - bearerAuth: []
+
+paths:
+  /sync/push:
+    post:
+      summary: Push local changes to server
+      description: |
+        Upload pending local changes (inserts, updates, deletes) to the server.
+        Processes changes in order, applies last-write-wins for conflicts.
+      operationId: syncPush
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: Changes applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflict - some changes rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncConflictResponse'
+
+  /sync/pull:
+    post:
+      summary: Pull remote changes
+      description: |
+        Fetch all changes from the server since the given timestamp.
+        Returns books and highlights modified after lastSyncedAt.
+      operationId: syncPull
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPullRequest'
+      responses:
+        '200':
+          description: Changes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /highlights:
+    get:
+      summary: List highlights
+      description: Get paginated list of user's highlights
+      operationId: listHighlights
+      parameters:
+        - name: bookId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by book
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Full-text search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Highlights retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HighlightListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create highlight
+      description: Create a new highlight (typically via sync)
+      operationId: createHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HighlightCreate'
+      responses:
+        '201':
+          description: Highlight created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Duplicate highlight (same content hash)
+
+  /highlights/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get highlight
+      operationId: getHighlight
+      responses:
+        '200':
+          description: Highlight found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update highlight
+      operationId: updateHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HighlightUpdate'
+      responses:
+        '200':
+          description: Highlight updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Version conflict
+
+    delete:
+      summary: Delete highlight
+      description: Soft delete - sets deletedAt timestamp
+      operationId: deleteHighlight
+      responses:
+        '204':
+          description: Highlight deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /books:
+    get:
+      summary: List books
+      description: Get user's books with highlight counts
+      operationId: listBooks
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Books retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get book with highlights
+      operationId: getBook
+      responses:
+        '200':
+          description: Book found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookWithHighlights'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /import-sessions:
+    post:
+      summary: Record import session
+      description: Log an import operation for analytics
+      operationId: createImportSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportSessionCreate'
+      responses:
+        '201':
+          description: Session recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth JWT token
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Base entities
+    Book:
+      type: object
+      required: [id, userId, title, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        languageId:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+          maxLength: 500
+        author:
+          type: string
+          maxLength: 255
+          nullable: true
+        asin:
+          type: string
+          maxLength: 20
+          nullable: true
+        highlightCount:
+          type: integer
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Highlight:
+      type: object
+      required: [id, userId, bookId, content, type, contentHash, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        bookId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        type:
+          type: string
+          enum: [highlight, note]
+        location:
+          type: string
+          maxLength: 50
+          nullable: true
+        page:
+          type: integer
+          nullable: true
+        kindleDate:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        context:
+          type: string
+          nullable: true
+        contentHash:
+          type: string
+          maxLength: 64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+          default: 1
+
+    ImportSession:
+      type: object
+      required: [id, userId, source, totalFound, imported, skipped, startedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [file, device]
+        filename:
+          type: string
+          maxLength: 255
+          nullable: true
+        deviceName:
+          type: string
+          maxLength: 100
+          nullable: true
+        totalFound:
+          type: integer
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: integer
+          default: 0
+        errorDetails:
+          type: array
+          items:
+            type: string
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # Request/Response schemas
+    HighlightCreate:
+      type: object
+      required: [bookId, content, type, contentHash]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Client-generated UUID
+        bookId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        type:
+          type: string
+          enum: [highlight, note]
+        location:
+          type: string
+          nullable: true
+        page:
+          type: integer
+          nullable: true
+        kindleDate:
+          type: string
+          format: date-time
+          nullable: true
+        contentHash:
+          type: string
+
+    HighlightUpdate:
+      type: object
+      properties:
+        content:
+          type: string
+        note:
+          type: string
+          nullable: true
+        context:
+          type: string
+          nullable: true
+        version:
+          type: integer
+          description: Expected version for optimistic locking
+
+    BookWithHighlights:
+      allOf:
+        - $ref: '#/components/schemas/Book'
+        - type: object
+          properties:
+            highlights:
+              type: array
+              items:
+                $ref: '#/components/schemas/Highlight'
+
+    HighlightListResponse:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Highlight'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    BookListResponse:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+        total:
+          type: integer
+
+    # Sync schemas
+    SyncPushRequest:
+      type: object
+      required: [changes]
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncChange'
+
+    SyncChange:
+      type: object
+      required: [table, operation, id, data]
+      properties:
+        table:
+          type: string
+          enum: [books, highlights]
+        operation:
+          type: string
+          enum: [insert, update, delete]
+        id:
+          type: string
+          format: uuid
+        data:
+          type: object
+          description: Entity data (full for insert, partial for update)
+        version:
+          type: integer
+          description: For conflict detection
+
+    SyncPushResponse:
+      type: object
+      required: [applied, syncedAt]
+      properties:
+        applied:
+          type: integer
+          description: Number of changes applied
+        syncedAt:
+          type: string
+          format: date-time
+          description: Server timestamp for client to store
+
+    SyncConflictResponse:
+      type: object
+      required: [applied, conflicts]
+      properties:
+        applied:
+          type: integer
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              table:
+                type: string
+              serverVersion:
+                type: integer
+              serverUpdatedAt:
+                type: string
+                format: date-time
+
+    SyncPullRequest:
+      type: object
+      required: [lastSyncedAt]
+      properties:
+        lastSyncedAt:
+          type: string
+          format: date-time
+          description: Fetch changes after this timestamp
+
+    SyncPullResponse:
+      type: object
+      required: [books, highlights, syncedAt]
+      properties:
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/Highlight'
+        syncedAt:
+          type: string
+          format: date-time
+
+    ImportSessionCreate:
+      type: object
+      required: [source, totalFound, imported, skipped, startedAt]
+      properties:
+        source:
+          type: string
+          enum: [file, device]
+        filename:
+          type: string
+          nullable: true
+        deviceName:
+          type: string
+          nullable: true
+        totalFound:
+          type: integer
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: integer
+        errorDetails:
+          type: array
+          items:
+            type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
