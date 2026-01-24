@@ -1,50 +1,155 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+================================================================================
+SYNC IMPACT REPORT
+================================================================================
+Version change: N/A (initial) → 1.0.0
+Modified principles: N/A (initial creation)
+Added sections:
+  - Core Principles (5 principles)
+  - Technology Stack
+  - Development Workflow
+  - Governance
+Removed sections: N/A
+Templates requiring updates:
+  - .specify/templates/plan-template.md: ✅ Compatible (Constitution Check section exists)
+  - .specify/templates/spec-template.md: ✅ Compatible (requirements align)
+  - .specify/templates/tasks-template.md: ✅ Compatible (TDD workflow supported)
+  - .specify/templates/checklist-template.md: ✅ Compatible (generic structure)
+  - .specify/templates/agent-file-template.md: ✅ Compatible (generic structure)
+Follow-up TODOs: None
+================================================================================
+-->
+
+# Mastery Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Test-First Development
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All features MUST have tests written before implementation. Tests are required for:
+- Business logic and domain rules
+- API endpoints and edge functions
+- Critical user flows across all platforms
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Enforcement**:
+- Tests MUST be written alongside implementation (not after)
+- Pull requests without adequate test coverage for new functionality will be rejected
+- Test coverage is verified in CI pipeline
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: Tests document expected behavior and prevent regressions. Writing tests first clarifies requirements before implementation begins.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Code Quality Standards
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+All code MUST meet project quality standards before merge:
+- **Linting**: All code passes configured linters (Dart analyzer, ESLint, Rust clippy for Tauri)
+- **Formatting**: Consistent formatting via automated tools (dart format, Prettier, rustfmt)
+- **Type Safety**: Strict typing enabled; `any` types require justification
+- **No Warnings**: Code MUST compile/analyze without warnings
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Enforcement**:
+- Pre-commit hooks run linting and formatting checks
+- CI pipeline fails on quality violations
+- Code review verifies adherence
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: Consistent code quality reduces cognitive load, catches bugs early, and makes the codebase maintainable across multiple platforms.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. Observability
+
+All production code MUST be observable:
+- **Structured Logging**: Use structured log formats (JSON) with consistent fields
+- **Error Tracking**: Errors are captured with context and stack traces
+- **Key Metrics**: Track performance metrics for critical operations
+
+**Requirements by Platform**:
+- Mobile (Flutter): Crashlytics or equivalent, performance monitoring
+- Extension: Console logging with structured format, error boundaries
+- Backend (Supabase): Edge function logging, database query monitoring
+- Desktop (Tauri): File-based logging, crash reports
+
+**Rationale**: Without observability, debugging production issues is guesswork. Structured logs and metrics enable rapid incident response.
+
+### IV. Simplicity (YAGNI)
+
+Code MUST be as simple as possible for current requirements:
+- **No Premature Abstraction**: Do not create abstractions until the third use case
+- **No Speculative Features**: Only implement what is explicitly required
+- **Minimal Dependencies**: Justify every external dependency added
+- **Delete Dead Code**: Remove unused code immediately; do not comment out
+
+**Complexity Justification**:
+When complexity is unavoidable, document in the implementation plan:
+| Complexity Added | Why Needed | Simpler Alternative Rejected Because |
+|------------------|------------|--------------------------------------|
+
+**Rationale**: Simpler code is easier to understand, test, maintain, and debug. Over-engineering creates technical debt.
+
+### V. Offline-First Architecture
+
+All client applications MUST function without network connectivity:
+- **Local-First Data**: Core data is stored locally and synced when online
+- **Graceful Degradation**: Features that require network clearly indicate status
+- **Conflict Resolution**: Define sync conflict strategy per data type
+- **Queue Operations**: Network operations queue when offline, execute when connected
+
+**Platform Requirements**:
+- Mobile (Flutter): SQLite/Drift for local storage, background sync
+- Extension: IndexedDB or chrome.storage for local data
+- Desktop (Tauri): Local file system with sync queue
+
+**Rationale**: Users expect apps to work reliably regardless of network conditions. Reading/studying often happens offline (planes, commutes, remote areas).
+
+## Technology Stack
+
+**Mobile App**: Flutter (Dart) - iOS and Android from single codebase
+**Browser Extension**: TypeScript - Chrome/Firefox extension for web highlights
+**Backend**: Supabase - PostgreSQL database, Authentication, Storage, Edge Functions (TypeScript)
+**Desktop Agent**: Tauri (Rust + TypeScript) - Kindle highlight auto-import tool
+
+**Shared Code Strategy**:
+- Business logic that must be consistent across platforms lives in Supabase Edge Functions
+- Platform-specific UI code stays in respective apps
+- API contracts defined in shared TypeScript types (where applicable)
+
+## Development Workflow
+
+### Branch Strategy
+
+- `main`: Production-ready code only
+- `feature/*`: Feature development branches
+- `fix/*`: Bug fix branches
+
+### Pull Request Requirements
+
+1. All CI checks pass (tests, linting, formatting)
+2. Code review approval required
+3. Constitution compliance verified
+4. Documentation updated if applicable
+
+### Commit Standards
+
+- Use conventional commits format: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Scope: mobile, extension, backend, desktop, shared
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices. When conflicts arise between this document and other guidance, the constitution takes precedence.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Amendment Process
+
+1. Propose amendment via pull request to this file
+2. Document rationale for change
+3. Update version according to semantic versioning:
+   - MAJOR: Principle removal or fundamental redefinition
+   - MINOR: New principle or significant expansion
+   - PATCH: Clarifications, wording improvements
+4. Update dependent templates if affected
+5. Merge requires explicit approval
+
+### Compliance Review
+
+- All pull requests MUST verify compliance with Core Principles
+- Violations require explicit justification in the PR description
+- Justified violations MUST be tracked in Complexity Tracking table
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
