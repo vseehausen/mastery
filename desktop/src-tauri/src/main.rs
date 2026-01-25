@@ -3,7 +3,7 @@
 
 mod kindle;
 
-use kindle::{is_kindle_connected, get_clippings_info as get_clippings_info_impl, read_clippings as read_clippings_impl, count_clippings as count_clippings_impl};
+use kindle::{is_kindle_connected, sync_vocab_with_privileges, handle_sync_vocab_cli};
 
 /// Get current Kindle connection status
 #[tauri::command]
@@ -11,32 +11,60 @@ fn get_kindle_status() -> bool {
     is_kindle_connected()
 }
 
-/// Get clippings file information (path and size in bytes)
+/// Sync vocab.db from Kindle to app data directory
 #[tauri::command]
-fn get_clippings_info() -> Result<(String, u64), String> {
-    get_clippings_info_impl()
+async fn sync_kindle_vocab(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    
+    eprintln!("[main] sync_kindle_vocab called");
+    
+    let data_dir = app.path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    
+    eprintln!("[main] App data dir: {}", data_dir.display());
+    
+    std::fs::create_dir_all(&data_dir)
+        .map_err(|e| e.to_string())?;
+    
+    let output_path = data_dir.join("vocab.db");
+    eprintln!("[main] Output path: {}", output_path.display());
+    
+    sync_vocab_with_privileges(&output_path)
 }
 
-/// Read the entire clippings file content
+/// Get path to synced vocab.db if it exists
 #[tauri::command]
-fn read_clippings() -> Result<String, String> {
-    read_clippings_impl()
-}
-
-/// Count highlights in clippings content
-#[tauri::command]
-fn count_clippings(content: String) -> usize {
-    count_clippings_impl(&content)
+fn get_vocab_db_path(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    
+    let data_dir = app.path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    
+    let vocab_path = data_dir.join("vocab.db");
+    
+    if vocab_path.exists() {
+        Ok(vocab_path.to_string_lossy().to_string())
+    } else {
+        Err("vocab.db not synced yet".to_string())
+    }
 }
 
 fn main() {
+    // Check for CLI sync mode (called with admin privileges)
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() >= 3 && args[1] == "--sync-vocab" {
+        handle_sync_vocab_cli(&args[2]);
+        return;
+    }
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_kindle_status,
-            get_clippings_info,
-            read_clippings,
-            count_clippings
+            sync_kindle_vocab,
+            get_vocab_db_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

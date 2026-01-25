@@ -1,121 +1,150 @@
 <script lang="ts">
-  import { getKindleStatus, getClippingsInfo, readClippings, countClippings, formatFileSize } from '$lib/api/kindle';
+  import { getKindleStatus, syncKindleVocab, getVocabDbPath } from '$lib/api/kindle';
 
   let kindleConnected = $state<boolean | null>(null);
   let checking = $state(false);
-  let filePath = $state<string | null>(null);
-  let fileSize = $state<number | null>(null);
-  let loadingInfo = $state(false);
-  let fileContent = $state<string | null>(null);
-  let loadingContent = $state(false);
-  let highlightCount = $state<number | null>(null);
+  let syncing = $state(false);
+  let vocabPath = $state<string | null>(null);
+  let syncStatus = $state<string | null>(null);
   let error = $state<string | null>(null);
+  let logs = $state<string[]>([]);
+
+  function addLog(msg: string) {
+    const timestamp = new Date().toLocaleTimeString();
+    logs = [...logs, `[${timestamp}] ${msg}`];
+    console.log(msg);
+  }
+
+  function clearLogs() {
+    logs = [];
+  }
 
   async function checkKindleStatus() {
     checking = true;
     error = null;
+    addLog('Checking Kindle status...');
     try {
       kindleConnected = await getKindleStatus();
-      if (kindleConnected) {
-        await loadFileInfo();
-      } else {
-        filePath = null;
-        fileSize = null;
-        fileContent = null;
+      addLog(`Kindle connected: ${kindleConnected}`);
+      // Also check if we have a synced vocab.db
+      try {
+        vocabPath = await getVocabDbPath();
+        addLog(`Existing vocab.db found at: ${vocabPath}`);
+      } catch {
+        vocabPath = null;
+        addLog('No existing vocab.db found');
       }
     } catch (err) {
       console.error('Failed to check Kindle status:', err);
       kindleConnected = false;
-      error = err instanceof Error ? err.message : 'Failed to check status';
+      const errMsg = err instanceof Error ? err.message : String(err);
+      error = errMsg;
+      addLog(`Error: ${errMsg}`);
     } finally {
       checking = false;
     }
   }
 
-  async function loadFileInfo() {
-    if (!kindleConnected) return;
-    
-    loadingInfo = true;
+  async function handleSyncVocab() {
+    syncing = true;
     error = null;
+    syncStatus = null;
+    clearLogs();
+    addLog('Starting vocab.db sync...');
+    addLog('This may prompt for your password (required for MTP access)');
+    
     try {
-      const [path, size] = await getClippingsInfo();
-      filePath = path;
-      fileSize = size;
+      const result = await syncKindleVocab();
+      syncStatus = result;
+      addLog(`Success: ${result}`);
+      // Refresh vocab path
+      try {
+        vocabPath = await getVocabDbPath();
+        addLog(`Vocab.db saved to: ${vocabPath}`);
+      } catch {
+        vocabPath = null;
+      }
     } catch (err) {
-      console.error('Failed to load file info:', err);
-      filePath = null;
-      fileSize = null;
-      error = err instanceof Error ? err.message : 'Failed to load file info';
+      const errMsg = err instanceof Error ? err.message : String(err);
+      error = errMsg;
+      addLog(`Error: ${errMsg}`);
     } finally {
-      loadingInfo = false;
+      syncing = false;
+      addLog('Sync operation complete');
     }
   }
 
-  async function loadClippings() {
-    if (!kindleConnected) return;
-    
-    loadingContent = true;
-    error = null;
-    try {
-      const content = await readClippings();
-      fileContent = content;
-      // Count highlights
-      const count = await countClippings(content);
-      highlightCount = count;
-    } catch (err) {
-      console.error('Failed to read clippings:', err);
-      fileContent = null;
-      highlightCount = null;
-      error = err instanceof Error ? err.message : 'Failed to read file';
-    } finally {
-      loadingContent = false;
-    }
-  }
+  // Check status on mount
+  checkKindleStatus();
 </script>
 
 <main class="container">
   <h1>Mastery Desktop</h1>
 
   <div class="kindle-section">
-    <h2>Kindle Status</h2>
+    <h2>Kindle Vocabulary Sync</h2>
+    
     <button onclick={checkKindleStatus} disabled={checking}>
       {checking ? 'Checking...' : 'Check Kindle Status'}
     </button>
     
     {#if kindleConnected !== null}
       <p class="status-message">
-        Kindle Connected: <strong>{kindleConnected ? 'Yes' : 'No'}</strong>
+        Kindle Connected: <strong class={kindleConnected ? 'connected' : 'disconnected'}>
+          {kindleConnected ? 'Yes' : 'No'}
+        </strong>
       </p>
     {/if}
 
-    {#if kindleConnected && loadingInfo}
-      <p>Loading file info...</p>
-    {/if}
-
-    {#if kindleConnected && filePath && fileSize !== null}
-      <div class="file-info">
-        <p><strong>File Path:</strong></p>
-        <p class="file-path">{filePath}</p>
-        <p><strong>File Size:</strong> {formatFileSize(fileSize)}</p>
-        
-        <button onclick={loadClippings} disabled={loadingContent} class="load-button">
-          {loadingContent ? 'Loading...' : 'Load Clippings'}
+    {#if kindleConnected}
+      <div class="sync-section">
+        <button onclick={handleSyncVocab} disabled={syncing} class="sync-button">
+          {syncing ? 'Syncing...' : 'Sync Vocabulary Database'}
         </button>
+        <p class="hint">
+          Syncs vocab.db from your Kindle. You may be prompted for your password.
+        </p>
       </div>
     {/if}
 
-    {#if error}
-      <p class="error-message">Error: {error}</p>
+    {#if syncStatus}
+      <p class="success-message">{syncStatus}</p>
     {/if}
 
-    {#if fileContent !== null}
-      <div class="content-preview">
-        {#if highlightCount !== null}
-          <h3>Found {highlightCount} highlights</h3>
-        {/if}
-        <h3>File Content Preview (first 500 characters):</h3>
-        <pre class="content-text">{fileContent.substring(0, 500)}...</pre>
-        <p class="content-info">Total size: {fileContent.length} characters</p>
+    {#if error}
+      <p class="error-message">{error}</p>
+    {/if}
+
+    {#if vocabPath}
+      <div class="vocab-info">
+        <h3>Synced Vocabulary Database</h3>
+        <p class="file-path">{vocabPath}</p>
+      </div>
+    {/if}
+
+    {#if !kindleConnected && kindleConnected !== null}
+      <div class="instructions">
+        <h3>How to connect your Kindle</h3>
+        <ol>
+          <li>Connect your Kindle via USB cable</li>
+          <li>On older Kindles: Enable USB drive mode</li>
+          <li>On newer Kindles (2024+): The app will access it directly via MTP</li>
+          <li>Click "Check Kindle Status" to detect your device</li>
+        </ol>
+      </div>
+    {/if}
+
+    {#if logs.length > 0}
+      <div class="log-section">
+        <div class="log-header">
+          <h3>Activity Log</h3>
+          <button onclick={clearLogs} class="clear-btn">Clear</button>
+        </div>
+        <div class="log-content">
+          {#each logs as log}
+            <div class="log-line">{log}</div>
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
@@ -143,7 +172,8 @@
     padding: 2rem;
     background: #f5f5f5;
     border-radius: 8px;
-    min-width: 300px;
+    min-width: 400px;
+    max-width: 600px;
   }
 
   button {
@@ -168,67 +198,146 @@
     cursor: not-allowed;
   }
 
+  .sync-button {
+    background-color: #22c55e;
+  }
+
+  .sync-button:hover:not(:disabled) {
+    background-color: #16a34a;
+  }
+
   .status-message {
     margin-top: 1rem;
     font-size: 1.1em;
   }
 
-  .status-message strong {
-    color: #646cff;
+  .connected {
+    color: #22c55e;
   }
 
-  .file-info {
+  .disconnected {
+    color: #ef4444;
+  }
+
+  .sync-section {
     margin-top: 1rem;
-    padding: 1rem;
-    background: white;
-    border-radius: 4px;
-    text-align: left;
-    min-width: 100%;
+    text-align: center;
   }
 
-  .file-path {
-    font-family: monospace;
-    font-size: 0.9em;
+  .hint {
+    font-size: 0.85em;
     color: #666;
-    word-break: break-all;
-    margin: 0.5rem 0;
+    margin-top: 0.5rem;
   }
 
-  .load-button {
+  .success-message {
+    color: #22c55e;
+    background: #f0fdf4;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
     margin-top: 1rem;
   }
 
   .error-message {
     color: #dc2626;
-    margin-top: 1rem;
-    padding: 0.5rem;
     background: #fef2f2;
+    padding: 0.75rem 1rem;
     border-radius: 4px;
+    margin-top: 1rem;
   }
 
-  .content-preview {
-    margin-top: 2rem;
+  .vocab-info {
+    margin-top: 1.5rem;
     padding: 1rem;
     background: white;
     border-radius: 4px;
-    min-width: 100%;
+    width: 100%;
   }
 
-  .content-text {
-    background: #f5f5f5;
-    padding: 1rem;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-size: 0.9em;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 300px;
-    overflow-y: auto;
+  .vocab-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1em;
   }
 
-  .content-info {
-    margin-top: 0.5rem;
-    font-size: 0.9em;
+  .file-path {
+    font-family: monospace;
+    font-size: 0.85em;
     color: #666;
+    word-break: break-all;
+    margin: 0;
+  }
+
+  .instructions {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #fef3c7;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .instructions h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1em;
+  }
+
+  .instructions ol {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructions li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9em;
+  }
+
+  .log-section {
+    margin-top: 1.5rem;
+    width: 100%;
+    background: #1a1a2e;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: #16213e;
+  }
+
+  .log-header h3 {
+    margin: 0;
+    font-size: 0.9em;
+    color: #a0a0a0;
+  }
+
+  .clear-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75em;
+    background: #333;
+    color: #888;
+  }
+
+  .clear-btn:hover:not(:disabled) {
+    background: #444;
+  }
+
+  .log-content {
+    padding: 0.75rem 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8em;
+  }
+
+  .log-line {
+    color: #4ade80;
+    padding: 0.15rem 0;
+    word-break: break-all;
+  }
+
+  .log-line:nth-child(even) {
+    color: #86efac;
   }
 </style>

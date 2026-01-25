@@ -12,25 +12,18 @@ export async function getKindleStatus(): Promise<boolean> {
 }
 
 /**
- * Get clippings file information
- * Returns: [file_path, file_size_bytes]
+ * Sync vocab.db from Kindle
+ * This will prompt for admin password if needed (for MTP devices)
  */
-export async function getClippingsInfo(): Promise<[string, number]> {
-  return invoke<[string, number]>('get_clippings_info');
+export async function syncKindleVocab(): Promise<string> {
+  return invoke<string>('sync_kindle_vocab');
 }
 
 /**
- * Read the entire clippings file content
+ * Get path to synced vocab.db if it exists
  */
-export async function readClippings(): Promise<string> {
-  return invoke<string>('read_clippings');
-}
-
-/**
- * Count highlights in clippings content
- */
-export async function countClippings(content: string): Promise<number> {
-  return invoke<number>('count_clippings', { content });
+export async function getVocabDbPath(): Promise<string> {
+  return invoke<string>('get_vocab_db_path');
 }
 
 /**

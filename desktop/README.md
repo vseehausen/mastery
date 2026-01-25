@@ -1,6 +1,23 @@
-# Tauri + SvelteKit + TypeScript
+# Mastery Desktop
 
-This template should help get you started developing with Tauri, SvelteKit and TypeScript in Vite.
+Tauri desktop application for importing Kindle vocabulary.
+
+## Setup
+
+See [KINDLE_SETUP.md](./KINDLE_SETUP.md) for Kindle connection instructions.
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run in development mode
+pnpm tauri dev
+
+# Build for production
+pnpm tauri build
+```
 
 ## Recommended IDE Setup
 
