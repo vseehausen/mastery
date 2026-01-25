@@ -2,14 +2,11 @@
 
 Tauri desktop application for importing Kindle vocabulary.
 
-## Prerequisites (Development Only)
+## Features
 
-Users don't need to install anything - the app bundles all dependencies.
-
-For development, install:
-```bash
-brew install libmtp
-```
+- Pure Rust MTP implementation (no external dependencies)
+- Automatic Kindle detection
+- vocab.db sync with admin password prompt
 
 ## Development
 
@@ -21,11 +18,11 @@ pnpm tauri dev
 ## Release Build
 
 ```bash
-bash scripts/build-release.sh
+pnpm tauri build
 ```
 
-This creates:
+Creates:
 - `src-tauri/target/release/bundle/macos/Mastery.app`
 - `src-tauri/target/release/bundle/dmg/Mastery_0.1.0_aarch64.dmg`
 
-The build script bundles `libmtp` and `libusb` dylibs so users don't need homebrew.
+No external dependencies needed - pure Rust binary.

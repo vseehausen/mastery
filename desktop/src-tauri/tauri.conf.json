@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bash src-tauri/scripts/bundle-dylibs.sh && pnpm build",
+    "beforeBuildCommand": "pnpm build",
     "frontendDist": "../build"
   },
   "app": {
@@ -32,11 +32,7 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "11.0",
-      "frameworks": [
-        "libs/libmtp.9.dylib",
-        "libs/libusb-1.0.0.dylib"
-      ]
+      "minimumSystemVersion": "11.0"
     }
   }
 }

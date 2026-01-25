@@ -2,9 +2,11 @@
 //!
 //! Supports all Kindle e-reader models:
 //! - Older models (pre-2024): Mount as USB mass storage, vocab.db at system/vocabulary/
-//! - Newer models (2024+): Use MTP protocol via libmtp-rs (requires admin privileges)
+//! - Newer models (2024+): Use MTP protocol via pure Rust implementation (requires admin privileges)
 //!
 //! The vocab.db file is a SQLite database containing vocabulary lookups made on the Kindle.
+
+mod mtp;
 
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -133,115 +135,14 @@ pub fn sync_vocab_db(output_path: &Path) -> Result<u64, String> {
     }
 }
 
-/// Sync vocab.db via MTP using libmtp-rs
-/// This requires admin privileges to detach the kernel driver
+/// Sync vocab.db via MTP using pure Rust implementation
+/// This requires admin privileges for USB device access
 #[cfg(target_os = "macos")]
 fn sync_vocab_via_mtp(output_path: &Path) -> Result<u64, String> {
-    use libmtp_rs::device::raw::detect_raw_devices;
-    use libmtp_rs::device::{MtpDevice, StorageSort};
-    use libmtp_rs::object::filetypes::Filetype;
-    use libmtp_rs::object::Object;
-    use libmtp_rs::storage::Parent;
-
-    log("Starting MTP sync...");
+    log("Starting MTP sync (pure Rust)...");
     log(&format!("Output path: {}", output_path.display()));
-
-    // Detect devices
-    log("Detecting MTP devices...");
-    let raw_devices = detect_raw_devices()
-        .map_err(|e| format!("Failed to detect MTP devices: {:?}. Try running with admin privileges.", e))?;
-
-    log(&format!("Found {} raw devices", raw_devices.len()));
     
-    if raw_devices.is_empty() {
-        return Err("No Kindle found via MTP. Make sure it's connected.".to_string());
-    }
-
-    let raw_device = raw_devices.into_iter().next().unwrap();
-    log(&format!("Using device: VID={:#06x} PID={:#06x}", 
-        raw_device.device_entry().vendor_id,
-        raw_device.device_entry().product_id));
-    
-    // Open device
-    log("Opening device (uncached)...");
-    let mut device: MtpDevice = raw_device.open_uncached()
-        .ok_or("Failed to open Kindle. It may require admin privileges or be in use.")?;
-    log("Device opened successfully");
-
-    // Update storage
-    log("Updating storage info...");
-    device.update_storage(StorageSort::ByFreeSpace)
-        .map_err(|e| format!("Failed to access storage: {:?}", e))?;
-
-    let storage_pool = device.storage_pool();
-    let storage_count = storage_pool.iter().count();
-    log(&format!("Found {} storage(s)", storage_count));
-
-    // Track result to return after forgetting device
-    let mut result: Result<u64, String> = Err("vocab.db not found on Kindle".to_string());
-
-    // Navigate to system/vocabulary/vocab.db
-    'outer: for (storage_id, storage) in storage_pool.iter() {
-        log(&format!("Scanning storage {}: {:?}", storage_id, storage.description()));
-        
-        let root_items = storage.files_and_folders(Parent::Root);
-        let root_count = root_items.len();
-        log(&format!("  Root has {} items", root_count));
-        
-        for item in root_items {
-            let name = item.name().to_lowercase();
-            log(&format!("  - {} (type: {:?})", item.name(), item.ftype()));
-            
-            if name == "system" && matches!(item.ftype(), Filetype::Folder) {
-                log("  Found 'system' folder, scanning...");
-                let system_items = storage.files_and_folders(Parent::Folder(item.id()));
-                
-                for sys_item in system_items {
-                    log(&format!("    - {} (type: {:?})", sys_item.name(), sys_item.ftype()));
-                    
-                    if sys_item.name().to_lowercase() == "vocabulary" && matches!(sys_item.ftype(), Filetype::Folder) {
-                        log("    Found 'vocabulary' folder, scanning...");
-                        let vocab_items = storage.files_and_folders(Parent::Folder(sys_item.id()));
-                        
-                        for vocab_item in vocab_items {
-                            log(&format!("      - {} (size: {} bytes)", vocab_item.name(), vocab_item.size()));
-                            
-                            if vocab_item.name().to_lowercase() == "vocab.db" {
-                                log(&format!("      Found vocab.db! Size on device: {} bytes", vocab_item.size()));
-                                log(&format!("      Downloading to: {}", output_path.display()));
-                                
-                                let output_str = output_path.to_string_lossy().to_string();
-                                match storage.get_file_to_path(vocab_item.id(), output_str) {
-                                    Ok(()) => {
-                                        let size = fs::metadata(output_path)
-                                            .map(|m| m.len())
-                                            .unwrap_or(0);
-                                        log(&format!("      Download complete! Local size: {} bytes", size));
-                                        result = Ok(size);
-                                    }
-                                    Err(e) => {
-                                        result = Err(format!("Failed to download vocab.db: {:?}", e));
-                                    }
-                                }
-                                break 'outer;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Prevent device drop from closing session (which disconnects Kindle)
-    // The subprocess will exit anyway, so leaking is fine
-    drop(storage_pool);
-    log("Leaking MTP device to keep Kindle connected...");
-    std::mem::forget(device);
-
-    if result.is_err() {
-        log("ERROR: vocab.db not found after scanning all storage");
-    }
-    result
+    mtp::sync_vocab_via_mtp(output_path)
 }
 
 /// Sync vocab.db with admin privileges using osascript
