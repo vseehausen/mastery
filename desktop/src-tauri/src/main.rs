@@ -32,7 +32,12 @@ fn count_clippings(content: String) -> usize {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_kindle_status])
+        .invoke_handler(tauri::generate_handler![
+            get_kindle_status,
+            get_clippings_info,
+            read_clippings,
+            count_clippings
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
