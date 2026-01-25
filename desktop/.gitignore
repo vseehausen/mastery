@@ -1,15 +1,10 @@
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
-src-tauri/target/
-
-# Environment
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
 .env
-.env.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
+.env.*
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

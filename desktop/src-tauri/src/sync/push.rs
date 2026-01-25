@@ -136,7 +136,7 @@ pub async fn push_highlight(db: &Database, auth: &SupabaseAuth, highlight: &High
 }
 
 /// Push a book to sync
-pub async fn push_book(auth: &SupabaseAuth, book: &Book) -> Result<()> {
+pub async fn  (auth: &SupabaseAuth, book: &Book) -> Result<()> {
     let payload = BookPayload {
         id: book.id.clone(),
         title: book.title.clone(),
