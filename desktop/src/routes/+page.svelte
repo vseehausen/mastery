@@ -1,156 +1,147 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/core";
+  import { getKindleStatus, getClippingsInfo, formatFileSize } from '$lib/api/kindle';
 
-  let name = $state("");
-  let greetMsg = $state("");
+  let kindleConnected = $state<boolean | null>(null);
+  let checking = $state(false);
+  let filePath = $state<string | null>(null);
+  let fileSize = $state<number | null>(null);
+  let loadingInfo = $state(false);
 
-  async function greet(event: Event) {
-    event.preventDefault();
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsg = await invoke("greet", { name });
+  async function checkKindleStatus() {
+    checking = true;
+    try {
+      kindleConnected = await getKindleStatus();
+      if (kindleConnected) {
+        await loadFileInfo();
+      } else {
+        filePath = null;
+        fileSize = null;
+      }
+    } catch (error) {
+      console.error('Failed to check Kindle status:', error);
+      kindleConnected = false;
+    } finally {
+      checking = false;
+    }
+  }
+
+  async function loadFileInfo() {
+    if (!kindleConnected) return;
+    
+    loadingInfo = true;
+    try {
+      const [path, size] = await getClippingsInfo();
+      filePath = path;
+      fileSize = size;
+    } catch (error) {
+      console.error('Failed to load file info:', error);
+      filePath = null;
+      fileSize = null;
+    } finally {
+      loadingInfo = false;
+    }
   }
 </script>
 
 <main class="container">
-  <h1>Welcome to Tauri + Svelte</h1>
+  <h1>Mastery Desktop</h1>
 
-  <div class="row">
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
-    </a>
-    <a href="https://tauri.app" target="_blank">
-      <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank">
-      <img src="/svelte.svg" class="logo svelte-kit" alt="SvelteKit Logo" />
-    </a>
+  <div class="kindle-section">
+    <h2>Kindle Status</h2>
+    <button onclick={checkKindleStatus} disabled={checking}>
+      {checking ? 'Checking...' : 'Check Kindle Status'}
+    </button>
+    
+    {#if kindleConnected !== null}
+      <p class="status-message">
+        Kindle Connected: <strong>{kindleConnected ? 'Yes' : 'No'}</strong>
+      </p>
+    {/if}
+
+    {#if kindleConnected && loadingInfo}
+      <p>Loading file info...</p>
+    {/if}
+
+    {#if kindleConnected && filePath && fileSize !== null}
+      <div class="file-info">
+        <p><strong>File Path:</strong></p>
+        <p class="file-path">{filePath}</p>
+        <p><strong>File Size:</strong> {formatFileSize(fileSize)}</p>
+      </div>
+    {/if}
   </div>
-  <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
-
-  <form class="row" onsubmit={greet}>
-    <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <button type="submit">Greet</button>
-  </form>
-  <p>{greetMsg}</p>
 </main>
 
 <style>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.svelte-kit:hover {
-  filter: drop-shadow(0 0 2em #ff3e00);
-}
-
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
-.container {
-  margin: 0;
-  padding-top: 10vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
+  .container {
+    margin: 0;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
   }
 
-  a:hover {
-    color: #24c8db;
+  h1 {
+    margin-bottom: 2rem;
   }
 
-  input,
+  .kindle-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: #f5f5f5;
+    border-radius: 8px;
+    min-width: 300px;
+  }
+
   button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #646cff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.25s;
   }
-  button:active {
-    background-color: #0f0f0f69;
-  }
-}
 
+  button:hover:not(:disabled) {
+    background-color: #535bf2;
+  }
+
+  button:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+  }
+
+  .status-message {
+    margin-top: 1rem;
+    font-size: 1.1em;
+  }
+
+  .status-message strong {
+    color: #646cff;
+  }
+
+  .file-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 4px;
+    text-align: left;
+    min-width: 100%;
+  }
+
+  .file-path {
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #666;
+    word-break: break-all;
+    margin: 0.5rem 0;
+  }
 </style>
