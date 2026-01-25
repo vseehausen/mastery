@@ -1,0 +1,17 @@
+# Clippy configuration for Mastery desktop agent
+# Uses pedantic settings for strict code quality
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 25
+
+# Allowed names that would otherwise trigger warnings
+allowed-idents-below-min-chars = ["x", "y", "id", "db", "rx", "tx"]
+
+# Documentation requirements
+missing-docs-in-crate-items = true
+
+# Maximum lines for functions
+too-many-lines-threshold = 100
+
+# Maximum arguments for functions
+too-many-arguments-threshold = 7

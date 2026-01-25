@@ -1,0 +1,50 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Secrets
+*.pem
+*.key
+*.p12
+credentials.json
+service-account.json
+
+# Rust
+target/
+*.rs.bk
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Supabase
+.supabase/
