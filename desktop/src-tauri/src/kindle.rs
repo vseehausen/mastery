@@ -41,3 +41,28 @@ pub fn get_clippings_info() -> Result<(String, u64), String> {
         Err("Platform not supported".to_string())
     }
 }
+
+/// Read the entire clippings file content
+pub fn read_clippings() -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let path = Path::new(CLIPPINGS_PATH);
+        if !path.exists() {
+            return Err("Clippings file not found".to_string());
+        }
+
+        std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file: {}", e))
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Platform not supported".to_string())
+    }
+}
+
+/// Count the number of highlights in the clippings content
+/// Simple count based on separator "=========="
+pub fn count_clippings(content: &str) -> usize {
+    content.split("==========").count().saturating_sub(1)
+}

@@ -3,7 +3,7 @@
 
 mod kindle;
 
-use kindle::{is_kindle_connected, get_clippings_info as get_clippings_info_impl};
+use kindle::{is_kindle_connected, get_clippings_info as get_clippings_info_impl, read_clippings as read_clippings_impl, count_clippings as count_clippings_impl};
 
 /// Get current Kindle connection status
 #[tauri::command]
@@ -15,6 +15,18 @@ fn get_kindle_status() -> bool {
 #[tauri::command]
 fn get_clippings_info() -> Result<(String, u64), String> {
     get_clippings_info_impl()
+}
+
+/// Read the entire clippings file content
+#[tauri::command]
+fn read_clippings() -> Result<String, String> {
+    read_clippings_impl()
+}
+
+/// Count highlights in clippings content
+#[tauri::command]
+fn count_clippings(content: String) -> usize {
+    count_clippings_impl(&content)
 }
 
 fn main() {

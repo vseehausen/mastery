@@ -20,6 +20,20 @@ export async function getClippingsInfo(): Promise<[string, number]> {
 }
 
 /**
+ * Read the entire clippings file content
+ */
+export async function readClippings(): Promise<string> {
+  return invoke<string>('read_clippings');
+}
+
+/**
+ * Count highlights in clippings content
+ */
+export async function countClippings(content: string): Promise<number> {
+  return invoke<number>('count_clippings', { content });
+}
+
+/**
  * Format file size in human-readable format
  */
 export function formatFileSize(bytes: number): string {
