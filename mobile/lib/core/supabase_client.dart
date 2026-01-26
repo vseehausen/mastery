@@ -1,24 +1,18 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase client configuration and initialization
 class SupabaseConfig {
-  static const String _supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: '',
-  );
-
-  static const String _supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-    defaultValue: '',
-  );
+  static String get _supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get _supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   /// Initialize Supabase client
   static Future<void> initialize() async {
     if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
       if (kDebugMode) {
         print('Warning: Supabase URL or Anon Key not configured');
-        print('Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables');
+        print('Add SUPABASE_URL and SUPABASE_ANON_KEY to mobile/.env file');
       }
       return;
     }

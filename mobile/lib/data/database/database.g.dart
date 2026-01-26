@@ -3204,6 +3204,930 @@ class SyncOutboxCompanion extends UpdateCompanion<SyncOutboxData> {
   }
 }
 
+class $VocabularysTable extends Vocabularys
+    with TableInfo<$VocabularysTable, Vocabulary> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VocabularysTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wordMeta = const VerificationMeta('word');
+  @override
+  late final GeneratedColumn<String> word = GeneratedColumn<String>(
+    'word',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 100),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stemMeta = const VerificationMeta('stem');
+  @override
+  late final GeneratedColumn<String> stem = GeneratedColumn<String>(
+    'stem',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 100),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contextMeta = const VerificationMeta(
+    'context',
+  );
+  @override
+  late final GeneratedColumn<String> context = GeneratedColumn<String>(
+    'context',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bookTitleMeta = const VerificationMeta(
+    'bookTitle',
+  );
+  @override
+  late final GeneratedColumn<String> bookTitle = GeneratedColumn<String>(
+    'book_title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bookAuthorMeta = const VerificationMeta(
+    'bookAuthor',
+  );
+  @override
+  late final GeneratedColumn<String> bookAuthor = GeneratedColumn<String>(
+    'book_author',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bookAsinMeta = const VerificationMeta(
+    'bookAsin',
+  );
+  @override
+  late final GeneratedColumn<String> bookAsin = GeneratedColumn<String>(
+    'book_asin',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lookupTimestampMeta = const VerificationMeta(
+    'lookupTimestamp',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lookupTimestamp =
+      GeneratedColumn<DateTime>(
+        'lookup_timestamp',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _contentHashMeta = const VerificationMeta(
+    'contentHash',
+  );
+  @override
+  late final GeneratedColumn<String> contentHash = GeneratedColumn<String>(
+    'content_hash',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 64),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    word,
+    stem,
+    context,
+    bookTitle,
+    bookAuthor,
+    bookAsin,
+    lookupTimestamp,
+    contentHash,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vocabularys';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Vocabulary> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('word')) {
+      context.handle(
+        _wordMeta,
+        word.isAcceptableOrUnknown(data['word']!, _wordMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wordMeta);
+    }
+    if (data.containsKey('stem')) {
+      context.handle(
+        _stemMeta,
+        stem.isAcceptableOrUnknown(data['stem']!, _stemMeta),
+      );
+    }
+    if (data.containsKey('context')) {
+      context.handle(
+        _contextMeta,
+        this.context.isAcceptableOrUnknown(data['context']!, _contextMeta),
+      );
+    }
+    if (data.containsKey('book_title')) {
+      context.handle(
+        _bookTitleMeta,
+        bookTitle.isAcceptableOrUnknown(data['book_title']!, _bookTitleMeta),
+      );
+    }
+    if (data.containsKey('book_author')) {
+      context.handle(
+        _bookAuthorMeta,
+        bookAuthor.isAcceptableOrUnknown(data['book_author']!, _bookAuthorMeta),
+      );
+    }
+    if (data.containsKey('book_asin')) {
+      context.handle(
+        _bookAsinMeta,
+        bookAsin.isAcceptableOrUnknown(data['book_asin']!, _bookAsinMeta),
+      );
+    }
+    if (data.containsKey('lookup_timestamp')) {
+      context.handle(
+        _lookupTimestampMeta,
+        lookupTimestamp.isAcceptableOrUnknown(
+          data['lookup_timestamp']!,
+          _lookupTimestampMeta,
+        ),
+      );
+    }
+    if (data.containsKey('content_hash')) {
+      context.handle(
+        _contentHashMeta,
+        contentHash.isAcceptableOrUnknown(
+          data['content_hash']!,
+          _contentHashMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentHashMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Vocabulary map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Vocabulary(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      word: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}word'],
+      )!,
+      stem: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stem'],
+      ),
+      context: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}context'],
+      ),
+      bookTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_title'],
+      ),
+      bookAuthor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_author'],
+      ),
+      bookAsin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_asin'],
+      ),
+      lookupTimestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}lookup_timestamp'],
+      ),
+      contentHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_hash'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $VocabularysTable createAlias(String alias) {
+    return $VocabularysTable(attachedDatabase, alias);
+  }
+}
+
+class Vocabulary extends DataClass implements Insertable<Vocabulary> {
+  final String id;
+  final String userId;
+  final String word;
+  final String? stem;
+  final String? context;
+  final String? bookTitle;
+  final String? bookAuthor;
+  final String? bookAsin;
+  final DateTime? lookupTimestamp;
+  final String contentHash;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const Vocabulary({
+    required this.id,
+    required this.userId,
+    required this.word,
+    this.stem,
+    this.context,
+    this.bookTitle,
+    this.bookAuthor,
+    this.bookAsin,
+    this.lookupTimestamp,
+    required this.contentHash,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['word'] = Variable<String>(word);
+    if (!nullToAbsent || stem != null) {
+      map['stem'] = Variable<String>(stem);
+    }
+    if (!nullToAbsent || context != null) {
+      map['context'] = Variable<String>(context);
+    }
+    if (!nullToAbsent || bookTitle != null) {
+      map['book_title'] = Variable<String>(bookTitle);
+    }
+    if (!nullToAbsent || bookAuthor != null) {
+      map['book_author'] = Variable<String>(bookAuthor);
+    }
+    if (!nullToAbsent || bookAsin != null) {
+      map['book_asin'] = Variable<String>(bookAsin);
+    }
+    if (!nullToAbsent || lookupTimestamp != null) {
+      map['lookup_timestamp'] = Variable<DateTime>(lookupTimestamp);
+    }
+    map['content_hash'] = Variable<String>(contentHash);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  VocabularysCompanion toCompanion(bool nullToAbsent) {
+    return VocabularysCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      word: Value(word),
+      stem: stem == null && nullToAbsent ? const Value.absent() : Value(stem),
+      context: context == null && nullToAbsent
+          ? const Value.absent()
+          : Value(context),
+      bookTitle: bookTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bookTitle),
+      bookAuthor: bookAuthor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bookAuthor),
+      bookAsin: bookAsin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bookAsin),
+      lookupTimestamp: lookupTimestamp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lookupTimestamp),
+      contentHash: Value(contentHash),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory Vocabulary.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Vocabulary(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      word: serializer.fromJson<String>(json['word']),
+      stem: serializer.fromJson<String?>(json['stem']),
+      context: serializer.fromJson<String?>(json['context']),
+      bookTitle: serializer.fromJson<String?>(json['bookTitle']),
+      bookAuthor: serializer.fromJson<String?>(json['bookAuthor']),
+      bookAsin: serializer.fromJson<String?>(json['bookAsin']),
+      lookupTimestamp: serializer.fromJson<DateTime?>(json['lookupTimestamp']),
+      contentHash: serializer.fromJson<String>(json['contentHash']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'word': serializer.toJson<String>(word),
+      'stem': serializer.toJson<String?>(stem),
+      'context': serializer.toJson<String?>(context),
+      'bookTitle': serializer.toJson<String?>(bookTitle),
+      'bookAuthor': serializer.toJson<String?>(bookAuthor),
+      'bookAsin': serializer.toJson<String?>(bookAsin),
+      'lookupTimestamp': serializer.toJson<DateTime?>(lookupTimestamp),
+      'contentHash': serializer.toJson<String>(contentHash),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  Vocabulary copyWith({
+    String? id,
+    String? userId,
+    String? word,
+    Value<String?> stem = const Value.absent(),
+    Value<String?> context = const Value.absent(),
+    Value<String?> bookTitle = const Value.absent(),
+    Value<String?> bookAuthor = const Value.absent(),
+    Value<String?> bookAsin = const Value.absent(),
+    Value<DateTime?> lookupTimestamp = const Value.absent(),
+    String? contentHash,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => Vocabulary(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    word: word ?? this.word,
+    stem: stem.present ? stem.value : this.stem,
+    context: context.present ? context.value : this.context,
+    bookTitle: bookTitle.present ? bookTitle.value : this.bookTitle,
+    bookAuthor: bookAuthor.present ? bookAuthor.value : this.bookAuthor,
+    bookAsin: bookAsin.present ? bookAsin.value : this.bookAsin,
+    lookupTimestamp: lookupTimestamp.present
+        ? lookupTimestamp.value
+        : this.lookupTimestamp,
+    contentHash: contentHash ?? this.contentHash,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  Vocabulary copyWithCompanion(VocabularysCompanion data) {
+    return Vocabulary(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      word: data.word.present ? data.word.value : this.word,
+      stem: data.stem.present ? data.stem.value : this.stem,
+      context: data.context.present ? data.context.value : this.context,
+      bookTitle: data.bookTitle.present ? data.bookTitle.value : this.bookTitle,
+      bookAuthor: data.bookAuthor.present
+          ? data.bookAuthor.value
+          : this.bookAuthor,
+      bookAsin: data.bookAsin.present ? data.bookAsin.value : this.bookAsin,
+      lookupTimestamp: data.lookupTimestamp.present
+          ? data.lookupTimestamp.value
+          : this.lookupTimestamp,
+      contentHash: data.contentHash.present
+          ? data.contentHash.value
+          : this.contentHash,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Vocabulary(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('word: $word, ')
+          ..write('stem: $stem, ')
+          ..write('context: $context, ')
+          ..write('bookTitle: $bookTitle, ')
+          ..write('bookAuthor: $bookAuthor, ')
+          ..write('bookAsin: $bookAsin, ')
+          ..write('lookupTimestamp: $lookupTimestamp, ')
+          ..write('contentHash: $contentHash, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    word,
+    stem,
+    context,
+    bookTitle,
+    bookAuthor,
+    bookAsin,
+    lookupTimestamp,
+    contentHash,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Vocabulary &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.word == this.word &&
+          other.stem == this.stem &&
+          other.context == this.context &&
+          other.bookTitle == this.bookTitle &&
+          other.bookAuthor == this.bookAuthor &&
+          other.bookAsin == this.bookAsin &&
+          other.lookupTimestamp == this.lookupTimestamp &&
+          other.contentHash == this.contentHash &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> word;
+  final Value<String?> stem;
+  final Value<String?> context;
+  final Value<String?> bookTitle;
+  final Value<String?> bookAuthor;
+  final Value<String?> bookAsin;
+  final Value<DateTime?> lookupTimestamp;
+  final Value<String> contentHash;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const VocabularysCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.word = const Value.absent(),
+    this.stem = const Value.absent(),
+    this.context = const Value.absent(),
+    this.bookTitle = const Value.absent(),
+    this.bookAuthor = const Value.absent(),
+    this.bookAsin = const Value.absent(),
+    this.lookupTimestamp = const Value.absent(),
+    this.contentHash = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VocabularysCompanion.insert({
+    required String id,
+    required String userId,
+    required String word,
+    this.stem = const Value.absent(),
+    this.context = const Value.absent(),
+    this.bookTitle = const Value.absent(),
+    this.bookAuthor = const Value.absent(),
+    this.bookAsin = const Value.absent(),
+    this.lookupTimestamp = const Value.absent(),
+    required String contentHash,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       word = Value(word),
+       contentHash = Value(contentHash),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Vocabulary> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? word,
+    Expression<String>? stem,
+    Expression<String>? context,
+    Expression<String>? bookTitle,
+    Expression<String>? bookAuthor,
+    Expression<String>? bookAsin,
+    Expression<DateTime>? lookupTimestamp,
+    Expression<String>? contentHash,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (word != null) 'word': word,
+      if (stem != null) 'stem': stem,
+      if (context != null) 'context': context,
+      if (bookTitle != null) 'book_title': bookTitle,
+      if (bookAuthor != null) 'book_author': bookAuthor,
+      if (bookAsin != null) 'book_asin': bookAsin,
+      if (lookupTimestamp != null) 'lookup_timestamp': lookupTimestamp,
+      if (contentHash != null) 'content_hash': contentHash,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VocabularysCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? word,
+    Value<String?>? stem,
+    Value<String?>? context,
+    Value<String?>? bookTitle,
+    Value<String?>? bookAuthor,
+    Value<String?>? bookAsin,
+    Value<DateTime?>? lookupTimestamp,
+    Value<String>? contentHash,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return VocabularysCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      word: word ?? this.word,
+      stem: stem ?? this.stem,
+      context: context ?? this.context,
+      bookTitle: bookTitle ?? this.bookTitle,
+      bookAuthor: bookAuthor ?? this.bookAuthor,
+      bookAsin: bookAsin ?? this.bookAsin,
+      lookupTimestamp: lookupTimestamp ?? this.lookupTimestamp,
+      contentHash: contentHash ?? this.contentHash,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (word.present) {
+      map['word'] = Variable<String>(word.value);
+    }
+    if (stem.present) {
+      map['stem'] = Variable<String>(stem.value);
+    }
+    if (context.present) {
+      map['context'] = Variable<String>(context.value);
+    }
+    if (bookTitle.present) {
+      map['book_title'] = Variable<String>(bookTitle.value);
+    }
+    if (bookAuthor.present) {
+      map['book_author'] = Variable<String>(bookAuthor.value);
+    }
+    if (bookAsin.present) {
+      map['book_asin'] = Variable<String>(bookAsin.value);
+    }
+    if (lookupTimestamp.present) {
+      map['lookup_timestamp'] = Variable<DateTime>(lookupTimestamp.value);
+    }
+    if (contentHash.present) {
+      map['content_hash'] = Variable<String>(contentHash.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VocabularysCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('word: $word, ')
+          ..write('stem: $stem, ')
+          ..write('context: $context, ')
+          ..write('bookTitle: $bookTitle, ')
+          ..write('bookAuthor: $bookAuthor, ')
+          ..write('bookAsin: $bookAsin, ')
+          ..write('lookupTimestamp: $lookupTimestamp, ')
+          ..write('contentHash: $contentHash, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3212,6 +4136,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $HighlightsTable highlights = $HighlightsTable(this);
   late final $ImportSessionsTable importSessions = $ImportSessionsTable(this);
   late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
+  late final $VocabularysTable vocabularys = $VocabularysTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3222,6 +4147,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     highlights,
     importSessions,
     syncOutbox,
+    vocabularys,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -4768,6 +5694,425 @@ typedef $$SyncOutboxTableProcessedTableManager =
       SyncOutboxData,
       PrefetchHooks Function()
     >;
+typedef $$VocabularysTableCreateCompanionBuilder =
+    VocabularysCompanion Function({
+      required String id,
+      required String userId,
+      required String word,
+      Value<String?> stem,
+      Value<String?> context,
+      Value<String?> bookTitle,
+      Value<String?> bookAuthor,
+      Value<String?> bookAsin,
+      Value<DateTime?> lookupTimestamp,
+      required String contentHash,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$VocabularysTableUpdateCompanionBuilder =
+    VocabularysCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> word,
+      Value<String?> stem,
+      Value<String?> context,
+      Value<String?> bookTitle,
+      Value<String?> bookAuthor,
+      Value<String?> bookAsin,
+      Value<DateTime?> lookupTimestamp,
+      Value<String> contentHash,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$VocabularysTableFilterComposer
+    extends Composer<_$AppDatabase, $VocabularysTable> {
+  $$VocabularysTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get word => $composableBuilder(
+    column: $table.word,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stem => $composableBuilder(
+    column: $table.stem,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get context => $composableBuilder(
+    column: $table.context,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookTitle => $composableBuilder(
+    column: $table.bookTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookAuthor => $composableBuilder(
+    column: $table.bookAuthor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookAsin => $composableBuilder(
+    column: $table.bookAsin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lookupTimestamp => $composableBuilder(
+    column: $table.lookupTimestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VocabularysTableOrderingComposer
+    extends Composer<_$AppDatabase, $VocabularysTable> {
+  $$VocabularysTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get word => $composableBuilder(
+    column: $table.word,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stem => $composableBuilder(
+    column: $table.stem,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get context => $composableBuilder(
+    column: $table.context,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookTitle => $composableBuilder(
+    column: $table.bookTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookAuthor => $composableBuilder(
+    column: $table.bookAuthor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookAsin => $composableBuilder(
+    column: $table.bookAsin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lookupTimestamp => $composableBuilder(
+    column: $table.lookupTimestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VocabularysTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VocabularysTable> {
+  $$VocabularysTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get word =>
+      $composableBuilder(column: $table.word, builder: (column) => column);
+
+  GeneratedColumn<String> get stem =>
+      $composableBuilder(column: $table.stem, builder: (column) => column);
+
+  GeneratedColumn<String> get context =>
+      $composableBuilder(column: $table.context, builder: (column) => column);
+
+  GeneratedColumn<String> get bookTitle =>
+      $composableBuilder(column: $table.bookTitle, builder: (column) => column);
+
+  GeneratedColumn<String> get bookAuthor => $composableBuilder(
+    column: $table.bookAuthor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bookAsin =>
+      $composableBuilder(column: $table.bookAsin, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lookupTimestamp => $composableBuilder(
+    column: $table.lookupTimestamp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$VocabularysTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VocabularysTable,
+          Vocabulary,
+          $$VocabularysTableFilterComposer,
+          $$VocabularysTableOrderingComposer,
+          $$VocabularysTableAnnotationComposer,
+          $$VocabularysTableCreateCompanionBuilder,
+          $$VocabularysTableUpdateCompanionBuilder,
+          (
+            Vocabulary,
+            BaseReferences<_$AppDatabase, $VocabularysTable, Vocabulary>,
+          ),
+          Vocabulary,
+          PrefetchHooks Function()
+        > {
+  $$VocabularysTableTableManager(_$AppDatabase db, $VocabularysTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VocabularysTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VocabularysTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VocabularysTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> word = const Value.absent(),
+                Value<String?> stem = const Value.absent(),
+                Value<String?> context = const Value.absent(),
+                Value<String?> bookTitle = const Value.absent(),
+                Value<String?> bookAuthor = const Value.absent(),
+                Value<String?> bookAsin = const Value.absent(),
+                Value<DateTime?> lookupTimestamp = const Value.absent(),
+                Value<String> contentHash = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VocabularysCompanion(
+                id: id,
+                userId: userId,
+                word: word,
+                stem: stem,
+                context: context,
+                bookTitle: bookTitle,
+                bookAuthor: bookAuthor,
+                bookAsin: bookAsin,
+                lookupTimestamp: lookupTimestamp,
+                contentHash: contentHash,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String word,
+                Value<String?> stem = const Value.absent(),
+                Value<String?> context = const Value.absent(),
+                Value<String?> bookTitle = const Value.absent(),
+                Value<String?> bookAuthor = const Value.absent(),
+                Value<String?> bookAsin = const Value.absent(),
+                Value<DateTime?> lookupTimestamp = const Value.absent(),
+                required String contentHash,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VocabularysCompanion.insert(
+                id: id,
+                userId: userId,
+                word: word,
+                stem: stem,
+                context: context,
+                bookTitle: bookTitle,
+                bookAuthor: bookAuthor,
+                bookAsin: bookAsin,
+                lookupTimestamp: lookupTimestamp,
+                contentHash: contentHash,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VocabularysTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VocabularysTable,
+      Vocabulary,
+      $$VocabularysTableFilterComposer,
+      $$VocabularysTableOrderingComposer,
+      $$VocabularysTableAnnotationComposer,
+      $$VocabularysTableCreateCompanionBuilder,
+      $$VocabularysTableUpdateCompanionBuilder,
+      (
+        Vocabulary,
+        BaseReferences<_$AppDatabase, $VocabularysTable, Vocabulary>,
+      ),
+      Vocabulary,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4782,4 +6127,6 @@ class $AppDatabaseManager {
       $$ImportSessionsTableTableManager(_db, _db.importSessions);
   $$SyncOutboxTableTableManager get syncOutbox =>
       $$SyncOutboxTableTableManager(_db, _db.syncOutbox);
+  $$VocabularysTableTableManager get vocabularys =>
+      $$VocabularysTableTableManager(_db, _db.vocabularys);
 }

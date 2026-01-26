@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/supabase_client.dart';
+import 'features/auth/screens/login_screen.dart';
 import 'features/books/books_screen.dart';
 import 'features/import/import_screen.dart';
 import 'features/search/search_screen.dart';
+import 'features/vocabulary/vocabulary_screen.dart';
+import 'providers/auth_provider.dart';
+import 'providers/database_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await SupabaseConfig.initialize();
   runApp(const ProviderScope(child: MasteryApp()));
 }
 
@@ -36,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const List<Widget> _screens = [
     _HomeTab(),
+    VocabularyScreen(),
     BooksScreen(),
     SearchScreen(),
   ];
@@ -58,6 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Home',
           ),
           NavigationDestination(
+            icon: Icon(Icons.abc_outlined),
+            selectedIcon: Icon(Icons.abc),
+            label: 'Vocabulary',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.library_books_outlined),
             selectedIcon: Icon(Icons.library_books),
             label: 'Books',
@@ -73,15 +88,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends ConsumerStatefulWidget {
   const _HomeTab();
 
   @override
+  ConsumerState<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<_HomeTab> {
+  bool _isSyncing = false;
+
+  @override
   Widget build(BuildContext context) {
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    final currentUser = ref.watch(currentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mastery'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          if (isAuthenticated)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                final authRepo = ref.read(authRepositoryProvider);
+                await authRepo.signOut();
+              },
+              tooltip: 'Sign out',
+            ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -102,21 +138,80 @@ class _HomeTab extends StatelessWidget {
               'Your vocabulary learning companion',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ImportScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.file_upload),
-              label: const Text('Import Highlights'),
+            const SizedBox(height: 16),
+            currentUser.when(
+              data: (user) => user != null
+                  ? Text(
+                      'Logged in as: ${user.email}',
+                      style: const TextStyle(color: Colors.green),
+                    )
+                  : const Text(
+                      'Not logged in',
+                      style: TextStyle(color: Colors.orange),
+                    ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
             ),
+            const SizedBox(height: 32),
+            if (!isAuthenticated)
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.login),
+                label: const Text('Sign In'),
+              )
+            else ...[
+              FilledButton.icon(
+                onPressed: _isSyncing ? null : _syncVocabulary,
+                icon: _isSyncing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.sync),
+                label: Text(_isSyncing ? 'Syncing...' : 'Sync Vocabulary'),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const ImportScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.file_upload),
+                label: const Text('Import Highlights'),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _syncVocabulary() async {
+    setState(() => _isSyncing = true);
+    try {
+      final syncService = ref.read(syncServiceProvider);
+      final result = await syncService.pullChanges(null);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.error != null
+                ? 'Sync error: ${result.error}'
+                : 'Synced: ${result.vocabulary} vocabulary, ${result.books} books'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
   }
 }

@@ -1,4 +1,4 @@
-//! Kindle detection and vocab.db sync
+//! Kindle detection and vocab.db access
 //!
 //! Supports all Kindle e-reader models:
 //! - Older models (pre-2024): Mount as USB mass storage, vocab.db at system/vocabulary/
@@ -11,6 +11,8 @@ mod mtp;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::process::Command;
+
+pub use mtp::read_vocab_db_via_mtp;
 
 const VOCAB_DB_FILE: &str = "vocab.db";
 const VOCAB_PATH: &str = "system/vocabulary";
@@ -89,23 +91,117 @@ fn is_kindle_mtp_device_present() -> bool {
     }
 }
 
+/// Connection status with more detail
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KindleStatus {
+    pub connected: bool,
+    pub connection_type: Option<String>,
+}
+
 /// Check if a Kindle device is connected
+#[allow(dead_code)]
 pub fn is_kindle_connected() -> bool {
+    get_kindle_status().connected
+}
+
+/// Get detailed Kindle connection status
+pub fn get_kindle_status() -> KindleStatus {
     // Check mounted volumes first (older Kindles or MacDroid)
     if find_vocab_on_mounted_volumes().is_some() {
-        return true;
+        return KindleStatus {
+            connected: true,
+            connection_type: Some("mounted".to_string()),
+        };
     }
     
     // Check for MTP device presence
     #[cfg(target_os = "macos")]
     {
-        is_kindle_mtp_device_present()
+        if is_kindle_mtp_device_present() {
+            return KindleStatus {
+                connected: true,
+                connection_type: Some("mtp".to_string()),
+            };
+        }
+    }
+    
+    KindleStatus {
+        connected: false,
+        connection_type: None,
+    }
+}
+
+/// Read vocab.db content directly from Kindle (returns bytes)
+pub fn read_vocab_db_content() -> Result<Vec<u8>, String> {
+    // Try mounted volumes first (no special privileges needed)
+    if let Some(source_path) = find_vocab_on_mounted_volumes() {
+        log(&format!("Reading from mounted volume: {}", source_path.display()));
+        return fs::read(&source_path)
+            .map_err(|e| format!("Failed to read vocab.db: {}", e));
+    }
+    
+    // For MTP devices, we need admin privileges on macOS
+    // Use temp file approach with privilege escalation
+    #[cfg(target_os = "macos")]
+    {
+        log("Kindle not on mounted volume, trying MTP with admin privileges...");
+        read_vocab_via_mtp_privileged()
     }
     
     #[cfg(not(target_os = "macos"))]
     {
-        false
+        Err("Kindle not found. Please connect your Kindle via USB.".to_string())
     }
+}
+
+/// Read vocab.db via MTP with admin privilege escalation (macOS)
+#[cfg(target_os = "macos")]
+fn read_vocab_via_mtp_privileged() -> Result<Vec<u8>, String> {
+    use std::env::temp_dir;
+    
+    let temp_path = temp_dir().join("mastery_vocab_temp.db");
+    log(&format!("Using temp path: {}", temp_path.display()));
+    
+    let current_exe = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current exe: {}", e))?;
+    
+    let script = format!(
+        r#"do shell script "{} --sync-vocab '{}'" with administrator privileges"#,
+        current_exe.display(),
+        temp_path.display()
+    );
+    
+    log("Requesting admin privileges for MTP access...");
+    
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg(&script)
+        .output()
+        .map_err(|e| format!("Failed to request admin privileges: {}", e))?;
+    
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    
+    if !output.status.success() {
+        if stderr.contains("User canceled") || stderr.contains("(-128)") {
+            return Err("Import cancelled by user".to_string());
+        }
+        return Err(format!("MTP access failed: {}", stderr.trim()));
+    }
+    
+    // Read the temp file
+    if !temp_path.exists() {
+        return Err("Failed to read from Kindle via MTP".to_string());
+    }
+    
+    let content = fs::read(&temp_path)
+        .map_err(|e| format!("Failed to read temp file: {}", e))?;
+    
+    // Clean up temp file
+    let _ = fs::remove_file(&temp_path);
+    
+    log(&format!("Read {} bytes from Kindle via MTP", content.len()));
+    Ok(content)
 }
 
 /// Sync vocab.db from Kindle to the specified output path.
@@ -147,6 +243,7 @@ fn sync_vocab_via_mtp(output_path: &Path) -> Result<u64, String> {
 
 /// Sync vocab.db with admin privileges using osascript
 /// This prompts the user for their password once
+#[allow(dead_code)]
 pub fn sync_vocab_with_privileges(output_path: &Path) -> Result<String, String> {
     log("sync_vocab_with_privileges called");
     log(&format!("Output path: {}", output_path.display()));

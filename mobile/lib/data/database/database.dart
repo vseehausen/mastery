@@ -9,14 +9,14 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Languages, Books, Highlights, ImportSessions, SyncOutbox])
+@DriftDatabase(tables: [Languages, Books, Highlights, ImportSessions, SyncOutbox, Vocabularys])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -32,7 +32,15 @@ class AppDatabase extends _$AppDatabase {
         ));
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Handle future migrations here
+        // Migration from version 1 to 2: Add vocabulary table
+        if (from < 2) {
+          await m.createTable(vocabularys);
+        }
+        // Migration from version 2 to 3: Recreate vocabulary table with new schema
+        if (from < 3) {
+          await m.deleteTable('vocabularys');
+          await m.createTable(vocabularys);
+        }
       },
     );
   }

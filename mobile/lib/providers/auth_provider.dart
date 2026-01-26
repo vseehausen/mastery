@@ -20,16 +20,16 @@ final currentUserProvider = StreamProvider<User?>((ref) {
   return authRepo.authStateChanges.map((state) => state.session?.user);
 });
 
-/// Provider for current user ID
+/// Provider for current user ID (reactive - updates on auth state change)
 final currentUserIdProvider = Provider<String?>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.userId;
+  final userAsync = ref.watch(currentUserProvider);
+  return userAsync.valueOrNull?.id;
 });
 
-/// Provider to check if user is authenticated
+/// Provider to check if user is authenticated (reactive - updates on auth state change)
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.isAuthenticated;
+  final userAsync = ref.watch(currentUserProvider);
+  return userAsync.valueOrNull != null;
 });
 
 /// Provider for auth state changes

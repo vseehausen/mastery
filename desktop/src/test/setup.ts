@@ -6,9 +6,11 @@ import '@testing-library/jest-dom';
 beforeAll(() => {
   Object.defineProperty(window, 'crypto', {
     value: {
-      // @ts-ignore
-      getRandomValues: (buffer: ArrayBufferView) => {
-        return randomFillSync(buffer);
+      getRandomValues: <T extends ArrayBufferView | null>(buffer: T): T => {
+        if (buffer) {
+          randomFillSync(buffer as NodeJS.ArrayBufferView);
+        }
+        return buffer;
       },
     },
   });

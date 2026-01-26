@@ -126,11 +126,23 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     return errorResponse('Failed to fetch highlights', 500);
   }
 
+  // Fetch vocabulary modified since lastSyncedAt
+  const { data: vocabulary, error: vocabularyError } = await client
+    .from('vocabulary')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (vocabularyError) {
+    return errorResponse('Failed to fetch vocabulary', 500);
+  }
+
   const syncedAt = new Date().toISOString();
 
   return jsonResponse({
     books: books || [],
     highlights: highlights || [],
+    vocabulary: vocabulary || [],
     syncedAt,
   });
 }

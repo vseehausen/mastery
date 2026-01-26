@@ -50,7 +50,7 @@ class SyncService {
       }).toList();
 
       final response = await SupabaseConfig.client.functions.invoke(
-        'sync',
+        'sync/push',
         body: {'changes': changes},
         method: HttpMethod.post,
       );
@@ -86,18 +86,18 @@ class SyncService {
   /// Pull remote changes from the server
   Future<SyncPullResult> pullChanges(DateTime? lastSyncedAt) async {
     if (_isSyncing) {
-      return SyncPullResult(books: 0, highlights: 0, error: 'Sync already in progress');
+      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: 'Sync already in progress');
     }
 
     if (!SupabaseConfig.isAuthenticated) {
-      return SyncPullResult(books: 0, highlights: 0, error: 'Not authenticated');
+      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: 'Not authenticated');
     }
 
     _isSyncing = true;
 
     try {
       final response = await SupabaseConfig.client.functions.invoke(
-        'sync',
+        'sync/pull',
         body: {
           'lastSyncedAt': (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0)).toIso8601String(),
         },
@@ -108,6 +108,7 @@ class SyncService {
         return SyncPullResult(
           books: 0,
           highlights: 0,
+          vocabulary: 0,
           error: 'Server returned ${response.status}',
         );
       }
@@ -115,16 +116,38 @@ class SyncService {
       final result = response.data as Map<String, dynamic>;
       final books = result['books'] as List<dynamic>? ?? [];
       final highlights = result['highlights'] as List<dynamic>? ?? [];
+      final vocabulary = result['vocabulary'] as List<dynamic>? ?? [];
 
-      // TODO: Merge remote changes into local database
-      // This requires conflict resolution logic
+      // Save vocabulary to local database
+      for (final v in vocabulary) {
+        final entry = VocabularysCompanion(
+          id: Value(v['id'] as String),
+          userId: Value(v['user_id'] as String),
+          word: Value(v['word'] as String),
+          stem: Value(v['stem'] as String?),
+          context: Value(v['context'] as String?),
+          bookTitle: Value(v['book_title'] as String?),
+          bookAuthor: Value(v['book_author'] as String?),
+          bookAsin: Value(v['book_asin'] as String?),
+          contentHash: Value(v['content_hash'] as String),
+          lookupTimestamp: Value(v['lookup_timestamp'] != null 
+              ? DateTime.parse(v['lookup_timestamp'] as String) 
+              : null),
+          createdAt: Value(DateTime.parse(v['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(v['updated_at'] as String)),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+        );
+        await _db.into(_db.vocabularys).insertOnConflictUpdate(entry);
+      }
 
       return SyncPullResult(
         books: books.length,
         highlights: highlights.length,
+        vocabulary: vocabulary.length,
       );
     } catch (e) {
-      return SyncPullResult(books: 0, highlights: 0, error: e.toString());
+      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: e.toString());
     } finally {
       _isSyncing = false;
     }
@@ -157,6 +180,12 @@ class SyncService {
           lastSyncedAt: Value(syncedAt),
           isPendingSync: const Value(false),
         ));
+      } else if (item.entityTable == 'vocabulary') {
+        await (_db.update(_db.vocabularys)..where((v) => v.id.equals(item.recordId)))
+            .write(VocabularysCompanion(
+          lastSyncedAt: Value(syncedAt),
+          isPendingSync: const Value(false),
+        ));
       }
     }
   }
@@ -177,9 +206,10 @@ class SyncPushResult {
 class SyncPullResult {
   final int books;
   final int highlights;
+  final int vocabulary;
   final String? error;
 
-  SyncPullResult({required this.books, required this.highlights, this.error});
+  SyncPullResult({required this.books, required this.highlights, required this.vocabulary, this.error});
 
   bool get hasError => error != null;
 }

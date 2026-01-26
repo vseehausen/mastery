@@ -3,6 +3,7 @@ import '../data/database/database.dart';
 import '../data/repositories/book_repository.dart';
 import '../data/repositories/highlight_repository.dart';
 import '../data/repositories/sync_outbox_repository.dart';
+import '../data/repositories/vocabulary_repository.dart';
 import '../data/services/sync_service.dart';
 import '../features/import/import_service.dart';
 import '../features/search/services/search_service.dart';
@@ -30,6 +31,12 @@ final highlightRepositoryProvider = Provider<HighlightRepository>((ref) {
 final syncOutboxRepositoryProvider = Provider<SyncOutboxRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return SyncOutboxRepository(db);
+});
+
+/// Provider for VocabularyRepository
+final vocabularyRepositoryProvider = Provider<VocabularyRepository>((ref) {
+  final db = ref.watch(databaseProvider);
+  return VocabularyRepository(db);
 });
 
 /// Provider for SyncService

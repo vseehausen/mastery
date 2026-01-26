@@ -1,0 +1,357 @@
+openapi: 3.0.3
+info:
+  title: Mastery Vocabulary API
+  description: API for vocabulary import and display feature
+  version: 1.0.0
+
+servers:
+  - url: https://{project}.supabase.co/functions/v1
+    variables:
+      project:
+        default: your-project-ref
+
+security:
+  - bearerAuth: []
+
+paths:
+  /parse-vocab:
+    post:
+      summary: Parse vocab.db file
+      description: |
+        Accepts a base64-encoded vocab.db SQLite file from Kindle,
+        parses vocabulary entries, and returns them as JSON.
+        Does NOT store data - caller is responsible for storage.
+      operationId: parseVocabDb
+      tags:
+        - Vocabulary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: byte
+                  description: Base64-encoded vocab.db file content
+                  maxLength: 6000000
+            example:
+              file: "U1FMaXRlIGZvcm1hdCAzAA..."
+      responses:
+        '200':
+          description: Successfully parsed vocabulary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ParsedVocabularyEntry'
+                  totalParsed:
+                    type: integer
+                    description: Total entries parsed from file
+                  books:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ParsedBook'
+              example:
+                totalParsed: 150
+                entries:
+                  - word: "ephemeral"
+                    stem: "ephemeral"
+                    context: "The ephemeral nature of youth..."
+                    lookupTimestamp: "2026-01-15T14:30:00Z"
+                    bookTitle: "The Great Gatsby"
+                    bookAuthor: "F. Scott Fitzgerald"
+                    bookAsin: "B004FJNF7O"
+                    contentHash: "a1b2c3d4..."
+                books:
+                  - title: "The Great Gatsby"
+                    author: "F. Scott Fitzgerald"
+                    asin: "B004FJNF7O"
+        '400':
+          description: Invalid file format or corrupt database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - missing or invalid auth token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: File too large (max 6MB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sync/push:
+    post:
+      summary: Push local changes to server
+      description: |
+        Existing endpoint updated to support vocabulary table.
+        Accepts vocabulary inserts/updates/deletes.
+      operationId: syncPush
+      tags:
+        - Sync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - changes
+              properties:
+                changes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SyncChange'
+      responses:
+        '200':
+          description: Changes applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+        '409':
+          description: Conflicts detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+
+  /sync/pull:
+    post:
+      summary: Pull changes from server
+      description: |
+        Existing endpoint updated to include vocabulary in response.
+        Returns all vocabulary modified since lastSyncedAt.
+      operationId: syncPull
+      tags:
+        - Sync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lastSyncedAt:
+                  type: string
+                  format: date-time
+                  description: Timestamp of last successful sync
+      responses:
+        '200':
+          description: Changes since lastSyncedAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ParsedVocabularyEntry:
+      type: object
+      required:
+        - word
+        - contentHash
+      properties:
+        word:
+          type: string
+          maxLength: 100
+          description: The looked-up word
+        stem:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Word stem/root form
+        context:
+          type: string
+          nullable: true
+          description: Context sentence from book
+        lookupTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: When word was looked up
+        bookTitle:
+          type: string
+          nullable: true
+          description: Source book title
+        bookAuthor:
+          type: string
+          nullable: true
+          description: Source book author
+        bookAsin:
+          type: string
+          nullable: true
+          description: Amazon ASIN if available
+        contentHash:
+          type: string
+          maxLength: 64
+          description: SHA-256 hash for deduplication
+
+    ParsedBook:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Book title
+        author:
+          type: string
+          nullable: true
+          description: Book author
+        asin:
+          type: string
+          nullable: true
+          description: Amazon ASIN
+
+    VocabularyEntry:
+      type: object
+      required:
+        - id
+        - user_id
+        - word
+        - content_hash
+        - created_at
+        - updated_at
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        book_id:
+          type: string
+          format: uuid
+          nullable: true
+        word:
+          type: string
+          maxLength: 100
+        stem:
+          type: string
+          maxLength: 100
+          nullable: true
+        context:
+          type: string
+          nullable: true
+        lookup_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        content_hash:
+          type: string
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+
+    SyncChange:
+      type: object
+      required:
+        - table
+        - operation
+        - id
+      properties:
+        table:
+          type: string
+          enum: [books, highlights, vocabulary]
+        operation:
+          type: string
+          enum: [insert, update, delete]
+        id:
+          type: string
+          format: uuid
+        data:
+          type: object
+          description: Entity data for insert/update
+        version:
+          type: integer
+          description: Current version for conflict detection
+
+    SyncPushResponse:
+      type: object
+      properties:
+        applied:
+          type: integer
+          description: Number of changes applied
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              table:
+                type: string
+              serverVersion:
+                type: integer
+              serverUpdatedAt:
+                type: string
+                format: date-time
+        syncedAt:
+          type: string
+          format: date-time
+
+    SyncPullResponse:
+      type: object
+      properties:
+        books:
+          type: array
+          items:
+            type: object
+        highlights:
+          type: array
+          items:
+            type: object
+        vocabulary:
+          type: array
+          items:
+            $ref: '#/components/schemas/VocabularyEntry'
+        syncedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code for programmatic handling

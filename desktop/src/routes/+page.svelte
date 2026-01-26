@@ -1,343 +1,283 @@
 <script lang="ts">
-  import { getKindleStatus, syncKindleVocab, getVocabDbPath } from '$lib/api/kindle';
+  import { onMount, onDestroy } from 'svelte';
+  import { checkKindleStatus, type KindleStatus } from '$lib/api/kindle';
+  import { importFromKindle, type ImportResult } from '$lib/api/vocab';
+  import ImportHistory from '$lib/components/ImportHistory.svelte';
 
-  let kindleConnected = $state<boolean | null>(null);
-  let checking = $state(false);
-  let syncing = $state(false);
-  let vocabPath = $state<string | null>(null);
-  let syncStatus = $state<string | null>(null);
+  let status = $state<KindleStatus>({ connected: false, connectionType: null });
+  let importing = $state(false);
+  let lastResult = $state<ImportResult | null>(null);
   let error = $state<string | null>(null);
-  let logs = $state<string[]>([]);
+  let historyComponent: ImportHistory;
+  let pollInterval: ReturnType<typeof setInterval>;
 
-  function addLog(msg: string) {
-    const timestamp = new Date().toLocaleTimeString();
-    logs = [...logs, `[${timestamp}] ${msg}`];
-    console.log(msg);
-  }
-
-  function clearLogs() {
-    logs = [];
-  }
-
-  async function checkKindleStatus() {
-    checking = true;
-    error = null;
-    addLog('Checking Kindle status...');
+  async function pollStatus() {
     try {
-      kindleConnected = await getKindleStatus();
-      addLog(`Kindle connected: ${kindleConnected}`);
-      // Also check if we have a synced vocab.db
-      try {
-        vocabPath = await getVocabDbPath();
-        addLog(`Existing vocab.db found at: ${vocabPath}`);
-      } catch {
-        vocabPath = null;
-        addLog('No existing vocab.db found');
-      }
-    } catch (err) {
-      console.error('Failed to check Kindle status:', err);
-      kindleConnected = false;
-      const errMsg = err instanceof Error ? err.message : String(err);
-      error = errMsg;
-      addLog(`Error: ${errMsg}`);
-    } finally {
-      checking = false;
+      status = await checkKindleStatus();
+    } catch (e) {
+      console.error('Failed to check Kindle status:', e);
     }
   }
 
-  async function handleSyncVocab() {
-    syncing = true;
+  async function handleImport() {
+    importing = true;
     error = null;
-    syncStatus = null;
-    clearLogs();
-    addLog('Starting vocab.db sync...');
-    addLog('This may prompt for your password (required for MTP access)');
+    lastResult = null;
     
     try {
-      const result = await syncKindleVocab();
-      syncStatus = result;
-      addLog(`Success: ${result}`);
-      // Refresh vocab path
-      try {
-        vocabPath = await getVocabDbPath();
-        addLog(`Vocab.db saved to: ${vocabPath}`);
-      } catch {
-        vocabPath = null;
-      }
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      error = errMsg;
-      addLog(`Error: ${errMsg}`);
+      lastResult = await importFromKindle();
+      historyComponent?.refresh();
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
     } finally {
-      syncing = false;
-      addLog('Sync operation complete');
+      importing = false;
     }
   }
 
-  // Check status on mount
-  checkKindleStatus();
+  onMount(() => {
+    pollStatus();
+    pollInterval = setInterval(pollStatus, 3000);
+  });
+
+  onDestroy(() => {
+    clearInterval(pollInterval);
+  });
 </script>
 
 <main class="container">
-  <h1>Mastery Desktop</h1>
+  <h1>Mastery</h1>
+  <p class="subtitle">Import vocabulary from your Kindle</p>
 
-  <div class="kindle-section">
-    <h2>Kindle Vocabulary Sync</h2>
-    
-    <button onclick={checkKindleStatus} disabled={checking}>
-      {checking ? 'Checking...' : 'Check Kindle Status'}
-    </button>
-    
-    {#if kindleConnected !== null}
-      <p class="status-message">
-        Kindle Connected: <strong class={kindleConnected ? 'connected' : 'disconnected'}>
-          {kindleConnected ? 'Yes' : 'No'}
-        </strong>
-      </p>
-    {/if}
-
-    {#if kindleConnected}
-      <div class="sync-section">
-        <button onclick={handleSyncVocab} disabled={syncing} class="sync-button">
-          {syncing ? 'Syncing...' : 'Sync Vocabulary Database'}
-        </button>
-        <p class="hint">
-          Syncs vocab.db from your Kindle. You may be prompted for your password.
-        </p>
+  <div class="status-card">
+    <div class="connection-row">
+      <div class="status-indicator" class:connected={status.connected}></div>
+      <div class="status-text">
+        {#if status.connected}
+          <span class="connected-text">Kindle Connected</span>
+          <span class="connection-type">via {status.connectionType === 'mounted' ? 'USB' : 'MTP'}</span>
+        {:else}
+          <span class="disconnected-text">Kindle Not Connected</span>
+          <span class="hint">Connect your Kindle via USB</span>
+        {/if}
       </div>
+    </div>
+
+    {#if status.connected}
+      <button 
+        class="import-button" 
+        onclick={handleImport} 
+        disabled={importing}
+      >
+        {#if importing}
+          <span class="spinner"></span>
+          Importing...
+        {:else}
+          Import Vocabulary
+        {/if}
+      </button>
     {/if}
 
-    {#if syncStatus}
-      <p class="success-message">{syncStatus}</p>
+    {#if lastResult}
+      <div class="result-card success">
+        <div class="result-header">Import Complete</div>
+        <div class="result-stats">
+          <div class="stat">
+            <span class="stat-value">{lastResult.imported}</span>
+            <span class="stat-label">imported</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{lastResult.skipped}</span>
+            <span class="stat-label">skipped</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{lastResult.books}</span>
+            <span class="stat-label">books</span>
+          </div>
+        </div>
+        {#if lastResult.error}
+          <p class="result-warning">{lastResult.error}</p>
+        {/if}
+      </div>
     {/if}
 
     {#if error}
-      <p class="error-message">{error}</p>
-    {/if}
-
-    {#if vocabPath}
-      <div class="vocab-info">
-        <h3>Synced Vocabulary Database</h3>
-        <p class="file-path">{vocabPath}</p>
-      </div>
-    {/if}
-
-    {#if !kindleConnected && kindleConnected !== null}
-      <div class="instructions">
-        <h3>How to connect your Kindle</h3>
-        <ol>
-          <li>Connect your Kindle via USB cable</li>
-          <li>On older Kindles: Enable USB drive mode</li>
-          <li>On newer Kindles (2024+): The app will access it directly via MTP</li>
-          <li>Click "Check Kindle Status" to detect your device</li>
-        </ol>
-      </div>
-    {/if}
-
-    {#if logs.length > 0}
-      <div class="log-section">
-        <div class="log-header">
-          <h3>Activity Log</h3>
-          <button onclick={clearLogs} class="clear-btn">Clear</button>
-        </div>
-        <div class="log-content">
-          {#each logs as log}
-            <div class="log-line">{log}</div>
-          {/each}
-        </div>
+      <div class="result-card error">
+        <div class="result-header">Import Failed</div>
+        <p class="error-text">{error}</p>
       </div>
     {/if}
   </div>
+
+  <ImportHistory bind:this={historyComponent} />
 </main>
 
 <style>
   .container {
-    margin: 0;
     padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
+    max-width: 500px;
+    margin: 0 auto;
   }
 
   h1 {
-    margin-bottom: 2rem;
-  }
-
-  .kindle-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 2rem;
-    background: #f5f5f5;
-    border-radius: 8px;
-    min-width: 400px;
-    max-width: 600px;
-  }
-
-  button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #646cff;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.25s;
-  }
-
-  button:hover:not(:disabled) {
-    background-color: #535bf2;
-  }
-
-  button:disabled {
-    background-color: #999;
-    cursor: not-allowed;
-  }
-
-  .sync-button {
-    background-color: #22c55e;
-  }
-
-  .sync-button:hover:not(:disabled) {
-    background-color: #16a34a;
-  }
-
-  .status-message {
-    margin-top: 1rem;
-    font-size: 1.1em;
-  }
-
-  .connected {
-    color: #22c55e;
-  }
-
-  .disconnected {
-    color: #ef4444;
-  }
-
-  .sync-section {
-    margin-top: 1rem;
+    margin: 0;
+    font-size: 2rem;
     text-align: center;
   }
 
-  .hint {
-    font-size: 0.85em;
+  .subtitle {
+    text-align: center;
     color: #666;
-    margin-top: 0.5rem;
+    margin: 0.5rem 0 2rem;
   }
 
-  .success-message {
-    color: #22c55e;
-    background: #f0fdf4;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    margin-top: 1rem;
-  }
-
-  .error-message {
-    color: #dc2626;
-    background: #fef2f2;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    margin-top: 1rem;
-  }
-
-  .vocab-info {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: white;
-    border-radius: 4px;
-    width: 100%;
-  }
-
-  .vocab-info h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1em;
-  }
-
-  .file-path {
-    font-family: monospace;
-    font-size: 0.85em;
-    color: #666;
-    word-break: break-all;
-    margin: 0;
-  }
-
-  .instructions {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: #fef3c7;
-    border-radius: 4px;
-    width: 100%;
-  }
-
-  .instructions h3 {
-    margin: 0 0 0.75rem 0;
-    font-size: 1em;
-  }
-
-  .instructions ol {
-    margin: 0;
-    padding-left: 1.5rem;
-  }
-
-  .instructions li {
-    margin-bottom: 0.5rem;
-    font-size: 0.9em;
-  }
-
-  .log-section {
-    margin-top: 1.5rem;
-    width: 100%;
-    background: #1a1a2e;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .log-header {
+  .status-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .connection-row {
+    display: flex;
     align-items: center;
-    padding: 0.5rem 1rem;
-    background: #16213e;
+    gap: 1rem;
   }
 
-  .log-header h3 {
-    margin: 0;
-    font-size: 0.9em;
-    color: #a0a0a0;
+  .status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #dc2626;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+    transition: all 0.3s ease;
   }
 
-  .clear-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75em;
-    background: #333;
+  .status-indicator.connected {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  }
+
+  .status-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .connected-text {
+    font-weight: 600;
+    color: #22c55e;
+  }
+
+  .disconnected-text {
+    font-weight: 600;
+    color: #666;
+  }
+
+  .connection-type, .hint {
+    font-size: 0.85rem;
     color: #888;
   }
 
-  .clear-btn:hover:not(:disabled) {
-    background: #444;
+  .import-button {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
 
-  .log-content {
-    padding: 0.75rem 1rem;
-    max-height: 200px;
-    overflow-y: auto;
-    font-family: monospace;
-    font-size: 0.8em;
+  .import-button:hover:not(:disabled) {
+    background: #7c3aed;
   }
 
-  .log-line {
-    color: #4ade80;
-    padding: 0.15rem 0;
-    word-break: break-all;
+  .import-button:disabled {
+    background: #a78bfa;
+    cursor: not-allowed;
   }
 
-  .log-line:nth-child(even) {
-    color: #86efac;
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .result-card {
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .result-card.success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+  }
+
+  .result-card.error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+  }
+
+  .result-header {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .result-card.success .result-header {
+    color: #166534;
+  }
+
+  .result-card.error .result-header {
+    color: #991b1b;
+  }
+
+  .result-stats {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #166534;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  .result-warning {
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: #b45309;
+  }
+
+  .error-text {
+    margin: 0;
+    color: #991b1b;
+    font-size: 0.9rem;
   }
 </style>

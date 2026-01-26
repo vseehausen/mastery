@@ -1,6 +1,6 @@
 // Supabase client utilities for edge functions
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 export function createSupabaseClient(req: Request) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

@@ -1,124 +1,42 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { mockIPC, clearMocks } from '@tauri-apps/api/mocks';
-import {
-  getKindleStatus,
-  getClippingsInfo,
-  readClippings,
-  countClippings,
-  formatFileSize,
-} from './kindle';
+import { checkKindleStatus, type KindleStatus } from './kindle';
 
 beforeEach(() => {
   clearMocks();
 });
 
-describe('getKindleStatus', () => {
-  it('returns true when Kindle is connected', async () => {
+describe('checkKindleStatus', () => {
+  it('returns connected status when Kindle is connected via USB', async () => {
+    const mockStatus: KindleStatus = { connected: true, connectionType: 'mounted' };
     mockIPC((cmd) => {
-      if (cmd === 'get_kindle_status') return true;
+      if (cmd === 'check_kindle_status') return mockStatus;
     });
 
-    const result = await getKindleStatus();
-    expect(result).toBe(true);
+    const result = await checkKindleStatus();
+    expect(result.connected).toBe(true);
+    expect(result.connectionType).toBe('mounted');
   });
 
-  it('returns false when Kindle is not connected', async () => {
+  it('returns connected status when Kindle is connected via MTP', async () => {
+    const mockStatus: KindleStatus = { connected: true, connectionType: 'mtp' };
     mockIPC((cmd) => {
-      if (cmd === 'get_kindle_status') return false;
+      if (cmd === 'check_kindle_status') return mockStatus;
     });
 
-    const result = await getKindleStatus();
-    expect(result).toBe(false);
+    const result = await checkKindleStatus();
+    expect(result.connected).toBe(true);
+    expect(result.connectionType).toBe('mtp');
   });
-});
 
-describe('getClippingsInfo', () => {
-  it('returns file path and size when file exists', async () => {
-    const mockPath = '/Volumes/Kindle/documents/My Clippings.txt';
-    const mockSize = 1024;
-
+  it('returns disconnected status when Kindle is not connected', async () => {
+    const mockStatus: KindleStatus = { connected: false, connectionType: null };
     mockIPC((cmd) => {
-      if (cmd === 'get_clippings_info') {
-        return [mockPath, mockSize];
-      }
+      if (cmd === 'check_kindle_status') return mockStatus;
     });
 
-    const result = await getClippingsInfo();
-    expect(result).toEqual([mockPath, mockSize]);
-  });
-
-  it('handles errors gracefully', async () => {
-    mockIPC((cmd) => {
-      if (cmd === 'get_clippings_info') {
-        throw new Error('File not found');
-      }
-    });
-
-    await expect(getClippingsInfo()).rejects.toThrow();
-  });
-});
-
-describe('readClippings', () => {
-  it('returns file content when file exists', async () => {
-    const mockContent = 'Sample clippings content';
-
-    mockIPC((cmd) => {
-      if (cmd === 'read_clippings') {
-        return mockContent;
-      }
-    });
-
-    const result = await readClippings();
-    expect(result).toBe(mockContent);
-  });
-
-  it('handles errors gracefully', async () => {
-    mockIPC((cmd) => {
-      if (cmd === 'read_clippings') {
-        throw new Error('Failed to read file');
-      }
-    });
-
-    await expect(readClippings()).rejects.toThrow();
-  });
-});
-
-describe('countClippings', () => {
-  it('returns correct count for content with separators', async () => {
-    const mockContent = 'Highlight 1\n==========\nHighlight 2\n==========\nHighlight 3';
-
-    mockIPC((cmd, args) => {
-      if (cmd === 'count_clippings') {
-        return mockContent.split('==========').length - 1;
-      }
-    });
-
-    const result = await countClippings(mockContent);
-    expect(result).toBe(2);
-  });
-
-  it('returns 0 for empty content', async () => {
-    mockIPC((cmd, args) => {
-      if (cmd === 'count_clippings') {
-        return 0;
-      }
-    });
-
-    const result = await countClippings('');
-    expect(result).toBe(0);
-  });
-});
-
-describe('formatFileSize', () => {
-  it('formats bytes correctly', () => {
-    expect(formatFileSize(0)).toBe('0 B');
-    expect(formatFileSize(1024)).toBe('1 KB');
-    expect(formatFileSize(1048576)).toBe('1 MB');
-    expect(formatFileSize(1073741824)).toBe('1 GB');
-  });
-
-  it('handles decimal sizes', () => {
-    expect(formatFileSize(1536)).toBe('1.5 KB');
-    expect(formatFileSize(2621440)).toBe('2.5 MB');
+    const result = await checkKindleStatus();
+    expect(result.connected).toBe(false);
+    expect(result.connectionType).toBeNull();
   });
 });
