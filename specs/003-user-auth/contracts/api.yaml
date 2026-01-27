@@ -1,0 +1,319 @@
+openapi: 3.0.0
+info:
+  title: Mastery Authentication API
+  description: |
+    Authentication API for Mastery app. Most authentication is handled by Supabase Auth.
+    This document describes Tauri commands for desktop and Supabase Auth integration patterns.
+  version: 1.0.0
+
+servers:
+  - url: https://{project}.supabase.co
+    description: Supabase Auth endpoints
+    variables:
+      project:
+        default: your-project-ref
+
+paths:
+  /auth/v1/signup:
+    post:
+      summary: Sign up with email and password
+      description: Supabase Auth endpoint for email/password registration
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid email or password
+        '422':
+          description: User already exists
+
+  /auth/v1/token:
+    post:
+      summary: Sign in with email and password
+      description: Supabase Auth endpoint for email/password authentication
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+
+  /auth/v1/authorize:
+    get:
+      summary: Initiate OAuth flow
+      description: Supabase Auth endpoint to start OAuth authentication
+      tags:
+        - Authentication
+      parameters:
+        - name: provider
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [apple, google, github, microsoft]
+        - name: redirect_to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to OAuth provider
+        '400':
+          description: Invalid provider or redirect URL
+
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: Refresh token for obtaining new access tokens
+        expires_in:
+          type: integer
+          description: Access token expiration time in seconds
+        token_type:
+          type: string
+          default: bearer
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          nullable: true
+        email_confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        last_sign_in_at:
+          type: string
+          format: date-time
+          nullable: true
+        app_metadata:
+          type: object
+        user_metadata:
+          type: object
+
+    Session:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_at:
+          type: integer
+        expires_in:
+          type: integer
+        token_type:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+---
+# Tauri Commands (Desktop)
+
+## Commands
+
+### `auth_sign_in_with_email`
+Sign in with email and password.
+
+**Request**:
+```typescript
+{
+  email: string;
+  password: string;
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  session?: Session;
+  error?: string;
+}
+```
+
+### `auth_sign_up_with_email`
+Create account with email and password.
+
+**Request**:
+```typescript
+{
+  email: string;
+  password: string;
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  session?: Session;
+  error?: string;
+}
+```
+
+### `auth_sign_in_with_oauth`
+Initiate OAuth flow (opens browser).
+
+**Request**:
+```typescript
+{
+  provider: 'apple' | 'google' | 'github' | 'microsoft';
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  auth_url: string;  // URL to open in browser
+  error?: string;
+}
+```
+
+### `auth_sign_out`
+Sign out current user.
+
+**Request**: None
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  error?: string;
+}
+```
+
+### `auth_get_session`
+Get current session (if authenticated).
+
+**Request**: None
+
+**Response**:
+```typescript
+{
+  session: Session | null;
+}
+```
+
+### `auth_get_current_user`
+Get current authenticated user.
+
+**Request**: None
+
+**Response**:
+```typescript
+{
+  user: User | null;
+}
+```
+
+### `auth_on_oauth_callback`
+Handle OAuth redirect callback (called via deep link).
+
+**Request**:
+```typescript
+{
+  url: string;  // Full callback URL with code/token
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  session?: Session;
+  error?: string;
+}
+```
+
+---
+# Flutter Methods (Mobile)
+
+## AuthRepository Interface
+
+### `signInWithEmail(email: String, password: String): Future<AuthResponse>`
+Sign in with email and password.
+
+### `signUpWithEmail(email: String, password: String): Future<AuthResponse>`
+Create account with email and password.
+
+### `signInWithApple(): Future<AuthResponse>`
+Sign in with Apple Sign In (native).
+
+### `signInWithGoogle(): Future<AuthResponse>`
+Sign in with Google Sign In (native).
+
+### `signOut(): Future<void>`
+Sign out current user.
+
+### `get currentUser: User?`
+Get current authenticated user (reactive).
+
+### `get authStateChanges: Stream<AuthState>`
+Stream of authentication state changes.
+
+### `get isAuthenticated: bool`
+Check if user is authenticated.
+
+### `get userId: String?`
+Get current user's ID.

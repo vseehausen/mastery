@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
@@ -181,6 +182,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // OAuth divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Or continue with',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // OAuth buttons
+                Row(
+                  children: [
+                    // Apple Sign In (iOS/macOS only)
+                    if (Platform.isIOS || Platform.isMacOS)
+                      Expanded(
+                        child: _OAuthButton(
+                          onPressed: _isLoading ? null : _signInWithApple,
+                          icon: Icons.apple,
+                          label: 'Apple',
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    if (Platform.isIOS || Platform.isMacOS)
+                      const SizedBox(width: 12),
+                    // Google Sign In
+                    Expanded(
+                      child: _OAuthButton(
+                        onPressed: _isLoading ? null : _signInWithGoogle,
+                        icon: Icons.g_mobiledata,
+                        label: 'Google',
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        borderColor: Colors.grey.shade300,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
                 // Sign up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -191,8 +242,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
                             builder: (context) => const SignupScreen(),
                           ),
                         );
@@ -225,9 +276,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // Navigate back on success
+      // Navigate back on success - pop until we reach the first route
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       setState(() {
@@ -243,7 +294,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _showForgotPassword() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => _ForgotPasswordDialog(
         onSubmit: (email) async {
@@ -252,6 +303,70 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signInWithApple();
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = _getOAuthErrorMessage(e, 'Apple');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signInWithGoogle();
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = _getOAuthErrorMessage(e, 'Google');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _getOAuthErrorMessage(dynamic error, String provider) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('cancel')) {
+      return '$provider Sign In was cancelled';
+    }
+    if (message.contains('network')) {
+      return 'Network error. Please check your connection.';
+    }
+    if (message.contains('unsupported')) {
+      return '$provider Sign In is not available on this device';
+    }
+    return '$provider Sign In failed. Please try again.';
   }
 
   String _getErrorMessage(dynamic error) {
@@ -266,6 +381,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return 'Network error. Please check your connection.';
     }
     return 'An error occurred. Please try again.';
+  }
+}
+
+/// OAuth sign-in button widget
+class _OAuthButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Color? borderColor;
+
+  const _OAuthButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        side: BorderSide(
+          color: borderColor ?? backgroundColor,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 24),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

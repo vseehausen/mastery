@@ -269,7 +269,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               const SizedBox(height: 32),
               FilledButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -295,13 +295,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.signUpWithEmail(
+      final response = await authRepo.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      setState(() {
-        _signupComplete = true;
-      });
+      
+      // Check if user was automatically signed in (session exists)
+      if (response.session != null && response.user != null) {
+        // User was auto-signed in, navigate back to home
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        // Email verification required, show success screen
+        setState(() {
+          _signupComplete = true;
+        });
+      }
     } catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e);

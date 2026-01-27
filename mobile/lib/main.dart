@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/supabase_client.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/auth_guard.dart';
 import 'features/books/books_screen.dart';
 import 'features/import/import_screen.dart';
 import 'features/search/search_screen.dart';
@@ -28,7 +29,7 @@ class MasteryApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const AuthGuard(child: HomeScreen()),
     );
   }
 }

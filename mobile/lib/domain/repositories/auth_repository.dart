@@ -26,6 +26,12 @@ abstract class AuthRepository {
   /// Send password reset email
   Future<void> resetPassword(String email);
 
+  /// Sign in with Apple Sign In
+  Future<AuthResponse> signInWithApple();
+
+  /// Sign in with Google Sign In
+  Future<AuthResponse> signInWithGoogle();
+
   /// Check if user is authenticated
   bool get isAuthenticated;
 

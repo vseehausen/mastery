@@ -91,32 +91,13 @@ impl MtpDevice {
             .map_err(|e| format!("Failed to open device: {}", e))?;
 
         // Try to claim interface - if it fails, try to detach kernel driver first
-        if let Err(e) = handle.claim_interface(interface_num) {
-            eprintln!(
-                "[mtp] Initial claim failed: {}, trying to detach kernel driver...",
-                e
-            );
-
+        if let Err(_) = handle.claim_interface(interface_num) {
             // Check if kernel driver is active and try to detach
-            match handle.kernel_driver_active(interface_num) {
-                Ok(true) => {
-                    eprintln!("[mtp] Kernel driver active, attempting detach...");
-                    if let Err(de) = handle.detach_kernel_driver(interface_num) {
-                        eprintln!("[mtp] Detach failed: {} (continuing anyway)", de);
-                    } else {
-                        eprintln!("[mtp] Kernel driver detached");
-                    }
-                }
-                Ok(false) => eprintln!("[mtp] No kernel driver active"),
-                Err(ke) => eprintln!("[mtp] Could not check kernel driver: {}", ke),
+            if let Ok(true) = handle.kernel_driver_active(interface_num) {
+                let _ = handle.detach_kernel_driver(interface_num);
             }
-
-            // Try claiming again
-            if let Err(e2) = handle.claim_interface(interface_num) {
-                eprintln!("[mtp] Second claim attempt failed: {}", e2);
-                // Continue anyway - MTP commands might still work
-                eprintln!("[mtp] Proceeding without exclusive interface claim...");
-            }
+            // Try claiming again - continue anyway if it fails
+            let _ = handle.claim_interface(interface_num);
         }
 
         Ok(Self {
@@ -423,6 +404,7 @@ pub fn sync_vocab_via_mtp(output_path: &Path) -> Result<u64, String> {
 }
 
 /// Read vocab.db content directly from Kindle via MTP (returns bytes)
+#[allow(dead_code)]
 pub fn read_vocab_db_via_mtp() -> Result<Vec<u8>, String> {
     let mut device = MtpDevice::find_kindle()?;
     device.read_vocab_db_bytes()

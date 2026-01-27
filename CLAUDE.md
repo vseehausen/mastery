@@ -5,6 +5,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-24
 ## Active Technologies
 - Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno) (002-vocabulary-import-display)
 - PostgreSQL (Supabase), SQLite (mobile via Drift, desktop local cache) (002-vocabulary-import-display)
+- Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in (003-user-auth)
+- Supabase Auth (session tokens stored locally per platform) (003-user-auth)
 
 - **Mobile**: Flutter 3.x (Dart 3.x), Drift, Supabase Flutter SDK
 - **Desktop**: Tauri 2.x (Rust), nusb, mountpoints
@@ -67,6 +69,7 @@ cd supabase && supabase functions deploy
 5. **Offline-First**: Local-first data, sync when online, last-write-wins
 
 ## Recent Changes
+- 003-user-auth: Added Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in
 - 002-vocabulary-import-display: Added Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno)
 
 - 001-kindle-import: Kindle highlight import feature (in progress)

@@ -1,15 +1,44 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { goto } from '$app/navigation';
   import { checkKindleStatus, type KindleStatus } from '$lib/api/kindle';
   import { importFromKindle, type ImportResult } from '$lib/api/vocab';
+  import { signOut, getCurrentUser, getSession } from '$lib/api/auth';
   import ImportHistory from '$lib/components/ImportHistory.svelte';
 
   let status = $state<KindleStatus>({ connected: false, connectionType: null });
   let importing = $state(false);
   let lastResult = $state<ImportResult | null>(null);
   let error = $state<string | null>(null);
-  let historyComponent: ImportHistory;
+  let historyComponent = $state<ImportHistory | null>(null);
   let pollInterval: ReturnType<typeof setInterval>;
+  let currentUser = $state<{ id: string; email?: string } | null>(null);
+  let isLoading = $state(true);
+  let isAuthenticated = $state(false);
+
+  async function checkAuthAndLoadUser() {
+    const session = await getSession();
+    const user = await getCurrentUser();
+    
+    if (session && user) {
+      isAuthenticated = true;
+      currentUser = user;
+    } else {
+      isAuthenticated = false;
+      currentUser = null;
+      goto('/auth/sign-in');
+    }
+    isLoading = false;
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      goto('/auth/sign-in');
+    } catch (e) {
+      console.error('Sign out error:', e);
+    }
+  }
 
   async function pollStatus() {
     try {
@@ -34,19 +63,38 @@
     }
   }
 
-  onMount(() => {
-    pollStatus();
-    pollInterval = setInterval(pollStatus, 3000);
+  onMount(async () => {
+    await checkAuthAndLoadUser();
+    if (isAuthenticated) {
+      pollStatus();
+      pollInterval = setInterval(pollStatus, 3000);
+    }
   });
 
   onDestroy(() => {
-    clearInterval(pollInterval);
+    if (pollInterval) clearInterval(pollInterval);
   });
 </script>
 
+{#if isLoading}
+  <div class="loading-container">
+    <div class="spinner-large"></div>
+    <p>Loading...</p>
+  </div>
+{:else if isAuthenticated}
 <main class="container">
-  <h1>Mastery</h1>
-  <p class="subtitle">Import vocabulary from your Kindle</p>
+  <div class="header-row">
+    <div>
+      <h1>Mastery</h1>
+      <p class="subtitle">Import vocabulary from your Kindle</p>
+    </div>
+    {#if currentUser}
+      <div class="user-info">
+        <span class="user-email">{currentUser.email || 'User'}</span>
+        <button class="sign-out-button" onclick={handleSignOut}>Sign Out</button>
+      </div>
+    {/if}
+  </div>
 
   <div class="status-card">
     <div class="connection-row">
@@ -110,12 +158,66 @@
 
   <ImportHistory bind:this={historyComponent} />
 </main>
+{/if}
 
 <style>
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #6b7280;
+  }
+
+  .spinner-large {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
   .container {
     padding: 2rem;
     max-width: 500px;
     margin: 0 auto;
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .user-email {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .sign-out-button {
+    padding: 0.5rem 1rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .sign-out-button:hover {
+    background: #dc2626;
   }
 
   h1 {
