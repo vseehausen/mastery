@@ -103,9 +103,3 @@ export function formatTimestamp(isoString: string): string {
     minute: '2-digit',
   });
 }
-
-export function truncateContext(context: string | null, maxLength = 50): string {
-  if (!context) return '';
-  if (context.length <= maxLength) return context;
-  return context.substring(0, maxLength - 3) + '...';
-}
