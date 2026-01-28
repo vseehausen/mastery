@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../highlights/highlights_screen.dart';
 import 'books_provider.dart';
 
-/// Screen showing the list of books with highlights
+/// Screen showing the list of books with vocabulary
 class BooksScreen extends ConsumerWidget {
   const BooksScreen({super.key});
 
@@ -43,7 +42,7 @@ class BooksScreen extends ConsumerWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Import your Kindle highlights to get started',
+            'Sync your vocabulary to see your books',
             style: TextStyle(color: Colors.grey),
           ),
         ],
@@ -80,7 +79,7 @@ class BooksScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                'highlights',
+                'words',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -89,10 +88,9 @@ class BooksScreen extends ConsumerWidget {
             ],
           ),
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => HighlightsScreen(bookId: book.id),
-              ),
+            // TODO: Navigate to vocabulary filtered by book
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${book.title} - ${book.highlightCount} words')),
             );
           },
         );

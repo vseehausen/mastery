@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../highlights/highlight_detail_screen.dart';
-import '../highlights/highlights_provider.dart';
+import '../vocabulary/vocabulary_provider.dart';
+import '../vocabulary/vocabulary_detail_screen.dart';
 
-/// Screen for searching across all highlights
+/// Screen for searching vocabulary
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -36,7 +36,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       controller: _searchController,
       autofocus: true,
       decoration: InputDecoration(
-        hintText: 'Search highlights...',
+        hintText: 'Search vocabulary...',
         border: InputBorder.none,
         suffixIcon: _query.isNotEmpty
             ? IconButton(
@@ -70,7 +70,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Search your highlights',
+            'Search your vocabulary',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey.shade600,
@@ -78,7 +78,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter keywords to find passages',
+            'Enter a word to find it',
             style: TextStyle(
               color: Colors.grey.shade500,
             ),
@@ -89,28 +89,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    final searchResults = ref.watch(highlightSearchProvider(_query));
+    final searchResults = ref.watch(vocabularySearchProvider(_query));
 
     return searchResults.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Text('Error: $error'),
       ),
-      data: (highlights) {
-        if (highlights.isEmpty) {
+      data: (vocabulary) {
+        if (vocabulary.isEmpty) {
           return _buildNoResults();
         }
         return ListView.builder(
-          itemCount: highlights.length,
+          itemCount: vocabulary.length,
           itemBuilder: (context, index) {
-            final highlight = highlights[index];
+            final vocab = vocabulary[index];
             return _SearchResultCard(
-              highlight: highlight,
+              vocabulary: vocab,
               query: _query,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => HighlightDetailScreen(highlight: highlight),
+                    builder: (context) => VocabularyDetailScreen(vocabularyId: vocab.id),
                   ),
                 );
               },
@@ -153,12 +153,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 class _SearchResultCard extends StatelessWidget {
-  final dynamic highlight;
+  final dynamic vocabulary;
   final String query;
   final VoidCallback onTap;
 
   const _SearchResultCard({
-    required this.highlight,
+    required this.vocabulary,
     required this.query,
     required this.onTap,
   });
@@ -175,38 +175,30 @@ class _SearchResultCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Highlighted content
-              _buildHighlightedText(highlight.content, query),
-              const SizedBox(height: 12),
-              // Metadata row
-              Row(
-                children: [
-                  Icon(
-                    highlight.type == 'note' ? Icons.note : Icons.format_quote,
-                    size: 16,
+              _buildHighlightedText(vocabulary.word, query),
+              if (vocabulary.context != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  vocabulary.context!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
                     color: Colors.grey.shade600,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'From imported book', // TODO: Get book title
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              if (vocabulary.bookTitle != null)
+                Text(
+                  vocabulary.bookTitle!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontStyle: FontStyle.italic,
                   ),
-                  if (highlight.page != null)
-                    Text(
-                      'p. ${highlight.page}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                ],
-              ),
+                  overflow: TextOverflow.ellipsis,
+                ),
             ],
           ),
         ),
@@ -218,9 +210,7 @@ class _SearchResultCard extends StatelessWidget {
     if (query.isEmpty) {
       return Text(
         text,
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 15, height: 1.4),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       );
     }
 
@@ -252,12 +242,10 @@ class _SearchResultCard extends StatelessWidget {
     }
 
     return RichText(
-      maxLines: 3,
-      overflow: TextOverflow.ellipsis,
       text: TextSpan(
         style: const TextStyle(
-          fontSize: 15,
-          height: 1.4,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
         children: spans,

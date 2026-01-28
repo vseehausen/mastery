@@ -110,10 +110,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildImportPage() {
     return _OnboardingPage(
-      icon: Icons.file_upload,
-      title: 'Import from Kindle',
+      icon: Icons.computer,
+      title: 'Import via Desktop',
       description:
-          'Select "My Clippings.txt" from your Kindle device to import all your highlights instantly.',
+          'Connect your Kindle to your computer and use the Mastery desktop app to import vocabulary.',
     );
   }
 
@@ -122,7 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.search,
       title: 'Search & Browse',
       description:
-          'Organize highlights by book, search across all content, and review your learning journey.',
+          'Browse vocabulary by book, search across all words, and review your learning journey.',
     );
   }
 

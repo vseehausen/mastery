@@ -5,7 +5,6 @@ import 'core/supabase_client.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/books/books_screen.dart';
-import 'features/import/import_screen.dart';
 import 'features/search/search_screen.dart';
 import 'features/vocabulary/vocabulary_screen.dart';
 import 'providers/auth_provider.dart';
@@ -166,7 +165,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 icon: const Icon(Icons.login),
                 label: const Text('Sign In'),
               )
-            else ...[
+            else
               FilledButton.icon(
                 onPressed: _isSyncing ? null : _syncVocabulary,
                 icon: _isSyncing
@@ -178,19 +177,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     : const Icon(Icons.sync),
                 label: Text(_isSyncing ? 'Syncing...' : 'Sync Vocabulary'),
               ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const ImportScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.file_upload),
-                label: const Text('Import Highlights'),
-              ),
-            ],
           ],
         ),
       ),
