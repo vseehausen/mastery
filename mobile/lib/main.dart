@@ -46,20 +46,24 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
+  void _switchToTab(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: const [
+        children: [
           // Dashboard/Home
-          DashboardScreen(),
+          DashboardScreen(onSwitchTab: _switchToTab),
           // Learn (placeholder)
-          _LearnScreen(),
+          const _LearnScreen(),
           // Vocabulary
-          VocabularyScreenNew(),
+          const VocabularyScreenNew(),
           // Settings
-          SettingsScreen(),
+          const SettingsScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavBar(

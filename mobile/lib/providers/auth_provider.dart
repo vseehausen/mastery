@@ -37,3 +37,6 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
   return authRepo.authStateChanges;
 });
+
+/// Provider to track if OAuth is in progress (for loading screen)
+final oauthInProgressProvider = StateProvider<bool>((ref) => false);

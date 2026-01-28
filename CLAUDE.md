@@ -167,6 +167,7 @@ cd supabase && supabase functions deploy
 3. **Observability**: Structured logging, error tracking, metrics
 4. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
 5. **Offline-First**: Local-first data, sync when online, last-write-wins
+6. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
 
 ## Recent Changes
 - 003-user-auth: Added Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in

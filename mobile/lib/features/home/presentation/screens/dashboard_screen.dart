@@ -6,33 +6,41 @@ import '../widgets/today_session_card.dart';
 import '../widgets/shadow_brain_card.dart';
 import '../widgets/recent_words_section.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../vocabulary/vocabulary_detail_screen.dart';
+import '../../../vocabulary/vocabulary_provider.dart';
 
 /// Main dashboard screen with vocabulary overview
 class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, required this.onSwitchTab});
+
+  final ValueChanged<int> onSwitchTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = ref.watch(currentUserProvider);
+    final vocabularyAsync = ref.watch(allVocabularyProvider);
 
-    // Mock data - replace with actual data from providers
+    // Get avatar URL from user metadata
+    final avatarUrl = currentUser.valueOrNull?.userMetadata?['avatar_url'] as String?;
+
+    // Convert vocabulary to recent words format
+    final recentWords = vocabularyAsync.when(
+      data: (vocabs) => vocabs.take(2).map((v) => {
+        'id': v.id,
+        'word': v.word,
+        'definition': v.context ?? 'No context',
+        'status': LearningStatus.unknown,
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, _) => <Map<String, dynamic>>[],
+    );
+
+    // Mock stats - TODO: replace with real data from providers
     const wordsToReview = 12;
     const totalWords = 127;
     const activeWords = 45;
     const progressPercent = 27.5;
-    final recentWords = [
-      {
-        'word': 'Ephemeral',
-        'definition': 'Lasting for a very short time',
-        'status': LearningStatus.learning,
-      },
-      {
-        'word': 'Serendipity',
-        'definition': 'The occurrence of events by chance',
-        'status': LearningStatus.learning,
-      },
-    ];
 
     return Scaffold(
       body: SafeArea(
@@ -66,16 +74,15 @@ class DashboardScreen extends ConsumerWidget {
                     loading: () => const SizedBox.shrink(),
                     error: (_, _) => const SizedBox.shrink(),
                   ),
-                  // Avatar
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.person, color: Colors.white),
+                  // Avatar with image and tap to settings
+                  GestureDetector(
+                    onTap: () => onSwitchTab(3),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl == null
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
                     ),
                   ),
                 ],
@@ -116,14 +123,14 @@ class DashboardScreen extends ConsumerWidget {
                     // Recent words
                     RecentWordsSection(
                       words: recentWords,
-                      onSeeAll: () {
-                        // Navigate to full vocabulary list
-                        // (handled by parent bottom nav)
-                      },
+                      onSeeAll: () => onSwitchTab(2),
                       onWordTap: (word) {
-                        // Navigate to word detail
-                        Navigator.of(context).pushNamed(
-                          '/vocabulary/${word['word']}',
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => VocabularyDetailScreen(
+                              vocabularyId: word['id'] as String,
+                            ),
+                          ),
                         );
                       },
                     ),

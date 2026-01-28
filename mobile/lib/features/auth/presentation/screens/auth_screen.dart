@@ -149,6 +149,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
+    // Set OAuth in progress BEFORE starting
+    ref.read(oauthInProgressProvider.notifier).state = true;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -157,24 +160,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       final authRepo = ref.read(authRepositoryProvider);
       await authRepo.signInWithApple();
-      if (mounted) {
-        // Navigation will be handled by AuthGuard
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
+      // Don't navigate here - AuthGuard handles it
     } catch (e) {
+      // Clear OAuth flag on error
+      ref.read(oauthInProgressProvider.notifier).state = false;
       setState(() {
         _errorMessage = _getOAuthErrorMessage(e, 'Apple');
       });
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _signInWithGoogle() async {
+    // Set OAuth in progress BEFORE starting
+    ref.read(oauthInProgressProvider.notifier).state = true;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -183,18 +186,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       final authRepo = ref.read(authRepositoryProvider);
       await authRepo.signInWithGoogle();
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
+      // Don't navigate here - AuthGuard handles it
     } catch (e) {
+      // Clear OAuth flag on error
+      ref.read(oauthInProgressProvider.notifier).state = false;
       setState(() {
         _errorMessage = _getOAuthErrorMessage(e, 'Google');
       });
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }

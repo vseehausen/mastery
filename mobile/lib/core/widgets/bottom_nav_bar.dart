@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/text_styles.dart';
 
 /// Custom bottom navigation bar with 4 tabs
@@ -33,18 +34,19 @@ class BottomNavBar extends StatelessWidget {
           ),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 32),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(
           tabs.length,
-          (index) => _NavTab(
-            icon: tabs[index]['icon'] as IconData,
-            label: tabs[index]['label'] as String,
-            isActive: selectedIndex == index,
-            onTap: () => onTabSelected(index),
-            primaryColor: primaryColor,
-            isDark: isDark,
+          (index) => Expanded(
+            child: _NavTab(
+              icon: tabs[index]['icon'] as IconData,
+              label: tabs[index]['label'] as String,
+              isActive: selectedIndex == index,
+              onTap: () => onTabSelected(index),
+              primaryColor: primaryColor,
+              isDark: isDark,
+            ),
           ),
         ),
       ),
@@ -71,29 +73,38 @@ class _NavTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isActive
-                ? primaryColor
-                : (isDark ? Colors.grey[600] : Colors.grey[400]),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: MasteryTextStyles.caption.copyWith(
+    return InkResponse(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      containedInkWell: true,
+      highlightShape: BoxShape.rectangle,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 56,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
               color: isActive
                   ? primaryColor
-                  : (isDark ? Colors.grey[600] : Colors.grey[500]),
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  : (isDark ? Colors.grey[600] : Colors.grey[400]),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: MasteryTextStyles.caption.copyWith(
+                color: isActive
+                    ? primaryColor
+                    : (isDark ? Colors.grey[600] : Colors.grey[500]),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
