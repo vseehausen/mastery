@@ -4,7 +4,6 @@ import '../data/repositories/book_repository.dart';
 import '../data/repositories/sync_outbox_repository.dart';
 import '../data/repositories/vocabulary_repository.dart';
 import '../data/services/sync_service.dart';
-import '../features/search/services/search_service.dart';
 
 /// Provider for the app database
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -36,10 +35,4 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final db = ref.watch(databaseProvider);
   final outboxRepo = ref.watch(syncOutboxRepositoryProvider);
   return SyncService(db: db, outboxRepo: outboxRepo);
-});
-
-/// Provider for SearchService
-final searchServiceProvider = Provider<SearchService>((ref) {
-  final vocabRepo = ref.watch(vocabularyRepositoryProvider);
-  return SearchService(vocabRepo);
 });

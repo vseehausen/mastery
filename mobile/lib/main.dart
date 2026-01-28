@@ -5,7 +5,6 @@ import 'core/supabase_client.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/books/books_screen.dart';
-import 'features/search/search_screen.dart';
 import 'features/vocabulary/vocabulary_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/database_provider.dart';
@@ -47,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _HomeTab(),
     VocabularyScreen(),
     BooksScreen(),
-    SearchScreen(),
   ];
 
   @override
@@ -76,11 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.library_books_outlined),
             selectedIcon: Icon(Icons.library_books),
             label: 'Books',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Search',
           ),
         ],
       ),
