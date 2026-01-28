@@ -1,36 +1,55 @@
 // Supabase client utilities for edge functions
+// See: https://supabase.com/docs/guides/functions/auth
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
+
+let supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+  }
+  return supabaseAdmin;
+}
 
 export function createSupabaseClient(req: Request) {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-  const authHeader = req.headers.get('Authorization');
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const authHeader = req.headers.get("Authorization");
 
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
-        Authorization: authHeader || '',
+        Authorization: authHeader || "",
       },
     },
   });
 }
 
 export function createServiceClient() {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
+/// Extracts and verifies user ID from JWT using Supabase Auth.
+/// This is the recommended approach per Supabase docs.
 export async function getUserId(req: Request): Promise<string | null> {
-  const client = createSupabaseClient(req);
-  const { data: { user }, error } = await client.auth.getUser();
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
 
-  if (error || !user) {
+  const token = authHeader.slice(7);
+  const supabase = getSupabaseAdmin();
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    console.error("JWT verification failed:", error?.message);
     return null;
   }
 
-  return user.id;
+  return data.user.id;
 }

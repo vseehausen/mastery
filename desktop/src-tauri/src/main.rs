@@ -75,27 +75,34 @@ fn check_kindle_status() -> KindleStatus {
 
 #[tauri::command]
 async fn import_from_kindle(app: tauri::AppHandle) -> Result<ImportResult, String> {
-    let token = vocab::get_auth_token_from_env()
-        .ok_or_else(|| "No auth token found in environment".to_string())?;
-    
-    let vocab_data = read_vocab_db_content()?;
-    
     let data_dir = app.path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     
     std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
     
-    vocab::import_vocabulary_from_bytes(&vocab_data, &token, Some(&data_dir)).await
+    // Get the authenticated user's session token (auto-refreshes if expired)
+    let auth = auth::SupabaseAuth::new(&data_dir);
+    let session = auth.get_valid_session().await
+        .ok_or_else(|| "Not authenticated. Please sign in first.".to_string())?;
+    
+    let vocab_data = read_vocab_db_content()?;
+    
+    vocab::import_vocabulary_from_bytes(&vocab_data, &session.access_token, Some(&data_dir)).await
 }
 
 #[tauri::command]
-fn get_import_history(app: tauri::AppHandle) -> Vec<vocab::ImportSession> {
-    let data_dir = match app.path().app_data_dir() {
-        Ok(dir) => dir,
-        Err(_) => return Vec::new(),
-    };
-    vocab::get_import_sessions(&data_dir)
+async fn get_import_history(app: tauri::AppHandle) -> Result<Vec<vocab::ImportSession>, String> {
+    let data_dir = app.path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    
+    // Get valid session (auto-refreshes if expired)
+    let auth = auth::SupabaseAuth::new(&data_dir);
+    let session = auth.get_valid_session().await
+        .ok_or_else(|| "Session expired. Please sign in again.".to_string())?;
+    
+    vocab::fetch_import_sessions(&session.access_token).await
 }
 
 #[tauri::command]

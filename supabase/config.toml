@@ -34,3 +34,5 @@ double_confirm_changes = true
 enable_confirmations = false
 
 [functions]
+# JWT verification handled in code using supabase.auth.getUser()
+# Deploy with: supabase functions deploy --no-verify-jwt

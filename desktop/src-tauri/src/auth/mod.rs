@@ -15,6 +15,14 @@ pub struct AuthSession {
     pub email: Option<String>,
 }
 
+impl AuthSession {
+    /// Check if the access token is expired (with 60s buffer)
+    pub fn is_expired(&self) -> bool {
+        let now = Utc::now().timestamp();
+        self.expires_at <= now + 60 // 60 second buffer
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: String,
@@ -151,6 +159,54 @@ impl SupabaseAuth {
     
     pub fn sign_out(&self) -> Result<()> {
         self.delete_session()
+    }
+    
+    /// Refresh the session using the refresh token
+    pub async fn refresh_session(&self, refresh_token: &str) -> Result<Option<AuthSession>> {
+        if !self.is_configured() {
+            return Ok(None);
+        }
+        
+        let client = Client::new();
+        let url = format!("{}/auth/v1/token?grant_type=refresh_token", self.supabase_url);
+        
+        let response = client
+            .post(&url)
+            .header("apikey", &self.anon_key)
+            .header("Content-Type", "application/json")
+            .json(&serde_json::json!({
+                "refresh_token": refresh_token
+            }))
+            .send()
+            .await
+            .map_err(|e| anyhow::anyhow!("Network error: {}", e))?;
+        
+        if response.status().is_success() {
+            let body: serde_json::Value = response.json().await.unwrap_or_default();
+            if let Ok(session) = serde_json::from_value::<SupabaseSession>(body) {
+                let auth_session = AuthSession::from_supabase(session);
+                self.save_session(&auth_session).ok();
+                return Ok(Some(auth_session));
+            }
+        }
+        
+        Ok(None)
+    }
+    
+    /// Get a valid session, refreshing if expired
+    pub async fn get_valid_session(&self) -> Option<AuthSession> {
+        let session = self.load_session()?;
+        
+        if session.is_expired() {
+            // Try to refresh
+            if let Ok(Some(new_session)) = self.refresh_session(&session.refresh_token).await {
+                return Some(new_session);
+            }
+            // Refresh failed, session is invalid
+            return None;
+        }
+        
+        Some(session)
     }
     
     pub fn get_current_user(&self) -> Option<User> {

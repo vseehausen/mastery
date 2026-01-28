@@ -58,70 +58,46 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthResponse> signInWithApple() async {
-    // Apple Sign In only available on iOS/macOS
     if (!Platform.isIOS && !Platform.isMacOS) {
       throw UnsupportedError('Apple Sign In is only available on iOS/macOS');
     }
 
-    try {
-      print('Apple Sign In: Getting credentials...');
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
-      print('Apple Sign In: Got credential, identityToken exists: ${credential.identityToken != null}');
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+    );
 
-      final idToken = credential.identityToken;
-      if (idToken == null) {
-        throw Exception('Apple Sign In failed: No identity token');
-      }
-
-      print('Apple Sign In: Signing in with Supabase...');
-      final response = await _client.auth.signInWithIdToken(
-        provider: OAuthProvider.apple,
-        idToken: idToken,
-      );
-      print('Apple Sign In: Success! User: ${response.user?.email}');
-      return response;
-    } catch (e) {
-      print('Apple Sign In Error: $e');
-      rethrow;
+    final idToken = credential.identityToken;
+    if (idToken == null) {
+      throw Exception('Apple Sign In failed: No identity token');
     }
+
+    return _client.auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+    );
   }
 
   @override
   Future<AuthResponse> signInWithGoogle() async {
-    try {
-      print('Google Sign In: Starting...');
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw Exception('Google Sign In cancelled');
-      }
-      print('Google Sign In: Got user ${googleUser.email}');
-
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
-      final accessToken = googleAuth.accessToken;
-      print('Google Sign In: Got tokens, idToken exists: ${idToken != null}');
-
-      if (idToken == null) {
-        throw Exception('Google Sign In failed: No ID token');
-      }
-
-      print('Google Sign In: Signing in with Supabase...');
-      // Don't pass accessToken - it causes nonce mismatch issues
-      final response = await _client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-      );
-      print('Google Sign In: Success! User: ${response.user?.email}');
-      return response;
-    } catch (e) {
-      print('Google Sign In Error: $e');
-      rethrow;
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      throw Exception('Google Sign In cancelled');
     }
+
+    final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+
+    if (idToken == null) {
+      throw Exception('Google Sign In failed: No ID token');
+    }
+
+    return _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+    );
   }
 
   @override

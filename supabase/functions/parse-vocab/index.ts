@@ -195,6 +195,62 @@ Deno.serve(async (req) => {
 
     const books = Array.from(booksMap.values());
 
+    // Upsert books and build a map of kindle_book_id -> database book_id
+    const bookIdMap = new Map<string, string>();
+    
+    for (const book of books) {
+      // Check if book exists by ASIN or title+author
+      let existingBook = null;
+      
+      if (book.asin) {
+        const { data } = await client
+          .from('books')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('asin', book.asin)
+          .single();
+        existingBook = data;
+      }
+      
+      if (!existingBook && book.title) {
+        const query = client
+          .from('books')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('title', book.title);
+        
+        if (book.author) {
+          query.eq('author', book.author);
+        }
+        
+        const { data } = await query.single();
+        existingBook = data;
+      }
+      
+      if (existingBook) {
+        bookIdMap.set(book.id, existingBook.id);
+      } else {
+        // Insert new book
+        const { data: newBook, error } = await client
+          .from('books')
+          .insert({
+            user_id: userId,
+            title: book.title,
+            author: book.author,
+            asin: book.asin,
+            source: 'kindle',
+          })
+          .select('id')
+          .single();
+        
+        if (newBook) {
+          bookIdMap.set(book.id, newBook.id);
+        } else if (error) {
+          console.error('Book insert error:', error);
+        }
+      }
+    }
+
     // Get existing vocabulary hashes for deduplication
     const { data: existingVocab } = await client
       .from('vocabulary')
@@ -216,19 +272,31 @@ Deno.serve(async (req) => {
     for (let i = 0; i < newEntries.length; i += batchSize) {
       const batch = newEntries.slice(i, i + batchSize);
       
-      const vocabRecords = batch.map(entry => ({
-        user_id: userId,
-        word: entry.word,
-        stem: entry.stem,
-        context: entry.context,
-        book_title: entry.bookTitle,
-        book_author: entry.bookAuthor,
-        book_asin: entry.bookAsin,
-        lookup_timestamp: entry.lookupTimestamp,
-        content_hash: entry.contentHash,
-        is_pending_sync: false,
-        version: 1,
-      }));
+      const vocabRecords = batch.map(entry => {
+        // Find book_id from the map using the kindle book key
+        let bookId: string | null = null;
+        if (entry.bookTitle) {
+          // Find the book by matching title
+          for (const [kindleId, book] of booksMap.entries()) {
+            if (book.title === entry.bookTitle) {
+              bookId = bookIdMap.get(kindleId) || null;
+              break;
+            }
+          }
+        }
+        
+        return {
+          user_id: userId,
+          word: entry.word,
+          stem: entry.stem,
+          context: entry.context,
+          book_id: bookId,
+          lookup_timestamp: entry.lookupTimestamp,
+          content_hash: entry.contentHash,
+          is_pending_sync: false,
+          version: 1,
+        };
+      });
 
       const { error } = await client
         .from('vocabulary')
