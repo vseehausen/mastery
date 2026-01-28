@@ -1,10 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockIPC, clearMocks } from '@tauri-apps/api/mocks';
 import { checkKindleStatus, type KindleStatus } from '../../api/kindle';
 import { importFromKindle } from '../../api/vocab';
 
+vi.mock('$lib/supabase', () => ({
+  supabase: {
+    functions: {
+      invoke: vi.fn()
+    }
+  }
+}));
+
 beforeEach(() => {
   clearMocks();
+  vi.clearAllMocks();
 });
 
 describe('Kindle API Integration', () => {
@@ -31,14 +40,20 @@ describe('Kindle API Integration', () => {
   });
 
   it('can import from Kindle when connected', async () => {
-    const mockResult = {
-      totalParsed: 100,
-      imported: 95,
-      skipped: 5,
-      books: 10,
-    };
+    const mockBytes = [83, 81, 76, 105, 116, 101];
     mockIPC((cmd) => {
-      if (cmd === 'import_from_kindle') return mockResult;
+      if (cmd === 'read_kindle_vocab_db') return mockBytes;
+    });
+
+    const { supabase } = await import('$lib/supabase');
+    vi.mocked(supabase.functions.invoke).mockResolvedValue({
+      data: {
+        totalParsed: 100,
+        imported: 95,
+        skipped: 5,
+        books: 10,
+      },
+      error: null
     });
 
     const result = await importFromKindle();
@@ -49,7 +64,7 @@ describe('Kindle API Integration', () => {
 
   it('handles import errors gracefully', async () => {
     mockIPC((cmd) => {
-      if (cmd === 'import_from_kindle') {
+      if (cmd === 'read_kindle_vocab_db') {
         throw new Error('Kindle not connected');
       }
     });

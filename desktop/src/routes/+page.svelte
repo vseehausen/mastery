@@ -3,7 +3,8 @@
   import { goto } from '$app/navigation';
   import { checkKindleStatus, type KindleStatus } from '$lib/api/kindle';
   import { importFromKindle, type ImportResult } from '$lib/api/vocab';
-  import { signOut, getCurrentUser, getSession } from '$lib/api/auth';
+  import { signOut, getCurrentUser, onAuthStateChange } from '$lib/api/auth';
+  import { supabase } from '$lib/supabase';
   import ImportHistory from '$lib/components/ImportHistory.svelte';
 
   let status = $state<KindleStatus>({ connected: false, connectionType: null });
@@ -15,9 +16,10 @@
   let currentUser = $state<{ id: string; email?: string } | null>(null);
   let isLoading = $state(true);
   let isAuthenticated = $state(false);
+  let unlistenAuth: (() => void) | null = null;
 
   async function checkAuthAndLoadUser() {
-    const session = await getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     const user = await getCurrentUser();
     
     if (session && user) {
@@ -65,6 +67,21 @@
 
   onMount(async () => {
     await checkAuthAndLoadUser();
+    
+    // Subscribe to auth state changes
+    unlistenAuth = onAuthStateChange((session) => {
+      if (session) {
+        isAuthenticated = true;
+        getCurrentUser().then(user => {
+          currentUser = user;
+        });
+      } else {
+        isAuthenticated = false;
+        currentUser = null;
+        goto('/auth/sign-in');
+      }
+    });
+    
     if (isAuthenticated) {
       pollStatus();
       pollInterval = setInterval(pollStatus, 3000);
@@ -73,6 +90,7 @@
 
   onDestroy(() => {
     if (pollInterval) clearInterval(pollInterval);
+    if (unlistenAuth) unlistenAuth();
   });
 </script>
 

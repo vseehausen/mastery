@@ -1,32 +1,5 @@
-/**
- * TypeScript API for vocabulary parsing and sync
- */
-
+import { supabase } from '$lib/supabase';
 import { invoke } from '@tauri-apps/api/core';
-
-export interface ParsedVocabularyEntry {
-  word: string;
-  stem: string | null;
-  context: string | null;
-  lookupTimestamp: string | null;
-  bookTitle: string | null;
-  bookAuthor: string | null;
-  bookAsin: string | null;
-  contentHash: string;
-}
-
-export interface ParsedBook {
-  id: string;
-  title: string;
-  author: string | null;
-  asin: string | null;
-}
-
-export interface ParseVocabResponse {
-  totalParsed: number;
-  entries: ParsedVocabularyEntry[];
-  books: ParsedBook[];
-}
 
 export interface ImportResult {
   totalParsed: number;
@@ -36,17 +9,6 @@ export interface ImportResult {
   error?: string;
 }
 
-/**
- * Import vocabulary directly from Kindle
- * Single step: reads from Kindle → uploads to server → done
- */
-export async function importFromKindle(): Promise<ImportResult> {
-  return invoke<ImportResult>('import_from_kindle');
-}
-
-/**
- * Get vocabulary import history
- */
 export interface ImportSession {
   id: string;
   timestamp: string;
@@ -58,20 +20,79 @@ export interface ImportSession {
   error?: string;
 }
 
+function bytesToBase64(bytes: number[]): string {
+  const binary = String.fromCharCode(...bytes);
+  return btoa(binary);
+}
+
+export async function importFromKindle(): Promise<ImportResult> {
+  try {
+    const vocabBytes: number[] = await invoke('read_kindle_vocab_db');
+    
+    if (!vocabBytes || vocabBytes.length === 0) {
+      throw new Error('No data read from Kindle');
+    }
+
+    const base64 = bytesToBase64(vocabBytes);
+
+    const { data, error } = await supabase.functions.invoke('parse-vocab', {
+      body: { file: base64 },
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Failed to parse vocabulary');
+    }
+
+    if (!data) {
+      throw new Error('No data returned from server');
+    }
+
+    return {
+      totalParsed: data.totalParsed || 0,
+      imported: data.imported || 0,
+      skipped: data.skipped || 0,
+      books: data.books || 0,
+      error: data.errors ? data.errors.join('; ') : undefined,
+    };
+  } catch (error) {
+    throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
 export async function getImportHistory(): Promise<ImportSession[]> {
-  return invoke<ImportSession[]>('get_import_history');
+  try {
+    const { data, error } = await supabase
+      .from('import_sessions')
+      .select('*')
+      .order('started_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      throw new Error(error.message || 'Failed to fetch import history');
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    return data.map((row: any) => {
+      const hasErrors = (row.errors || 0) > 0;
+      return {
+        id: row.id,
+        timestamp: row.started_at || '',
+        totalParsed: row.total_found || 0,
+        imported: row.imported || 0,
+        skipped: row.skipped || 0,
+        books: 0,
+        status: hasErrors ? 'error' : 'success',
+        error: hasErrors ? `${row.errors} errors` : undefined,
+      };
+    });
+  } catch (error) {
+    throw error instanceof Error ? error : new Error(String(error));
+  }
 }
 
-/**
- * Check if there are vocabulary entries pending sync
- */
-export async function hasPendingVocabularySync(): Promise<boolean> {
-  return invoke<boolean>('has_pending_vocabulary_sync');
-}
-
-/**
- * Format timestamp for display
- */
 export function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
   return date.toLocaleDateString(undefined, {
@@ -83,9 +104,6 @@ export function formatTimestamp(isoString: string): string {
   });
 }
 
-/**
- * Truncate context string for list display
- */
 export function truncateContext(context: string | null, maxLength = 50): string {
   if (!context) return '';
   if (context.length <= maxLength) return context;
