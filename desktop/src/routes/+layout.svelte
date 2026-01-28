@@ -5,6 +5,7 @@
   import { listen } from '@tauri-apps/api/event';
   import { handleOAuthCallback } from '$lib/api/auth';
   import type { Snippet } from 'svelte';
+  import '../app.css';
   
   interface Props {
     children: Snippet;
