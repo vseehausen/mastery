@@ -106,8 +106,9 @@ cd supabase && supabase functions deploy
 
 ## Architecture Notes
 
-- **Desktop**: Rust handles only Kindle USB/MTP access, returns raw `vocab.db` bytes. All Supabase interactions (auth, API) happen in Svelte frontend.
+- **Desktop**: Rust handles **only** native hardware access (Kindle USB/MTP). All other logic (auth, API calls, UI state, data processing) happens in Svelte frontend. Keep Rust minimal.
 - **Mobile**: Import feature removed—capture is desktop-only. Mobile focuses on vocabulary display, learning, and sync.
 - **Edge Functions**: `parse-vocab` handles SQLite parsing and creates `import_sessions` records.
+- **OAuth**: Uses web-based OAuth flow with deep link callback (`mastery://auth/callback`). Deep links only work in built `.app` bundle, not dev mode.
 
 <!-- MANUAL ADDITIONS END -->
