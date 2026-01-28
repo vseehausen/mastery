@@ -80,7 +80,6 @@ Design requirements:
 
 Current capture sources:
 - **Kindle vocabulary lookups** (`vocab.db`) via desktop import
-- **Kindle highlights** (`My Clippings.txt`) via manual import
 
 Design requirements:
 - Device connection + import status is obvious
