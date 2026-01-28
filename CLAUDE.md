@@ -89,4 +89,25 @@ cd supabase && supabase functions deploy
 - Supabase Edge Functions handle sync/push and sync/pull
 
 <!-- MANUAL ADDITIONS START -->
+
+## Desktop UI Stack
+
+- **Tailwind CSS v4**: `@import "tailwindcss"` in `src/app.css`
+- **shadcn-svelte**: Config in `components.json`, add components via `pnpm dlx shadcn-svelte@latest add [name]`
+- **Theme**: Stone base color, CSS variables in `app.css`
+- **MCP**: Use `user-shadcn/ui` MCP to list/search components:
+  - `list_items_in_registries` with `registries: ["@shadcn"]`
+  - `get_add_command_for_items` with `items: ["@shadcn/button", "@shadcn/card"]`
+
+## Design Assets
+
+- Design file: `design/mastery-design.pen`
+- Design brief: `DESIGN_BRIEF_OPTIMIZED.md`
+
+## Architecture Notes
+
+- **Desktop**: Rust handles only Kindle USB/MTP access, returns raw `vocab.db` bytes. All Supabase interactions (auth, API) happen in Svelte frontend.
+- **Mobile**: Import feature removed—capture is desktop-only. Mobile focuses on vocabulary display, learning, and sync.
+- **Edge Functions**: `parse-vocab` handles SQLite parsing and creates `import_sessions` records.
+
 <!-- MANUAL ADDITIONS END -->
