@@ -120,6 +120,7 @@ export async function signInWithOAuth(provider: OAuthProvider): Promise<{ error?
       provider,
       options: {
         redirectTo: 'mastery://auth/callback',
+        skipBrowserRedirect: true,
       },
     });
 

@@ -34,7 +34,9 @@ fn main() {
                 app.deep_link().on_open_url(move |event| {
                     for url in event.urls() {
                         let url_str = url.to_string();
+                        println!("[deep-link] Received URL: {}", url_str);
                         if url_str.starts_with("mastery://auth/callback") {
+                            println!("[deep-link] Emitting oauth-callback event");
                             let _ = handle.emit("oauth-callback", url_str);
                         }
                     }
