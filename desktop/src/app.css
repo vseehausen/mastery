@@ -20,6 +20,22 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-mastery-accent: var(--mastery-accent);
+  --color-mastery-accent-foreground: var(--mastery-accent-foreground);
+  --color-mastery-active: var(--mastery-active);
+  --color-mastery-known: var(--mastery-known);
+  --color-mastery-known-muted: var(--mastery-known-muted);
+  --color-mastery-learning: var(--mastery-learning);
+  --color-mastery-learning-muted: var(--mastery-learning-muted);
+  --color-mastery-success: var(--mastery-success);
+  --color-mastery-success-foreground: var(--mastery-success-foreground);
+  --color-mastery-success-muted: var(--mastery-success-muted);
+  --color-mastery-unknown: var(--mastery-unknown);
+  --color-mastery-warning: var(--mastery-warning);
+  --color-mastery-warning-muted: var(--mastery-warning-muted);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -47,6 +63,22 @@
   --input: oklch(0.91 0.005 75);
   --ring: oklch(0.55 0.01 75);
   --radius: 0.5rem;
+  --sidebar: oklch(0.99 0 0);
+  --sidebar-foreground: oklch(0.15 0.01 75);
+  --sidebar-border: oklch(0.91 0.005 75);
+  --mastery-accent: #F59E0B;
+  --mastery-accent-foreground: #78350F;
+  --mastery-active: #18181B;
+  --mastery-known: #10B981;
+  --mastery-known-muted: #DCFCE7;
+  --mastery-learning: #F59E0B;
+  --mastery-learning-muted: #FEF3C7;
+  --mastery-success: #10B981;
+  --mastery-success-foreground: #FFFFFF;
+  --mastery-success-muted: #DCFCE7;
+  --mastery-unknown: #E4E4E7;
+  --mastery-warning: #F59E0B;
+  --mastery-warning-muted: #FEF3C7;
 }
 
 .dark {
@@ -69,6 +101,22 @@
   --border: oklch(0.25 0.01 75);
   --input: oklch(0.25 0.01 75);
   --ring: oklch(0.55 0.01 75);
+  --sidebar: oklch(0.15 0.01 75);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.25 0.01 75);
+  --mastery-accent: #FBBF24;
+  --mastery-accent-foreground: #451A03;
+  --mastery-active: #FAFAF9;
+  --mastery-known: #34D399;
+  --mastery-known-muted: #052E16;
+  --mastery-learning: #FBBF24;
+  --mastery-learning-muted: #422006;
+  --mastery-success: #34D399;
+  --mastery-success-foreground: #022C22;
+  --mastery-success-muted: #052E16;
+  --mastery-unknown: #3F3F46;
+  --mastery-warning: #FBBF24;
+  --mastery-warning-muted: #422006;
 }
 
 @layer base {

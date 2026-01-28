@@ -19,6 +19,7 @@ export interface AuthResponse {
 export interface User {
   id: string;
   email?: string;
+  fullName?: string;
   emailConfirmedAt?: string;
   createdAt: string;
   lastSignInAt?: string;
@@ -30,6 +31,7 @@ function convertSupabaseUser(user: SupabaseUser): User {
   return {
     id: user.id,
     email: user.email,
+    fullName: (user.user_metadata?.full_name as string | undefined) || undefined,
     emailConfirmedAt: user.email_confirmed_at || undefined,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || undefined,
@@ -47,11 +49,16 @@ function convertSupabaseSession(session: any): AuthSession | null {
   };
 }
 
-export async function signUpWithEmail(email: string, password: string): Promise<AuthResponse> {
+export async function signUpWithEmail(email: string, password: string, fullName?: string): Promise<AuthResponse> {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
     });
 
     if (error) {
