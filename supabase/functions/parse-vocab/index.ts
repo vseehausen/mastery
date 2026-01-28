@@ -251,6 +251,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Create import session record
+    const startedAt = new Date().toISOString();
+    const { data: importSession, error: sessionError } = await client
+      .from('import_sessions')
+      .insert({
+        user_id: userId,
+        source: 'device',
+        device_name: 'Kindle',
+        total_found: entries.length,
+        imported: 0,
+        skipped: 0,
+        errors: 0,
+        started_at: startedAt,
+      })
+      .select('id')
+      .single();
+
+    if (sessionError) {
+      console.error('Failed to create import session:', sessionError);
+    }
+
     // Get existing vocabulary hashes for deduplication
     const { data: existingVocab } = await client
       .from('vocabulary')
@@ -308,6 +329,20 @@ Deno.serve(async (req) => {
       } else {
         imported += batch.length;
       }
+    }
+
+    // Update import session with results
+    if (importSession?.id) {
+      await client
+        .from('import_sessions')
+        .update({
+          imported,
+          skipped,
+          errors: errors.length,
+          error_details: errors.length > 0 ? { messages: errors } : null,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', importSession.id);
     }
 
     return jsonResponse({
