@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
-import 'screens/login_screen.dart';
+import 'presentation/screens/auth_screen.dart';
 
 /// Auth guard widget that shows login if user is not authenticated
 class AuthGuard extends ConsumerWidget {
@@ -20,7 +20,7 @@ class AuthGuard extends ConsumerWidget {
     return authState.when(
       data: (state) {
         if (!isAuthenticated) {
-          return const LoginScreen();
+          return const AuthScreen();
         }
         return child;
       },
@@ -42,7 +42,7 @@ class AuthGuard extends ConsumerWidget {
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute<void>(
-                      builder: (context) => const LoginScreen(),
+                      builder: (context) => const AuthScreen(),
                     ),
                   );
                 },

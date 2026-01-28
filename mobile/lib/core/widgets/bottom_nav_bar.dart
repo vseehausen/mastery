@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import '../theme/text_styles.dart';
+
+/// Custom bottom navigation bar with 4 tabs
+class BottomNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
+
+  const BottomNavBar({
+    super.key,
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final bgColor = isDark ? const Color(0xFF18181B) : Colors.white;
+    const tabs = [
+      {'icon': Icons.home_outlined, 'label': 'Home'},
+      {'icon': Icons.lightbulb_outline, 'label': 'Learn'},
+      {'icon': Icons.book_outlined, 'label': 'Words'},
+      {'icon': Icons.settings_outlined, 'label': 'Settings'},
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(
+          tabs.length,
+          (index) => _NavTab(
+            icon: tabs[index]['icon'] as IconData,
+            label: tabs[index]['label'] as String,
+            isActive: selectedIndex == index,
+            onTap: () => onTabSelected(index),
+            primaryColor: primaryColor,
+            isDark: isDark,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _NavTab({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 24,
+            color: isActive
+                ? primaryColor
+                : (isDark ? Colors.grey[600] : Colors.grey[400]),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: MasteryTextStyles.caption.copyWith(
+              color: isActive
+                  ? primaryColor
+                  : (isDark ? Colors.grey[600] : Colors.grey[500]),
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

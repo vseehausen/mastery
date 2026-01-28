@@ -1,0 +1,51 @@
+import 'package:flutter/material.dart';
+import '../../../../core/theme/text_styles.dart';
+import '../../../../core/theme/color_tokens.dart';
+
+/// OAuth button widget with outline style
+class OAuthButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+
+  const OAuthButton({
+    super.key,
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? MasteryColors.borderDark : MasteryColors.borderLight;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: textColor),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: MasteryTextStyles.bodyBold.copyWith(color: textColor),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

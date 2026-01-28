@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'core/supabase_client.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'core/theme/app_theme.dart';
+import 'core/widgets/bottom_nav_bar.dart';
 import 'features/auth/auth_guard.dart';
-import 'features/books/books_screen.dart';
-import 'features/vocabulary/vocabulary_screen.dart';
-import 'providers/auth_provider.dart';
-import 'providers/database_provider.dart';
+import 'features/home/presentation/screens/dashboard_screen.dart';
+import 'features/vocabulary/presentation/screens/vocabulary_screen.dart';
+import 'features/settings/presentation/screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,177 +22,92 @@ class MasteryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ShadApp(
       title: 'Mastery',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: MasteryTheme.light,
+      darkTheme: MasteryTheme.dark,
+      builder: (context, child) {
+        return ScaffoldMessenger(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const AuthGuard(child: HomeScreen()),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-
-  static const List<Widget> _screens = [
-    _HomeTab(),
-    VocabularyScreen(),
-    BooksScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.abc_outlined),
-            selectedIcon: Icon(Icons.abc),
-            label: 'Vocabulary',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.library_books_outlined),
-            selectedIcon: Icon(Icons.library_books),
-            label: 'Books',
-          ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          // Dashboard/Home
+          DashboardScreen(),
+          // Learn (placeholder)
+          _LearnScreen(),
+          // Vocabulary
+          VocabularyScreenNew(),
+          // Settings
+          SettingsScreen(),
         ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTabSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
       ),
     );
   }
 }
 
-class _HomeTab extends ConsumerStatefulWidget {
-  const _HomeTab();
-
-  @override
-  ConsumerState<_HomeTab> createState() => _HomeTabState();
-}
-
-class _HomeTabState extends ConsumerState<_HomeTab> {
-  bool _isSyncing = false;
+/// Placeholder Learn screen
+class _LearnScreen extends StatelessWidget {
+  const _LearnScreen();
 
   @override
   Widget build(BuildContext context) {
-    final isAuthenticated = ref.watch(isAuthenticatedProvider);
-    final currentUser = ref.watch(currentUserProvider);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mastery'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          if (isAuthenticated)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () async {
-                final authRepo = ref.read(authRepositoryProvider);
-                await authRepo.signOut();
-              },
-              tooltip: 'Sign out',
-            ),
-        ],
-      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.auto_stories,
-              size: 80,
-              color: Colors.deepPurple,
+            Icon(
+              Icons.lightbulb_outline,
+              size: 64,
+              color: isDark ? Colors.grey[600] : Colors.grey[300],
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Welcome to Mastery',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            const SizedBox(height: 16),
+            Text(
+              'Learning Session',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Your vocabulary learning companion',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 16),
-            currentUser.when(
-              data: (user) => user != null
-                  ? Text(
-                      'Logged in as: ${user.email}',
-                      style: const TextStyle(color: Colors.green),
-                    )
-                  : const Text(
-                      'Not logged in',
-                      style: TextStyle(color: Colors.orange),
-                    ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 32),
-            if (!isAuthenticated)
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const LoginScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.login),
-                label: const Text('Sign In'),
-              )
-            else
-              FilledButton.icon(
-                onPressed: _isSyncing ? null : _syncVocabulary,
-                icon: _isSyncing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.sync),
-                label: Text(_isSyncing ? 'Syncing...' : 'Sync Vocabulary'),
+              'Coming soon...',
+              style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _syncVocabulary() async {
-    setState(() => _isSyncing = true);
-    try {
-      final syncService = ref.read(syncServiceProvider);
-      final result = await syncService.pullChanges(null);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.error != null
-                ? 'Sync error: ${result.error}'
-                : 'Synced: ${result.vocabulary} vocabulary, ${result.books} books'),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSyncing = false);
-    }
   }
 }

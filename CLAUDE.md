@@ -1,6 +1,6 @@
 # Mastery Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-24
+Auto-generated from all feature plans. Last updated: 2026-01-28
 
 ## Active Technologies
 - Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno) (002-vocabulary-import-display)
@@ -110,5 +110,32 @@ cd supabase && supabase functions deploy
 - **Mobile**: Import feature removed—capture is desktop-only. Mobile focuses on vocabulary display, learning, and sync.
 - **Edge Functions**: `parse-vocab` handles SQLite parsing and creates `import_sessions` records.
 - **OAuth**: Uses web-based OAuth flow with deep link callback (`mastery://auth/callback`). Deep links only work in built `.app` bundle, not dev mode.
+
+## Quality Checks - REQUIRED AFTER EVERY TASK
+
+**Always run these checks after completing any code changes to catch errors early:**
+
+### Mobile (Flutter)
+```bash
+cd mobile
+flutter analyze                              # Check for lint issues and type errors
+flutter test                                 # Run unit and widget tests
+flutter pub get                              # Verify dependencies
+```
+
+### Desktop (Tauri + Svelte)
+```bash
+cd desktop
+cargo clippy --all-targets                  # Rust linting (pedantic mode)
+cargo test                                   # Rust unit tests
+npm run lint                                 # TypeScript/Svelte linting
+npm run type-check                          # TypeScript type checking
+```
+
+**Exit criteria before commit:**
+- ✅ No `error` level issues in analyze/lint output
+- ✅ All tests passing (or marked as skipped with comment)
+- ✅ No TypeScript/Rust compilation warnings related to new code
+- ✅ Code follows formatter rules: `dart format .` (mobile), `rustfmt` (desktop)
 
 <!-- MANUAL ADDITIONS END -->
