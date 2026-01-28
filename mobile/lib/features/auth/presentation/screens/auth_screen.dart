@@ -91,7 +91,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ? null
                     : () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
+                          MaterialPageRoute<void>(
                             builder: (context) =>
                                 const EmailSignUpScreen(),
                           ),
@@ -117,7 +117,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ? null
                         : () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
+                              MaterialPageRoute<void>(
                                 builder: (context) =>
                                     const EmailSignInScreen(),
                               ),

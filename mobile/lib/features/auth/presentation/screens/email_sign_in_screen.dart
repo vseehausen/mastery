@@ -4,7 +4,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../widgets/auth_logo.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/auth_provider.dart';
-import 'auth_screen.dart';
 import 'email_sign_up_screen.dart';
 
 /// Email sign in screen
@@ -90,7 +89,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value.isEmpty) {
                       return 'Please enter your email';
                     }
                     if (!value.contains('@')) {
@@ -109,7 +108,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value.isEmpty) {
                       return 'Please enter your password';
                     }
                     return null;
@@ -146,7 +145,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(
+                      : const Text(
                           'Sign In',
                           style: MasteryTextStyles.bodyBold,
                         ),
@@ -168,7 +167,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                           ? null
                           : () {
                               Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
+                                MaterialPageRoute<void>(
                                   builder: (context) =>
                                       const EmailSignUpScreen(),
                                 ),

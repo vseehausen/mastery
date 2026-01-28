@@ -21,7 +21,6 @@ class VocabularyScreenNew extends ConsumerStatefulWidget {
 
 class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
   final _searchController = TextEditingController();
-  LearningStatus? _selectedStatus;
   String _searchQuery = '';
 
   @override
@@ -67,7 +66,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                   const SizedBox(height: 12),
                   VocabularyFilterChips(
                     onFilterChanged: (status) {
-                      setState(() => _selectedStatus = status);
+                      // TODO: Implement status filtering
                     },
                   ),
                 ],

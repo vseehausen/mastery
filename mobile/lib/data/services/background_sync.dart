@@ -71,7 +71,7 @@ class BackgroundSyncWorker {
     } catch (e) {
       debugPrint('[BackgroundSync] Sync failed: $e');
       // Retry after delay
-      await Future.delayed(_retryDelay);
+      await Future<void>.delayed(_retryDelay);
     } finally {
       _isSyncing = false;
     }

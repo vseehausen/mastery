@@ -4,7 +4,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../widgets/auth_logo.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/auth_provider.dart';
-import 'auth_screen.dart';
 import 'email_sign_in_screen.dart';
 
 /// Email sign up screen
@@ -91,7 +90,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                   placeholder: const Text('John Doe'),
                   controller: _nameController,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value.isEmpty) {
                       return 'Please enter your full name';
                     }
                     return null;
@@ -107,7 +106,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value.isEmpty) {
                       return 'Please enter your email';
                     }
                     if (!value.contains('@')) {
@@ -126,7 +125,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value.isEmpty) {
                       return 'Please enter a password';
                     }
                     if (value.length < 6) {
@@ -166,7 +165,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(
+                      : const Text(
                           'Create Account',
                           style: MasteryTextStyles.bodyBold,
                         ),
@@ -188,7 +187,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                           ? null
                           : () {
                               Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
+                                MaterialPageRoute<void>(
                                   builder: (context) =>
                                       const EmailSignInScreen(),
                                 ),
