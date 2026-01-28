@@ -6,9 +6,6 @@ import '../../domain/repositories/auth_repository.dart';
 
 /// Supabase implementation of AuthRepository
 class AuthRepositoryImpl implements AuthRepository {
-  final SupabaseClient _client;
-  final GoogleSignIn _googleSignIn;
-
   AuthRepositoryImpl(this._client)
       : _googleSignIn = GoogleSignIn(
           scopes: ['email'],
@@ -17,6 +14,9 @@ class AuthRepositoryImpl implements AuthRepository {
               ? '771280991163-45gom2dnikc42h0ajt4cre62mds5v9u2.apps.googleusercontent.com'
               : null,
         );
+
+  final SupabaseClient _client;
+  final GoogleSignIn _googleSignIn;
 
   @override
   User? get currentUser => _client.auth.currentUser;

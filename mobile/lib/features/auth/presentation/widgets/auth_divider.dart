@@ -9,7 +9,7 @@ class AuthDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor =
-        isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300];
+        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300];
 
     return Row(
       children: [

@@ -4,16 +4,16 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Card showing vocabulary statistics and learning progress
 class ShadowBrainCard extends StatelessWidget {
-  final int totalWords;
-  final int activeWords;
-  final double progressPercent;
-
   const ShadowBrainCard({
     super.key,
     required this.totalWords,
     required this.activeWords,
     required this.progressPercent,
   });
+
+  final int totalWords;
+  final int activeWords;
+  final double progressPercent;
 
   @override
   Widget build(BuildContext context) {

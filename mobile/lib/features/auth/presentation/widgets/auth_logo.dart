@@ -4,14 +4,14 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Logo widget with title and optional subtitle for auth screens
 class AuthLogo extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-
   const AuthLogo({
     super.key,
     required this.title,
     this.subtitle,
   });
+
+  final String title;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {

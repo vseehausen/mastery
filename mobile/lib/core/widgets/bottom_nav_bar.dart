@@ -3,14 +3,14 @@ import '../theme/text_styles.dart';
 
 /// Custom bottom navigation bar with 4 tabs
 class BottomNavBar extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTabSelected;
-
   const BottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onTabSelected,
   });
+
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class BottomNavBar extends StatelessWidget {
         color: bgColor,
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
           ),
         ),
       ),
@@ -53,13 +53,6 @@ class BottomNavBar extends StatelessWidget {
 }
 
 class _NavTab extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final Color primaryColor;
-  final bool isDark;
-
   const _NavTab({
     required this.icon,
     required this.label,
@@ -68,6 +61,13 @@ class _NavTab extends StatelessWidget {
     required this.primaryColor,
     required this.isDark,
   });
+
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {

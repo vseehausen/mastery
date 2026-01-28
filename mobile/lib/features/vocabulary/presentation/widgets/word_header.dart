@@ -5,16 +5,16 @@ import '../../../../core/theme/color_tokens.dart';
 
 /// Header section of word detail showing word and status
 class WordHeader extends StatelessWidget {
-  final String word;
-  final String? pronunciation;
-  final LearningStatus? status;
-
   const WordHeader({
     super.key,
     required this.word,
     this.pronunciation,
     this.status,
   });
+
+  final String word;
+  final String? pronunciation;
+  final LearningStatus? status;
 
   @override
   Widget build(BuildContext context) {

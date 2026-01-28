@@ -59,7 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         email: user?.email ?? 'user@example.com',
                       ),
                       loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 24),
 
@@ -128,7 +128,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     SettingsSection(
                       title: 'ABOUT',
                       children: [
-                        SettingsListItem(
+                        const SettingsListItem(
                           label: 'Version',
                           value: '1.0.0',
                         ),

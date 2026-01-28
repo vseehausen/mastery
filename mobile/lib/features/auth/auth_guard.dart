@@ -5,12 +5,12 @@ import 'presentation/screens/auth_screen.dart';
 
 /// Auth guard widget that shows login if user is not authenticated
 class AuthGuard extends ConsumerWidget {
-  final Widget child;
-
   const AuthGuard({
     super.key,
     required this.child,
   });
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

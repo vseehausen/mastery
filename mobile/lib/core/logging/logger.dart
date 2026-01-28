@@ -11,10 +11,10 @@ enum LogLevel {
 
 /// Structured logger for the Mastery app
 class Logger {
+  Logger(this.name);
+
   final String name;
   static bool _enabled = kDebugMode;
-
-  Logger(this.name);
 
   /// Enable or disable logging globally
   static void setEnabled(bool enabled) {

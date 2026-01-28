@@ -3,16 +3,16 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Learning statistics for a word
 class LearningStats extends StatelessWidget {
-  final int? timesReviewed;
-  final int? confidence; // 1-5
-  final DateTime? nextReview;
-
   const LearningStats({
     super.key,
     this.timesReviewed,
     this.confidence,
     this.nextReview,
   });
+
+  final int? timesReviewed;
+  final int? confidence; // 1-5
+  final DateTime? nextReview;
 
   String _formatDate(DateTime? date) {
     if (date == null) return '-';
@@ -70,22 +70,22 @@ class LearningStats extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isDark;
-
   const _StatItem({
     required this.label,
     required this.value,
     required this.isDark,
   });
 
+  final String label;
+  final String value;
+  final bool isDark;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

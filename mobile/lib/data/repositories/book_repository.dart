@@ -4,10 +4,10 @@ import '../database/database.dart';
 
 /// Repository for Book entity operations
 class BookRepository {
+  BookRepository(this._db);
+
   final AppDatabase _db;
   final _uuid = const Uuid();
-
-  BookRepository(this._db);
 
   /// Find book by title and author for a user
   Future<Book?> findByTitleAndAuthor({
@@ -53,7 +53,7 @@ class BookRepository {
     );
 
     await _db.into(_db.books).insert(companion);
-    return (await _db.select(_db.books)
+    return (_db.select(_db.books)
           ..where((b) => b.id.equals(id)))
         .getSingle();
   }

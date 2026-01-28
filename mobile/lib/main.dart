@@ -51,7 +51,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: [
+        children: const [
           // Dashboard/Home
           DashboardScreen(),
           // Learn (placeholder)

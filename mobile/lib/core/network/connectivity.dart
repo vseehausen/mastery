@@ -21,11 +21,11 @@ final connectivityProvider = StateNotifierProvider<ConnectivityNotifier, Connect
 
 /// Notifier for network connectivity changes
 class ConnectivityNotifier extends StateNotifier<ConnectivityStatus> {
-  Timer? _checkTimer;
-
   ConnectivityNotifier() : super(ConnectivityStatus.unknown) {
     _startMonitoring();
   }
+
+  Timer? _checkTimer;
 
   void _startMonitoring() {
     // Check connectivity immediately

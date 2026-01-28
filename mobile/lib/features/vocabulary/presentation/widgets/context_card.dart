@@ -3,11 +3,6 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Card showing context where word was found
 class ContextCard extends StatelessWidget {
-  final String? context;
-  final String? bookTitle;
-  final String? author;
-  final int? chapter;
-
   const ContextCard({
     super.key,
     this.context,
@@ -16,11 +11,16 @@ class ContextCard extends StatelessWidget {
     this.chapter,
   });
 
+  final String? context;
+  final String? bookTitle;
+  final String? author;
+  final int? chapter;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor =
-        isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1);
+        isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1);
 
     if (this.context == null || this.context!.isEmpty) {
       return const SizedBox.shrink();

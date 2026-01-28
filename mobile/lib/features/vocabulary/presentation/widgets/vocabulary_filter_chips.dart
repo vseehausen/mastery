@@ -4,12 +4,12 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Filter chips for vocabulary status filtering
 class VocabularyFilterChips extends StatefulWidget {
-  final ValueChanged<LearningStatus?> onFilterChanged;
-
   const VocabularyFilterChips({
     super.key,
     required this.onFilterChanged,
   });
+
+  final ValueChanged<LearningStatus?> onFilterChanged;
 
   @override
   State<VocabularyFilterChips> createState() => _VocabularyFilterChipsState();
@@ -77,12 +77,6 @@ class _VocabularyFilterChipsState extends State<VocabularyFilterChips> {
 }
 
 class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-  final Color primaryColor;
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
@@ -90,6 +84,12 @@ class _FilterChip extends StatelessWidget {
     required this.isDark,
     required this.primaryColor,
   });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+  final Color primaryColor;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,7 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor
-              : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]),
+              : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
           borderRadius: BorderRadius.circular(24),
         ),
         child: Text(

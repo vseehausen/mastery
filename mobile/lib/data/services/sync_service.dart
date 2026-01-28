@@ -7,16 +7,16 @@ import '../repositories/sync_outbox_repository.dart';
 
 /// Service for syncing local changes to Supabase
 class SyncService {
-  final SyncOutboxRepository _outboxRepo;
-  final AppDatabase _db;
-
-  bool _isSyncing = false;
-
   SyncService({
     required SyncOutboxRepository outboxRepo,
     required AppDatabase db,
   })  : _outboxRepo = outboxRepo,
         _db = db;
+
+  final SyncOutboxRepository _outboxRepo;
+  final AppDatabase _db;
+
+  bool _isSyncing = false;
 
   /// Check if sync is in progress
   bool get isSyncing => _isSyncing;
@@ -119,7 +119,8 @@ class SyncService {
       final vocabulary = result['vocabulary'] as List<dynamic>? ?? [];
 
       // Save vocabulary to local database
-      for (final v in vocabulary) {
+      for (final item in vocabulary) {
+        final v = item as Map<String, dynamic>;
         final entry = VocabularysCompanion(
           id: Value(v['id'] as String),
           userId: Value(v['user_id'] as String),
@@ -193,33 +194,33 @@ class SyncService {
 
 /// Result of a sync push operation
 class SyncPushResult {
+  SyncPushResult({required this.applied, required this.failed, this.error});
+
   final int applied;
   final int failed;
   final String? error;
-
-  SyncPushResult({required this.applied, required this.failed, this.error});
 
   bool get hasError => error != null;
 }
 
 /// Result of a sync pull operation
 class SyncPullResult {
+  SyncPullResult({required this.books, required this.highlights, required this.vocabulary, this.error});
+
   final int books;
   final int highlights;
   final int vocabulary;
   final String? error;
-
-  SyncPullResult({required this.books, required this.highlights, required this.vocabulary, this.error});
 
   bool get hasError => error != null;
 }
 
 /// Combined result of a full sync
 class SyncResult {
+  SyncResult({required this.push, this.pull});
+
   final SyncPushResult push;
   final SyncPullResult? pull;
-
-  SyncResult({required this.push, this.pull});
 
   bool get hasError => push.hasError || (pull?.hasError ?? false);
 }

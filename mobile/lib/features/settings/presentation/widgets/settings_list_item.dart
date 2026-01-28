@@ -3,12 +3,6 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Individual settings list item
 class SettingsListItem extends StatelessWidget {
-  final String label;
-  final String? value;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final bool isDanger;
-
   const SettingsListItem({
     super.key,
     required this.label,
@@ -17,6 +11,12 @@ class SettingsListItem extends StatelessWidget {
     this.onTap,
     this.isDanger = false,
   });
+
+  final String label;
+  final String? value;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool isDanger;
 
   @override
   Widget build(BuildContext context) {

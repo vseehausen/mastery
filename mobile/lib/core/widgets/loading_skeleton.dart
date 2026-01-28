@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 /// Skeleton loader widget for displaying loading states
 class LoadingSkeleton extends StatefulWidget {
-  final double height;
-  final double? width;
-  final BorderRadius? borderRadius;
-
   const LoadingSkeleton({
     super.key,
     this.height = 20,
     this.width,
     this.borderRadius,
   });
+
+  final double height;
+  final double? width;
+  final BorderRadius? borderRadius;
 
   @override
   State<LoadingSkeleton> createState() => _LoadingSkeletonState();
@@ -70,16 +70,16 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
 
 /// Widget for displaying skeleton loading state for a list
 class SkeletonListLoader extends StatelessWidget {
-  final int itemCount;
-  final double itemHeight;
-  final double spacing;
-
   const SkeletonListLoader({
     super.key,
     this.itemCount = 5,
     this.itemHeight = 80,
     this.spacing = 12,
   });
+
+  final int itemCount;
+  final double itemHeight;
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {

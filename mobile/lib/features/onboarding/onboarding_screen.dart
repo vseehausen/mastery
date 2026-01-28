@@ -100,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildWelcomePage() {
-    return _OnboardingPage(
+    return const _OnboardingPage(
       icon: Icons.auto_stories,
       title: 'Welcome to Mastery',
       description:
@@ -109,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildImportPage() {
-    return _OnboardingPage(
+    return const _OnboardingPage(
       icon: Icons.computer,
       title: 'Import via Desktop',
       description:
@@ -118,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildSearchPage() {
-    return _OnboardingPage(
+    return const _OnboardingPage(
       icon: Icons.search,
       title: 'Search & Browse',
       description:
@@ -127,7 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildSyncPage() {
-    return _OnboardingPage(
+    return const _OnboardingPage(
       icon: Icons.cloud_sync,
       title: 'Sync to Cloud',
       description:
@@ -138,15 +138,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 /// Individual onboarding page widget
 class _OnboardingPage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-
   const _OnboardingPage({
     required this.icon,
     required this.title,
     required this.description,
   });
+
+  final IconData icon;
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {

@@ -3,11 +3,6 @@ import '../theme/text_styles.dart';
 
 /// Card for displaying statistics
 class StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData? icon;
-  final Color? backgroundColor;
-
   const StatCard({
     super.key,
     required this.label,
@@ -15,6 +10,11 @@ class StatCard extends StatelessWidget {
     this.icon,
     this.backgroundColor,
   });
+
+  final String label;
+  final String value;
+  final IconData? icon;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class StatCard extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
         ),
       ),
       child: Column(

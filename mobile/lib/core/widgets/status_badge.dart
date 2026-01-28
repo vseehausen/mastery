@@ -4,14 +4,14 @@ import '../theme/text_styles.dart';
 
 /// Status badge for vocabulary learning status
 class StatusBadge extends StatelessWidget {
-  final LearningStatus status;
-  final bool compact;
-
   const StatusBadge({
     super.key,
     required this.status,
     this.compact = false,
   });
+
+  final LearningStatus status;
+  final bool compact;
 
   String get _label {
     switch (status) {

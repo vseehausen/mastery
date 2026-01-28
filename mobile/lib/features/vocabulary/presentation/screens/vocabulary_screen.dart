@@ -83,7 +83,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 error: (error, stack) => _buildErrorState(error),
                 data: (vocabulary) {
                   // Filter by search query
-                  var filtered = vocabulary
+                  final filtered = vocabulary
                       .where((v) => v.word
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase()))
@@ -177,7 +177,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: 64,
             color: Colors.red,

@@ -4,16 +4,16 @@ import '../../../../core/theme/color_tokens.dart';
 
 /// OAuth button widget with outline style
 class OAuthButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String label;
-
   const OAuthButton({
     super.key,
     required this.onPressed,
     required this.icon,
     required this.label,
   });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {

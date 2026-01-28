@@ -60,6 +60,106 @@ cd supabase && supabase functions deploy
 - **Commits**: Conventional commits (`type(scope): description`)
 - **Scopes**: mobile, desktop, backend, shared
 
+### Dart/Flutter Style Conventions
+
+**MUST follow these conventions to pass `flutter analyze`:**
+
+1. **Deprecated APIs**: Never use `withOpacity()`. Use `withValues(alpha: 0.1)` instead.
+   ```dart
+   // ❌ BAD
+   Colors.white.withOpacity(0.1)
+   
+   // ✅ GOOD
+   Colors.white.withValues(alpha: 0.1)
+   ```
+
+2. **Constructor Order**: Constructors MUST come before fields in class declarations.
+   ```dart
+   // ❌ BAD
+   class MyWidget extends StatelessWidget {
+     final String title;
+     const MyWidget({required this.title});
+   }
+   
+   // ✅ GOOD
+   class MyWidget extends StatelessWidget {
+     const MyWidget({required this.title});
+     final String title;
+   }
+   ```
+
+3. **String Quotes**: Use single quotes for string literals, not double quotes.
+   ```dart
+   // ❌ BAD
+   Text("Hello")
+   
+   // ✅ GOOD
+   Text('Hello')
+   ```
+
+4. **Type Safety**: Avoid dynamic calls. Cast to proper types first.
+   ```dart
+   // ❌ BAD
+   for (final item in list) {
+     final value = item['key'];
+   }
+   
+   // ✅ GOOD
+   for (final item in list) {
+     final map = item as Map<String, dynamic>;
+     final value = map['key'];
+   }
+   ```
+
+5. **Await Usage**: Only await Future types. Don't await query builders directly.
+   ```dart
+   // ❌ BAD
+   return (await db.select(table)..where(...)).getSingle();
+   
+   // ✅ GOOD
+   return (db.select(table)..where(...)).getSingle();
+   ```
+
+6. **Super Parameters**: Use super parameters when passing to parent constructor.
+   ```dart
+   // ❌ BAD
+   AppDatabase.forTesting(QueryExecutor e) : super(e);
+   
+   // ✅ GOOD
+   AppDatabase.forTesting(super.e);
+   ```
+
+7. **Unused Code**: Remove unused fields, imports, and variables immediately.
+
+8. **Const Constructors**: Prefer `const` constructors when values are compile-time constants.
+   ```dart
+   // ✅ GOOD
+   const SizedBox(height: 16)
+   const Text('Hello')
+   ```
+
+9. **Null Checks**: Remove unnecessary null comparisons when type is non-nullable.
+   ```dart
+   // ❌ BAD
+   if (value == null || value.isEmpty) { ... }
+   
+   // ✅ GOOD (when value is non-nullable)
+   if (value.isEmpty) { ... }
+   ```
+
+10. **Type Arguments**: Always provide explicit type arguments for generic constructors.
+    ```dart
+    // ❌ BAD
+    MaterialPageRoute(builder: ...)
+    Future.delayed(duration)
+    
+    // ✅ GOOD
+    MaterialPageRoute<void>(builder: ...)
+    Future<void>.delayed(duration)
+    ```
+
+**Always run `flutter analyze` before committing and fix all `error` and `warning` level issues.**
+
 ## Constitution Principles
 
 1. **Test-First**: Tests written alongside implementation

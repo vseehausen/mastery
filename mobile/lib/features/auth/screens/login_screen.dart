@@ -378,13 +378,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 /// OAuth sign-in button widget
 class _OAuthButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String label;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final Color? borderColor;
-
   const _OAuthButton({
     required this.onPressed,
     required this.icon,
@@ -393,6 +386,13 @@ class _OAuthButton extends StatelessWidget {
     required this.foregroundColor,
     this.borderColor,
   });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -428,9 +428,9 @@ class _OAuthButton extends StatelessWidget {
 }
 
 class _ForgotPasswordDialog extends StatefulWidget {
-  final Future<void> Function(String email) onSubmit;
-
   const _ForgotPasswordDialog({required this.onSubmit});
+
+  final Future<void> Function(String email) onSubmit;
 
   @override
   State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();

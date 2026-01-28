@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Widget for displaying error states with retry capability
 class ErrorState extends StatelessWidget {
-  final String title;
-  final String message;
-  final VoidCallback? onRetry;
-  final IconData icon;
-
   const ErrorState({
     super.key,
     this.title = 'Oops!',
@@ -14,6 +9,11 @@ class ErrorState extends StatelessWidget {
     this.onRetry,
     this.icon = Icons.error_outline,
   });
+
+  final String title;
+  final String message;
+  final VoidCallback? onRetry;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -64,11 +64,6 @@ class ErrorState extends StatelessWidget {
 
 /// Widget for displaying empty states
 class EmptyState extends StatelessWidget {
-  final String title;
-  final String message;
-  final IconData icon;
-  final Widget? action;
-
   const EmptyState({
     super.key,
     this.title = 'Nothing here',
@@ -76,6 +71,11 @@ class EmptyState extends StatelessWidget {
     this.icon = Icons.inbox_outlined,
     this.action,
   });
+
+  final String title;
+  final String message;
+  final IconData icon;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {

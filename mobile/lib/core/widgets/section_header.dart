@@ -4,14 +4,14 @@ import '../theme/text_styles.dart';
 
 /// Section header with title and optional "See all" link
 class SectionHeader extends StatelessWidget {
-  final String title;
-  final VoidCallback? onSeeAll;
-
   const SectionHeader({
     super.key,
     required this.title,
     this.onSeeAll,
   });
+
+  final String title;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {

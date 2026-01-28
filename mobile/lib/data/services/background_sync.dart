@@ -4,16 +4,16 @@ import '../repositories/sync_outbox_repository.dart';
 
 /// Background sync worker for syncing changes when device is online
 class BackgroundSyncWorker {
+  BackgroundSyncWorker({
+    required SyncOutboxRepository outboxRepo,
+  }) : _outboxRepo = outboxRepo;
+
   final SyncOutboxRepository _outboxRepo;
   static const Duration _syncInterval = Duration(minutes: 15);
   static const Duration _retryDelay = Duration(seconds: 5);
 
   Timer? _syncTimer;
   bool _isSyncing = false;
-
-  BackgroundSyncWorker({
-    required SyncOutboxRepository outboxRepo,
-  }) : _outboxRepo = outboxRepo;
 
   /// Start the background sync worker
   void start() {

@@ -5,16 +5,16 @@ import '../../../../core/theme/color_tokens.dart';
 
 /// Recent words section for dashboard
 class RecentWordsSection extends StatelessWidget {
-  final List<Map<String, dynamic>> words; // [{word, definition, status}, ...]
-  final VoidCallback? onSeeAll;
-  final ValueChanged<Map<String, dynamic>>? onWordTap;
-
   const RecentWordsSection({
     super.key,
     required this.words,
     this.onSeeAll,
     this.onWordTap,
   });
+
+  final List<Map<String, dynamic>> words; // [{word, definition, status}, ...]
+  final VoidCallback? onSeeAll;
+  final ValueChanged<Map<String, dynamic>>? onWordTap;
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +27,8 @@ class RecentWordsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (words.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
                 'No words yet. Import your first Kindle highlights!',

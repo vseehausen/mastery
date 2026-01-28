@@ -5,14 +5,14 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Card showing today's learning session
 class TodaySessionCard extends StatelessWidget {
-  final int wordsToReview;
-  final VoidCallback onStart;
-
   const TodaySessionCard({
     super.key,
     required this.wordsToReview,
     required this.onStart,
   });
+
+  final int wordsToReview;
+  final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {

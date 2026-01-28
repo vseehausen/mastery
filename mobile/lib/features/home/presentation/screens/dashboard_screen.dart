@@ -64,7 +64,7 @@ class DashboardScreen extends ConsumerWidget {
                       ],
                     ),
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                   ),
                   // Avatar
                   Container(
@@ -105,6 +105,7 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // Shadow brain stats
+                    // ignore: prefer_const_constructors
                     ShadowBrainCard(
                       totalWords: totalWords,
                       activeWords: activeWords,

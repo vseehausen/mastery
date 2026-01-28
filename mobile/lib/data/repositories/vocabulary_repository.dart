@@ -4,10 +4,10 @@ import '../database/database.dart';
 
 /// Repository for Vocabulary entity operations
 class VocabularyRepository {
+  VocabularyRepository(this._db);
+
   final AppDatabase _db;
   final _uuid = const Uuid();
-
-  VocabularyRepository(this._db);
 
   /// Check if vocabulary entry already exists by content hash
   Future<bool> existsByContentHash({
@@ -53,7 +53,7 @@ class VocabularyRepository {
     );
 
     await _db.into(_db.vocabularys).insert(companion);
-    return (await _db.select(_db.vocabularys)
+    return (_db.select(_db.vocabularys)
           ..where((v) => v.id.equals(id)))
         .getSingle();
   }

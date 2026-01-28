@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Search bar for vocabulary screen
 class VocabularySearchBar extends StatelessWidget {
-  final TextEditingController? controller;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onClear;
-
   const VocabularySearchBar({
     super.key,
     this.controller,
@@ -13,11 +9,15 @@ class VocabularySearchBar extends StatelessWidget {
     this.onClear,
   });
 
+  final TextEditingController? controller;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClear;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor =
-        isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300];
+        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300];
 
     return TextField(
       controller: controller,
@@ -50,7 +50,7 @@ class VocabularySearchBar extends StatelessWidget {
           ),
         ),
         filled: true,
-        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
       ),
     );

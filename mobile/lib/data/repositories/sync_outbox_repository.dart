@@ -4,9 +4,9 @@ import '../database/database.dart';
 
 /// Repository for managing sync outbox operations
 class SyncOutboxRepository {
-  final AppDatabase _db;
-
   SyncOutboxRepository(this._db);
+
+  final AppDatabase _db;
 
   /// Add an item to the sync outbox
   Future<void> queueForSync({

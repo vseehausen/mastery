@@ -93,13 +93,13 @@ class VocabularyDetailScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.amber.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.amber.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withOpacity(0.1)
-                            : Colors.amber.withOpacity(0.2),
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.amber.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
