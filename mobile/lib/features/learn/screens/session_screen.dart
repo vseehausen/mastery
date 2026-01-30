@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
@@ -86,12 +88,75 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final prefs = await userPrefsRepo.getOrCreateWithDefaults(userId);
 
     // Build session plan
-    final plan = await planner.buildSessionPlan(
+    var plan = await planner.buildSessionPlan(
       userId: userId,
       timeTargetMinutes: prefs.dailyTimeTargetMinutes,
       intensity: prefs.intensity,
       targetRetention: prefs.targetRetention,
     );
+
+    debugPrint('[Session] Initial plan items: ${plan.items.length}');
+
+    // If no items locally, fetch learning cards directly from Supabase
+    if (plan.items.isEmpty) {
+      debugPrint('[Session] No items locally, fetching from server...');
+
+      try {
+        // Direct query to Supabase for learning cards
+        final cardsResponse = await Supabase.instance.client
+            .from('learning_cards')
+            .select()
+            .eq('user_id', userId);
+
+        final cards = cardsResponse as List<dynamic>;
+        debugPrint('[Session] Fetched ${cards.length} cards from server');
+
+        // Save to local database
+        final db = ref.read(databaseProvider);
+        for (final item in cards) {
+          final c = item as Map<String, dynamic>;
+          final entry = LearningCardsCompanion(
+            id: Value(c['id'] as String),
+            userId: Value(c['user_id'] as String),
+            vocabularyId: Value(c['vocabulary_id'] as String),
+            state: Value(c['state'] as int),
+            due: Value(DateTime.parse(c['due'] as String)),
+            stability: Value((c['stability'] as num).toDouble()),
+            difficulty: Value((c['difficulty'] as num).toDouble()),
+            reps: Value(c['reps'] as int),
+            lapses: Value(c['lapses'] as int),
+            lastReview: Value(
+              c['last_review'] != null
+                  ? DateTime.parse(c['last_review'] as String)
+                  : null,
+            ),
+            isLeech: Value(c['is_leech'] as bool),
+            createdAt: Value(DateTime.parse(c['created_at'] as String)),
+            updatedAt: Value(DateTime.parse(c['updated_at'] as String)),
+            deletedAt: Value(
+              c['deleted_at'] != null
+                  ? DateTime.parse(c['deleted_at'] as String)
+                  : null,
+            ),
+            version: Value(c['version'] as int? ?? 1),
+            lastSyncedAt: Value(DateTime.now()),
+            isPendingSync: const Value(false),
+          );
+          await db.into(db.learningCards).insertOnConflictUpdate(entry);
+        }
+
+        // Retry building the plan after fetching cards
+        plan = await planner.buildSessionPlan(
+          userId: userId,
+          timeTargetMinutes: prefs.dailyTimeTargetMinutes,
+          intensity: prefs.intensity,
+          targetRetention: prefs.targetRetention,
+        );
+        debugPrint('[Session] Plan after fetch: ${plan.items.length} items');
+      } catch (e) {
+        debugPrint('[Session] Error fetching cards: $e');
+      }
+    }
 
     if (plan.items.isEmpty) {
       if (mounted) {
@@ -559,7 +624,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           return RecallCard(
             word: vocab.word,
             answer: vocab.context ?? vocab.word,
-            context: vocab.context,
             onGrade: _handleRecallGrade,
           );
         }

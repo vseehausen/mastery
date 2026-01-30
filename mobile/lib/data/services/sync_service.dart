@@ -319,7 +319,7 @@ class SyncService {
     };
   }
 
-  /// Pull remote changes from the server
+  /// Pull remote changes from the server using direct Supabase queries
   Future<SyncPullResult> pullChanges(DateTime? lastSyncedAt) async {
     if (_isSyncing) {
       return SyncPullResult(
@@ -342,35 +342,48 @@ class SyncService {
     _isSyncing = true;
 
     try {
-      final response = await SupabaseConfig.client.functions.invoke(
-        'sync/pull',
-        body: {
-          'lastSyncedAt':
-              (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
-                  .toIso8601String(),
-        },
-        method: HttpMethod.post,
-      );
+      final since = (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+          .toIso8601String();
+      final client = SupabaseConfig.client;
 
-      if (response.status != 200) {
-        return SyncPullResult(
-          books: 0,
-          highlights: 0,
-          vocabulary: 0,
-          error: 'Server returned ${response.status}',
-        );
-      }
+      // Fetch vocabulary directly from Supabase
+      final vocabResponse = await client
+          .from('vocabulary')
+          .select()
+          .gt('updated_at', since);
+      final vocabulary = vocabResponse as List<dynamic>;
 
-      final result = response.data as Map<String, dynamic>;
-      final books = result['books'] as List<dynamic>? ?? [];
-      final highlights = result['highlights'] as List<dynamic>? ?? [];
-      final vocabulary = result['vocabulary'] as List<dynamic>? ?? [];
-      final learningCards = result['learning_cards'] as List<dynamic>? ?? [];
-      final learningSessions =
-          result['learning_sessions'] as List<dynamic>? ?? [];
-      final streaks = result['streaks'] as List<dynamic>? ?? [];
-      final userPreferences =
-          result['user_learning_preferences'] as List<dynamic>? ?? [];
+      // Fetch learning_cards directly from Supabase
+      final cardsResponse = await client
+          .from('learning_cards')
+          .select()
+          .gt('updated_at', since);
+      final learningCards = cardsResponse as List<dynamic>;
+
+      // Fetch learning_sessions directly from Supabase
+      final sessionsResponse = await client
+          .from('learning_sessions')
+          .select()
+          .gt('updated_at', since);
+      final learningSessions = sessionsResponse as List<dynamic>;
+
+      // Fetch streaks directly from Supabase
+      final streaksResponse = await client
+          .from('streaks')
+          .select()
+          .gt('updated_at', since);
+      final streaks = streaksResponse as List<dynamic>;
+
+      // Fetch user_learning_preferences directly from Supabase
+      final prefsResponse = await client
+          .from('user_learning_preferences')
+          .select()
+          .gt('updated_at', since);
+      final userPreferences = prefsResponse as List<dynamic>;
+
+      // Books and highlights (keeping empty for now - not used in learning)
+      final books = <dynamic>[];
+      final highlights = <dynamic>[];
 
       // Save vocabulary to local database
       for (final item in vocabulary) {

@@ -328,6 +328,42 @@ Deno.serve(async (req) => {
         errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
       } else {
         imported += batch.length;
+
+        // After successful vocabulary insert, create learning cards
+        const contentHashes = batch.map(e => e.contentHash);
+        const { data: insertedVocab } = await client
+          .from('vocabulary')
+          .select('id')
+          .eq('user_id', userId)
+          .in('content_hash', contentHashes);
+
+        if (insertedVocab && insertedVocab.length > 0) {
+          const learningCards = insertedVocab.map(v => ({
+            user_id: userId,
+            vocabulary_id: v.id,
+            state: 0,        // new
+            due: new Date().toISOString(),
+            stability: 0.0,
+            difficulty: 0.0,
+            reps: 0,
+            lapses: 0,
+            is_leech: false,
+            is_pending_sync: false,
+            version: 1,
+          }));
+
+          const { error: cardError } = await client
+            .from('learning_cards')
+            .upsert(learningCards, {
+              onConflict: 'user_id,vocabulary_id',
+              ignoreDuplicates: true
+            });
+
+          if (cardError) {
+            console.error('Learning card creation error:', cardError);
+            // Don't add to errors array - vocabulary import succeeded
+          }
+        }
       }
     }
 

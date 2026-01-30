@@ -49,6 +49,13 @@ async function handlePush(req: Request, userId: string): Promise<Response> {
           .insert({ ...data, id, user_id: userId });
 
         if (!error) applied++;
+      } else if (operation === 'upsert') {
+        // Upsert - insert or update based on id
+        const { error } = await client
+          .from(table)
+          .upsert({ ...data, id, user_id: userId, last_synced_at: new Date().toISOString() });
+
+        if (!error) applied++;
       } else if (operation === 'update') {
         const { data: existing } = await client
           .from(table)
@@ -103,6 +110,7 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
   const client = createSupabaseClient(req);
 
   const since = lastSyncedAt || '1970-01-01T00:00:00Z';
+  console.log(`[sync/pull] userId=${userId}, since=${since}`);
 
   // Fetch books modified since lastSyncedAt
   const { data: books, error: booksError } = await client
@@ -137,12 +145,62 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     return errorResponse('Failed to fetch vocabulary', 500);
   }
 
+  // Fetch learning_cards modified since lastSyncedAt
+  const { data: learning_cards, error: learningCardsError } = await client
+    .from('learning_cards')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (learningCardsError) {
+    return errorResponse('Failed to fetch learning cards', 500);
+  }
+
+  // Fetch learning_sessions modified since lastSyncedAt
+  const { data: learning_sessions, error: learningSessionsError } = await client
+    .from('learning_sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (learningSessionsError) {
+    return errorResponse('Failed to fetch learning sessions', 500);
+  }
+
+  // Fetch streaks modified since lastSyncedAt
+  const { data: streaks, error: streaksError } = await client
+    .from('streaks')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (streaksError) {
+    return errorResponse('Failed to fetch streaks', 500);
+  }
+
+  // Fetch user_learning_preferences modified since lastSyncedAt
+  const { data: user_learning_preferences, error: prefsError } = await client
+    .from('user_learning_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (prefsError) {
+    return errorResponse('Failed to fetch user preferences', 500);
+  }
+
   const syncedAt = new Date().toISOString();
+
+  console.log(`[sync/pull] Returning: vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}`);
 
   return jsonResponse({
     books: books || [],
     highlights: highlights || [],
     vocabulary: vocabulary || [],
+    learning_cards: learning_cards || [],
+    learning_sessions: learning_sessions || [],
+    streaks: streaks || [],
+    user_learning_preferences: user_learning_preferences || [],
     syncedAt,
   });
 }

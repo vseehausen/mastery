@@ -117,8 +117,7 @@ class SessionPlanner {
       items.add(
         PlannedItem(
           learningCard: card,
-          interactionMode:
-              InteractionMode.recognition, // Always MCQ for leeches
+          interactionMode: selectInteractionMode(card),
           priority: _computePriorityScore(card) * 1.5, // Boost leech priority
         ),
       );
@@ -133,8 +132,7 @@ class SessionPlanner {
       items.add(
         PlannedItem(
           learningCard: card,
-          interactionMode:
-              InteractionMode.recognition, // Always MCQ for new cards
+          interactionMode: selectInteractionMode(card),
           priority: 0.0, // Lowest priority
         ),
       );
@@ -155,20 +153,9 @@ class SessionPlanner {
   }
 
   /// Select interaction mode for a card
-  /// Recognition for new/learning/relearning or stability < 7 days
-  /// Recall for review state with stability >= 7 days
+  /// Currently using recall (self-grade) for all cards
   int selectInteractionMode(LearningCard card) {
-    // New, learning, or relearning cards always use recognition
-    if (card.state != CardState.review) {
-      return InteractionMode.recognition;
-    }
-
-    // Review cards with low stability use recognition
-    if (card.stability < InteractionMode.stabilityThresholdDays) {
-      return InteractionMode.recognition;
-    }
-
-    // Mature review cards use recall
+    // Use recall mode for all cards - show word, reveal answer, self-grade
     return InteractionMode.recall;
   }
 

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../providers/auth_provider.dart';
-import '../../../../core/theme/text_styles.dart';
-import '../widgets/today_session_card.dart';
-import '../widgets/shadow_brain_card.dart';
-import '../widgets/recent_words_section.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/theme/text_styles.dart';
+import '../../../../providers/auth_provider.dart';
+import '../../../learn/screens/session_screen.dart';
 import '../../../vocabulary/vocabulary_detail_screen.dart';
 import '../../../vocabulary/vocabulary_provider.dart';
+import '../widgets/recent_words_section.dart';
+import '../widgets/shadow_brain_card.dart';
+import '../widgets/today_session_card.dart';
 
 /// Main dashboard screen with vocabulary overview
 class DashboardScreen extends ConsumerWidget {
@@ -101,10 +102,9 @@ class DashboardScreen extends ConsumerWidget {
                     TodaySessionCard(
                       wordsToReview: wordsToReview,
                       onStart: () {
-                        // Navigate to learning session
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Learning session not yet implemented'),
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const SessionScreen(),
                           ),
                         );
                       },

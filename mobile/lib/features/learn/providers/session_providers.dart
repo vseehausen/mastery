@@ -5,6 +5,7 @@ import '../../../data/database/database.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/database_provider.dart';
 import '../../../providers/learning_providers.dart';
 
 part 'session_providers.g.dart';
@@ -63,13 +64,25 @@ Future<bool> hasItemsToReview(Ref ref) async {
   if (userId == null) return false;
 
   final learningCardRepo = ref.watch(learningCardRepositoryProvider);
+  final vocabRepo = ref.watch(vocabularyRepositoryProvider);
 
   // Check for due cards or new cards
   final dueCards = await learningCardRepo.getDueCards(userId, limit: 1);
   if (dueCards.isNotEmpty) return true;
 
   final newCards = await learningCardRepo.getNewCards(userId, limit: 1);
-  return newCards.isNotEmpty;
+  if (newCards.isNotEmpty) return true;
+
+  // Also check if there's vocabulary that doesn't have learning cards yet
+  final allVocab = await vocabRepo.getAllForUser(userId);
+  if (allVocab.isNotEmpty) {
+    // There's vocabulary - cards will be created at import time on server
+    final existingCards = await learningCardRepo.getAll(userId);
+    // If there are more vocab items than cards, we have items to review
+    if (allVocab.length > existingCards.length) return true;
+  }
+
+  return false;
 }
 
 // =============================================================================

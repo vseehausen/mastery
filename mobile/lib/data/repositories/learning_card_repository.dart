@@ -200,4 +200,38 @@ class LearningCardRepository {
       lastSyncedAt: Value(now),
     ));
   }
+
+  /// Create learning cards for all vocabulary items that don't have one yet
+  /// Returns the number of cards created
+  Future<int> createCardsForNewVocabulary(String userId) async {
+    // Get all vocabulary IDs for this user
+    final vocabQuery = _db.select(_db.vocabularys)
+      ..where((t) => t.userId.equals(userId))
+      ..where((t) => t.deletedAt.isNull());
+    final allVocab = await vocabQuery.get();
+
+    // Get all existing learning card vocabulary IDs
+    final existingCards = await getAll(userId);
+    final existingVocabIds = existingCards.map((c) => c.vocabularyId).toSet();
+
+    // Find vocabulary without cards
+    final vocabWithoutCards =
+        allVocab.where((v) => !existingVocabIds.contains(v.id)).toList();
+
+    // Create cards for each
+    final now = DateTime.now().toUtc();
+    for (final vocab in vocabWithoutCards) {
+      final companion = LearningCardsCompanion.insert(
+        id: _uuid.v4(),
+        userId: userId,
+        vocabularyId: vocab.id,
+        due: now,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await _db.into(_db.learningCards).insert(companion);
+    }
+
+    return vocabWithoutCards.length;
+  }
 }
