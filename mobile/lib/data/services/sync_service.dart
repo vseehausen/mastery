@@ -3,18 +3,38 @@ import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase_client.dart';
 import '../database/database.dart';
+import '../repositories/learning_card_repository.dart';
+import '../repositories/review_log_repository.dart';
+import '../repositories/session_repository.dart';
+import '../repositories/streak_repository.dart';
 import '../repositories/sync_outbox_repository.dart';
+import '../repositories/user_preferences_repository.dart';
 
 /// Service for syncing local changes to Supabase
 class SyncService {
   SyncService({
     required SyncOutboxRepository outboxRepo,
     required AppDatabase db,
-  })  : _outboxRepo = outboxRepo,
-        _db = db;
+    LearningCardRepository? learningCardRepository,
+    SessionRepository? sessionRepository,
+    StreakRepository? streakRepository,
+    UserPreferencesRepository? userPreferencesRepository,
+    ReviewLogRepository? reviewLogRepository,
+  }) : _outboxRepo = outboxRepo,
+       _db = db,
+       _learningCardRepository = learningCardRepository,
+       _sessionRepository = sessionRepository,
+       _streakRepository = streakRepository,
+       _userPreferencesRepository = userPreferencesRepository,
+       _reviewLogRepository = reviewLogRepository;
 
   final SyncOutboxRepository _outboxRepo;
   final AppDatabase _db;
+  final LearningCardRepository? _learningCardRepository;
+  final SessionRepository? _sessionRepository;
+  final StreakRepository? _streakRepository;
+  final UserPreferencesRepository? _userPreferencesRepository;
+  final ReviewLogRepository? _reviewLogRepository;
 
   bool _isSyncing = false;
 
@@ -24,7 +44,11 @@ class SyncService {
   /// Push pending local changes to the server
   Future<SyncPushResult> pushChanges() async {
     if (_isSyncing) {
-      return SyncPushResult(applied: 0, failed: 0, error: 'Sync already in progress');
+      return SyncPushResult(
+        applied: 0,
+        failed: 0,
+        error: 'Sync already in progress',
+      );
     }
 
     if (!SupabaseConfig.isAuthenticated) {
@@ -36,29 +60,37 @@ class SyncService {
     try {
       final pendingItems = await _outboxRepo.getPendingItemsForSync();
 
-      if (pendingItems.isEmpty) {
-        return SyncPushResult(applied: 0, failed: 0);
-      }
+      // Collect learning data pending sync
+      final learningChanges = await _collectLearningChanges();
+      final allChanges = <Map<String, dynamic>>[];
 
-      final changes = pendingItems.map((item) {
-        return {
+      // Add outbox items
+      for (final item in pendingItems) {
+        allChanges.add({
           'table': item.entityTable,
           'operation': item.operation,
           'id': item.recordId,
           'data': jsonDecode(item.payload),
-        };
-      }).toList();
+        });
+      }
+
+      // Add learning changes
+      allChanges.addAll(learningChanges);
+
+      if (allChanges.isEmpty) {
+        return SyncPushResult(applied: 0, failed: 0);
+      }
 
       final response = await SupabaseConfig.client.functions.invoke(
         'sync/push',
-        body: {'changes': changes},
+        body: {'changes': allChanges},
         method: HttpMethod.post,
       );
 
       if (response.status != 200) {
         return SyncPushResult(
           applied: 0,
-          failed: pendingItems.length,
+          failed: allChanges.length,
           error: 'Server returned ${response.status}',
         );
       }
@@ -66,7 +98,7 @@ class SyncService {
       final result = response.data as Map<String, dynamic>;
       final applied = result['applied'] as int? ?? 0;
 
-      // Mark successfully synced items
+      // Mark successfully synced outbox items
       for (final item in pendingItems) {
         await _outboxRepo.markSynced(item.id);
       }
@@ -74,6 +106,9 @@ class SyncService {
       // Update lastSyncedAt for synced records
       final syncedAt = DateTime.now();
       await _updateLastSyncedAt(pendingItems, syncedAt);
+
+      // Mark learning data as synced
+      await _markLearningDataSynced();
 
       return SyncPushResult(applied: applied, failed: 0);
     } catch (e) {
@@ -83,14 +118,225 @@ class SyncService {
     }
   }
 
+  /// Collect pending learning data changes for sync
+  Future<List<Map<String, dynamic>>> _collectLearningChanges() async {
+    final changes = <Map<String, dynamic>>[];
+
+    // Learning cards
+    if (_learningCardRepository != null) {
+      final pendingCards = await _learningCardRepository.getPendingSync();
+      for (final card in pendingCards) {
+        changes.add({
+          'table': 'learning_cards',
+          'operation': 'upsert',
+          'id': card.id,
+          'data': _learningCardToJson(card),
+        });
+      }
+    }
+
+    // Learning sessions
+    if (_sessionRepository != null) {
+      final pendingSessions = await _sessionRepository.getPendingSync();
+      for (final session in pendingSessions) {
+        changes.add({
+          'table': 'learning_sessions',
+          'operation': 'upsert',
+          'id': session.id,
+          'data': _learningSessionToJson(session),
+        });
+      }
+    }
+
+    // Streaks
+    if (_streakRepository != null) {
+      final pendingStreaks = await _streakRepository.getPendingSync();
+      for (final streak in pendingStreaks) {
+        changes.add({
+          'table': 'streaks',
+          'operation': 'upsert',
+          'id': streak.id,
+          'data': _streakToJson(streak),
+        });
+      }
+    }
+
+    // User learning preferences
+    if (_userPreferencesRepository != null) {
+      final pendingPrefs = await _userPreferencesRepository.getPendingSync();
+      for (final pref in pendingPrefs) {
+        changes.add({
+          'table': 'user_learning_preferences',
+          'operation': 'upsert',
+          'id': pref.id,
+          'data': _userPreferencesToJson(pref),
+        });
+      }
+    }
+
+    // Review logs (push-only, append-only)
+    if (_reviewLogRepository != null) {
+      final pendingLogs = await _reviewLogRepository.getPendingSync();
+      for (final log in pendingLogs) {
+        changes.add({
+          'table': 'review_logs',
+          'operation': 'insert',
+          'id': log.id,
+          'data': _reviewLogToJson(log),
+        });
+      }
+    }
+
+    return changes;
+  }
+
+  /// Mark all pending learning data as synced
+  Future<void> _markLearningDataSynced() async {
+    if (_learningCardRepository != null) {
+      final pendingCards = await _learningCardRepository.getPendingSync();
+      for (final card in pendingCards) {
+        await _learningCardRepository.markSynced(card.id);
+      }
+    }
+
+    if (_sessionRepository != null) {
+      final pendingSessions = await _sessionRepository.getPendingSync();
+      for (final session in pendingSessions) {
+        await _sessionRepository.markSynced(session.id);
+      }
+    }
+
+    if (_streakRepository != null) {
+      final pendingStreaks = await _streakRepository.getPendingSync();
+      for (final streak in pendingStreaks) {
+        await _streakRepository.markSynced(streak.id);
+      }
+    }
+
+    if (_userPreferencesRepository != null) {
+      final pendingPrefs = await _userPreferencesRepository.getPendingSync();
+      for (final pref in pendingPrefs) {
+        await _userPreferencesRepository.markSynced(pref.id);
+      }
+    }
+
+    if (_reviewLogRepository != null) {
+      final pendingLogs = await _reviewLogRepository.getPendingSync();
+      for (final log in pendingLogs) {
+        await _reviewLogRepository.markSynced(log.id);
+      }
+    }
+  }
+
+  /// Convert LearningCard to JSON for sync
+  Map<String, dynamic> _learningCardToJson(LearningCard card) {
+    return {
+      'id': card.id,
+      'user_id': card.userId,
+      'vocabulary_id': card.vocabularyId,
+      'state': card.state,
+      'due': card.due.toIso8601String(),
+      'stability': card.stability,
+      'difficulty': card.difficulty,
+      'reps': card.reps,
+      'lapses': card.lapses,
+      'last_review': card.lastReview?.toIso8601String(),
+      'is_leech': card.isLeech,
+      'created_at': card.createdAt.toIso8601String(),
+      'updated_at': card.updatedAt.toIso8601String(),
+      'deleted_at': card.deletedAt?.toIso8601String(),
+      'version': card.version,
+    };
+  }
+
+  /// Convert LearningSession to JSON for sync
+  Map<String, dynamic> _learningSessionToJson(LearningSession session) {
+    return {
+      'id': session.id,
+      'user_id': session.userId,
+      'started_at': session.startedAt.toIso8601String(),
+      'expires_at': session.expiresAt.toIso8601String(),
+      'planned_minutes': session.plannedMinutes,
+      'elapsed_seconds': session.elapsedSeconds,
+      'bonus_seconds': session.bonusSeconds,
+      'items_presented': session.itemsPresented,
+      'items_completed': session.itemsCompleted,
+      'new_words_presented': session.newWordsPresented,
+      'reviews_presented': session.reviewsPresented,
+      'accuracy_rate': session.accuracyRate,
+      'avg_response_time_ms': session.avgResponseTimeMs,
+      'outcome': session.outcome,
+      'created_at': session.createdAt.toIso8601String(),
+      'updated_at': session.updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Convert Streak to JSON for sync
+  Map<String, dynamic> _streakToJson(Streak streak) {
+    return {
+      'id': streak.id,
+      'user_id': streak.userId,
+      'current_count': streak.currentCount,
+      'longest_count': streak.longestCount,
+      'last_completed_date': streak.lastCompletedDate?.toIso8601String(),
+      'created_at': streak.createdAt.toIso8601String(),
+      'updated_at': streak.updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Convert UserLearningPreference to JSON for sync
+  Map<String, dynamic> _userPreferencesToJson(UserLearningPreference pref) {
+    return {
+      'id': pref.id,
+      'user_id': pref.userId,
+      'daily_time_target_minutes': pref.dailyTimeTargetMinutes,
+      'target_retention': pref.targetRetention,
+      'intensity': pref.intensity,
+      'new_word_suppression_active': pref.newWordSuppressionActive,
+      'created_at': pref.createdAt.toIso8601String(),
+      'updated_at': pref.updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Convert ReviewLog to JSON for sync
+  Map<String, dynamic> _reviewLogToJson(ReviewLog log) {
+    return {
+      'id': log.id,
+      'user_id': log.userId,
+      'learning_card_id': log.learningCardId,
+      'rating': log.rating,
+      'interaction_mode': log.interactionMode,
+      'state_before': log.stateBefore,
+      'state_after': log.stateAfter,
+      'stability_before': log.stabilityBefore,
+      'stability_after': log.stabilityAfter,
+      'difficulty_before': log.difficultyBefore,
+      'difficulty_after': log.difficultyAfter,
+      'response_time_ms': log.responseTimeMs,
+      'retrievability_at_review': log.retrievabilityAtReview,
+      'reviewed_at': log.reviewedAt.toIso8601String(),
+      'session_id': log.sessionId,
+    };
+  }
+
   /// Pull remote changes from the server
   Future<SyncPullResult> pullChanges(DateTime? lastSyncedAt) async {
     if (_isSyncing) {
-      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: 'Sync already in progress');
+      return SyncPullResult(
+        books: 0,
+        highlights: 0,
+        vocabulary: 0,
+        error: 'Sync already in progress',
+      );
     }
 
     if (!SupabaseConfig.isAuthenticated) {
-      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: 'Not authenticated');
+      return SyncPullResult(
+        books: 0,
+        highlights: 0,
+        vocabulary: 0,
+        error: 'Not authenticated',
+      );
     }
 
     _isSyncing = true;
@@ -99,7 +345,9 @@ class SyncService {
       final response = await SupabaseConfig.client.functions.invoke(
         'sync/pull',
         body: {
-          'lastSyncedAt': (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0)).toIso8601String(),
+          'lastSyncedAt':
+              (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+                  .toIso8601String(),
         },
         method: HttpMethod.post,
       );
@@ -117,6 +365,12 @@ class SyncService {
       final books = result['books'] as List<dynamic>? ?? [];
       final highlights = result['highlights'] as List<dynamic>? ?? [];
       final vocabulary = result['vocabulary'] as List<dynamic>? ?? [];
+      final learningCards = result['learning_cards'] as List<dynamic>? ?? [];
+      final learningSessions =
+          result['learning_sessions'] as List<dynamic>? ?? [];
+      final streaks = result['streaks'] as List<dynamic>? ?? [];
+      final userPreferences =
+          result['user_learning_preferences'] as List<dynamic>? ?? [];
 
       // Save vocabulary to local database
       for (final item in vocabulary) {
@@ -131,9 +385,11 @@ class SyncService {
           bookAuthor: Value(v['book_author'] as String?),
           bookAsin: Value(v['book_asin'] as String?),
           contentHash: Value(v['content_hash'] as String),
-          lookupTimestamp: Value(v['lookup_timestamp'] != null 
-              ? DateTime.parse(v['lookup_timestamp'] as String) 
-              : null),
+          lookupTimestamp: Value(
+            v['lookup_timestamp'] != null
+                ? DateTime.parse(v['lookup_timestamp'] as String)
+                : null,
+          ),
           createdAt: Value(DateTime.parse(v['created_at'] as String)),
           updatedAt: Value(DateTime.parse(v['updated_at'] as String)),
           lastSyncedAt: Value(DateTime.now()),
@@ -142,13 +398,133 @@ class SyncService {
         await _db.into(_db.vocabularys).insertOnConflictUpdate(entry);
       }
 
+      // Save learning cards to local database
+      for (final item in learningCards) {
+        final c = item as Map<String, dynamic>;
+        final entry = LearningCardsCompanion(
+          id: Value(c['id'] as String),
+          userId: Value(c['user_id'] as String),
+          vocabularyId: Value(c['vocabulary_id'] as String),
+          state: Value(c['state'] as int),
+          due: Value(DateTime.parse(c['due'] as String)),
+          stability: Value((c['stability'] as num).toDouble()),
+          difficulty: Value((c['difficulty'] as num).toDouble()),
+          reps: Value(c['reps'] as int),
+          lapses: Value(c['lapses'] as int),
+          lastReview: Value(
+            c['last_review'] != null
+                ? DateTime.parse(c['last_review'] as String)
+                : null,
+          ),
+          isLeech: Value(c['is_leech'] as bool),
+          createdAt: Value(DateTime.parse(c['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(c['updated_at'] as String)),
+          deletedAt: Value(
+            c['deleted_at'] != null
+                ? DateTime.parse(c['deleted_at'] as String)
+                : null,
+          ),
+          version: Value(c['version'] as int? ?? 1),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+        );
+        await _db.into(_db.learningCards).insertOnConflictUpdate(entry);
+      }
+
+      // Save learning sessions to local database
+      for (final item in learningSessions) {
+        final s = item as Map<String, dynamic>;
+        final entry = LearningSessionsCompanion(
+          id: Value(s['id'] as String),
+          userId: Value(s['user_id'] as String),
+          startedAt: Value(DateTime.parse(s['started_at'] as String)),
+          expiresAt: Value(DateTime.parse(s['expires_at'] as String)),
+          plannedMinutes: Value(s['planned_minutes'] as int),
+          elapsedSeconds: Value(s['elapsed_seconds'] as int? ?? 0),
+          bonusSeconds: Value(s['bonus_seconds'] as int? ?? 0),
+          itemsPresented: Value(s['items_presented'] as int? ?? 0),
+          itemsCompleted: Value(s['items_completed'] as int? ?? 0),
+          newWordsPresented: Value(s['new_words_presented'] as int? ?? 0),
+          reviewsPresented: Value(s['reviews_presented'] as int? ?? 0),
+          accuracyRate: Value(
+            s['accuracy_rate'] != null
+                ? (s['accuracy_rate'] as num).toDouble()
+                : null,
+          ),
+          avgResponseTimeMs: Value(s['avg_response_time_ms'] as int?),
+          outcome: Value(s['outcome'] as int? ?? 0),
+          createdAt: Value(DateTime.parse(s['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(s['updated_at'] as String)),
+          isPendingSync: const Value(false),
+        );
+        await _db.into(_db.learningSessions).insertOnConflictUpdate(entry);
+      }
+
+      // Save streaks to local database
+      for (final item in streaks) {
+        final st = item as Map<String, dynamic>;
+        final entry = StreaksCompanion(
+          id: Value(st['id'] as String),
+          userId: Value(st['user_id'] as String),
+          currentCount: Value(st['current_count'] as int? ?? 0),
+          longestCount: Value(st['longest_count'] as int? ?? 0),
+          lastCompletedDate: Value(
+            st['last_completed_date'] != null
+                ? DateTime.parse(st['last_completed_date'] as String)
+                : null,
+          ),
+          createdAt: Value(DateTime.parse(st['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(st['updated_at'] as String)),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+        );
+        await _db.into(_db.streaks).insertOnConflictUpdate(entry);
+      }
+
+      // Save user learning preferences to local database
+      for (final item in userPreferences) {
+        final p = item as Map<String, dynamic>;
+        final entry = UserLearningPreferencesCompanion(
+          id: Value(p['id'] as String),
+          userId: Value(p['user_id'] as String),
+          dailyTimeTargetMinutes: Value(
+            p['daily_time_target_minutes'] as int? ?? 10,
+          ),
+          targetRetention: Value(
+            p['target_retention'] != null
+                ? (p['target_retention'] as num).toDouble()
+                : 0.90,
+          ),
+          intensity: Value(p['intensity'] as int? ?? 1),
+          newWordSuppressionActive: Value(
+            p['new_word_suppression_active'] as bool? ?? false,
+          ),
+          createdAt: Value(DateTime.parse(p['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(p['updated_at'] as String)),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+        );
+        await _db
+            .into(_db.userLearningPreferences)
+            .insertOnConflictUpdate(entry);
+      }
+
       return SyncPullResult(
         books: books.length,
         highlights: highlights.length,
         vocabulary: vocabulary.length,
+        learningCards: learningCards.length,
+        learningSessions: learningSessions.length,
+        streaks: streaks.length,
+        userPreferences: userPreferences.length,
       );
     } catch (e) {
-      return SyncPullResult(books: 0, highlights: 0, vocabulary: 0, error: e.toString());
+      return SyncPullResult(
+        books: 0,
+        highlights: 0,
+        vocabulary: 0,
+        error: e.toString(),
+      );
     } finally {
       _isSyncing = false;
     }
@@ -167,26 +543,38 @@ class SyncService {
     return SyncResult(push: pushResult, pull: pullResult);
   }
 
-  Future<void> _updateLastSyncedAt(List<SyncOutboxData> items, DateTime syncedAt) async {
+  Future<void> _updateLastSyncedAt(
+    List<SyncOutboxData> items,
+    DateTime syncedAt,
+  ) async {
     for (final item in items) {
       if (item.entityTable == 'books') {
-        await (_db.update(_db.books)..where((b) => b.id.equals(item.recordId)))
-            .write(BooksCompanion(
-          lastSyncedAt: Value(syncedAt),
-          isPendingSync: const Value(false),
-        ));
+        await (_db.update(
+          _db.books,
+        )..where((b) => b.id.equals(item.recordId))).write(
+          BooksCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
       } else if (item.entityTable == 'highlights') {
-        await (_db.update(_db.highlights)..where((h) => h.id.equals(item.recordId)))
-            .write(HighlightsCompanion(
-          lastSyncedAt: Value(syncedAt),
-          isPendingSync: const Value(false),
-        ));
+        await (_db.update(
+          _db.highlights,
+        )..where((h) => h.id.equals(item.recordId))).write(
+          HighlightsCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
       } else if (item.entityTable == 'vocabulary') {
-        await (_db.update(_db.vocabularys)..where((v) => v.id.equals(item.recordId)))
-            .write(VocabularysCompanion(
-          lastSyncedAt: Value(syncedAt),
-          isPendingSync: const Value(false),
-        ));
+        await (_db.update(
+          _db.vocabularys,
+        )..where((v) => v.id.equals(item.recordId))).write(
+          VocabularysCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
       }
     }
   }
@@ -205,11 +593,24 @@ class SyncPushResult {
 
 /// Result of a sync pull operation
 class SyncPullResult {
-  SyncPullResult({required this.books, required this.highlights, required this.vocabulary, this.error});
+  SyncPullResult({
+    required this.books,
+    required this.highlights,
+    required this.vocabulary,
+    this.learningCards = 0,
+    this.learningSessions = 0,
+    this.streaks = 0,
+    this.userPreferences = 0,
+    this.error,
+  });
 
   final int books;
   final int highlights;
   final int vocabulary;
+  final int learningCards;
+  final int learningSessions;
+  final int streaks;
+  final int userPreferences;
   final String? error;
 
   bool get hasError => error != null;

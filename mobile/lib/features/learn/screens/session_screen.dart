@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -291,6 +293,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (_session == null || _isSessionComplete) return;
 
     final sessionRepo = ref.read(sessionRepositoryProvider);
+    final syncService = ref.read(syncServiceProvider);
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
@@ -309,6 +312,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (outcome == SessionOutcomeEnum.complete) {
       await ref.read(streakNotifierProvider.notifier).incrementStreak();
     }
+
+    // Trigger sync to push learning data to server
+    // Fire-and-forget sync to avoid blocking UI
+    unawaited(syncService.pushChanges());
 
     // Invalidate providers to refresh home screen
     ref.invalidate(hasCompletedTodayProvider);

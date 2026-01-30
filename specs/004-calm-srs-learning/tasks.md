@@ -207,12 +207,12 @@
 
 **Purpose**: Extend existing sync infrastructure for learning data
 
-- [ ] T070 [P] Add LearningCards to SyncOutbox pattern in `mobile/lib/data/services/sync_service.dart`
-- [ ] T071 [P] Add LearningSessions to SyncOutbox pattern
-- [ ] T072 [P] Add Streaks to SyncOutbox pattern
-- [ ] T073 [P] Add UserLearningPreferences to SyncOutbox pattern
-- [ ] T074 Add ReviewLogs to sync (push-only, append-only - never pulled)
-- [ ] T075 Trigger sync on session complete
+- [x] T070 [P] Add LearningCards to SyncOutbox pattern in `mobile/lib/data/services/sync_service.dart`
+- [x] T071 [P] Add LearningSessions to SyncOutbox pattern
+- [x] T072 [P] Add Streaks to SyncOutbox pattern
+- [x] T073 [P] Add UserLearningPreferences to SyncOutbox pattern
+- [x] T074 Add ReviewLogs to sync (push-only, append-only - never pulled)
+- [x] T075 Trigger sync on session complete
 
 ---
 
@@ -224,9 +224,9 @@
 
 - [x] T076 [P] Run `flutter analyze` and fix all errors/warnings
 - [x] T077 [P] Run `dart format .` on all new files
-- [ ] T078 Implement unit tests for SrsScheduler in `mobile/test/unit/services/srs_scheduler_test.dart`
-- [ ] T079 [P] Implement unit tests for SessionPlanner in `mobile/test/unit/services/session_planner_test.dart`
-- [ ] T080 [P] Implement unit tests for TelemetryService in `mobile/test/unit/services/telemetry_service_test.dart`
+- [x] T078 Implement unit tests for SrsScheduler in `mobile/test/unit/services/srs_scheduler_test.dart`
+- [x] T079 [P] Implement unit tests for SessionPlanner in `mobile/test/unit/services/session_planner_test.dart`
+- [x] T080 [P] Implement unit tests for TelemetryService in `mobile/test/unit/services/telemetry_service_test.dart`
 - [ ] T081 [P] Implement repository tests for LearningCardRepository in `mobile/test/unit/repositories/learning_card_repository_test.dart`
 - [ ] T082 [P] Implement repository tests for SessionRepository in `mobile/test/unit/repositories/session_repository_test.dart`
 - [ ] T083 [P] Implement repository tests for StreakRepository in `mobile/test/unit/repositories/streak_repository_test.dart`
