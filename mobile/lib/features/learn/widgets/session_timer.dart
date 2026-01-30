@@ -44,7 +44,9 @@ class _SessionTimerState extends State<SessionTimer> {
   void initState() {
     super.initState();
     _elapsedSeconds = widget.initialElapsed;
-    _startTimer();
+    if (!widget.isPaused) {
+      _startTimer();
+    }
   }
 
   @override

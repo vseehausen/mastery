@@ -227,14 +227,14 @@
 - [x] T078 Implement unit tests for SrsScheduler in `mobile/test/unit/services/srs_scheduler_test.dart`
 - [x] T079 [P] Implement unit tests for SessionPlanner in `mobile/test/unit/services/session_planner_test.dart`
 - [x] T080 [P] Implement unit tests for TelemetryService in `mobile/test/unit/services/telemetry_service_test.dart`
-- [ ] T081 [P] Implement repository tests for LearningCardRepository in `mobile/test/unit/repositories/learning_card_repository_test.dart`
-- [ ] T082 [P] Implement repository tests for SessionRepository in `mobile/test/unit/repositories/session_repository_test.dart`
-- [ ] T083 [P] Implement repository tests for StreakRepository in `mobile/test/unit/repositories/streak_repository_test.dart`
-- [ ] T084 [P] Implement widget tests for RecognitionCard in `mobile/test/widgets/recognition_card_test.dart`
-- [ ] T085 [P] Implement widget tests for RecallCard in `mobile/test/widgets/recall_card_test.dart`
-- [ ] T086 Implement widget tests for SessionScreen in `mobile/test/widgets/session_screen_test.dart`
-- [ ] T087 Validate quickstart.md steps work end-to-end
-- [ ] T088 Final review: verify no backlog counts, due numbers, or pressure indicators visible in any UI
+- [x] T081 [P] Implement repository tests for LearningCardRepository in `mobile/test/unit/repositories/learning_card_repository_test.dart`
+- [x] T082 [P] Implement repository tests for SessionRepository in `mobile/test/unit/repositories/session_repository_test.dart`
+- [x] T083 [P] Implement repository tests for StreakRepository in `mobile/test/unit/repositories/streak_repository_test.dart`
+- [x] T084 [P] Implement widget tests for RecognitionCard in `mobile/test/widgets/recognition_card_test.dart`
+- [x] T085 [P] Implement widget tests for RecallCard in `mobile/test/widgets/recall_card_test.dart`
+- [x] T086 Implement widget tests for SessionScreen in `mobile/test/widgets/session_screen_test.dart`
+- [x] T087 Validate quickstart.md steps work end-to-end
+- [x] T088 Final review: verify no backlog counts, due numbers, or pressure indicators visible in any UI
 
 ---
 

@@ -197,17 +197,24 @@ class _RecognitionCardState extends State<RecognitionCard> {
         onPressed: showResult ? null : () => _handleSelection(option),
         backgroundColor: backgroundColor,
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
+            Flexible(
               child: Text(
                 option,
                 style: MasteryTextStyles.body.copyWith(color: textColor),
               ),
             ),
             if (showResult && isCorrectOption)
-              Icon(Icons.check, color: textColor, size: 20)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(Icons.check, color: textColor, size: 20),
+              )
             else if (showResult && isSelected && !isCorrectOption)
-              Icon(Icons.close, color: textColor, size: 20),
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(Icons.close, color: textColor, size: 20),
+              ),
           ],
         ),
       ),
