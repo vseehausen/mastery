@@ -4128,6 +4128,4129 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
   }
 }
 
+class $LearningCardsTable extends LearningCards
+    with TableInfo<$LearningCardsTable, LearningCard> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LearningCardsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vocabularyIdMeta = const VerificationMeta(
+    'vocabularyId',
+  );
+  @override
+  late final GeneratedColumn<String> vocabularyId = GeneratedColumn<String>(
+    'vocabulary_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<int> state = GeneratedColumn<int>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dueMeta = const VerificationMeta('due');
+  @override
+  late final GeneratedColumn<DateTime> due = GeneratedColumn<DateTime>(
+    'due',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stabilityMeta = const VerificationMeta(
+    'stability',
+  );
+  @override
+  late final GeneratedColumn<double> stability = GeneratedColumn<double>(
+    'stability',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _difficultyMeta = const VerificationMeta(
+    'difficulty',
+  );
+  @override
+  late final GeneratedColumn<double> difficulty = GeneratedColumn<double>(
+    'difficulty',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _repsMeta = const VerificationMeta('reps');
+  @override
+  late final GeneratedColumn<int> reps = GeneratedColumn<int>(
+    'reps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lapsesMeta = const VerificationMeta('lapses');
+  @override
+  late final GeneratedColumn<int> lapses = GeneratedColumn<int>(
+    'lapses',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastReviewMeta = const VerificationMeta(
+    'lastReview',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastReview = GeneratedColumn<DateTime>(
+    'last_review',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isLeechMeta = const VerificationMeta(
+    'isLeech',
+  );
+  @override
+  late final GeneratedColumn<bool> isLeech = GeneratedColumn<bool>(
+    'is_leech',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_leech" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    vocabularyId,
+    state,
+    due,
+    stability,
+    difficulty,
+    reps,
+    lapses,
+    lastReview,
+    isLeech,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'learning_cards';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LearningCard> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('vocabulary_id')) {
+      context.handle(
+        _vocabularyIdMeta,
+        vocabularyId.isAcceptableOrUnknown(
+          data['vocabulary_id']!,
+          _vocabularyIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyIdMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('due')) {
+      context.handle(
+        _dueMeta,
+        due.isAcceptableOrUnknown(data['due']!, _dueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dueMeta);
+    }
+    if (data.containsKey('stability')) {
+      context.handle(
+        _stabilityMeta,
+        stability.isAcceptableOrUnknown(data['stability']!, _stabilityMeta),
+      );
+    }
+    if (data.containsKey('difficulty')) {
+      context.handle(
+        _difficultyMeta,
+        difficulty.isAcceptableOrUnknown(data['difficulty']!, _difficultyMeta),
+      );
+    }
+    if (data.containsKey('reps')) {
+      context.handle(
+        _repsMeta,
+        reps.isAcceptableOrUnknown(data['reps']!, _repsMeta),
+      );
+    }
+    if (data.containsKey('lapses')) {
+      context.handle(
+        _lapsesMeta,
+        lapses.isAcceptableOrUnknown(data['lapses']!, _lapsesMeta),
+      );
+    }
+    if (data.containsKey('last_review')) {
+      context.handle(
+        _lastReviewMeta,
+        lastReview.isAcceptableOrUnknown(data['last_review']!, _lastReviewMeta),
+      );
+    }
+    if (data.containsKey('is_leech')) {
+      context.handle(
+        _isLeechMeta,
+        isLeech.isAcceptableOrUnknown(data['is_leech']!, _isLeechMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LearningCard map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LearningCard(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      vocabularyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vocabulary_id'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}state'],
+      )!,
+      due: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due'],
+      )!,
+      stability: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stability'],
+      )!,
+      difficulty: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}difficulty'],
+      )!,
+      reps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reps'],
+      )!,
+      lapses: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lapses'],
+      )!,
+      lastReview: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_review'],
+      ),
+      isLeech: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_leech'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $LearningCardsTable createAlias(String alias) {
+    return $LearningCardsTable(attachedDatabase, alias);
+  }
+}
+
+class LearningCard extends DataClass implements Insertable<LearningCard> {
+  final String id;
+  final String userId;
+  final String vocabularyId;
+  final int state;
+  final DateTime due;
+  final double stability;
+  final double difficulty;
+  final int reps;
+  final int lapses;
+  final DateTime? lastReview;
+  final bool isLeech;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const LearningCard({
+    required this.id,
+    required this.userId,
+    required this.vocabularyId,
+    required this.state,
+    required this.due,
+    required this.stability,
+    required this.difficulty,
+    required this.reps,
+    required this.lapses,
+    this.lastReview,
+    required this.isLeech,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['vocabulary_id'] = Variable<String>(vocabularyId);
+    map['state'] = Variable<int>(state);
+    map['due'] = Variable<DateTime>(due);
+    map['stability'] = Variable<double>(stability);
+    map['difficulty'] = Variable<double>(difficulty);
+    map['reps'] = Variable<int>(reps);
+    map['lapses'] = Variable<int>(lapses);
+    if (!nullToAbsent || lastReview != null) {
+      map['last_review'] = Variable<DateTime>(lastReview);
+    }
+    map['is_leech'] = Variable<bool>(isLeech);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  LearningCardsCompanion toCompanion(bool nullToAbsent) {
+    return LearningCardsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      vocabularyId: Value(vocabularyId),
+      state: Value(state),
+      due: Value(due),
+      stability: Value(stability),
+      difficulty: Value(difficulty),
+      reps: Value(reps),
+      lapses: Value(lapses),
+      lastReview: lastReview == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastReview),
+      isLeech: Value(isLeech),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory LearningCard.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LearningCard(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      vocabularyId: serializer.fromJson<String>(json['vocabularyId']),
+      state: serializer.fromJson<int>(json['state']),
+      due: serializer.fromJson<DateTime>(json['due']),
+      stability: serializer.fromJson<double>(json['stability']),
+      difficulty: serializer.fromJson<double>(json['difficulty']),
+      reps: serializer.fromJson<int>(json['reps']),
+      lapses: serializer.fromJson<int>(json['lapses']),
+      lastReview: serializer.fromJson<DateTime?>(json['lastReview']),
+      isLeech: serializer.fromJson<bool>(json['isLeech']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'vocabularyId': serializer.toJson<String>(vocabularyId),
+      'state': serializer.toJson<int>(state),
+      'due': serializer.toJson<DateTime>(due),
+      'stability': serializer.toJson<double>(stability),
+      'difficulty': serializer.toJson<double>(difficulty),
+      'reps': serializer.toJson<int>(reps),
+      'lapses': serializer.toJson<int>(lapses),
+      'lastReview': serializer.toJson<DateTime?>(lastReview),
+      'isLeech': serializer.toJson<bool>(isLeech),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  LearningCard copyWith({
+    String? id,
+    String? userId,
+    String? vocabularyId,
+    int? state,
+    DateTime? due,
+    double? stability,
+    double? difficulty,
+    int? reps,
+    int? lapses,
+    Value<DateTime?> lastReview = const Value.absent(),
+    bool? isLeech,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => LearningCard(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    vocabularyId: vocabularyId ?? this.vocabularyId,
+    state: state ?? this.state,
+    due: due ?? this.due,
+    stability: stability ?? this.stability,
+    difficulty: difficulty ?? this.difficulty,
+    reps: reps ?? this.reps,
+    lapses: lapses ?? this.lapses,
+    lastReview: lastReview.present ? lastReview.value : this.lastReview,
+    isLeech: isLeech ?? this.isLeech,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  LearningCard copyWithCompanion(LearningCardsCompanion data) {
+    return LearningCard(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      vocabularyId: data.vocabularyId.present
+          ? data.vocabularyId.value
+          : this.vocabularyId,
+      state: data.state.present ? data.state.value : this.state,
+      due: data.due.present ? data.due.value : this.due,
+      stability: data.stability.present ? data.stability.value : this.stability,
+      difficulty: data.difficulty.present
+          ? data.difficulty.value
+          : this.difficulty,
+      reps: data.reps.present ? data.reps.value : this.reps,
+      lapses: data.lapses.present ? data.lapses.value : this.lapses,
+      lastReview: data.lastReview.present
+          ? data.lastReview.value
+          : this.lastReview,
+      isLeech: data.isLeech.present ? data.isLeech.value : this.isLeech,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningCard(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('state: $state, ')
+          ..write('due: $due, ')
+          ..write('stability: $stability, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('reps: $reps, ')
+          ..write('lapses: $lapses, ')
+          ..write('lastReview: $lastReview, ')
+          ..write('isLeech: $isLeech, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    vocabularyId,
+    state,
+    due,
+    stability,
+    difficulty,
+    reps,
+    lapses,
+    lastReview,
+    isLeech,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LearningCard &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.vocabularyId == this.vocabularyId &&
+          other.state == this.state &&
+          other.due == this.due &&
+          other.stability == this.stability &&
+          other.difficulty == this.difficulty &&
+          other.reps == this.reps &&
+          other.lapses == this.lapses &&
+          other.lastReview == this.lastReview &&
+          other.isLeech == this.isLeech &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class LearningCardsCompanion extends UpdateCompanion<LearningCard> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> vocabularyId;
+  final Value<int> state;
+  final Value<DateTime> due;
+  final Value<double> stability;
+  final Value<double> difficulty;
+  final Value<int> reps;
+  final Value<int> lapses;
+  final Value<DateTime?> lastReview;
+  final Value<bool> isLeech;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const LearningCardsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.vocabularyId = const Value.absent(),
+    this.state = const Value.absent(),
+    this.due = const Value.absent(),
+    this.stability = const Value.absent(),
+    this.difficulty = const Value.absent(),
+    this.reps = const Value.absent(),
+    this.lapses = const Value.absent(),
+    this.lastReview = const Value.absent(),
+    this.isLeech = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LearningCardsCompanion.insert({
+    required String id,
+    required String userId,
+    required String vocabularyId,
+    this.state = const Value.absent(),
+    required DateTime due,
+    this.stability = const Value.absent(),
+    this.difficulty = const Value.absent(),
+    this.reps = const Value.absent(),
+    this.lapses = const Value.absent(),
+    this.lastReview = const Value.absent(),
+    this.isLeech = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       vocabularyId = Value(vocabularyId),
+       due = Value(due),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LearningCard> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? vocabularyId,
+    Expression<int>? state,
+    Expression<DateTime>? due,
+    Expression<double>? stability,
+    Expression<double>? difficulty,
+    Expression<int>? reps,
+    Expression<int>? lapses,
+    Expression<DateTime>? lastReview,
+    Expression<bool>? isLeech,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (vocabularyId != null) 'vocabulary_id': vocabularyId,
+      if (state != null) 'state': state,
+      if (due != null) 'due': due,
+      if (stability != null) 'stability': stability,
+      if (difficulty != null) 'difficulty': difficulty,
+      if (reps != null) 'reps': reps,
+      if (lapses != null) 'lapses': lapses,
+      if (lastReview != null) 'last_review': lastReview,
+      if (isLeech != null) 'is_leech': isLeech,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LearningCardsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? vocabularyId,
+    Value<int>? state,
+    Value<DateTime>? due,
+    Value<double>? stability,
+    Value<double>? difficulty,
+    Value<int>? reps,
+    Value<int>? lapses,
+    Value<DateTime?>? lastReview,
+    Value<bool>? isLeech,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return LearningCardsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      vocabularyId: vocabularyId ?? this.vocabularyId,
+      state: state ?? this.state,
+      due: due ?? this.due,
+      stability: stability ?? this.stability,
+      difficulty: difficulty ?? this.difficulty,
+      reps: reps ?? this.reps,
+      lapses: lapses ?? this.lapses,
+      lastReview: lastReview ?? this.lastReview,
+      isLeech: isLeech ?? this.isLeech,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (vocabularyId.present) {
+      map['vocabulary_id'] = Variable<String>(vocabularyId.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<int>(state.value);
+    }
+    if (due.present) {
+      map['due'] = Variable<DateTime>(due.value);
+    }
+    if (stability.present) {
+      map['stability'] = Variable<double>(stability.value);
+    }
+    if (difficulty.present) {
+      map['difficulty'] = Variable<double>(difficulty.value);
+    }
+    if (reps.present) {
+      map['reps'] = Variable<int>(reps.value);
+    }
+    if (lapses.present) {
+      map['lapses'] = Variable<int>(lapses.value);
+    }
+    if (lastReview.present) {
+      map['last_review'] = Variable<DateTime>(lastReview.value);
+    }
+    if (isLeech.present) {
+      map['is_leech'] = Variable<bool>(isLeech.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningCardsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('state: $state, ')
+          ..write('due: $due, ')
+          ..write('stability: $stability, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('reps: $reps, ')
+          ..write('lapses: $lapses, ')
+          ..write('lastReview: $lastReview, ')
+          ..write('isLeech: $isLeech, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReviewLogsTable extends ReviewLogs
+    with TableInfo<$ReviewLogsTable, ReviewLog> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReviewLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _learningCardIdMeta = const VerificationMeta(
+    'learningCardId',
+  );
+  @override
+  late final GeneratedColumn<String> learningCardId = GeneratedColumn<String>(
+    'learning_card_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
+  @override
+  late final GeneratedColumn<int> rating = GeneratedColumn<int>(
+    'rating',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _interactionModeMeta = const VerificationMeta(
+    'interactionMode',
+  );
+  @override
+  late final GeneratedColumn<int> interactionMode = GeneratedColumn<int>(
+    'interaction_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateBeforeMeta = const VerificationMeta(
+    'stateBefore',
+  );
+  @override
+  late final GeneratedColumn<int> stateBefore = GeneratedColumn<int>(
+    'state_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateAfterMeta = const VerificationMeta(
+    'stateAfter',
+  );
+  @override
+  late final GeneratedColumn<int> stateAfter = GeneratedColumn<int>(
+    'state_after',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stabilityBeforeMeta = const VerificationMeta(
+    'stabilityBefore',
+  );
+  @override
+  late final GeneratedColumn<double> stabilityBefore = GeneratedColumn<double>(
+    'stability_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stabilityAfterMeta = const VerificationMeta(
+    'stabilityAfter',
+  );
+  @override
+  late final GeneratedColumn<double> stabilityAfter = GeneratedColumn<double>(
+    'stability_after',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _difficultyBeforeMeta = const VerificationMeta(
+    'difficultyBefore',
+  );
+  @override
+  late final GeneratedColumn<double> difficultyBefore = GeneratedColumn<double>(
+    'difficulty_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _difficultyAfterMeta = const VerificationMeta(
+    'difficultyAfter',
+  );
+  @override
+  late final GeneratedColumn<double> difficultyAfter = GeneratedColumn<double>(
+    'difficulty_after',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _responseTimeMsMeta = const VerificationMeta(
+    'responseTimeMs',
+  );
+  @override
+  late final GeneratedColumn<int> responseTimeMs = GeneratedColumn<int>(
+    'response_time_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _retrievabilityAtReviewMeta =
+      const VerificationMeta('retrievabilityAtReview');
+  @override
+  late final GeneratedColumn<double> retrievabilityAtReview =
+      GeneratedColumn<double>(
+        'retrievability_at_review',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _reviewedAtMeta = const VerificationMeta(
+    'reviewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reviewedAt = GeneratedColumn<DateTime>(
+    'reviewed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    learningCardId,
+    rating,
+    interactionMode,
+    stateBefore,
+    stateAfter,
+    stabilityBefore,
+    stabilityAfter,
+    difficultyBefore,
+    difficultyAfter,
+    responseTimeMs,
+    retrievabilityAtReview,
+    reviewedAt,
+    sessionId,
+    isPendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'review_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReviewLog> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('learning_card_id')) {
+      context.handle(
+        _learningCardIdMeta,
+        learningCardId.isAcceptableOrUnknown(
+          data['learning_card_id']!,
+          _learningCardIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_learningCardIdMeta);
+    }
+    if (data.containsKey('rating')) {
+      context.handle(
+        _ratingMeta,
+        rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ratingMeta);
+    }
+    if (data.containsKey('interaction_mode')) {
+      context.handle(
+        _interactionModeMeta,
+        interactionMode.isAcceptableOrUnknown(
+          data['interaction_mode']!,
+          _interactionModeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_interactionModeMeta);
+    }
+    if (data.containsKey('state_before')) {
+      context.handle(
+        _stateBeforeMeta,
+        stateBefore.isAcceptableOrUnknown(
+          data['state_before']!,
+          _stateBeforeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_stateBeforeMeta);
+    }
+    if (data.containsKey('state_after')) {
+      context.handle(
+        _stateAfterMeta,
+        stateAfter.isAcceptableOrUnknown(data['state_after']!, _stateAfterMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateAfterMeta);
+    }
+    if (data.containsKey('stability_before')) {
+      context.handle(
+        _stabilityBeforeMeta,
+        stabilityBefore.isAcceptableOrUnknown(
+          data['stability_before']!,
+          _stabilityBeforeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_stabilityBeforeMeta);
+    }
+    if (data.containsKey('stability_after')) {
+      context.handle(
+        _stabilityAfterMeta,
+        stabilityAfter.isAcceptableOrUnknown(
+          data['stability_after']!,
+          _stabilityAfterMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_stabilityAfterMeta);
+    }
+    if (data.containsKey('difficulty_before')) {
+      context.handle(
+        _difficultyBeforeMeta,
+        difficultyBefore.isAcceptableOrUnknown(
+          data['difficulty_before']!,
+          _difficultyBeforeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_difficultyBeforeMeta);
+    }
+    if (data.containsKey('difficulty_after')) {
+      context.handle(
+        _difficultyAfterMeta,
+        difficultyAfter.isAcceptableOrUnknown(
+          data['difficulty_after']!,
+          _difficultyAfterMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_difficultyAfterMeta);
+    }
+    if (data.containsKey('response_time_ms')) {
+      context.handle(
+        _responseTimeMsMeta,
+        responseTimeMs.isAcceptableOrUnknown(
+          data['response_time_ms']!,
+          _responseTimeMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_responseTimeMsMeta);
+    }
+    if (data.containsKey('retrievability_at_review')) {
+      context.handle(
+        _retrievabilityAtReviewMeta,
+        retrievabilityAtReview.isAcceptableOrUnknown(
+          data['retrievability_at_review']!,
+          _retrievabilityAtReviewMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_retrievabilityAtReviewMeta);
+    }
+    if (data.containsKey('reviewed_at')) {
+      context.handle(
+        _reviewedAtMeta,
+        reviewedAt.isAcceptableOrUnknown(data['reviewed_at']!, _reviewedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewedAtMeta);
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReviewLog map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReviewLog(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      learningCardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}learning_card_id'],
+      )!,
+      rating: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rating'],
+      )!,
+      interactionMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}interaction_mode'],
+      )!,
+      stateBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}state_before'],
+      )!,
+      stateAfter: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}state_after'],
+      )!,
+      stabilityBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stability_before'],
+      )!,
+      stabilityAfter: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stability_after'],
+      )!,
+      difficultyBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}difficulty_before'],
+      )!,
+      difficultyAfter: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}difficulty_after'],
+      )!,
+      responseTimeMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}response_time_ms'],
+      )!,
+      retrievabilityAtReview: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}retrievability_at_review'],
+      )!,
+      reviewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reviewed_at'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $ReviewLogsTable createAlias(String alias) {
+    return $ReviewLogsTable(attachedDatabase, alias);
+  }
+}
+
+class ReviewLog extends DataClass implements Insertable<ReviewLog> {
+  final String id;
+  final String userId;
+  final String learningCardId;
+  final int rating;
+  final int interactionMode;
+  final int stateBefore;
+  final int stateAfter;
+  final double stabilityBefore;
+  final double stabilityAfter;
+  final double difficultyBefore;
+  final double difficultyAfter;
+  final int responseTimeMs;
+  final double retrievabilityAtReview;
+  final DateTime reviewedAt;
+  final String? sessionId;
+  final bool isPendingSync;
+  const ReviewLog({
+    required this.id,
+    required this.userId,
+    required this.learningCardId,
+    required this.rating,
+    required this.interactionMode,
+    required this.stateBefore,
+    required this.stateAfter,
+    required this.stabilityBefore,
+    required this.stabilityAfter,
+    required this.difficultyBefore,
+    required this.difficultyAfter,
+    required this.responseTimeMs,
+    required this.retrievabilityAtReview,
+    required this.reviewedAt,
+    this.sessionId,
+    required this.isPendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['learning_card_id'] = Variable<String>(learningCardId);
+    map['rating'] = Variable<int>(rating);
+    map['interaction_mode'] = Variable<int>(interactionMode);
+    map['state_before'] = Variable<int>(stateBefore);
+    map['state_after'] = Variable<int>(stateAfter);
+    map['stability_before'] = Variable<double>(stabilityBefore);
+    map['stability_after'] = Variable<double>(stabilityAfter);
+    map['difficulty_before'] = Variable<double>(difficultyBefore);
+    map['difficulty_after'] = Variable<double>(difficultyAfter);
+    map['response_time_ms'] = Variable<int>(responseTimeMs);
+    map['retrievability_at_review'] = Variable<double>(retrievabilityAtReview);
+    map['reviewed_at'] = Variable<DateTime>(reviewedAt);
+    if (!nullToAbsent || sessionId != null) {
+      map['session_id'] = Variable<String>(sessionId);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    return map;
+  }
+
+  ReviewLogsCompanion toCompanion(bool nullToAbsent) {
+    return ReviewLogsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      learningCardId: Value(learningCardId),
+      rating: Value(rating),
+      interactionMode: Value(interactionMode),
+      stateBefore: Value(stateBefore),
+      stateAfter: Value(stateAfter),
+      stabilityBefore: Value(stabilityBefore),
+      stabilityAfter: Value(stabilityAfter),
+      difficultyBefore: Value(difficultyBefore),
+      difficultyAfter: Value(difficultyAfter),
+      responseTimeMs: Value(responseTimeMs),
+      retrievabilityAtReview: Value(retrievabilityAtReview),
+      reviewedAt: Value(reviewedAt),
+      sessionId: sessionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sessionId),
+      isPendingSync: Value(isPendingSync),
+    );
+  }
+
+  factory ReviewLog.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReviewLog(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      learningCardId: serializer.fromJson<String>(json['learningCardId']),
+      rating: serializer.fromJson<int>(json['rating']),
+      interactionMode: serializer.fromJson<int>(json['interactionMode']),
+      stateBefore: serializer.fromJson<int>(json['stateBefore']),
+      stateAfter: serializer.fromJson<int>(json['stateAfter']),
+      stabilityBefore: serializer.fromJson<double>(json['stabilityBefore']),
+      stabilityAfter: serializer.fromJson<double>(json['stabilityAfter']),
+      difficultyBefore: serializer.fromJson<double>(json['difficultyBefore']),
+      difficultyAfter: serializer.fromJson<double>(json['difficultyAfter']),
+      responseTimeMs: serializer.fromJson<int>(json['responseTimeMs']),
+      retrievabilityAtReview: serializer.fromJson<double>(
+        json['retrievabilityAtReview'],
+      ),
+      reviewedAt: serializer.fromJson<DateTime>(json['reviewedAt']),
+      sessionId: serializer.fromJson<String?>(json['sessionId']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'learningCardId': serializer.toJson<String>(learningCardId),
+      'rating': serializer.toJson<int>(rating),
+      'interactionMode': serializer.toJson<int>(interactionMode),
+      'stateBefore': serializer.toJson<int>(stateBefore),
+      'stateAfter': serializer.toJson<int>(stateAfter),
+      'stabilityBefore': serializer.toJson<double>(stabilityBefore),
+      'stabilityAfter': serializer.toJson<double>(stabilityAfter),
+      'difficultyBefore': serializer.toJson<double>(difficultyBefore),
+      'difficultyAfter': serializer.toJson<double>(difficultyAfter),
+      'responseTimeMs': serializer.toJson<int>(responseTimeMs),
+      'retrievabilityAtReview': serializer.toJson<double>(
+        retrievabilityAtReview,
+      ),
+      'reviewedAt': serializer.toJson<DateTime>(reviewedAt),
+      'sessionId': serializer.toJson<String?>(sessionId),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+    };
+  }
+
+  ReviewLog copyWith({
+    String? id,
+    String? userId,
+    String? learningCardId,
+    int? rating,
+    int? interactionMode,
+    int? stateBefore,
+    int? stateAfter,
+    double? stabilityBefore,
+    double? stabilityAfter,
+    double? difficultyBefore,
+    double? difficultyAfter,
+    int? responseTimeMs,
+    double? retrievabilityAtReview,
+    DateTime? reviewedAt,
+    Value<String?> sessionId = const Value.absent(),
+    bool? isPendingSync,
+  }) => ReviewLog(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    learningCardId: learningCardId ?? this.learningCardId,
+    rating: rating ?? this.rating,
+    interactionMode: interactionMode ?? this.interactionMode,
+    stateBefore: stateBefore ?? this.stateBefore,
+    stateAfter: stateAfter ?? this.stateAfter,
+    stabilityBefore: stabilityBefore ?? this.stabilityBefore,
+    stabilityAfter: stabilityAfter ?? this.stabilityAfter,
+    difficultyBefore: difficultyBefore ?? this.difficultyBefore,
+    difficultyAfter: difficultyAfter ?? this.difficultyAfter,
+    responseTimeMs: responseTimeMs ?? this.responseTimeMs,
+    retrievabilityAtReview:
+        retrievabilityAtReview ?? this.retrievabilityAtReview,
+    reviewedAt: reviewedAt ?? this.reviewedAt,
+    sessionId: sessionId.present ? sessionId.value : this.sessionId,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+  );
+  ReviewLog copyWithCompanion(ReviewLogsCompanion data) {
+    return ReviewLog(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      learningCardId: data.learningCardId.present
+          ? data.learningCardId.value
+          : this.learningCardId,
+      rating: data.rating.present ? data.rating.value : this.rating,
+      interactionMode: data.interactionMode.present
+          ? data.interactionMode.value
+          : this.interactionMode,
+      stateBefore: data.stateBefore.present
+          ? data.stateBefore.value
+          : this.stateBefore,
+      stateAfter: data.stateAfter.present
+          ? data.stateAfter.value
+          : this.stateAfter,
+      stabilityBefore: data.stabilityBefore.present
+          ? data.stabilityBefore.value
+          : this.stabilityBefore,
+      stabilityAfter: data.stabilityAfter.present
+          ? data.stabilityAfter.value
+          : this.stabilityAfter,
+      difficultyBefore: data.difficultyBefore.present
+          ? data.difficultyBefore.value
+          : this.difficultyBefore,
+      difficultyAfter: data.difficultyAfter.present
+          ? data.difficultyAfter.value
+          : this.difficultyAfter,
+      responseTimeMs: data.responseTimeMs.present
+          ? data.responseTimeMs.value
+          : this.responseTimeMs,
+      retrievabilityAtReview: data.retrievabilityAtReview.present
+          ? data.retrievabilityAtReview.value
+          : this.retrievabilityAtReview,
+      reviewedAt: data.reviewedAt.present
+          ? data.reviewedAt.value
+          : this.reviewedAt,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewLog(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('learningCardId: $learningCardId, ')
+          ..write('rating: $rating, ')
+          ..write('interactionMode: $interactionMode, ')
+          ..write('stateBefore: $stateBefore, ')
+          ..write('stateAfter: $stateAfter, ')
+          ..write('stabilityBefore: $stabilityBefore, ')
+          ..write('stabilityAfter: $stabilityAfter, ')
+          ..write('difficultyBefore: $difficultyBefore, ')
+          ..write('difficultyAfter: $difficultyAfter, ')
+          ..write('responseTimeMs: $responseTimeMs, ')
+          ..write('retrievabilityAtReview: $retrievabilityAtReview, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('isPendingSync: $isPendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    learningCardId,
+    rating,
+    interactionMode,
+    stateBefore,
+    stateAfter,
+    stabilityBefore,
+    stabilityAfter,
+    difficultyBefore,
+    difficultyAfter,
+    responseTimeMs,
+    retrievabilityAtReview,
+    reviewedAt,
+    sessionId,
+    isPendingSync,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReviewLog &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.learningCardId == this.learningCardId &&
+          other.rating == this.rating &&
+          other.interactionMode == this.interactionMode &&
+          other.stateBefore == this.stateBefore &&
+          other.stateAfter == this.stateAfter &&
+          other.stabilityBefore == this.stabilityBefore &&
+          other.stabilityAfter == this.stabilityAfter &&
+          other.difficultyBefore == this.difficultyBefore &&
+          other.difficultyAfter == this.difficultyAfter &&
+          other.responseTimeMs == this.responseTimeMs &&
+          other.retrievabilityAtReview == this.retrievabilityAtReview &&
+          other.reviewedAt == this.reviewedAt &&
+          other.sessionId == this.sessionId &&
+          other.isPendingSync == this.isPendingSync);
+}
+
+class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> learningCardId;
+  final Value<int> rating;
+  final Value<int> interactionMode;
+  final Value<int> stateBefore;
+  final Value<int> stateAfter;
+  final Value<double> stabilityBefore;
+  final Value<double> stabilityAfter;
+  final Value<double> difficultyBefore;
+  final Value<double> difficultyAfter;
+  final Value<int> responseTimeMs;
+  final Value<double> retrievabilityAtReview;
+  final Value<DateTime> reviewedAt;
+  final Value<String?> sessionId;
+  final Value<bool> isPendingSync;
+  final Value<int> rowid;
+  const ReviewLogsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.learningCardId = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.interactionMode = const Value.absent(),
+    this.stateBefore = const Value.absent(),
+    this.stateAfter = const Value.absent(),
+    this.stabilityBefore = const Value.absent(),
+    this.stabilityAfter = const Value.absent(),
+    this.difficultyBefore = const Value.absent(),
+    this.difficultyAfter = const Value.absent(),
+    this.responseTimeMs = const Value.absent(),
+    this.retrievabilityAtReview = const Value.absent(),
+    this.reviewedAt = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReviewLogsCompanion.insert({
+    required String id,
+    required String userId,
+    required String learningCardId,
+    required int rating,
+    required int interactionMode,
+    required int stateBefore,
+    required int stateAfter,
+    required double stabilityBefore,
+    required double stabilityAfter,
+    required double difficultyBefore,
+    required double difficultyAfter,
+    required int responseTimeMs,
+    required double retrievabilityAtReview,
+    required DateTime reviewedAt,
+    this.sessionId = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       learningCardId = Value(learningCardId),
+       rating = Value(rating),
+       interactionMode = Value(interactionMode),
+       stateBefore = Value(stateBefore),
+       stateAfter = Value(stateAfter),
+       stabilityBefore = Value(stabilityBefore),
+       stabilityAfter = Value(stabilityAfter),
+       difficultyBefore = Value(difficultyBefore),
+       difficultyAfter = Value(difficultyAfter),
+       responseTimeMs = Value(responseTimeMs),
+       retrievabilityAtReview = Value(retrievabilityAtReview),
+       reviewedAt = Value(reviewedAt);
+  static Insertable<ReviewLog> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? learningCardId,
+    Expression<int>? rating,
+    Expression<int>? interactionMode,
+    Expression<int>? stateBefore,
+    Expression<int>? stateAfter,
+    Expression<double>? stabilityBefore,
+    Expression<double>? stabilityAfter,
+    Expression<double>? difficultyBefore,
+    Expression<double>? difficultyAfter,
+    Expression<int>? responseTimeMs,
+    Expression<double>? retrievabilityAtReview,
+    Expression<DateTime>? reviewedAt,
+    Expression<String>? sessionId,
+    Expression<bool>? isPendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (learningCardId != null) 'learning_card_id': learningCardId,
+      if (rating != null) 'rating': rating,
+      if (interactionMode != null) 'interaction_mode': interactionMode,
+      if (stateBefore != null) 'state_before': stateBefore,
+      if (stateAfter != null) 'state_after': stateAfter,
+      if (stabilityBefore != null) 'stability_before': stabilityBefore,
+      if (stabilityAfter != null) 'stability_after': stabilityAfter,
+      if (difficultyBefore != null) 'difficulty_before': difficultyBefore,
+      if (difficultyAfter != null) 'difficulty_after': difficultyAfter,
+      if (responseTimeMs != null) 'response_time_ms': responseTimeMs,
+      if (retrievabilityAtReview != null)
+        'retrievability_at_review': retrievabilityAtReview,
+      if (reviewedAt != null) 'reviewed_at': reviewedAt,
+      if (sessionId != null) 'session_id': sessionId,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReviewLogsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? learningCardId,
+    Value<int>? rating,
+    Value<int>? interactionMode,
+    Value<int>? stateBefore,
+    Value<int>? stateAfter,
+    Value<double>? stabilityBefore,
+    Value<double>? stabilityAfter,
+    Value<double>? difficultyBefore,
+    Value<double>? difficultyAfter,
+    Value<int>? responseTimeMs,
+    Value<double>? retrievabilityAtReview,
+    Value<DateTime>? reviewedAt,
+    Value<String?>? sessionId,
+    Value<bool>? isPendingSync,
+    Value<int>? rowid,
+  }) {
+    return ReviewLogsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      learningCardId: learningCardId ?? this.learningCardId,
+      rating: rating ?? this.rating,
+      interactionMode: interactionMode ?? this.interactionMode,
+      stateBefore: stateBefore ?? this.stateBefore,
+      stateAfter: stateAfter ?? this.stateAfter,
+      stabilityBefore: stabilityBefore ?? this.stabilityBefore,
+      stabilityAfter: stabilityAfter ?? this.stabilityAfter,
+      difficultyBefore: difficultyBefore ?? this.difficultyBefore,
+      difficultyAfter: difficultyAfter ?? this.difficultyAfter,
+      responseTimeMs: responseTimeMs ?? this.responseTimeMs,
+      retrievabilityAtReview:
+          retrievabilityAtReview ?? this.retrievabilityAtReview,
+      reviewedAt: reviewedAt ?? this.reviewedAt,
+      sessionId: sessionId ?? this.sessionId,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (learningCardId.present) {
+      map['learning_card_id'] = Variable<String>(learningCardId.value);
+    }
+    if (rating.present) {
+      map['rating'] = Variable<int>(rating.value);
+    }
+    if (interactionMode.present) {
+      map['interaction_mode'] = Variable<int>(interactionMode.value);
+    }
+    if (stateBefore.present) {
+      map['state_before'] = Variable<int>(stateBefore.value);
+    }
+    if (stateAfter.present) {
+      map['state_after'] = Variable<int>(stateAfter.value);
+    }
+    if (stabilityBefore.present) {
+      map['stability_before'] = Variable<double>(stabilityBefore.value);
+    }
+    if (stabilityAfter.present) {
+      map['stability_after'] = Variable<double>(stabilityAfter.value);
+    }
+    if (difficultyBefore.present) {
+      map['difficulty_before'] = Variable<double>(difficultyBefore.value);
+    }
+    if (difficultyAfter.present) {
+      map['difficulty_after'] = Variable<double>(difficultyAfter.value);
+    }
+    if (responseTimeMs.present) {
+      map['response_time_ms'] = Variable<int>(responseTimeMs.value);
+    }
+    if (retrievabilityAtReview.present) {
+      map['retrievability_at_review'] = Variable<double>(
+        retrievabilityAtReview.value,
+      );
+    }
+    if (reviewedAt.present) {
+      map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<String>(sessionId.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewLogsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('learningCardId: $learningCardId, ')
+          ..write('rating: $rating, ')
+          ..write('interactionMode: $interactionMode, ')
+          ..write('stateBefore: $stateBefore, ')
+          ..write('stateAfter: $stateAfter, ')
+          ..write('stabilityBefore: $stabilityBefore, ')
+          ..write('stabilityAfter: $stabilityAfter, ')
+          ..write('difficultyBefore: $difficultyBefore, ')
+          ..write('difficultyAfter: $difficultyAfter, ')
+          ..write('responseTimeMs: $responseTimeMs, ')
+          ..write('retrievabilityAtReview: $retrievabilityAtReview, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LearningSessionsTable extends LearningSessions
+    with TableInfo<$LearningSessionsTable, LearningSession> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LearningSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expiresAt = GeneratedColumn<DateTime>(
+    'expires_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _plannedMinutesMeta = const VerificationMeta(
+    'plannedMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> plannedMinutes = GeneratedColumn<int>(
+    'planned_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _elapsedSecondsMeta = const VerificationMeta(
+    'elapsedSeconds',
+  );
+  @override
+  late final GeneratedColumn<int> elapsedSeconds = GeneratedColumn<int>(
+    'elapsed_seconds',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _bonusSecondsMeta = const VerificationMeta(
+    'bonusSeconds',
+  );
+  @override
+  late final GeneratedColumn<int> bonusSeconds = GeneratedColumn<int>(
+    'bonus_seconds',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _itemsPresentedMeta = const VerificationMeta(
+    'itemsPresented',
+  );
+  @override
+  late final GeneratedColumn<int> itemsPresented = GeneratedColumn<int>(
+    'items_presented',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _itemsCompletedMeta = const VerificationMeta(
+    'itemsCompleted',
+  );
+  @override
+  late final GeneratedColumn<int> itemsCompleted = GeneratedColumn<int>(
+    'items_completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _newWordsPresentedMeta = const VerificationMeta(
+    'newWordsPresented',
+  );
+  @override
+  late final GeneratedColumn<int> newWordsPresented = GeneratedColumn<int>(
+    'new_words_presented',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _reviewsPresentedMeta = const VerificationMeta(
+    'reviewsPresented',
+  );
+  @override
+  late final GeneratedColumn<int> reviewsPresented = GeneratedColumn<int>(
+    'reviews_presented',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _accuracyRateMeta = const VerificationMeta(
+    'accuracyRate',
+  );
+  @override
+  late final GeneratedColumn<double> accuracyRate = GeneratedColumn<double>(
+    'accuracy_rate',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avgResponseTimeMsMeta = const VerificationMeta(
+    'avgResponseTimeMs',
+  );
+  @override
+  late final GeneratedColumn<int> avgResponseTimeMs = GeneratedColumn<int>(
+    'avg_response_time_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _outcomeMeta = const VerificationMeta(
+    'outcome',
+  );
+  @override
+  late final GeneratedColumn<int> outcome = GeneratedColumn<int>(
+    'outcome',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    startedAt,
+    expiresAt,
+    plannedMinutes,
+    elapsedSeconds,
+    bonusSeconds,
+    itemsPresented,
+    itemsCompleted,
+    newWordsPresented,
+    reviewsPresented,
+    accuracyRate,
+    avgResponseTimeMs,
+    outcome,
+    createdAt,
+    updatedAt,
+    isPendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'learning_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LearningSession> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_expiresAtMeta);
+    }
+    if (data.containsKey('planned_minutes')) {
+      context.handle(
+        _plannedMinutesMeta,
+        plannedMinutes.isAcceptableOrUnknown(
+          data['planned_minutes']!,
+          _plannedMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_plannedMinutesMeta);
+    }
+    if (data.containsKey('elapsed_seconds')) {
+      context.handle(
+        _elapsedSecondsMeta,
+        elapsedSeconds.isAcceptableOrUnknown(
+          data['elapsed_seconds']!,
+          _elapsedSecondsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bonus_seconds')) {
+      context.handle(
+        _bonusSecondsMeta,
+        bonusSeconds.isAcceptableOrUnknown(
+          data['bonus_seconds']!,
+          _bonusSecondsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('items_presented')) {
+      context.handle(
+        _itemsPresentedMeta,
+        itemsPresented.isAcceptableOrUnknown(
+          data['items_presented']!,
+          _itemsPresentedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('items_completed')) {
+      context.handle(
+        _itemsCompletedMeta,
+        itemsCompleted.isAcceptableOrUnknown(
+          data['items_completed']!,
+          _itemsCompletedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('new_words_presented')) {
+      context.handle(
+        _newWordsPresentedMeta,
+        newWordsPresented.isAcceptableOrUnknown(
+          data['new_words_presented']!,
+          _newWordsPresentedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reviews_presented')) {
+      context.handle(
+        _reviewsPresentedMeta,
+        reviewsPresented.isAcceptableOrUnknown(
+          data['reviews_presented']!,
+          _reviewsPresentedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('accuracy_rate')) {
+      context.handle(
+        _accuracyRateMeta,
+        accuracyRate.isAcceptableOrUnknown(
+          data['accuracy_rate']!,
+          _accuracyRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('avg_response_time_ms')) {
+      context.handle(
+        _avgResponseTimeMsMeta,
+        avgResponseTimeMs.isAcceptableOrUnknown(
+          data['avg_response_time_ms']!,
+          _avgResponseTimeMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('outcome')) {
+      context.handle(
+        _outcomeMeta,
+        outcome.isAcceptableOrUnknown(data['outcome']!, _outcomeMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LearningSession map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LearningSession(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expires_at'],
+      )!,
+      plannedMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}planned_minutes'],
+      )!,
+      elapsedSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}elapsed_seconds'],
+      )!,
+      bonusSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bonus_seconds'],
+      )!,
+      itemsPresented: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}items_presented'],
+      )!,
+      itemsCompleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}items_completed'],
+      )!,
+      newWordsPresented: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}new_words_presented'],
+      )!,
+      reviewsPresented: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reviews_presented'],
+      )!,
+      accuracyRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}accuracy_rate'],
+      ),
+      avgResponseTimeMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}avg_response_time_ms'],
+      ),
+      outcome: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}outcome'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $LearningSessionsTable createAlias(String alias) {
+    return $LearningSessionsTable(attachedDatabase, alias);
+  }
+}
+
+class LearningSession extends DataClass implements Insertable<LearningSession> {
+  final String id;
+  final String userId;
+  final DateTime startedAt;
+  final DateTime expiresAt;
+  final int plannedMinutes;
+  final int elapsedSeconds;
+  final int bonusSeconds;
+  final int itemsPresented;
+  final int itemsCompleted;
+  final int newWordsPresented;
+  final int reviewsPresented;
+  final double? accuracyRate;
+  final int? avgResponseTimeMs;
+  final int outcome;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool isPendingSync;
+  const LearningSession({
+    required this.id,
+    required this.userId,
+    required this.startedAt,
+    required this.expiresAt,
+    required this.plannedMinutes,
+    required this.elapsedSeconds,
+    required this.bonusSeconds,
+    required this.itemsPresented,
+    required this.itemsCompleted,
+    required this.newWordsPresented,
+    required this.reviewsPresented,
+    this.accuracyRate,
+    this.avgResponseTimeMs,
+    required this.outcome,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isPendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['expires_at'] = Variable<DateTime>(expiresAt);
+    map['planned_minutes'] = Variable<int>(plannedMinutes);
+    map['elapsed_seconds'] = Variable<int>(elapsedSeconds);
+    map['bonus_seconds'] = Variable<int>(bonusSeconds);
+    map['items_presented'] = Variable<int>(itemsPresented);
+    map['items_completed'] = Variable<int>(itemsCompleted);
+    map['new_words_presented'] = Variable<int>(newWordsPresented);
+    map['reviews_presented'] = Variable<int>(reviewsPresented);
+    if (!nullToAbsent || accuracyRate != null) {
+      map['accuracy_rate'] = Variable<double>(accuracyRate);
+    }
+    if (!nullToAbsent || avgResponseTimeMs != null) {
+      map['avg_response_time_ms'] = Variable<int>(avgResponseTimeMs);
+    }
+    map['outcome'] = Variable<int>(outcome);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    return map;
+  }
+
+  LearningSessionsCompanion toCompanion(bool nullToAbsent) {
+    return LearningSessionsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      startedAt: Value(startedAt),
+      expiresAt: Value(expiresAt),
+      plannedMinutes: Value(plannedMinutes),
+      elapsedSeconds: Value(elapsedSeconds),
+      bonusSeconds: Value(bonusSeconds),
+      itemsPresented: Value(itemsPresented),
+      itemsCompleted: Value(itemsCompleted),
+      newWordsPresented: Value(newWordsPresented),
+      reviewsPresented: Value(reviewsPresented),
+      accuracyRate: accuracyRate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accuracyRate),
+      avgResponseTimeMs: avgResponseTimeMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgResponseTimeMs),
+      outcome: Value(outcome),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      isPendingSync: Value(isPendingSync),
+    );
+  }
+
+  factory LearningSession.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LearningSession(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      expiresAt: serializer.fromJson<DateTime>(json['expiresAt']),
+      plannedMinutes: serializer.fromJson<int>(json['plannedMinutes']),
+      elapsedSeconds: serializer.fromJson<int>(json['elapsedSeconds']),
+      bonusSeconds: serializer.fromJson<int>(json['bonusSeconds']),
+      itemsPresented: serializer.fromJson<int>(json['itemsPresented']),
+      itemsCompleted: serializer.fromJson<int>(json['itemsCompleted']),
+      newWordsPresented: serializer.fromJson<int>(json['newWordsPresented']),
+      reviewsPresented: serializer.fromJson<int>(json['reviewsPresented']),
+      accuracyRate: serializer.fromJson<double?>(json['accuracyRate']),
+      avgResponseTimeMs: serializer.fromJson<int?>(json['avgResponseTimeMs']),
+      outcome: serializer.fromJson<int>(json['outcome']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'expiresAt': serializer.toJson<DateTime>(expiresAt),
+      'plannedMinutes': serializer.toJson<int>(plannedMinutes),
+      'elapsedSeconds': serializer.toJson<int>(elapsedSeconds),
+      'bonusSeconds': serializer.toJson<int>(bonusSeconds),
+      'itemsPresented': serializer.toJson<int>(itemsPresented),
+      'itemsCompleted': serializer.toJson<int>(itemsCompleted),
+      'newWordsPresented': serializer.toJson<int>(newWordsPresented),
+      'reviewsPresented': serializer.toJson<int>(reviewsPresented),
+      'accuracyRate': serializer.toJson<double?>(accuracyRate),
+      'avgResponseTimeMs': serializer.toJson<int?>(avgResponseTimeMs),
+      'outcome': serializer.toJson<int>(outcome),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+    };
+  }
+
+  LearningSession copyWith({
+    String? id,
+    String? userId,
+    DateTime? startedAt,
+    DateTime? expiresAt,
+    int? plannedMinutes,
+    int? elapsedSeconds,
+    int? bonusSeconds,
+    int? itemsPresented,
+    int? itemsCompleted,
+    int? newWordsPresented,
+    int? reviewsPresented,
+    Value<double?> accuracyRate = const Value.absent(),
+    Value<int?> avgResponseTimeMs = const Value.absent(),
+    int? outcome,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isPendingSync,
+  }) => LearningSession(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    startedAt: startedAt ?? this.startedAt,
+    expiresAt: expiresAt ?? this.expiresAt,
+    plannedMinutes: plannedMinutes ?? this.plannedMinutes,
+    elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+    bonusSeconds: bonusSeconds ?? this.bonusSeconds,
+    itemsPresented: itemsPresented ?? this.itemsPresented,
+    itemsCompleted: itemsCompleted ?? this.itemsCompleted,
+    newWordsPresented: newWordsPresented ?? this.newWordsPresented,
+    reviewsPresented: reviewsPresented ?? this.reviewsPresented,
+    accuracyRate: accuracyRate.present ? accuracyRate.value : this.accuracyRate,
+    avgResponseTimeMs: avgResponseTimeMs.present
+        ? avgResponseTimeMs.value
+        : this.avgResponseTimeMs,
+    outcome: outcome ?? this.outcome,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+  );
+  LearningSession copyWithCompanion(LearningSessionsCompanion data) {
+    return LearningSession(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      plannedMinutes: data.plannedMinutes.present
+          ? data.plannedMinutes.value
+          : this.plannedMinutes,
+      elapsedSeconds: data.elapsedSeconds.present
+          ? data.elapsedSeconds.value
+          : this.elapsedSeconds,
+      bonusSeconds: data.bonusSeconds.present
+          ? data.bonusSeconds.value
+          : this.bonusSeconds,
+      itemsPresented: data.itemsPresented.present
+          ? data.itemsPresented.value
+          : this.itemsPresented,
+      itemsCompleted: data.itemsCompleted.present
+          ? data.itemsCompleted.value
+          : this.itemsCompleted,
+      newWordsPresented: data.newWordsPresented.present
+          ? data.newWordsPresented.value
+          : this.newWordsPresented,
+      reviewsPresented: data.reviewsPresented.present
+          ? data.reviewsPresented.value
+          : this.reviewsPresented,
+      accuracyRate: data.accuracyRate.present
+          ? data.accuracyRate.value
+          : this.accuracyRate,
+      avgResponseTimeMs: data.avgResponseTimeMs.present
+          ? data.avgResponseTimeMs.value
+          : this.avgResponseTimeMs,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningSession(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('plannedMinutes: $plannedMinutes, ')
+          ..write('elapsedSeconds: $elapsedSeconds, ')
+          ..write('bonusSeconds: $bonusSeconds, ')
+          ..write('itemsPresented: $itemsPresented, ')
+          ..write('itemsCompleted: $itemsCompleted, ')
+          ..write('newWordsPresented: $newWordsPresented, ')
+          ..write('reviewsPresented: $reviewsPresented, ')
+          ..write('accuracyRate: $accuracyRate, ')
+          ..write('avgResponseTimeMs: $avgResponseTimeMs, ')
+          ..write('outcome: $outcome, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isPendingSync: $isPendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    startedAt,
+    expiresAt,
+    plannedMinutes,
+    elapsedSeconds,
+    bonusSeconds,
+    itemsPresented,
+    itemsCompleted,
+    newWordsPresented,
+    reviewsPresented,
+    accuracyRate,
+    avgResponseTimeMs,
+    outcome,
+    createdAt,
+    updatedAt,
+    isPendingSync,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LearningSession &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.startedAt == this.startedAt &&
+          other.expiresAt == this.expiresAt &&
+          other.plannedMinutes == this.plannedMinutes &&
+          other.elapsedSeconds == this.elapsedSeconds &&
+          other.bonusSeconds == this.bonusSeconds &&
+          other.itemsPresented == this.itemsPresented &&
+          other.itemsCompleted == this.itemsCompleted &&
+          other.newWordsPresented == this.newWordsPresented &&
+          other.reviewsPresented == this.reviewsPresented &&
+          other.accuracyRate == this.accuracyRate &&
+          other.avgResponseTimeMs == this.avgResponseTimeMs &&
+          other.outcome == this.outcome &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isPendingSync == this.isPendingSync);
+}
+
+class LearningSessionsCompanion extends UpdateCompanion<LearningSession> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> expiresAt;
+  final Value<int> plannedMinutes;
+  final Value<int> elapsedSeconds;
+  final Value<int> bonusSeconds;
+  final Value<int> itemsPresented;
+  final Value<int> itemsCompleted;
+  final Value<int> newWordsPresented;
+  final Value<int> reviewsPresented;
+  final Value<double?> accuracyRate;
+  final Value<int?> avgResponseTimeMs;
+  final Value<int> outcome;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> rowid;
+  const LearningSessionsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.plannedMinutes = const Value.absent(),
+    this.elapsedSeconds = const Value.absent(),
+    this.bonusSeconds = const Value.absent(),
+    this.itemsPresented = const Value.absent(),
+    this.itemsCompleted = const Value.absent(),
+    this.newWordsPresented = const Value.absent(),
+    this.reviewsPresented = const Value.absent(),
+    this.accuracyRate = const Value.absent(),
+    this.avgResponseTimeMs = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LearningSessionsCompanion.insert({
+    required String id,
+    required String userId,
+    required DateTime startedAt,
+    required DateTime expiresAt,
+    required int plannedMinutes,
+    this.elapsedSeconds = const Value.absent(),
+    this.bonusSeconds = const Value.absent(),
+    this.itemsPresented = const Value.absent(),
+    this.itemsCompleted = const Value.absent(),
+    this.newWordsPresented = const Value.absent(),
+    this.reviewsPresented = const Value.absent(),
+    this.accuracyRate = const Value.absent(),
+    this.avgResponseTimeMs = const Value.absent(),
+    this.outcome = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       startedAt = Value(startedAt),
+       expiresAt = Value(expiresAt),
+       plannedMinutes = Value(plannedMinutes),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LearningSession> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? expiresAt,
+    Expression<int>? plannedMinutes,
+    Expression<int>? elapsedSeconds,
+    Expression<int>? bonusSeconds,
+    Expression<int>? itemsPresented,
+    Expression<int>? itemsCompleted,
+    Expression<int>? newWordsPresented,
+    Expression<int>? reviewsPresented,
+    Expression<double>? accuracyRate,
+    Expression<int>? avgResponseTimeMs,
+    Expression<int>? outcome,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (plannedMinutes != null) 'planned_minutes': plannedMinutes,
+      if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
+      if (bonusSeconds != null) 'bonus_seconds': bonusSeconds,
+      if (itemsPresented != null) 'items_presented': itemsPresented,
+      if (itemsCompleted != null) 'items_completed': itemsCompleted,
+      if (newWordsPresented != null) 'new_words_presented': newWordsPresented,
+      if (reviewsPresented != null) 'reviews_presented': reviewsPresented,
+      if (accuracyRate != null) 'accuracy_rate': accuracyRate,
+      if (avgResponseTimeMs != null) 'avg_response_time_ms': avgResponseTimeMs,
+      if (outcome != null) 'outcome': outcome,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LearningSessionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<DateTime>? startedAt,
+    Value<DateTime>? expiresAt,
+    Value<int>? plannedMinutes,
+    Value<int>? elapsedSeconds,
+    Value<int>? bonusSeconds,
+    Value<int>? itemsPresented,
+    Value<int>? itemsCompleted,
+    Value<int>? newWordsPresented,
+    Value<int>? reviewsPresented,
+    Value<double?>? accuracyRate,
+    Value<int?>? avgResponseTimeMs,
+    Value<int>? outcome,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? rowid,
+  }) {
+    return LearningSessionsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      startedAt: startedAt ?? this.startedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      plannedMinutes: plannedMinutes ?? this.plannedMinutes,
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      bonusSeconds: bonusSeconds ?? this.bonusSeconds,
+      itemsPresented: itemsPresented ?? this.itemsPresented,
+      itemsCompleted: itemsCompleted ?? this.itemsCompleted,
+      newWordsPresented: newWordsPresented ?? this.newWordsPresented,
+      reviewsPresented: reviewsPresented ?? this.reviewsPresented,
+      accuracyRate: accuracyRate ?? this.accuracyRate,
+      avgResponseTimeMs: avgResponseTimeMs ?? this.avgResponseTimeMs,
+      outcome: outcome ?? this.outcome,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<DateTime>(expiresAt.value);
+    }
+    if (plannedMinutes.present) {
+      map['planned_minutes'] = Variable<int>(plannedMinutes.value);
+    }
+    if (elapsedSeconds.present) {
+      map['elapsed_seconds'] = Variable<int>(elapsedSeconds.value);
+    }
+    if (bonusSeconds.present) {
+      map['bonus_seconds'] = Variable<int>(bonusSeconds.value);
+    }
+    if (itemsPresented.present) {
+      map['items_presented'] = Variable<int>(itemsPresented.value);
+    }
+    if (itemsCompleted.present) {
+      map['items_completed'] = Variable<int>(itemsCompleted.value);
+    }
+    if (newWordsPresented.present) {
+      map['new_words_presented'] = Variable<int>(newWordsPresented.value);
+    }
+    if (reviewsPresented.present) {
+      map['reviews_presented'] = Variable<int>(reviewsPresented.value);
+    }
+    if (accuracyRate.present) {
+      map['accuracy_rate'] = Variable<double>(accuracyRate.value);
+    }
+    if (avgResponseTimeMs.present) {
+      map['avg_response_time_ms'] = Variable<int>(avgResponseTimeMs.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<int>(outcome.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('plannedMinutes: $plannedMinutes, ')
+          ..write('elapsedSeconds: $elapsedSeconds, ')
+          ..write('bonusSeconds: $bonusSeconds, ')
+          ..write('itemsPresented: $itemsPresented, ')
+          ..write('itemsCompleted: $itemsCompleted, ')
+          ..write('newWordsPresented: $newWordsPresented, ')
+          ..write('reviewsPresented: $reviewsPresented, ')
+          ..write('accuracyRate: $accuracyRate, ')
+          ..write('avgResponseTimeMs: $avgResponseTimeMs, ')
+          ..write('outcome: $outcome, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UserLearningPreferencesTable extends UserLearningPreferences
+    with TableInfo<$UserLearningPreferencesTable, UserLearningPreference> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserLearningPreferencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _dailyTimeTargetMinutesMeta =
+      const VerificationMeta('dailyTimeTargetMinutes');
+  @override
+  late final GeneratedColumn<int> dailyTimeTargetMinutes = GeneratedColumn<int>(
+    'daily_time_target_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
+  static const VerificationMeta _targetRetentionMeta = const VerificationMeta(
+    'targetRetention',
+  );
+  @override
+  late final GeneratedColumn<double> targetRetention = GeneratedColumn<double>(
+    'target_retention',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.90),
+  );
+  static const VerificationMeta _intensityMeta = const VerificationMeta(
+    'intensity',
+  );
+  @override
+  late final GeneratedColumn<int> intensity = GeneratedColumn<int>(
+    'intensity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _newWordSuppressionActiveMeta =
+      const VerificationMeta('newWordSuppressionActive');
+  @override
+  late final GeneratedColumn<bool> newWordSuppressionActive =
+      GeneratedColumn<bool>(
+        'new_word_suppression_active',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("new_word_suppression_active" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    dailyTimeTargetMinutes,
+    targetRetention,
+    intensity,
+    newWordSuppressionActive,
+    createdAt,
+    updatedAt,
+    lastSyncedAt,
+    isPendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_learning_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserLearningPreference> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('daily_time_target_minutes')) {
+      context.handle(
+        _dailyTimeTargetMinutesMeta,
+        dailyTimeTargetMinutes.isAcceptableOrUnknown(
+          data['daily_time_target_minutes']!,
+          _dailyTimeTargetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target_retention')) {
+      context.handle(
+        _targetRetentionMeta,
+        targetRetention.isAcceptableOrUnknown(
+          data['target_retention']!,
+          _targetRetentionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('intensity')) {
+      context.handle(
+        _intensityMeta,
+        intensity.isAcceptableOrUnknown(data['intensity']!, _intensityMeta),
+      );
+    }
+    if (data.containsKey('new_word_suppression_active')) {
+      context.handle(
+        _newWordSuppressionActiveMeta,
+        newWordSuppressionActive.isAcceptableOrUnknown(
+          data['new_word_suppression_active']!,
+          _newWordSuppressionActiveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserLearningPreference map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserLearningPreference(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      dailyTimeTargetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_time_target_minutes'],
+      )!,
+      targetRetention: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}target_retention'],
+      )!,
+      intensity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}intensity'],
+      )!,
+      newWordSuppressionActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}new_word_suppression_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $UserLearningPreferencesTable createAlias(String alias) {
+    return $UserLearningPreferencesTable(attachedDatabase, alias);
+  }
+}
+
+class UserLearningPreference extends DataClass
+    implements Insertable<UserLearningPreference> {
+  final String id;
+  final String userId;
+  final int dailyTimeTargetMinutes;
+  final double targetRetention;
+  final int intensity;
+  final bool newWordSuppressionActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  const UserLearningPreference({
+    required this.id,
+    required this.userId,
+    required this.dailyTimeTargetMinutes,
+    required this.targetRetention,
+    required this.intensity,
+    required this.newWordSuppressionActive,
+    required this.createdAt,
+    required this.updatedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['daily_time_target_minutes'] = Variable<int>(dailyTimeTargetMinutes);
+    map['target_retention'] = Variable<double>(targetRetention);
+    map['intensity'] = Variable<int>(intensity);
+    map['new_word_suppression_active'] = Variable<bool>(
+      newWordSuppressionActive,
+    );
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    return map;
+  }
+
+  UserLearningPreferencesCompanion toCompanion(bool nullToAbsent) {
+    return UserLearningPreferencesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      dailyTimeTargetMinutes: Value(dailyTimeTargetMinutes),
+      targetRetention: Value(targetRetention),
+      intensity: Value(intensity),
+      newWordSuppressionActive: Value(newWordSuppressionActive),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+    );
+  }
+
+  factory UserLearningPreference.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserLearningPreference(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      dailyTimeTargetMinutes: serializer.fromJson<int>(
+        json['dailyTimeTargetMinutes'],
+      ),
+      targetRetention: serializer.fromJson<double>(json['targetRetention']),
+      intensity: serializer.fromJson<int>(json['intensity']),
+      newWordSuppressionActive: serializer.fromJson<bool>(
+        json['newWordSuppressionActive'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'dailyTimeTargetMinutes': serializer.toJson<int>(dailyTimeTargetMinutes),
+      'targetRetention': serializer.toJson<double>(targetRetention),
+      'intensity': serializer.toJson<int>(intensity),
+      'newWordSuppressionActive': serializer.toJson<bool>(
+        newWordSuppressionActive,
+      ),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+    };
+  }
+
+  UserLearningPreference copyWith({
+    String? id,
+    String? userId,
+    int? dailyTimeTargetMinutes,
+    double? targetRetention,
+    int? intensity,
+    bool? newWordSuppressionActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+  }) => UserLearningPreference(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    dailyTimeTargetMinutes:
+        dailyTimeTargetMinutes ?? this.dailyTimeTargetMinutes,
+    targetRetention: targetRetention ?? this.targetRetention,
+    intensity: intensity ?? this.intensity,
+    newWordSuppressionActive:
+        newWordSuppressionActive ?? this.newWordSuppressionActive,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+  );
+  UserLearningPreference copyWithCompanion(
+    UserLearningPreferencesCompanion data,
+  ) {
+    return UserLearningPreference(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      dailyTimeTargetMinutes: data.dailyTimeTargetMinutes.present
+          ? data.dailyTimeTargetMinutes.value
+          : this.dailyTimeTargetMinutes,
+      targetRetention: data.targetRetention.present
+          ? data.targetRetention.value
+          : this.targetRetention,
+      intensity: data.intensity.present ? data.intensity.value : this.intensity,
+      newWordSuppressionActive: data.newWordSuppressionActive.present
+          ? data.newWordSuppressionActive.value
+          : this.newWordSuppressionActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserLearningPreference(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('dailyTimeTargetMinutes: $dailyTimeTargetMinutes, ')
+          ..write('targetRetention: $targetRetention, ')
+          ..write('intensity: $intensity, ')
+          ..write('newWordSuppressionActive: $newWordSuppressionActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    dailyTimeTargetMinutes,
+    targetRetention,
+    intensity,
+    newWordSuppressionActive,
+    createdAt,
+    updatedAt,
+    lastSyncedAt,
+    isPendingSync,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserLearningPreference &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.dailyTimeTargetMinutes == this.dailyTimeTargetMinutes &&
+          other.targetRetention == this.targetRetention &&
+          other.intensity == this.intensity &&
+          other.newWordSuppressionActive == this.newWordSuppressionActive &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync);
+}
+
+class UserLearningPreferencesCompanion
+    extends UpdateCompanion<UserLearningPreference> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<int> dailyTimeTargetMinutes;
+  final Value<double> targetRetention;
+  final Value<int> intensity;
+  final Value<bool> newWordSuppressionActive;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> rowid;
+  const UserLearningPreferencesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.dailyTimeTargetMinutes = const Value.absent(),
+    this.targetRetention = const Value.absent(),
+    this.intensity = const Value.absent(),
+    this.newWordSuppressionActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserLearningPreferencesCompanion.insert({
+    required String id,
+    required String userId,
+    this.dailyTimeTargetMinutes = const Value.absent(),
+    this.targetRetention = const Value.absent(),
+    this.intensity = const Value.absent(),
+    this.newWordSuppressionActive = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UserLearningPreference> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<int>? dailyTimeTargetMinutes,
+    Expression<double>? targetRetention,
+    Expression<int>? intensity,
+    Expression<bool>? newWordSuppressionActive,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (dailyTimeTargetMinutes != null)
+        'daily_time_target_minutes': dailyTimeTargetMinutes,
+      if (targetRetention != null) 'target_retention': targetRetention,
+      if (intensity != null) 'intensity': intensity,
+      if (newWordSuppressionActive != null)
+        'new_word_suppression_active': newWordSuppressionActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserLearningPreferencesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<int>? dailyTimeTargetMinutes,
+    Value<double>? targetRetention,
+    Value<int>? intensity,
+    Value<bool>? newWordSuppressionActive,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? rowid,
+  }) {
+    return UserLearningPreferencesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      dailyTimeTargetMinutes:
+          dailyTimeTargetMinutes ?? this.dailyTimeTargetMinutes,
+      targetRetention: targetRetention ?? this.targetRetention,
+      intensity: intensity ?? this.intensity,
+      newWordSuppressionActive:
+          newWordSuppressionActive ?? this.newWordSuppressionActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (dailyTimeTargetMinutes.present) {
+      map['daily_time_target_minutes'] = Variable<int>(
+        dailyTimeTargetMinutes.value,
+      );
+    }
+    if (targetRetention.present) {
+      map['target_retention'] = Variable<double>(targetRetention.value);
+    }
+    if (intensity.present) {
+      map['intensity'] = Variable<int>(intensity.value);
+    }
+    if (newWordSuppressionActive.present) {
+      map['new_word_suppression_active'] = Variable<bool>(
+        newWordSuppressionActive.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserLearningPreferencesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('dailyTimeTargetMinutes: $dailyTimeTargetMinutes, ')
+          ..write('targetRetention: $targetRetention, ')
+          ..write('intensity: $intensity, ')
+          ..write('newWordSuppressionActive: $newWordSuppressionActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $StreaksTable extends Streaks with TableInfo<$StreaksTable, Streak> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StreaksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _currentCountMeta = const VerificationMeta(
+    'currentCount',
+  );
+  @override
+  late final GeneratedColumn<int> currentCount = GeneratedColumn<int>(
+    'current_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _longestCountMeta = const VerificationMeta(
+    'longestCount',
+  );
+  @override
+  late final GeneratedColumn<int> longestCount = GeneratedColumn<int>(
+    'longest_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastCompletedDateMeta = const VerificationMeta(
+    'lastCompletedDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastCompletedDate =
+      GeneratedColumn<DateTime>(
+        'last_completed_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    currentCount,
+    longestCount,
+    lastCompletedDate,
+    createdAt,
+    updatedAt,
+    lastSyncedAt,
+    isPendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'streaks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Streak> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('current_count')) {
+      context.handle(
+        _currentCountMeta,
+        currentCount.isAcceptableOrUnknown(
+          data['current_count']!,
+          _currentCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('longest_count')) {
+      context.handle(
+        _longestCountMeta,
+        longestCount.isAcceptableOrUnknown(
+          data['longest_count']!,
+          _longestCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_completed_date')) {
+      context.handle(
+        _lastCompletedDateMeta,
+        lastCompletedDate.isAcceptableOrUnknown(
+          data['last_completed_date']!,
+          _lastCompletedDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Streak map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Streak(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      currentCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_count'],
+      )!,
+      longestCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}longest_count'],
+      )!,
+      lastCompletedDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_completed_date'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $StreaksTable createAlias(String alias) {
+    return $StreaksTable(attachedDatabase, alias);
+  }
+}
+
+class Streak extends DataClass implements Insertable<Streak> {
+  final String id;
+  final String userId;
+  final int currentCount;
+  final int longestCount;
+  final DateTime? lastCompletedDate;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  const Streak({
+    required this.id,
+    required this.userId,
+    required this.currentCount,
+    required this.longestCount,
+    this.lastCompletedDate,
+    required this.createdAt,
+    required this.updatedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['current_count'] = Variable<int>(currentCount);
+    map['longest_count'] = Variable<int>(longestCount);
+    if (!nullToAbsent || lastCompletedDate != null) {
+      map['last_completed_date'] = Variable<DateTime>(lastCompletedDate);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    return map;
+  }
+
+  StreaksCompanion toCompanion(bool nullToAbsent) {
+    return StreaksCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      currentCount: Value(currentCount),
+      longestCount: Value(longestCount),
+      lastCompletedDate: lastCompletedDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCompletedDate),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+    );
+  }
+
+  factory Streak.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Streak(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      currentCount: serializer.fromJson<int>(json['currentCount']),
+      longestCount: serializer.fromJson<int>(json['longestCount']),
+      lastCompletedDate: serializer.fromJson<DateTime?>(
+        json['lastCompletedDate'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'currentCount': serializer.toJson<int>(currentCount),
+      'longestCount': serializer.toJson<int>(longestCount),
+      'lastCompletedDate': serializer.toJson<DateTime?>(lastCompletedDate),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+    };
+  }
+
+  Streak copyWith({
+    String? id,
+    String? userId,
+    int? currentCount,
+    int? longestCount,
+    Value<DateTime?> lastCompletedDate = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+  }) => Streak(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    currentCount: currentCount ?? this.currentCount,
+    longestCount: longestCount ?? this.longestCount,
+    lastCompletedDate: lastCompletedDate.present
+        ? lastCompletedDate.value
+        : this.lastCompletedDate,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+  );
+  Streak copyWithCompanion(StreaksCompanion data) {
+    return Streak(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      currentCount: data.currentCount.present
+          ? data.currentCount.value
+          : this.currentCount,
+      longestCount: data.longestCount.present
+          ? data.longestCount.value
+          : this.longestCount,
+      lastCompletedDate: data.lastCompletedDate.present
+          ? data.lastCompletedDate.value
+          : this.lastCompletedDate,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Streak(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('currentCount: $currentCount, ')
+          ..write('longestCount: $longestCount, ')
+          ..write('lastCompletedDate: $lastCompletedDate, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    currentCount,
+    longestCount,
+    lastCompletedDate,
+    createdAt,
+    updatedAt,
+    lastSyncedAt,
+    isPendingSync,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Streak &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.currentCount == this.currentCount &&
+          other.longestCount == this.longestCount &&
+          other.lastCompletedDate == this.lastCompletedDate &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync);
+}
+
+class StreaksCompanion extends UpdateCompanion<Streak> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<int> currentCount;
+  final Value<int> longestCount;
+  final Value<DateTime?> lastCompletedDate;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> rowid;
+  const StreaksCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.currentCount = const Value.absent(),
+    this.longestCount = const Value.absent(),
+    this.lastCompletedDate = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  StreaksCompanion.insert({
+    required String id,
+    required String userId,
+    this.currentCount = const Value.absent(),
+    this.longestCount = const Value.absent(),
+    this.lastCompletedDate = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Streak> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<int>? currentCount,
+    Expression<int>? longestCount,
+    Expression<DateTime>? lastCompletedDate,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (currentCount != null) 'current_count': currentCount,
+      if (longestCount != null) 'longest_count': longestCount,
+      if (lastCompletedDate != null) 'last_completed_date': lastCompletedDate,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  StreaksCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<int>? currentCount,
+    Value<int>? longestCount,
+    Value<DateTime?>? lastCompletedDate,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? rowid,
+  }) {
+    return StreaksCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      currentCount: currentCount ?? this.currentCount,
+      longestCount: longestCount ?? this.longestCount,
+      lastCompletedDate: lastCompletedDate ?? this.lastCompletedDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (currentCount.present) {
+      map['current_count'] = Variable<int>(currentCount.value);
+    }
+    if (longestCount.present) {
+      map['longest_count'] = Variable<int>(longestCount.value);
+    }
+    if (lastCompletedDate.present) {
+      map['last_completed_date'] = Variable<DateTime>(lastCompletedDate.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StreaksCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('currentCount: $currentCount, ')
+          ..write('longestCount: $longestCount, ')
+          ..write('lastCompletedDate: $lastCompletedDate, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4137,6 +8260,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ImportSessionsTable importSessions = $ImportSessionsTable(this);
   late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
   late final $VocabularysTable vocabularys = $VocabularysTable(this);
+  late final $LearningCardsTable learningCards = $LearningCardsTable(this);
+  late final $ReviewLogsTable reviewLogs = $ReviewLogsTable(this);
+  late final $LearningSessionsTable learningSessions = $LearningSessionsTable(
+    this,
+  );
+  late final $UserLearningPreferencesTable userLearningPreferences =
+      $UserLearningPreferencesTable(this);
+  late final $StreaksTable streaks = $StreaksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4148,6 +8279,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     importSessions,
     syncOutbox,
     vocabularys,
+    learningCards,
+    reviewLogs,
+    learningSessions,
+    userLearningPreferences,
+    streaks,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -6113,6 +10249,1932 @@ typedef $$VocabularysTableProcessedTableManager =
       Vocabulary,
       PrefetchHooks Function()
     >;
+typedef $$LearningCardsTableCreateCompanionBuilder =
+    LearningCardsCompanion Function({
+      required String id,
+      required String userId,
+      required String vocabularyId,
+      Value<int> state,
+      required DateTime due,
+      Value<double> stability,
+      Value<double> difficulty,
+      Value<int> reps,
+      Value<int> lapses,
+      Value<DateTime?> lastReview,
+      Value<bool> isLeech,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$LearningCardsTableUpdateCompanionBuilder =
+    LearningCardsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> vocabularyId,
+      Value<int> state,
+      Value<DateTime> due,
+      Value<double> stability,
+      Value<double> difficulty,
+      Value<int> reps,
+      Value<int> lapses,
+      Value<DateTime?> lastReview,
+      Value<bool> isLeech,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$LearningCardsTableFilterComposer
+    extends Composer<_$AppDatabase, $LearningCardsTable> {
+  $$LearningCardsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get due => $composableBuilder(
+    column: $table.due,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get stability => $composableBuilder(
+    column: $table.stability,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reps => $composableBuilder(
+    column: $table.reps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lapses => $composableBuilder(
+    column: $table.lapses,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastReview => $composableBuilder(
+    column: $table.lastReview,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLeech => $composableBuilder(
+    column: $table.isLeech,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LearningCardsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LearningCardsTable> {
+  $$LearningCardsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get due => $composableBuilder(
+    column: $table.due,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get stability => $composableBuilder(
+    column: $table.stability,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reps => $composableBuilder(
+    column: $table.reps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lapses => $composableBuilder(
+    column: $table.lapses,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastReview => $composableBuilder(
+    column: $table.lastReview,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isLeech => $composableBuilder(
+    column: $table.isLeech,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LearningCardsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LearningCardsTable> {
+  $$LearningCardsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get due =>
+      $composableBuilder(column: $table.due, builder: (column) => column);
+
+  GeneratedColumn<double> get stability =>
+      $composableBuilder(column: $table.stability, builder: (column) => column);
+
+  GeneratedColumn<double> get difficulty => $composableBuilder(
+    column: $table.difficulty,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reps =>
+      $composableBuilder(column: $table.reps, builder: (column) => column);
+
+  GeneratedColumn<int> get lapses =>
+      $composableBuilder(column: $table.lapses, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastReview => $composableBuilder(
+    column: $table.lastReview,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isLeech =>
+      $composableBuilder(column: $table.isLeech, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$LearningCardsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LearningCardsTable,
+          LearningCard,
+          $$LearningCardsTableFilterComposer,
+          $$LearningCardsTableOrderingComposer,
+          $$LearningCardsTableAnnotationComposer,
+          $$LearningCardsTableCreateCompanionBuilder,
+          $$LearningCardsTableUpdateCompanionBuilder,
+          (
+            LearningCard,
+            BaseReferences<_$AppDatabase, $LearningCardsTable, LearningCard>,
+          ),
+          LearningCard,
+          PrefetchHooks Function()
+        > {
+  $$LearningCardsTableTableManager(_$AppDatabase db, $LearningCardsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LearningCardsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LearningCardsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LearningCardsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> vocabularyId = const Value.absent(),
+                Value<int> state = const Value.absent(),
+                Value<DateTime> due = const Value.absent(),
+                Value<double> stability = const Value.absent(),
+                Value<double> difficulty = const Value.absent(),
+                Value<int> reps = const Value.absent(),
+                Value<int> lapses = const Value.absent(),
+                Value<DateTime?> lastReview = const Value.absent(),
+                Value<bool> isLeech = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LearningCardsCompanion(
+                id: id,
+                userId: userId,
+                vocabularyId: vocabularyId,
+                state: state,
+                due: due,
+                stability: stability,
+                difficulty: difficulty,
+                reps: reps,
+                lapses: lapses,
+                lastReview: lastReview,
+                isLeech: isLeech,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String vocabularyId,
+                Value<int> state = const Value.absent(),
+                required DateTime due,
+                Value<double> stability = const Value.absent(),
+                Value<double> difficulty = const Value.absent(),
+                Value<int> reps = const Value.absent(),
+                Value<int> lapses = const Value.absent(),
+                Value<DateTime?> lastReview = const Value.absent(),
+                Value<bool> isLeech = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LearningCardsCompanion.insert(
+                id: id,
+                userId: userId,
+                vocabularyId: vocabularyId,
+                state: state,
+                due: due,
+                stability: stability,
+                difficulty: difficulty,
+                reps: reps,
+                lapses: lapses,
+                lastReview: lastReview,
+                isLeech: isLeech,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LearningCardsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LearningCardsTable,
+      LearningCard,
+      $$LearningCardsTableFilterComposer,
+      $$LearningCardsTableOrderingComposer,
+      $$LearningCardsTableAnnotationComposer,
+      $$LearningCardsTableCreateCompanionBuilder,
+      $$LearningCardsTableUpdateCompanionBuilder,
+      (
+        LearningCard,
+        BaseReferences<_$AppDatabase, $LearningCardsTable, LearningCard>,
+      ),
+      LearningCard,
+      PrefetchHooks Function()
+    >;
+typedef $$ReviewLogsTableCreateCompanionBuilder =
+    ReviewLogsCompanion Function({
+      required String id,
+      required String userId,
+      required String learningCardId,
+      required int rating,
+      required int interactionMode,
+      required int stateBefore,
+      required int stateAfter,
+      required double stabilityBefore,
+      required double stabilityAfter,
+      required double difficultyBefore,
+      required double difficultyAfter,
+      required int responseTimeMs,
+      required double retrievabilityAtReview,
+      required DateTime reviewedAt,
+      Value<String?> sessionId,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+typedef $$ReviewLogsTableUpdateCompanionBuilder =
+    ReviewLogsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> learningCardId,
+      Value<int> rating,
+      Value<int> interactionMode,
+      Value<int> stateBefore,
+      Value<int> stateAfter,
+      Value<double> stabilityBefore,
+      Value<double> stabilityAfter,
+      Value<double> difficultyBefore,
+      Value<double> difficultyAfter,
+      Value<int> responseTimeMs,
+      Value<double> retrievabilityAtReview,
+      Value<DateTime> reviewedAt,
+      Value<String?> sessionId,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+
+class $$ReviewLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReviewLogsTable> {
+  $$ReviewLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get learningCardId => $composableBuilder(
+    column: $table.learningCardId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get interactionMode => $composableBuilder(
+    column: $table.interactionMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get stateBefore => $composableBuilder(
+    column: $table.stateBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get stateAfter => $composableBuilder(
+    column: $table.stateAfter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get stabilityBefore => $composableBuilder(
+    column: $table.stabilityBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get stabilityAfter => $composableBuilder(
+    column: $table.stabilityAfter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get difficultyBefore => $composableBuilder(
+    column: $table.difficultyBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get difficultyAfter => $composableBuilder(
+    column: $table.difficultyAfter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get retrievabilityAtReview => $composableBuilder(
+    column: $table.retrievabilityAtReview,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReviewLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReviewLogsTable> {
+  $$ReviewLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get learningCardId => $composableBuilder(
+    column: $table.learningCardId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get interactionMode => $composableBuilder(
+    column: $table.interactionMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get stateBefore => $composableBuilder(
+    column: $table.stateBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get stateAfter => $composableBuilder(
+    column: $table.stateAfter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get stabilityBefore => $composableBuilder(
+    column: $table.stabilityBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get stabilityAfter => $composableBuilder(
+    column: $table.stabilityAfter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get difficultyBefore => $composableBuilder(
+    column: $table.difficultyBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get difficultyAfter => $composableBuilder(
+    column: $table.difficultyAfter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get retrievabilityAtReview => $composableBuilder(
+    column: $table.retrievabilityAtReview,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReviewLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReviewLogsTable> {
+  $$ReviewLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get learningCardId => $composableBuilder(
+    column: $table.learningCardId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rating =>
+      $composableBuilder(column: $table.rating, builder: (column) => column);
+
+  GeneratedColumn<int> get interactionMode => $composableBuilder(
+    column: $table.interactionMode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get stateBefore => $composableBuilder(
+    column: $table.stateBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get stateAfter => $composableBuilder(
+    column: $table.stateAfter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get stabilityBefore => $composableBuilder(
+    column: $table.stabilityBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get stabilityAfter => $composableBuilder(
+    column: $table.stabilityAfter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get difficultyBefore => $composableBuilder(
+    column: $table.difficultyBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get difficultyAfter => $composableBuilder(
+    column: $table.difficultyAfter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get retrievabilityAtReview => $composableBuilder(
+    column: $table.retrievabilityAtReview,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get reviewedAt => $composableBuilder(
+    column: $table.reviewedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sessionId =>
+      $composableBuilder(column: $table.sessionId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$ReviewLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReviewLogsTable,
+          ReviewLog,
+          $$ReviewLogsTableFilterComposer,
+          $$ReviewLogsTableOrderingComposer,
+          $$ReviewLogsTableAnnotationComposer,
+          $$ReviewLogsTableCreateCompanionBuilder,
+          $$ReviewLogsTableUpdateCompanionBuilder,
+          (
+            ReviewLog,
+            BaseReferences<_$AppDatabase, $ReviewLogsTable, ReviewLog>,
+          ),
+          ReviewLog,
+          PrefetchHooks Function()
+        > {
+  $$ReviewLogsTableTableManager(_$AppDatabase db, $ReviewLogsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReviewLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReviewLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReviewLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> learningCardId = const Value.absent(),
+                Value<int> rating = const Value.absent(),
+                Value<int> interactionMode = const Value.absent(),
+                Value<int> stateBefore = const Value.absent(),
+                Value<int> stateAfter = const Value.absent(),
+                Value<double> stabilityBefore = const Value.absent(),
+                Value<double> stabilityAfter = const Value.absent(),
+                Value<double> difficultyBefore = const Value.absent(),
+                Value<double> difficultyAfter = const Value.absent(),
+                Value<int> responseTimeMs = const Value.absent(),
+                Value<double> retrievabilityAtReview = const Value.absent(),
+                Value<DateTime> reviewedAt = const Value.absent(),
+                Value<String?> sessionId = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReviewLogsCompanion(
+                id: id,
+                userId: userId,
+                learningCardId: learningCardId,
+                rating: rating,
+                interactionMode: interactionMode,
+                stateBefore: stateBefore,
+                stateAfter: stateAfter,
+                stabilityBefore: stabilityBefore,
+                stabilityAfter: stabilityAfter,
+                difficultyBefore: difficultyBefore,
+                difficultyAfter: difficultyAfter,
+                responseTimeMs: responseTimeMs,
+                retrievabilityAtReview: retrievabilityAtReview,
+                reviewedAt: reviewedAt,
+                sessionId: sessionId,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String learningCardId,
+                required int rating,
+                required int interactionMode,
+                required int stateBefore,
+                required int stateAfter,
+                required double stabilityBefore,
+                required double stabilityAfter,
+                required double difficultyBefore,
+                required double difficultyAfter,
+                required int responseTimeMs,
+                required double retrievabilityAtReview,
+                required DateTime reviewedAt,
+                Value<String?> sessionId = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReviewLogsCompanion.insert(
+                id: id,
+                userId: userId,
+                learningCardId: learningCardId,
+                rating: rating,
+                interactionMode: interactionMode,
+                stateBefore: stateBefore,
+                stateAfter: stateAfter,
+                stabilityBefore: stabilityBefore,
+                stabilityAfter: stabilityAfter,
+                difficultyBefore: difficultyBefore,
+                difficultyAfter: difficultyAfter,
+                responseTimeMs: responseTimeMs,
+                retrievabilityAtReview: retrievabilityAtReview,
+                reviewedAt: reviewedAt,
+                sessionId: sessionId,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReviewLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReviewLogsTable,
+      ReviewLog,
+      $$ReviewLogsTableFilterComposer,
+      $$ReviewLogsTableOrderingComposer,
+      $$ReviewLogsTableAnnotationComposer,
+      $$ReviewLogsTableCreateCompanionBuilder,
+      $$ReviewLogsTableUpdateCompanionBuilder,
+      (ReviewLog, BaseReferences<_$AppDatabase, $ReviewLogsTable, ReviewLog>),
+      ReviewLog,
+      PrefetchHooks Function()
+    >;
+typedef $$LearningSessionsTableCreateCompanionBuilder =
+    LearningSessionsCompanion Function({
+      required String id,
+      required String userId,
+      required DateTime startedAt,
+      required DateTime expiresAt,
+      required int plannedMinutes,
+      Value<int> elapsedSeconds,
+      Value<int> bonusSeconds,
+      Value<int> itemsPresented,
+      Value<int> itemsCompleted,
+      Value<int> newWordsPresented,
+      Value<int> reviewsPresented,
+      Value<double?> accuracyRate,
+      Value<int?> avgResponseTimeMs,
+      Value<int> outcome,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+typedef $$LearningSessionsTableUpdateCompanionBuilder =
+    LearningSessionsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<DateTime> startedAt,
+      Value<DateTime> expiresAt,
+      Value<int> plannedMinutes,
+      Value<int> elapsedSeconds,
+      Value<int> bonusSeconds,
+      Value<int> itemsPresented,
+      Value<int> itemsCompleted,
+      Value<int> newWordsPresented,
+      Value<int> reviewsPresented,
+      Value<double?> accuracyRate,
+      Value<int?> avgResponseTimeMs,
+      Value<int> outcome,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+
+class $$LearningSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get plannedMinutes => $composableBuilder(
+    column: $table.plannedMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get elapsedSeconds => $composableBuilder(
+    column: $table.elapsedSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bonusSeconds => $composableBuilder(
+    column: $table.bonusSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemsPresented => $composableBuilder(
+    column: $table.itemsPresented,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemsCompleted => $composableBuilder(
+    column: $table.itemsCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get newWordsPresented => $composableBuilder(
+    column: $table.newWordsPresented,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reviewsPresented => $composableBuilder(
+    column: $table.reviewsPresented,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get accuracyRate => $composableBuilder(
+    column: $table.accuracyRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get avgResponseTimeMs => $composableBuilder(
+    column: $table.avgResponseTimeMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LearningSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get plannedMinutes => $composableBuilder(
+    column: $table.plannedMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get elapsedSeconds => $composableBuilder(
+    column: $table.elapsedSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bonusSeconds => $composableBuilder(
+    column: $table.bonusSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemsPresented => $composableBuilder(
+    column: $table.itemsPresented,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemsCompleted => $composableBuilder(
+    column: $table.itemsCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get newWordsPresented => $composableBuilder(
+    column: $table.newWordsPresented,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reviewsPresented => $composableBuilder(
+    column: $table.reviewsPresented,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get accuracyRate => $composableBuilder(
+    column: $table.accuracyRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get avgResponseTimeMs => $composableBuilder(
+    column: $table.avgResponseTimeMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LearningSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<int> get plannedMinutes => $composableBuilder(
+    column: $table.plannedMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get elapsedSeconds => $composableBuilder(
+    column: $table.elapsedSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bonusSeconds => $composableBuilder(
+    column: $table.bonusSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get itemsPresented => $composableBuilder(
+    column: $table.itemsPresented,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get itemsCompleted => $composableBuilder(
+    column: $table.itemsCompleted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get newWordsPresented => $composableBuilder(
+    column: $table.newWordsPresented,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reviewsPresented => $composableBuilder(
+    column: $table.reviewsPresented,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get accuracyRate => $composableBuilder(
+    column: $table.accuracyRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get avgResponseTimeMs => $composableBuilder(
+    column: $table.avgResponseTimeMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$LearningSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LearningSessionsTable,
+          LearningSession,
+          $$LearningSessionsTableFilterComposer,
+          $$LearningSessionsTableOrderingComposer,
+          $$LearningSessionsTableAnnotationComposer,
+          $$LearningSessionsTableCreateCompanionBuilder,
+          $$LearningSessionsTableUpdateCompanionBuilder,
+          (
+            LearningSession,
+            BaseReferences<
+              _$AppDatabase,
+              $LearningSessionsTable,
+              LearningSession
+            >,
+          ),
+          LearningSession,
+          PrefetchHooks Function()
+        > {
+  $$LearningSessionsTableTableManager(
+    _$AppDatabase db,
+    $LearningSessionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LearningSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LearningSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LearningSessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> expiresAt = const Value.absent(),
+                Value<int> plannedMinutes = const Value.absent(),
+                Value<int> elapsedSeconds = const Value.absent(),
+                Value<int> bonusSeconds = const Value.absent(),
+                Value<int> itemsPresented = const Value.absent(),
+                Value<int> itemsCompleted = const Value.absent(),
+                Value<int> newWordsPresented = const Value.absent(),
+                Value<int> reviewsPresented = const Value.absent(),
+                Value<double?> accuracyRate = const Value.absent(),
+                Value<int?> avgResponseTimeMs = const Value.absent(),
+                Value<int> outcome = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LearningSessionsCompanion(
+                id: id,
+                userId: userId,
+                startedAt: startedAt,
+                expiresAt: expiresAt,
+                plannedMinutes: plannedMinutes,
+                elapsedSeconds: elapsedSeconds,
+                bonusSeconds: bonusSeconds,
+                itemsPresented: itemsPresented,
+                itemsCompleted: itemsCompleted,
+                newWordsPresented: newWordsPresented,
+                reviewsPresented: reviewsPresented,
+                accuracyRate: accuracyRate,
+                avgResponseTimeMs: avgResponseTimeMs,
+                outcome: outcome,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required DateTime startedAt,
+                required DateTime expiresAt,
+                required int plannedMinutes,
+                Value<int> elapsedSeconds = const Value.absent(),
+                Value<int> bonusSeconds = const Value.absent(),
+                Value<int> itemsPresented = const Value.absent(),
+                Value<int> itemsCompleted = const Value.absent(),
+                Value<int> newWordsPresented = const Value.absent(),
+                Value<int> reviewsPresented = const Value.absent(),
+                Value<double?> accuracyRate = const Value.absent(),
+                Value<int?> avgResponseTimeMs = const Value.absent(),
+                Value<int> outcome = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LearningSessionsCompanion.insert(
+                id: id,
+                userId: userId,
+                startedAt: startedAt,
+                expiresAt: expiresAt,
+                plannedMinutes: plannedMinutes,
+                elapsedSeconds: elapsedSeconds,
+                bonusSeconds: bonusSeconds,
+                itemsPresented: itemsPresented,
+                itemsCompleted: itemsCompleted,
+                newWordsPresented: newWordsPresented,
+                reviewsPresented: reviewsPresented,
+                accuracyRate: accuracyRate,
+                avgResponseTimeMs: avgResponseTimeMs,
+                outcome: outcome,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LearningSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LearningSessionsTable,
+      LearningSession,
+      $$LearningSessionsTableFilterComposer,
+      $$LearningSessionsTableOrderingComposer,
+      $$LearningSessionsTableAnnotationComposer,
+      $$LearningSessionsTableCreateCompanionBuilder,
+      $$LearningSessionsTableUpdateCompanionBuilder,
+      (
+        LearningSession,
+        BaseReferences<_$AppDatabase, $LearningSessionsTable, LearningSession>,
+      ),
+      LearningSession,
+      PrefetchHooks Function()
+    >;
+typedef $$UserLearningPreferencesTableCreateCompanionBuilder =
+    UserLearningPreferencesCompanion Function({
+      required String id,
+      required String userId,
+      Value<int> dailyTimeTargetMinutes,
+      Value<double> targetRetention,
+      Value<int> intensity,
+      Value<bool> newWordSuppressionActive,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+typedef $$UserLearningPreferencesTableUpdateCompanionBuilder =
+    UserLearningPreferencesCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<int> dailyTimeTargetMinutes,
+      Value<double> targetRetention,
+      Value<int> intensity,
+      Value<bool> newWordSuppressionActive,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+
+class $$UserLearningPreferencesTableFilterComposer
+    extends Composer<_$AppDatabase, $UserLearningPreferencesTable> {
+  $$UserLearningPreferencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyTimeTargetMinutes => $composableBuilder(
+    column: $table.dailyTimeTargetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get targetRetention => $composableBuilder(
+    column: $table.targetRetention,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get newWordSuppressionActive => $composableBuilder(
+    column: $table.newWordSuppressionActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserLearningPreferencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserLearningPreferencesTable> {
+  $$UserLearningPreferencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyTimeTargetMinutes => $composableBuilder(
+    column: $table.dailyTimeTargetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get targetRetention => $composableBuilder(
+    column: $table.targetRetention,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get newWordSuppressionActive => $composableBuilder(
+    column: $table.newWordSuppressionActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserLearningPreferencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserLearningPreferencesTable> {
+  $$UserLearningPreferencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get dailyTimeTargetMinutes => $composableBuilder(
+    column: $table.dailyTimeTargetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get targetRetention => $composableBuilder(
+    column: $table.targetRetention,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get intensity =>
+      $composableBuilder(column: $table.intensity, builder: (column) => column);
+
+  GeneratedColumn<bool> get newWordSuppressionActive => $composableBuilder(
+    column: $table.newWordSuppressionActive,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$UserLearningPreferencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserLearningPreferencesTable,
+          UserLearningPreference,
+          $$UserLearningPreferencesTableFilterComposer,
+          $$UserLearningPreferencesTableOrderingComposer,
+          $$UserLearningPreferencesTableAnnotationComposer,
+          $$UserLearningPreferencesTableCreateCompanionBuilder,
+          $$UserLearningPreferencesTableUpdateCompanionBuilder,
+          (
+            UserLearningPreference,
+            BaseReferences<
+              _$AppDatabase,
+              $UserLearningPreferencesTable,
+              UserLearningPreference
+            >,
+          ),
+          UserLearningPreference,
+          PrefetchHooks Function()
+        > {
+  $$UserLearningPreferencesTableTableManager(
+    _$AppDatabase db,
+    $UserLearningPreferencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserLearningPreferencesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$UserLearningPreferencesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$UserLearningPreferencesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> dailyTimeTargetMinutes = const Value.absent(),
+                Value<double> targetRetention = const Value.absent(),
+                Value<int> intensity = const Value.absent(),
+                Value<bool> newWordSuppressionActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserLearningPreferencesCompanion(
+                id: id,
+                userId: userId,
+                dailyTimeTargetMinutes: dailyTimeTargetMinutes,
+                targetRetention: targetRetention,
+                intensity: intensity,
+                newWordSuppressionActive: newWordSuppressionActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                Value<int> dailyTimeTargetMinutes = const Value.absent(),
+                Value<double> targetRetention = const Value.absent(),
+                Value<int> intensity = const Value.absent(),
+                Value<bool> newWordSuppressionActive = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserLearningPreferencesCompanion.insert(
+                id: id,
+                userId: userId,
+                dailyTimeTargetMinutes: dailyTimeTargetMinutes,
+                targetRetention: targetRetention,
+                intensity: intensity,
+                newWordSuppressionActive: newWordSuppressionActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserLearningPreferencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserLearningPreferencesTable,
+      UserLearningPreference,
+      $$UserLearningPreferencesTableFilterComposer,
+      $$UserLearningPreferencesTableOrderingComposer,
+      $$UserLearningPreferencesTableAnnotationComposer,
+      $$UserLearningPreferencesTableCreateCompanionBuilder,
+      $$UserLearningPreferencesTableUpdateCompanionBuilder,
+      (
+        UserLearningPreference,
+        BaseReferences<
+          _$AppDatabase,
+          $UserLearningPreferencesTable,
+          UserLearningPreference
+        >,
+      ),
+      UserLearningPreference,
+      PrefetchHooks Function()
+    >;
+typedef $$StreaksTableCreateCompanionBuilder =
+    StreaksCompanion Function({
+      required String id,
+      required String userId,
+      Value<int> currentCount,
+      Value<int> longestCount,
+      Value<DateTime?> lastCompletedDate,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+typedef $$StreaksTableUpdateCompanionBuilder =
+    StreaksCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<int> currentCount,
+      Value<int> longestCount,
+      Value<DateTime?> lastCompletedDate,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> rowid,
+    });
+
+class $$StreaksTableFilterComposer
+    extends Composer<_$AppDatabase, $StreaksTable> {
+  $$StreaksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get currentCount => $composableBuilder(
+    column: $table.currentCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get longestCount => $composableBuilder(
+    column: $table.longestCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastCompletedDate => $composableBuilder(
+    column: $table.lastCompletedDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StreaksTableOrderingComposer
+    extends Composer<_$AppDatabase, $StreaksTable> {
+  $$StreaksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentCount => $composableBuilder(
+    column: $table.currentCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get longestCount => $composableBuilder(
+    column: $table.longestCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastCompletedDate => $composableBuilder(
+    column: $table.lastCompletedDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StreaksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StreaksTable> {
+  $$StreaksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get currentCount => $composableBuilder(
+    column: $table.currentCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get longestCount => $composableBuilder(
+    column: $table.longestCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastCompletedDate => $composableBuilder(
+    column: $table.lastCompletedDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$StreaksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StreaksTable,
+          Streak,
+          $$StreaksTableFilterComposer,
+          $$StreaksTableOrderingComposer,
+          $$StreaksTableAnnotationComposer,
+          $$StreaksTableCreateCompanionBuilder,
+          $$StreaksTableUpdateCompanionBuilder,
+          (Streak, BaseReferences<_$AppDatabase, $StreaksTable, Streak>),
+          Streak,
+          PrefetchHooks Function()
+        > {
+  $$StreaksTableTableManager(_$AppDatabase db, $StreaksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StreaksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StreaksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StreaksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> currentCount = const Value.absent(),
+                Value<int> longestCount = const Value.absent(),
+                Value<DateTime?> lastCompletedDate = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StreaksCompanion(
+                id: id,
+                userId: userId,
+                currentCount: currentCount,
+                longestCount: longestCount,
+                lastCompletedDate: lastCompletedDate,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                Value<int> currentCount = const Value.absent(),
+                Value<int> longestCount = const Value.absent(),
+                Value<DateTime?> lastCompletedDate = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StreaksCompanion.insert(
+                id: id,
+                userId: userId,
+                currentCount: currentCount,
+                longestCount: longestCount,
+                lastCompletedDate: lastCompletedDate,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StreaksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StreaksTable,
+      Streak,
+      $$StreaksTableFilterComposer,
+      $$StreaksTableOrderingComposer,
+      $$StreaksTableAnnotationComposer,
+      $$StreaksTableCreateCompanionBuilder,
+      $$StreaksTableUpdateCompanionBuilder,
+      (Streak, BaseReferences<_$AppDatabase, $StreaksTable, Streak>),
+      Streak,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6129,4 +12191,17 @@ class $AppDatabaseManager {
       $$SyncOutboxTableTableManager(_db, _db.syncOutbox);
   $$VocabularysTableTableManager get vocabularys =>
       $$VocabularysTableTableManager(_db, _db.vocabularys);
+  $$LearningCardsTableTableManager get learningCards =>
+      $$LearningCardsTableTableManager(_db, _db.learningCards);
+  $$ReviewLogsTableTableManager get reviewLogs =>
+      $$ReviewLogsTableTableManager(_db, _db.reviewLogs);
+  $$LearningSessionsTableTableManager get learningSessions =>
+      $$LearningSessionsTableTableManager(_db, _db.learningSessions);
+  $$UserLearningPreferencesTableTableManager get userLearningPreferences =>
+      $$UserLearningPreferencesTableTableManager(
+        _db,
+        _db.userLearningPreferences,
+      );
+  $$StreaksTableTableManager get streaks =>
+      $$StreaksTableTableManager(_db, _db.streaks);
 }

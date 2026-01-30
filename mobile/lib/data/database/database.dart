@@ -9,14 +9,27 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Languages, Books, Highlights, ImportSessions, SyncOutbox, Vocabularys])
+@DriftDatabase(tables: [
+  Languages,
+  Books,
+  Highlights,
+  ImportSessions,
+  SyncOutbox,
+  Vocabularys,
+  // Learning feature tables (004-calm-srs-learning)
+  LearningCards,
+  ReviewLogs,
+  LearningSessions,
+  UserLearningPreferences,
+  Streaks,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -40,6 +53,14 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await m.deleteTable('vocabularys');
           await m.createTable(vocabularys);
+        }
+        // Migration from version 3 to 4: Add learning feature tables
+        if (from < 4) {
+          await m.createTable(learningCards);
+          await m.createTable(reviewLogs);
+          await m.createTable(learningSessions);
+          await m.createTable(userLearningPreferences);
+          await m.createTable(streaks);
         }
       },
     );

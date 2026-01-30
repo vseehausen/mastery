@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/widgets/bottom_nav_bar.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/home/presentation/screens/dashboard_screen.dart';
+import 'features/learn/screens/session_home_screen.dart';
 import 'features/vocabulary/presentation/screens/vocabulary_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 
@@ -58,8 +59,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           // Dashboard/Home
           DashboardScreen(onSwitchTab: _switchToTab),
-          // Learn (placeholder)
-          const _LearnScreen(),
+          // Learn
+          const SessionHomeScreen(),
           // Vocabulary
           const VocabularyScreenNew(),
           // Settings
@@ -76,42 +77,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// Placeholder Learn screen
-class _LearnScreen extends StatelessWidget {
-  const _LearnScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lightbulb_outline,
-              size: 64,
-              color: isDark ? Colors.grey[600] : Colors.grey[300],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Learning Session',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming soon...',
-              style: TextStyle(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

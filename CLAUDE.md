@@ -7,6 +7,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-28
 - PostgreSQL (Supabase), SQLite (mobile via Drift, desktop local cache) (002-vocabulary-import-display)
 - Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in (003-user-auth)
 - Supabase Auth (session tokens stored locally per platform) (003-user-auth)
+- Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync) (004-calm-srs-learning)
+- SQLite via Drift (local, offline-first), PostgreSQL via Supabase (cloud sync) (004-calm-srs-learning)
 
 - **Mobile**: Flutter 3.x (Dart 3.x), Drift, Supabase Flutter SDK
 - **Desktop**: Tauri 2.x (Rust), nusb, mountpoints
@@ -164,16 +166,17 @@ cd supabase && supabase functions deploy
 
 1. **Test-First**: Tests written alongside implementation
 2. **Code Quality**: Linting, formatting, strict typing, no warnings
-3. **Observability**: Structured logging, error tracking, metrics
-4. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
-5. **Offline-First**: Local-first data, sync when online, last-write-wins
-6. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
+3. **Flutter Analyze Gate**: `flutter analyze` MUST pass with zero issues (no errors, warnings, or info) before any commit.
+4. **Observability**: Structured logging, error tracking, metrics
+5. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
+6. **Offline-First**: Local-first data, sync when online, last-write-wins
+7. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
 
 ## Recent Changes
+- 004-calm-srs-learning: Added Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync)
 - 003-user-auth: Added Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in
 - 002-vocabulary-import-display: Added Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno)
 
-- 001-kindle-import: Kindle highlight import feature (in progress)
 
 ## Key Entities
 
