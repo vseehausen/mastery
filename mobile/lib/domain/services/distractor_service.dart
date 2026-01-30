@@ -53,23 +53,31 @@ class DistractorService {
 
     // If we don't have enough, generate fallbacks
     if (selected.length < count) {
-      final fallbacks =
-          _generateFallbackDistractors(targetItem, count - selected.length);
+      final fallbacks = _generateFallbackDistractors(
+        targetItem,
+        count - selected.length,
+      );
       return [
-        ...selected.map((v) => Distractor(
-              itemId: v.id,
-              surfaceForm: v.word,
-              gloss: v.context ?? v.word,
-            )),
+        ...selected.map(
+          (v) => Distractor(
+            itemId: v.id,
+            surfaceForm: v.word,
+            gloss: v.context ?? v.word,
+          ),
+        ),
         ...fallbacks,
       ];
     }
 
-    return selected.map((v) => Distractor(
-          itemId: v.id,
-          surfaceForm: v.word,
-          gloss: v.context ?? v.word,
-        )).toList();
+    return selected
+        .map(
+          (v) => Distractor(
+            itemId: v.id,
+            surfaceForm: v.word,
+            gloss: v.context ?? v.word,
+          ),
+        )
+        .toList();
   }
 
   /// Generate fallback distractors when not enough vocabulary exists
@@ -84,11 +92,10 @@ class DistractorService {
     ];
 
     fallbacks.shuffle(_random);
-    return fallbacks.take(count).map((f) => Distractor(
-          itemId: '',
-          surfaceForm: f,
-          gloss: f,
-        )).toList();
+    return fallbacks
+        .take(count)
+        .map((f) => Distractor(itemId: '', surfaceForm: f, gloss: f))
+        .toList();
   }
 }
 

@@ -104,7 +104,9 @@ class _RecognitionCardState extends State<RecognitionCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+                color: isDark
+                    ? MasteryColors.mutedDark
+                    : MasteryColors.mutedLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -163,7 +165,9 @@ class _RecognitionCardState extends State<RecognitionCard> {
         backgroundColor = isDark
             ? MasteryColors.successMutedDark
             : MasteryColors.successMutedLight;
-        textColor = isDark ? MasteryColors.successDark : MasteryColors.successLight;
+        textColor = isDark
+            ? MasteryColors.successDark
+            : MasteryColors.successLight;
       } else if (isSelected) {
         // Highlight incorrect selection
         backgroundColor = isDark
@@ -172,14 +176,18 @@ class _RecognitionCardState extends State<RecognitionCard> {
         textColor = isDark ? const Color(0xFFEF4444) : const Color(0xFFDC2626);
       } else {
         // Unselected option
-        backgroundColor = isDark ? MasteryColors.cardDark : MasteryColors.cardLight;
+        backgroundColor = isDark
+            ? MasteryColors.cardDark
+            : MasteryColors.cardLight;
         textColor = isDark
             ? MasteryColors.mutedForegroundDark
             : MasteryColors.mutedForegroundLight;
       }
     } else {
       // Not answered yet
-      backgroundColor = isDark ? MasteryColors.cardDark : MasteryColors.cardLight;
+      backgroundColor = isDark
+          ? MasteryColors.cardDark
+          : MasteryColors.cardLight;
       textColor = isDark ? Colors.white : Colors.black;
     }
 

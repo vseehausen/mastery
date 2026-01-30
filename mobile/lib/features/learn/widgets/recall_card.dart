@@ -83,7 +83,9 @@ class _RecallCardState extends State<RecallCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+                color: isDark
+                    ? MasteryColors.mutedDark
+                    : MasteryColors.mutedLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -108,10 +110,14 @@ class _RecallCardState extends State<RecallCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+                color: isDark
+                    ? MasteryColors.cardDark
+                    : MasteryColors.cardLight,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: isDark
+                      ? MasteryColors.borderDark
+                      : MasteryColors.borderLight,
                 ),
               ),
               child: Text(

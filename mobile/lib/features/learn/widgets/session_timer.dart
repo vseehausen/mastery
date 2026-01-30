@@ -90,7 +90,10 @@ class _SessionTimerState extends State<SessionTimer> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final remainingSeconds = (widget.totalSeconds - _elapsedSeconds).clamp(0, widget.totalSeconds);
+    final remainingSeconds = (widget.totalSeconds - _elapsedSeconds).clamp(
+      0,
+      widget.totalSeconds,
+    );
     final progress = _elapsedSeconds / widget.totalSeconds;
 
     return Container(
@@ -105,7 +108,9 @@ class _SessionTimerState extends State<SessionTimer> {
             child: CircularProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               strokeWidth: 3,
-              backgroundColor: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+              backgroundColor: isDark
+                  ? MasteryColors.mutedDark
+                  : MasteryColors.mutedLight,
               valueColor: AlwaysStoppedAnimation<Color>(
                 _getProgressColor(progress, isDark),
               ),
@@ -127,7 +132,9 @@ class _SessionTimerState extends State<SessionTimer> {
             Icon(
               Icons.pause,
               size: 16,
-              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
           ],
         ],

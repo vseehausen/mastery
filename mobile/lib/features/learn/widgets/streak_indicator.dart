@@ -6,10 +6,7 @@ import '../../../core/theme/text_styles.dart';
 /// Widget showing the current streak count
 /// Displays as a flame icon with the streak number
 class StreakIndicator extends StatelessWidget {
-  const StreakIndicator({
-    super.key,
-    required this.count,
-  });
+  const StreakIndicator({super.key, required this.count});
 
   final int count;
 
@@ -23,8 +20,8 @@ class StreakIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: hasStreak
             ? (isDark
-                ? MasteryColors.warningMutedDark
-                : MasteryColors.warningMutedLight)
+                  ? MasteryColors.warningMutedDark
+                  : MasteryColors.warningMutedLight)
             : (isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -35,10 +32,12 @@ class StreakIndicator extends StatelessWidget {
             Icons.local_fire_department,
             size: 18,
             color: hasStreak
-                ? (isDark ? MasteryColors.warningDark : MasteryColors.warningLight)
+                ? (isDark
+                      ? MasteryColors.warningDark
+                      : MasteryColors.warningLight)
                 : (isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight),
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight),
           ),
           const SizedBox(width: 4),
           Text(
@@ -46,10 +45,12 @@ class StreakIndicator extends StatelessWidget {
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 14,
               color: hasStreak
-                  ? (isDark ? MasteryColors.warningDark : MasteryColors.warningLight)
+                  ? (isDark
+                        ? MasteryColors.warningDark
+                        : MasteryColors.warningLight)
                   : (isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight),
+                        ? MasteryColors.mutedForegroundDark
+                        : MasteryColors.mutedForegroundLight),
             ),
           ),
         ],

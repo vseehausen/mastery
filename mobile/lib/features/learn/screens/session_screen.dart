@@ -104,7 +104,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // Create new session if needed
     if (activeSession == null) {
       final plannedMinutes = prefs.dailyTimeTargetMinutes;
-      final expiresAt = DateTime(now.year, now.month, now.day, 23, 59, 59).toUtc();
+      final expiresAt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        23,
+        59,
+        59,
+      ).toUtc();
 
       activeSession = await sessionRepo.create(
         userId: userId,
@@ -312,15 +319,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       _isSessionComplete = true;
     });
 
+    // Check if all items are exhausted
+    final allItemsExhausted =
+        _currentItemIndex + 1 >= (_sessionPlan?.items.length ?? 0);
+
     if (!mounted) return;
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (context) => SessionCompleteScreen(
+          sessionId: _session!.id,
           itemsCompleted: _currentItemIndex + 1,
           totalItems: _sessionPlan?.items.length ?? 0,
           elapsedSeconds: _elapsedSeconds,
           plannedSeconds: totalSeconds,
           isFullCompletion: outcome == SessionOutcomeEnum.complete,
+          allItemsExhausted: allItemsExhausted,
         ),
       ),
     );
@@ -400,10 +413,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+                color: isDark
+                    ? MasteryColors.cardDark
+                    : MasteryColors.cardLight,
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                    color: isDark
+                        ? MasteryColors.borderDark
+                        : MasteryColors.borderLight,
                   ),
                 ),
               ),
@@ -493,9 +510,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               )
             else if (currentItem != null)
               // Current item card
-              Expanded(
-                child: _buildItemCard(currentItem, isDark),
-              )
+              Expanded(child: _buildItemCard(currentItem, isDark))
             else
               Expanded(
                 child: Center(
@@ -528,7 +543,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           return RecognitionCard(
             word: vocab.word,
             correctAnswer: vocab.context ?? vocab.word,
-            distractors: _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
+            distractors:
+                _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
             context: vocab.context,
             onAnswer: _handleRecognitionAnswer,
           );

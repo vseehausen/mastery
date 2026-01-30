@@ -22,10 +22,10 @@ class SessionPlanner {
     required UserPreferencesRepository userPreferencesRepository,
     required TelemetryService telemetryService,
     required SrsScheduler srsScheduler,
-  })  : _learningCardRepository = learningCardRepository,
-        _userPreferencesRepository = userPreferencesRepository,
-        _telemetryService = telemetryService,
-        _srsScheduler = srsScheduler;
+  }) : _learningCardRepository = learningCardRepository,
+       _userPreferencesRepository = userPreferencesRepository,
+       _telemetryService = telemetryService,
+       _srsScheduler = srsScheduler;
 
   final LearningCardRepository _learningCardRepository;
   final UserPreferencesRepository _userPreferencesRepository;
@@ -40,12 +40,11 @@ class SessionPlanner {
     required double targetRetention,
   }) async {
     // Get estimated time per item
-    final estimatedSecondsPerItem =
-        await _telemetryService.getEstimatedSecondsPerItem(userId);
+    final estimatedSecondsPerItem = await _telemetryService
+        .getEstimatedSecondsPerItem(userId);
 
     // Compute session capacity
-    final maxItems =
-        (timeTargetMinutes * 60 / estimatedSecondsPerItem).floor();
+    final maxItems = (timeTargetMinutes * 60 / estimatedSecondsPerItem).floor();
 
     if (maxItems <= 0) {
       return SessionPlan.empty();
@@ -55,7 +54,9 @@ class SessionPlanner {
     final overdueCount = await _learningCardRepository.getOverdueCount(userId);
 
     // Check if we should suppress new words (hysteresis)
-    final prefs = await _userPreferencesRepository.getOrCreateWithDefaults(userId);
+    final prefs = await _userPreferencesRepository.getOrCreateWithDefaults(
+      userId,
+    );
     final shouldSuppress = shouldSuppressNewWords(
       overdueCount: overdueCount,
       sessionCapacity: maxItems,
@@ -65,7 +66,9 @@ class SessionPlanner {
     // Update suppression state if changed
     if (shouldSuppress != prefs.newWordSuppressionActive) {
       await _userPreferencesRepository.updateNewWordSuppression(
-          userId, shouldSuppress);
+        userId,
+        shouldSuppress,
+      );
     }
 
     // Compute new word cap based on intensity (or 0 if suppressed)
@@ -74,11 +77,12 @@ class SessionPlanner {
         : Intensity.getNewWordCap(intensity, timeTargetMinutes);
 
     // Get cards in priority order
-    final dueCards =
-        await _learningCardRepository.getDueCardsSorted(userId);
+    final dueCards = await _learningCardRepository.getDueCardsSorted(userId);
     final leeches = await _learningCardRepository.getLeeches(userId);
-    final newCards =
-        await _learningCardRepository.getNewCards(userId, limit: newWordCap);
+    final newCards = await _learningCardRepository.getNewCards(
+      userId,
+      limit: newWordCap,
+    );
 
     // Build plan: due reviews first -> leeches -> new words
     final items = <PlannedItem>[];
@@ -93,11 +97,13 @@ class SessionPlanner {
       // Skip leeches here (they'll be added separately)
       if (card.isLeech) continue;
 
-      items.add(PlannedItem(
-        learningCard: card,
-        interactionMode: selectInteractionMode(card),
-        priority: _computePriorityScore(card),
-      ));
+      items.add(
+        PlannedItem(
+          learningCard: card,
+          interactionMode: selectInteractionMode(card),
+          priority: _computePriorityScore(card),
+        ),
+      );
       reviewCount++;
     }
 
@@ -108,11 +114,14 @@ class SessionPlanner {
       // Avoid duplicates (leech might already be in due cards)
       if (items.any((i) => i.learningCard.id == card.id)) continue;
 
-      items.add(PlannedItem(
-        learningCard: card,
-        interactionMode: InteractionMode.recognition, // Always MCQ for leeches
-        priority: _computePriorityScore(card) * 1.5, // Boost leech priority
-      ));
+      items.add(
+        PlannedItem(
+          learningCard: card,
+          interactionMode:
+              InteractionMode.recognition, // Always MCQ for leeches
+          priority: _computePriorityScore(card) * 1.5, // Boost leech priority
+        ),
+      );
       leechCount++;
     }
 
@@ -121,17 +130,20 @@ class SessionPlanner {
       if (items.length >= maxItems) break;
       if (newWordCount >= newWordCap) break;
 
-      items.add(PlannedItem(
-        learningCard: card,
-        interactionMode: InteractionMode.recognition, // Always MCQ for new cards
-        priority: 0.0, // Lowest priority
-      ));
+      items.add(
+        PlannedItem(
+          learningCard: card,
+          interactionMode:
+              InteractionMode.recognition, // Always MCQ for new cards
+          priority: 0.0, // Lowest priority
+        ),
+      );
       newWordCount++;
     }
 
     // Compute estimated duration
-    final estimatedDurationSeconds =
-        (items.length * estimatedSecondsPerItem).round();
+    final estimatedDurationSeconds = (items.length * estimatedSecondsPerItem)
+        .round();
 
     return SessionPlan(
       items: items,

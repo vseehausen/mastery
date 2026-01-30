@@ -8,6 +8,7 @@ import '../../../providers/auth_provider.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
+import 'learning_settings_screen.dart';
 import 'session_screen.dart';
 
 /// Home screen for the learning feature
@@ -46,11 +47,33 @@ class SessionHomeScreen extends ConsumerWidget {
                       color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
-                  // Streak indicator
-                  currentStreak.when(
-                    data: (streak) => StreakIndicator(count: streak),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const StreakIndicator(count: 0),
+                  Row(
+                    children: [
+                      // Streak indicator
+                      currentStreak.when(
+                        data: (streak) => StreakIndicator(count: streak),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const StreakIndicator(count: 0),
+                      ),
+                      const SizedBox(width: 8),
+                      // Settings button
+                      IconButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (context) =>
+                                  const LearningSettingsScreen(),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.settings_outlined,
+                          color: isDark
+                              ? MasteryColors.mutedForegroundDark
+                              : MasteryColors.mutedForegroundLight,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -120,7 +143,9 @@ class SessionHomeScreen extends ConsumerWidget {
             child: Icon(
               Icons.lightbulb_outline,
               size: 40,
-              color: isDark ? MasteryColors.accentDark : MasteryColors.accentLight,
+              color: isDark
+                  ? MasteryColors.accentDark
+                  : MasteryColors.accentLight,
             ),
           ),
           const SizedBox(height: 24),
@@ -186,7 +211,9 @@ class SessionHomeScreen extends ConsumerWidget {
           Text(
             'Great work! Come back tomorrow.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
             textAlign: TextAlign.center,
           ),
@@ -194,7 +221,9 @@ class SessionHomeScreen extends ConsumerWidget {
           Icon(
             Icons.check_circle,
             size: 48,
-            color: isDark ? MasteryColors.successDark : MasteryColors.successLight,
+            color: isDark
+                ? MasteryColors.successDark
+                : MasteryColors.successLight,
           ),
         ],
       );
@@ -214,7 +243,9 @@ class SessionHomeScreen extends ConsumerWidget {
           Text(
             'Add some vocabulary to get started!',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
             textAlign: TextAlign.center,
           ),
@@ -236,7 +267,9 @@ class SessionHomeScreen extends ConsumerWidget {
           Text(
             '${(progress * 100).toInt()}% complete',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
           ),
           const SizedBox(height: 16),
@@ -246,7 +279,9 @@ class SessionHomeScreen extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+              backgroundColor: isDark
+                  ? MasteryColors.mutedDark
+                  : MasteryColors.mutedLight,
               valueColor: AlwaysStoppedAnimation<Color>(
                 isDark ? MasteryColors.accentDark : MasteryColors.accentLight,
               ),
@@ -276,7 +311,9 @@ class SessionHomeScreen extends ConsumerWidget {
         Text(
           'A focused $timeTarget-minute session awaits.',
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+            color: isDark
+                ? MasteryColors.mutedForegroundDark
+                : MasteryColors.mutedForegroundLight,
           ),
           textAlign: TextAlign.center,
         ),

@@ -37,7 +37,9 @@ class SessionProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress.clamp(0.0, 1.0),
             minHeight: 6,
-            backgroundColor: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+            backgroundColor: isDark
+                ? MasteryColors.mutedDark
+                : MasteryColors.mutedLight,
             valueColor: AlwaysStoppedAnimation<Color>(
               isDark ? MasteryColors.successDark : MasteryColors.successLight,
             ),

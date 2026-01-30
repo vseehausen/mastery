@@ -4,28 +4,79 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/learning_providers.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
+import 'session_screen.dart';
 
 /// Screen shown after completing a learning session
-class SessionCompleteScreen extends ConsumerWidget {
+class SessionCompleteScreen extends ConsumerStatefulWidget {
   const SessionCompleteScreen({
     super.key,
+    required this.sessionId,
     required this.itemsCompleted,
     required this.totalItems,
     required this.elapsedSeconds,
     required this.plannedSeconds,
     required this.isFullCompletion,
+    this.allItemsExhausted = false,
   });
 
+  final String sessionId;
   final int itemsCompleted;
   final int totalItems;
   final int elapsedSeconds;
   final int plannedSeconds;
   final bool isFullCompletion;
+  final bool allItemsExhausted;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SessionCompleteScreen> createState() =>
+      _SessionCompleteScreenState();
+}
+
+class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
+  bool _isAddingBonus = false;
+
+  Future<void> _addBonusTime() async {
+    if (_isAddingBonus) return;
+
+    setState(() {
+      _isAddingBonus = true;
+    });
+
+    try {
+      final sessionRepo = ref.read(sessionRepositoryProvider);
+
+      // Add 2 minutes (120 seconds) of bonus time
+      await sessionRepo.addBonusTime(
+        sessionId: widget.sessionId,
+        bonusSeconds: 120,
+      );
+
+      // Navigate back to session screen to continue
+      if (mounted) {
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (context) => const SessionScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error adding bonus time: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingBonus = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentStreak = ref.watch(currentStreakProvider);
 
@@ -42,30 +93,34 @@ class SessionCompleteScreen extends ConsumerWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: isFullCompletion
+                  color: widget.isFullCompletion
                       ? (isDark
-                          ? MasteryColors.successMutedDark
-                          : MasteryColors.successMutedLight)
+                            ? MasteryColors.successMutedDark
+                            : MasteryColors.successMutedLight)
                       : (isDark
-                          ? MasteryColors.warningMutedDark
-                          : MasteryColors.warningMutedLight),
+                            ? MasteryColors.warningMutedDark
+                            : MasteryColors.warningMutedLight),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isFullCompletion ? Icons.check_circle : Icons.access_time,
+                  widget.isFullCompletion
+                      ? Icons.check_circle
+                      : Icons.access_time,
                   size: 64,
-                  color: isFullCompletion
-                      ? (isDark ? MasteryColors.successDark : MasteryColors.successLight)
-                      : (isDark ? MasteryColors.warningDark : MasteryColors.warningLight),
+                  color: widget.isFullCompletion
+                      ? (isDark
+                            ? MasteryColors.successDark
+                            : MasteryColors.successLight)
+                      : (isDark
+                            ? MasteryColors.warningDark
+                            : MasteryColors.warningLight),
                 ),
               ),
               const SizedBox(height: 32),
 
               // Title
               Text(
-                isFullCompletion
-                    ? "You're done for today!"
-                    : 'Session ended',
+                _getTitle(),
                 style: MasteryTextStyles.displayLarge.copyWith(
                   color: isDark ? Colors.white : Colors.black,
                 ),
@@ -75,9 +130,7 @@ class SessionCompleteScreen extends ConsumerWidget {
 
               // Subtitle
               Text(
-                isFullCompletion
-                    ? 'Great work! Come back tomorrow.'
-                    : 'You made progress today.',
+                _getSubtitle(),
                 style: MasteryTextStyles.body.copyWith(
                   color: isDark
                       ? MasteryColors.mutedForegroundDark
@@ -91,28 +144,34 @@ class SessionCompleteScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+                  color: isDark
+                      ? MasteryColors.cardDark
+                      : MasteryColors.cardLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                    color: isDark
+                        ? MasteryColors.borderDark
+                        : MasteryColors.borderLight,
                   ),
                 ),
                 child: Column(
                   children: [
                     _StatRow(
                       label: 'Items reviewed',
-                      value: '$itemsCompleted',
+                      value: '${widget.itemsCompleted}',
                       isDark: isDark,
                     ),
                     const SizedBox(height: 12),
                     _StatRow(
                       label: 'Time practiced',
-                      value: _formatTime(elapsedSeconds),
+                      value: _formatTime(widget.elapsedSeconds),
                       isDark: isDark,
                     ),
                     const SizedBox(height: 12),
                     Divider(
-                      color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                      color: isDark
+                          ? MasteryColors.borderDark
+                          : MasteryColors.borderLight,
                     ),
                     const SizedBox(height: 12),
                     // Streak
@@ -140,23 +199,24 @@ class SessionCompleteScreen extends ConsumerWidget {
 
               const Spacer(),
 
-              // Bonus time button (for future implementation)
-              if (isFullCompletion) ...[
+              // Bonus time button (only if full completion and items available)
+              if (widget.isFullCompletion && !widget.allItemsExhausted) ...[
                 ShadButton.outline(
-                  onPressed: () {
-                    // TODO: Implement bonus time (US6)
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Bonus time coming soon!')),
-                    );
-                  },
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 18),
-                      SizedBox(width: 8),
-                      Text('+2 min bonus'),
-                    ],
-                  ),
+                  onPressed: _isAddingBonus ? null : _addBonusTime,
+                  child: _isAddingBonus
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add, size: 18),
+                            SizedBox(width: 8),
+                            Text('+2 min bonus'),
+                          ],
+                        ),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -180,6 +240,26 @@ class SessionCompleteScreen extends ConsumerWidget {
     );
   }
 
+  String _getTitle() {
+    if (widget.allItemsExhausted) {
+      return "You've reviewed everything!";
+    }
+    if (widget.isFullCompletion) {
+      return "You're done for today!";
+    }
+    return 'Session ended';
+  }
+
+  String _getSubtitle() {
+    if (widget.allItemsExhausted) {
+      return 'No more items available right now.';
+    }
+    if (widget.isFullCompletion) {
+      return 'Great work! Come back tomorrow.';
+    }
+    return 'You made progress today.';
+  }
+
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -196,7 +276,6 @@ class _StatRow extends StatelessWidget {
     required this.value,
     required this.isDark,
   });
-
 
   final String label;
   final String value;

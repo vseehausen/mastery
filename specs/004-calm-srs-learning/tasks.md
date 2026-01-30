@@ -108,11 +108,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T039 [US2] Implement priority score query in `LearningCardRepository.getDueCardsSorted()` in `mobile/lib/data/repositories/learning_card_repository.dart` returning cards ordered by computed priority
-- [ ] T040 [US2] Implement `selectInteractionMode()` in `SessionPlanner` in `mobile/lib/domain/services/session_planner.dart`: Recognition for state=new/learning/relearning or stability < 7 days; Recall for state=review with stability >= 7 days
-- [ ] T041 [US2] Update `buildSessionPlan()` in `SessionPlanner` to fill session: due reviews first (sorted by priority) -> leeches -> new words (up to intensity cap) -> stop at capacity
-- [ ] T042 [US2] Implement intensity-based new-word caps in `SessionPlanner`: Light=2/10min, Normal=5/10min, Intense=8/10min per data-model.md
-- [ ] T043 [US2] Update `SessionScreen` to use planned item order and assigned interaction mode from SessionPlan
+- [x] T039 [US2] Implement priority score query in `LearningCardRepository.getDueCardsSorted()` in `mobile/lib/data/repositories/learning_card_repository.dart` returning cards ordered by computed priority
+- [x] T040 [US2] Implement `selectInteractionMode()` in `SessionPlanner` in `mobile/lib/domain/services/session_planner.dart`: Recognition for state=new/learning/relearning or stability < 7 days; Recall for state=review with stability >= 7 days
+- [x] T041 [US2] Update `buildSessionPlan()` in `SessionPlanner` to fill session: due reviews first (sorted by priority) -> leeches -> new words (up to intensity cap) -> stop at capacity
+- [x] T042 [US2] Implement intensity-based new-word caps in `SessionPlanner`: Light=2/10min, Normal=5/10min, Intense=8/10min per data-model.md
+- [x] T043 [US2] Update `SessionScreen` to use planned item order and assigned interaction mode from SessionPlan
 
 **Checkpoint**: User Story 2 complete - session fills with priority-scored items, correct interaction mode per item
 
@@ -126,11 +126,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T044 [US3] Implement `shouldSuppressNewWords()` with hysteresis in `SessionPlanner` in `mobile/lib/domain/services/session_planner.dart`: entry at 1x capacity, exit at 2x capacity
-- [ ] T045 [US3] Add `newWordSuppressionActive` state tracking in `UserLearningPreferences` or session-level state to implement hysteresis correctly across sessions
-- [ ] T046 [US3] Update `buildSessionPlan()` to set newWordCap=0 when suppression active, silently filling entire session with overdue reviews
-- [ ] T047 [US3] Verify SessionHomeScreen shows NO backlog count, NO overdue indicator, NO special messaging regardless of overdue amount
-- [ ] T048 [US3] Implement load-balancing: when overdue exceeds session capacity, distribute across future sessions by capping items per session at capacity
+- [x] T044 [US3] Implement `shouldSuppressNewWords()` with hysteresis in `SessionPlanner` in `mobile/lib/domain/services/session_planner.dart`: entry at 1x capacity, exit at 2x capacity
+- [x] T045 [US3] Add `newWordSuppressionActive` state tracking in `UserLearningPreferences` or session-level state to implement hysteresis correctly across sessions
+- [x] T046 [US3] Update `buildSessionPlan()` to set newWordCap=0 when suppression active, silently filling entire session with overdue reviews
+- [x] T047 [US3] Verify SessionHomeScreen shows NO backlog count, NO overdue indicator, NO special messaging regardless of overdue amount
+- [x] T048 [US3] Implement load-balancing: when overdue exceeds session capacity, distribute across future sessions by capping items per session at capacity
 
 **Checkpoint**: User Story 3 complete - missed days result in same calm UX, new words auto-suppressed during recovery
 
@@ -144,11 +144,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T049 [US4] Implement `LearningSettingsScreen` in `mobile/lib/features/learn/screens/learning_settings_screen.dart` with time target picker (5/10/15 presets + custom 1-60), intensity selector, retention slider
-- [ ] T050 [US4] Implement `learning_preferences_providers.dart` in `mobile/lib/features/learn/providers/` with userPreferencesProvider, updatePreferences mutation
-- [ ] T051 [US4] Update `SessionHomeScreen` CTA to reflect current dailyTimeTargetMinutes from UserLearningPreferences
-- [ ] T052 [US4] Pass user's targetRetention to SrsScheduler.createScheduler() when building session
-- [ ] T053 [US4] Add settings navigation from SessionHomeScreen (gear icon)
+- [x] T049 [US4] Implement `LearningSettingsScreen` in `mobile/lib/features/learn/screens/learning_settings_screen.dart` with time target picker (5/10/15 presets + custom 1-60), intensity selector, retention slider
+- [x] T050 [US4] Implement `learning_preferences_providers.dart` in `mobile/lib/features/learn/providers/` with userPreferencesProvider, updatePreferences mutation
+- [x] T051 [US4] Update `SessionHomeScreen` CTA to reflect current dailyTimeTargetMinutes from UserLearningPreferences
+- [x] T052 [US4] Pass user's targetRetention to SrsScheduler.createScheduler() when building session
+- [x] T053 [US4] Add settings navigation from SessionHomeScreen (gear icon)
 
 **Checkpoint**: User Story 4 complete - learner can configure learning preferences
 
@@ -162,11 +162,11 @@
 
 ### Implementation for User Story 5
 
-- [ ] T054 [US5] Implement streak increment logic: only increment when SessionOutcome=complete AND plannedMinutes fully elapsed
-- [ ] T055 [US5] Implement streak reset logic: on session start, if lastCompletedDate is not yesterday and not today, reset currentCount to 0
-- [ ] T056 [US5] Implement "already completed today" state: after completing session, show "You're done for today" on SessionHomeScreen, disable start button
-- [ ] T057 [US5] Implement partial session tracking: if user quits early, show progress bar at X% complete, do NOT increment streak
-- [ ] T058 [US5] Update longestCount when currentCount exceeds it in StreakRepository
+- [x] T054 [US5] Implement streak increment logic: only increment when SessionOutcome=complete AND plannedMinutes fully elapsed
+- [x] T055 [US5] Implement streak reset logic: on session start, if lastCompletedDate is not yesterday and not today, reset currentCount to 0
+- [x] T056 [US5] Implement "already completed today" state: after completing session, show "You're done for today" on SessionHomeScreen, disable start button
+- [x] T057 [US5] Implement partial session tracking: if user quits early, show progress bar at X% complete, do NOT increment streak
+- [x] T058 [US5] Update longestCount when currentCount exceeds it in StreakRepository
 
 **Checkpoint**: User Story 5 complete - streak tracking works correctly
 
@@ -180,11 +180,11 @@
 
 ### Implementation for User Story 6
 
-- [ ] T059 [US6] Add "+2 min bonus" button to `SessionCompleteScreen` in `mobile/lib/features/learn/screens/session_complete_screen.dart`
-- [ ] T060 [US6] Implement bonus extension flow: on tap, add 120 seconds to session, fetch more items from planner, resume SessionScreen
-- [ ] T061 [US6] Track bonusSeconds in LearningSessions table, update after each bonus
-- [ ] T062 [US6] Allow multiple consecutive bonus extensions (button reappears after each bonus completes)
-- [ ] T063 [US6] Handle edge case: if all items exhausted during bonus, end early with "You've reviewed everything available"
+- [x] T059 [US6] Add "+2 min bonus" button to `SessionCompleteScreen` in `mobile/lib/features/learn/screens/session_complete_screen.dart`
+- [x] T060 [US6] Implement bonus extension flow: on tap, add 120 seconds to session, fetch more items from planner, resume SessionScreen
+- [x] T061 [US6] Track bonusSeconds in LearningSessions table, update after each bonus
+- [x] T062 [US6] Allow multiple consecutive bonus extensions (button reappears after each bonus completes)
+- [x] T063 [US6] Handle edge case: if all items exhausted during bonus, end early with "You've reviewed everything available"
 
 **Checkpoint**: User Story 6 complete - bonus extension fully functional
 
@@ -194,12 +194,12 @@
 
 **Purpose**: Crash recovery and edge case handling per spec.md
 
-- [ ] T064 Implement session resume on app restart: check for active session where now < expiresAt, resume with remaining time
-- [ ] T065 Implement session expiry: if now > expiresAt on restart, discard session (set outcome=expired), generate fresh session
-- [ ] T066 Handle "no items available" state: show "Nothing to practice right now. Check back later." when no due items and no new words
-- [ ] T067 Handle "all items exhausted early" state: end session early with "You've reviewed everything available", still count as complete for streak
-- [ ] T068 Implement elapsed-time timer (not wall clock) for session duration to handle timezone changes gracefully
-- [ ] T069 Implement save-after-every-item: persist LearningCard updates and ReviewLog immediately after each grade
+- [x] T064 Implement session resume on app restart: check for active session where now < expiresAt, resume with remaining time
+- [x] T065 Implement session expiry: if now > expiresAt on restart, discard session (set outcome=expired), generate fresh session
+- [x] T066 Handle "no items available" state: show "Nothing to practice right now. Check back later." when no due items and no new words
+- [x] T067 Handle "all items exhausted early" state: end session early with "You've reviewed everything available", still count as complete for streak
+- [x] T068 Implement elapsed-time timer (not wall clock) for session duration to handle timezone changes gracefully
+- [x] T069 Implement save-after-every-item: persist LearningCard updates and ReviewLog immediately after each grade
 
 ---
 
@@ -222,8 +222,8 @@
 
 **Test-First Deviation Note**: Tests are grouped here for MVP pragmatism rather than pure test-first. Acceptable if: tests are completed within the same PR as implementation or in the immediately following PR, before the feature is marked "done". This maintains the constitution's intent (tests document behavior, prevent regressions) while allowing faster iteration.
 
-- [ ] T076 [P] Run `flutter analyze` and fix all errors/warnings
-- [ ] T077 [P] Run `dart format .` on all new files
+- [x] T076 [P] Run `flutter analyze` and fix all errors/warnings
+- [x] T077 [P] Run `dart format .` on all new files
 - [ ] T078 Implement unit tests for SrsScheduler in `mobile/test/unit/services/srs_scheduler_test.dart`
 - [ ] T079 [P] Implement unit tests for SessionPlanner in `mobile/test/unit/services/session_planner_test.dart`
 - [ ] T080 [P] Implement unit tests for TelemetryService in `mobile/test/unit/services/telemetry_service_test.dart`

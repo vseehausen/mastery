@@ -126,7 +126,7 @@ class ReviewLogData {
 /// and managing FSRS state.
 class SrsScheduler {
   SrsScheduler({double targetRetention = 0.90})
-      : _scheduler = createScheduler(targetRetention: targetRetention);
+    : _scheduler = createScheduler(targetRetention: targetRetention);
 
   final fsrs.Scheduler _scheduler;
 
@@ -164,7 +164,11 @@ class SrsScheduler {
 
     // Review the card
     final fsrsRating = ReviewRating.toFsrs(rating);
-    final result = _scheduler.reviewCard(fsrsCard, fsrsRating, reviewDateTime: reviewTime);
+    final result = _scheduler.reviewCard(
+      fsrsCard,
+      fsrsRating,
+      reviewDateTime: reviewTime,
+    );
     final newFsrsCard = result.card;
 
     // Compute lapses and leech status (we track these ourselves since FSRS doesn't)
@@ -230,7 +234,10 @@ class SrsScheduler {
 
     // Use FSRS scheduler's retrievability calculation
     final fsrsCard = _toFsrsCard(card);
-    return _scheduler.getCardRetrievability(fsrsCard, currentDateTime: currentTime);
+    return _scheduler.getCardRetrievability(
+      fsrsCard,
+      currentDateTime: currentTime,
+    );
   }
 
   /// Initialize a new learning card from a vocabulary item
