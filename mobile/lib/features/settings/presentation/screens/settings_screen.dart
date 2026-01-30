@@ -9,9 +9,7 @@ import '../widgets/settings_list_item.dart';
 
 /// Settings screen
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({
-    super.key,
-  });
+  const SettingsScreen({super.key});
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -55,7 +53,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     // Profile section
                     currentUser.when(
                       data: (user) => ProfileCard(
-                        name: (user?.userMetadata?['full_name'] as String?) ?? 'User',
+                        name:
+                            (user?.userMetadata?['full_name'] as String?) ??
+                            'User',
                         email: user?.email ?? 'user@example.com',
                       ),
                       loading: () => const SizedBox.shrink(),
@@ -73,7 +73,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Daily goal not yet configurable'),
+                                content: Text(
+                                  'Daily goal not yet configurable',
+                                ),
                               ),
                             );
                           },
@@ -83,8 +85,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           trailing: ShadSwitch(
                             value: _notificationsEnabled,
                             onChanged: (value) {
-                              setState(
-                                  () => _notificationsEnabled = value);
+                              setState(() => _notificationsEnabled = value);
                             },
                           ),
                         ),
@@ -173,10 +174,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Navigator.of(context).pop();
               }
             },
-            child: const Text(
-              'Sign Out',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

@@ -19,8 +19,9 @@ class ContextCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor =
-        isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1);
+    final bgColor = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.grey.withValues(alpha: 0.1);
 
     if (this.context == null || this.context!.isEmpty) {
       return const SizedBox.shrink();

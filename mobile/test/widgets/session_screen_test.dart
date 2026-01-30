@@ -11,10 +11,7 @@ void main() {
   group('SessionProgressBar', () {
     testWidgets('displays progress correctly', (tester) async {
       await tester.pumpTestWidget(
-        const SessionProgressBar(
-          completedItems: 5,
-          totalItems: 10,
-        ),
+        const SessionProgressBar(completedItems: 5, totalItems: 10),
       );
 
       // Should show some visual progress indicator
@@ -23,10 +20,7 @@ void main() {
 
     testWidgets('shows zero progress at start', (tester) async {
       await tester.pumpTestWidget(
-        const SessionProgressBar(
-          completedItems: 0,
-          totalItems: 10,
-        ),
+        const SessionProgressBar(completedItems: 0, totalItems: 10),
       );
 
       expect(find.byType(SessionProgressBar), findsOneWidget);
@@ -34,10 +28,7 @@ void main() {
 
     testWidgets('shows full progress at completion', (tester) async {
       await tester.pumpTestWidget(
-        const SessionProgressBar(
-          completedItems: 10,
-          totalItems: 10,
-        ),
+        const SessionProgressBar(completedItems: 10, totalItems: 10),
       );
 
       expect(find.byType(SessionProgressBar), findsOneWidget);
@@ -45,10 +36,7 @@ void main() {
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        const SessionProgressBar(
-          completedItems: 3,
-          totalItems: 10,
-        ),
+        const SessionProgressBar(completedItems: 3, totalItems: 10),
         themeMode: ThemeMode.dark,
       );
 
@@ -57,10 +45,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        const SessionProgressBar(
-          completedItems: 3,
-          totalItems: 10,
-        ),
+        const SessionProgressBar(completedItems: 3, totalItems: 10),
         themeMode: ThemeMode.light,
       );
 
@@ -272,11 +257,7 @@ void main() {
     testWidgets('completion state shows session complete', (tester) async {
       // Simulate completion state UI
       await tester.pumpTestWidget(
-        const Scaffold(
-          body: Center(
-            child: Text('Session complete!'),
-          ),
-        ),
+        const Scaffold(body: Center(child: Text('Session complete!'))),
       );
 
       expect(find.text('Session complete!'), findsOneWidget);

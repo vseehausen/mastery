@@ -3,10 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/database.dart';
 import '../../core/theme/text_styles.dart';
 import '../../core/theme/color_tokens.dart';
+import '../../providers/database_provider.dart';
 import 'vocabulary_provider.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
 import 'presentation/widgets/learning_stats.dart';
+
+/// Provider to load the most recent encounter for a vocabulary item
+final _primaryEncounterProvider = FutureProvider.family<Encounter?, String>((
+  ref,
+  vocabularyId,
+) async {
+  final encounterRepo = ref.watch(encounterRepositoryProvider);
+  return encounterRepo.getMostRecentForVocabulary(vocabularyId);
+});
+
+/// Provider to load source for an encounter
+final _sourceForEncounterProvider = FutureProvider.family<Source?, String?>((
+  ref,
+  sourceId,
+) async {
+  if (sourceId == null) return null;
+  final sourceRepo = ref.watch(sourceRepositoryProvider);
+  return sourceRepo.getById(sourceId);
+});
 
 /// Detail screen for a single vocabulary entry
 class VocabularyDetailScreen extends ConsumerWidget {
@@ -25,9 +45,9 @@ class VocabularyDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.bookmark_outline),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Bookmarked')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Bookmarked')));
             },
           ),
         ],
@@ -39,14 +59,15 @@ class VocabularyDetailScreen extends ConsumerWidget {
           if (vocab == null) {
             return const Center(child: Text('Vocabulary not found'));
           }
-          return _buildContent(context, vocab);
+          return _buildContent(context, ref, vocab);
         },
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, Vocabulary vocab) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, Vocabulary vocab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final encounterAsync = ref.watch(_primaryEncounterProvider(vocab.id));
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -70,15 +91,19 @@ class VocabularyDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Definition/Context section
-                  if (vocab.context != null && vocab.context!.isNotEmpty) ...[
-                    ContextCard(
-                      context: vocab.context,
-                      bookTitle: vocab.bookTitle,
-                      author: vocab.bookAuthor,
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                  // Context from encounter
+                  encounterAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (encounter) {
+                      if (encounter == null ||
+                          encounter.context == null ||
+                          encounter.context!.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return _buildEncounterContext(ref, encounter);
+                    },
+                  ),
 
                   // Learning stats
                   LearningStats(
@@ -115,9 +140,7 @@ class VocabularyDetailScreen extends ConsumerWidget {
                           child: Text(
                             'This word was shown because it\'s time to review based on your learning schedule.',
                             style: MasteryTextStyles.bodySmall.copyWith(
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.black87,
+                              color: isDark ? Colors.white : Colors.black87,
                               height: 1.5,
                             ),
                           ),
@@ -132,6 +155,27 @@ class VocabularyDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEncounterContext(WidgetRef ref, Encounter encounter) {
+    final sourceAsync = ref.watch(
+      _sourceForEncounterProvider(encounter.sourceId),
+    );
+
+    return Column(
+      children: [
+        sourceAsync.when(
+          loading: () => ContextCard(context: encounter.context),
+          error: (_, __) => ContextCard(context: encounter.context),
+          data: (source) => ContextCard(
+            context: encounter.context,
+            bookTitle: source?.title,
+            author: source?.author,
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }

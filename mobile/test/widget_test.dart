@@ -7,8 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mastery/main.dart';
 
 void main() {
-  testWidgets('App compiles and starts without crashing',
-      (WidgetTester tester) async {
+  testWidgets('App compiles and starts without crashing', (
+    WidgetTester tester,
+  ) async {
     // Build our app and trigger a frame
     await tester.pumpWidget(const ProviderScope(child: MasteryApp()));
 

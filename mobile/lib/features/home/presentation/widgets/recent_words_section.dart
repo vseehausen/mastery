@@ -21,18 +21,13 @@ class RecentWordsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: 'Recent Words',
-          onSeeAll: onSeeAll,
-        ),
+        SectionHeader(title: 'Recent Words', onSeeAll: onSeeAll),
         const SizedBox(height: 12),
         if (words.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text(
-                'No words yet. Import your first Kindle highlights!',
-              ),
+              child: Text('No words yet. Import your first Kindle highlights!'),
             ),
           )
         else

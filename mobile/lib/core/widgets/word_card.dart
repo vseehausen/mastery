@@ -21,8 +21,9 @@ class WordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor =
-        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300];
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.grey[300];
 
     return InkWell(
       onTap: onTap,
@@ -75,12 +76,7 @@ class WordCard extends StatelessWidget {
               ],
             ),
           ),
-          Divider(
-            height: 1,
-            color: borderColor,
-            indent: 16,
-            endIndent: 16,
-          ),
+          Divider(height: 1, color: borderColor, indent: 16, endIndent: 16),
         ],
       ),
     );

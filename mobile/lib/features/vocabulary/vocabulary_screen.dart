@@ -211,22 +211,12 @@ class _VocabularyScreenState extends ConsumerState<VocabularyScreen> {
 }
 
 class _VocabularyCard extends StatelessWidget {
-  const _VocabularyCard({
-    required this.vocabulary,
-    this.highlightQuery,
-  });
+  const _VocabularyCard({required this.vocabulary, this.highlightQuery});
 
   final Vocabulary vocabulary;
   final String? highlightQuery;
 
-  String _truncateContext(String? context, {int maxLength = 60}) {
-    if (context == null || context.isEmpty) return '';
-    if (context.length <= maxLength) return context;
-    return '${context.substring(0, maxLength - 3)}...';
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) return '';
+  String _formatDate(DateTime date) {
     return '${date.month}/${date.day}/${date.year}';
   }
 
@@ -238,9 +228,8 @@ class _VocabularyCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (context) => VocabularyDetailScreen(
-                vocabularyId: vocabulary.id,
-              ),
+              builder: (context) =>
+                  VocabularyDetailScreen(vocabularyId: vocabulary.id),
             ),
           );
         },
@@ -254,7 +243,10 @@ class _VocabularyCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: highlightQuery != null && highlightQuery!.isNotEmpty
-                        ? _buildHighlightedText(vocabulary.word, highlightQuery!)
+                        ? _buildHighlightedText(
+                            vocabulary.word,
+                            highlightQuery!,
+                          )
                         : Text(
                             vocabulary.word,
                             style: const TextStyle(
@@ -263,27 +255,22 @@ class _VocabularyCard extends StatelessWidget {
                             ),
                           ),
                   ),
-                  if (vocabulary.lookupTimestamp != null)
-                    Text(
-                      _formatDate(vocabulary.lookupTimestamp),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+                  Text(
+                    _formatDate(vocabulary.createdAt),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
                 ],
               ),
-              if (vocabulary.context != null &&
-                  vocabulary.context!.isNotEmpty) ...[
+              if (vocabulary.stem != null && vocabulary.stem!.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '"${_truncateContext(vocabulary.context)}"',
+                  vocabulary.stem!,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[700],
                     fontStyle: FontStyle.italic,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -311,12 +298,12 @@ class _VocabularyCard extends StatelessWidget {
         spans.add(TextSpan(text: text.substring(start, index)));
       }
 
-      spans.add(TextSpan(
-        text: text.substring(index, index + query.length),
-        style: const TextStyle(
-          backgroundColor: Colors.yellow,
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + query.length),
+          style: const TextStyle(backgroundColor: Colors.yellow),
         ),
-      ));
+      );
 
       start = index + query.length;
     }

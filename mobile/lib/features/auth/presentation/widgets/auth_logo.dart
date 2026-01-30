@@ -4,11 +4,7 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Logo widget with title and optional subtitle for auth screens
 class AuthLogo extends StatelessWidget {
-  const AuthLogo({
-    super.key,
-    required this.title,
-    this.subtitle,
-  });
+  const AuthLogo({super.key, required this.title, this.subtitle});
 
   final String title;
   final String? subtitle;
@@ -28,11 +24,7 @@ class AuthLogo extends StatelessWidget {
             color: MasteryColors.accentLight,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.auto_stories,
-            color: Colors.white,
-            size: 32,
-          ),
+          child: const Icon(Icons.auto_stories, color: Colors.white, size: 32),
         ),
         const SizedBox(height: 12),
         // Title

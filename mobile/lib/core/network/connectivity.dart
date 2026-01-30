@@ -15,9 +15,10 @@ enum ConnectivityStatus {
 }
 
 /// Provider for network connectivity status
-final connectivityProvider = StateNotifierProvider<ConnectivityNotifier, ConnectivityStatus>(
-  (ref) => ConnectivityNotifier(),
-);
+final connectivityProvider =
+    StateNotifierProvider<ConnectivityNotifier, ConnectivityStatus>(
+      (ref) => ConnectivityNotifier(),
+    );
 
 /// Notifier for network connectivity changes
 class ConnectivityNotifier extends StateNotifier<ConnectivityStatus> {

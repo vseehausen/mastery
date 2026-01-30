@@ -28,8 +28,17 @@ class SessionRepository {
   }) async {
     final now = DateTime.now().toUtc();
     // Default expiresAt to end of local day (23:59:59)
-    final defaultExpiresAt = expiresAt ??
-        DateTime(now.year, now.month, now.day, 23, 59, 59).toUtc();
+    final localNow = DateTime.now();
+    final defaultExpiresAt =
+        expiresAt ??
+        DateTime(
+          localNow.year,
+          localNow.month,
+          localNow.day,
+          23,
+          59,
+          59,
+        ).toUtc();
 
     final companion = LearningSessionsCompanion.insert(
       id: _uuid.v4(),
@@ -47,8 +56,9 @@ class SessionRepository {
 
   /// Get a session by ID
   Future<LearningSession?> getById(String id) {
-    return (_db.select(_db.learningSessions)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.learningSessions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get active session for a user (outcome = in_progress AND not expired)
@@ -68,11 +78,12 @@ class SessionRepository {
     final now = DateTime.now().toUtc();
     final startOfDay = DateTime(now.year, now.month, now.day).toUtc();
 
-    final completedSessions = await (_db.select(_db.learningSessions)
-          ..where((t) => t.userId.equals(userId))
-          ..where((t) => t.outcome.equals(SessionOutcome.complete))
-          ..where((t) => t.startedAt.isBiggerOrEqualValue(startOfDay)))
-        .get();
+    final completedSessions =
+        await (_db.select(_db.learningSessions)
+              ..where((t) => t.userId.equals(userId))
+              ..where((t) => t.outcome.equals(SessionOutcome.complete))
+              ..where((t) => t.startedAt.isBiggerOrEqualValue(startOfDay)))
+            .get();
 
     return completedSessions.isNotEmpty;
   }
@@ -87,17 +98,19 @@ class SessionRepository {
     required int reviewsPresented,
   }) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.learningSessions)
-          ..where((t) => t.id.equals(sessionId)))
-        .write(LearningSessionsCompanion(
-      elapsedSeconds: Value(elapsedSeconds),
-      itemsPresented: Value(itemsPresented),
-      itemsCompleted: Value(itemsCompleted),
-      newWordsPresented: Value(newWordsPresented),
-      reviewsPresented: Value(reviewsPresented),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(
+      _db.learningSessions,
+    )..where((t) => t.id.equals(sessionId))).write(
+      LearningSessionsCompanion(
+        elapsedSeconds: Value(elapsedSeconds),
+        itemsPresented: Value(itemsPresented),
+        itemsCompleted: Value(itemsCompleted),
+        newWordsPresented: Value(newWordsPresented),
+        reviewsPresented: Value(reviewsPresented),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
 
     return (await getById(sessionId))!;
   }
@@ -115,14 +128,16 @@ class SessionRepository {
     final now = DateTime.now().toUtc();
     final newBonusTotal = session.bonusSeconds + bonusSeconds;
 
-    await (_db.update(_db.learningSessions)
-          ..where((t) => t.id.equals(sessionId)))
-        .write(LearningSessionsCompanion(
-      bonusSeconds: Value(newBonusTotal),
-      outcome: const Value(SessionOutcome.inProgress), // Resume session
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(
+      _db.learningSessions,
+    )..where((t) => t.id.equals(sessionId))).write(
+      LearningSessionsCompanion(
+        bonusSeconds: Value(newBonusTotal),
+        outcome: const Value(SessionOutcome.inProgress), // Resume session
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
 
     return (await getById(sessionId))!;
   }
@@ -135,20 +150,23 @@ class SessionRepository {
     final now = DateTime.now().toUtc();
 
     // Compute session aggregates from review logs
-    final accuracyRate =
-        await _reviewLogRepository.computeSessionAccuracy(sessionId);
-    final avgResponseTimeMs =
-        await _reviewLogRepository.computeSessionAvgResponseTime(sessionId);
+    final accuracyRate = await _reviewLogRepository.computeSessionAccuracy(
+      sessionId,
+    );
+    final avgResponseTimeMs = await _reviewLogRepository
+        .computeSessionAvgResponseTime(sessionId);
 
-    await (_db.update(_db.learningSessions)
-          ..where((t) => t.id.equals(sessionId)))
-        .write(LearningSessionsCompanion(
-      outcome: Value(outcome),
-      accuracyRate: Value(accuracyRate),
-      avgResponseTimeMs: Value(avgResponseTimeMs),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(
+      _db.learningSessions,
+    )..where((t) => t.id.equals(sessionId))).write(
+      LearningSessionsCompanion(
+        outcome: Value(outcome),
+        accuracyRate: Value(accuracyRate),
+        avgResponseTimeMs: Value(avgResponseTimeMs),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
 
     return (await getById(sessionId))!;
   }
@@ -157,28 +175,33 @@ class SessionRepository {
   Future<int> expireStaleSessions(String userId) async {
     final now = DateTime.now().toUtc();
 
-    final staleSessions = await (_db.select(_db.learningSessions)
-          ..where((t) => t.userId.equals(userId))
-          ..where((t) => t.outcome.equals(SessionOutcome.inProgress))
-          ..where((t) => t.expiresAt.isSmallerOrEqualValue(now)))
-        .get();
+    final staleSessions =
+        await (_db.select(_db.learningSessions)
+              ..where((t) => t.userId.equals(userId))
+              ..where((t) => t.outcome.equals(SessionOutcome.inProgress))
+              ..where((t) => t.expiresAt.isSmallerOrEqualValue(now)))
+            .get();
 
     for (final session in staleSessions) {
-      await (_db.update(_db.learningSessions)
-            ..where((t) => t.id.equals(session.id)))
-          .write(LearningSessionsCompanion(
-        outcome: const Value(SessionOutcome.expired),
-        updatedAt: Value(now),
-        isPendingSync: const Value(true),
-      ));
+      await (_db.update(
+        _db.learningSessions,
+      )..where((t) => t.id.equals(session.id))).write(
+        LearningSessionsCompanion(
+          outcome: const Value(SessionOutcome.expired),
+          updatedAt: Value(now),
+          isPendingSync: const Value(true),
+        ),
+      );
     }
 
     return staleSessions.length;
   }
 
   /// Get recent sessions for a user
-  Future<List<LearningSession>> getRecentSessions(String userId,
-      {int limit = 10}) {
+  Future<List<LearningSession>> getRecentSessions(
+    String userId, {
+    int limit = 10,
+  }) {
     return (_db.select(_db.learningSessions)
           ..where((t) => t.userId.equals(userId))
           ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
@@ -188,17 +211,15 @@ class SessionRepository {
 
   /// Get sessions pending sync
   Future<List<LearningSession>> getPendingSync() {
-    return (_db.select(_db.learningSessions)
-          ..where((t) => t.isPendingSync.equals(true)))
-        .get();
+    return (_db.select(
+      _db.learningSessions,
+    )..where((t) => t.isPendingSync.equals(true))).get();
   }
 
   /// Mark session as synced
   Future<void> markSynced(String id) async {
     await (_db.update(_db.learningSessions)..where((t) => t.id.equals(id)))
-        .write(const LearningSessionsCompanion(
-      isPendingSync: Value(false),
-    ));
+        .write(const LearningSessionsCompanion(isPendingSync: Value(false)));
   }
 
   /// Get today's partial session (if any) for resuming
@@ -217,8 +238,7 @@ class SessionRepository {
 
   /// Calculate remaining time for a session in seconds
   int getRemainingSeconds(LearningSession session) {
-    final totalSeconds =
-        (session.plannedMinutes * 60) + session.bonusSeconds;
+    final totalSeconds = (session.plannedMinutes * 60) + session.bonusSeconds;
     final remaining = totalSeconds - session.elapsedSeconds;
     return remaining > 0 ? remaining : 0;
   }

@@ -601,33 +601,75 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Widget _buildItemCard(PlannedItem item, bool isDark) {
-    // Get vocabulary data for the item
-    return FutureBuilder<Vocabulary?>(
-      future: ref.read(vocabularyRepositoryProvider).getById(item.vocabularyId),
+    // Get vocabulary data and encounter context for the item
+    return FutureBuilder<_VocabWithContext>(
+      future: _loadVocabWithContext(item.vocabularyId),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null) {
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final vocab = snapshot.data!;
+        final data = snapshot.data!;
+        final contextText = data.encounterContext ?? data.vocab.word;
 
         if (item.isRecognition) {
           return RecognitionCard(
-            word: vocab.word,
-            correctAnswer: vocab.context ?? vocab.word,
+            word: data.vocab.word,
+            correctAnswer: contextText,
             distractors:
                 _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
-            context: vocab.context,
+            context: data.encounterContext,
             onAnswer: _handleRecognitionAnswer,
           );
         } else {
           return RecallCard(
-            word: vocab.word,
-            answer: vocab.context ?? vocab.word,
+            word: data.vocab.word,
+            answer: contextText,
             onGrade: _handleRecallGrade,
           );
         }
       },
     );
   }
+
+  Future<_VocabWithContext> _loadVocabWithContext(String vocabularyId) async {
+    final vocabRepo = ref.read(vocabularyRepositoryProvider);
+    final encounterRepo = ref.read(encounterRepositoryProvider);
+
+    final vocab = await vocabRepo.getById(vocabularyId);
+    if (vocab == null) {
+      return _VocabWithContext(
+        vocab: Vocabulary(
+          id: vocabularyId,
+          userId: '',
+          word: '???',
+          stem: null,
+          contentHash: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          deletedAt: null,
+          lastSyncedAt: null,
+          isPendingSync: false,
+          version: 1,
+        ),
+        encounterContext: null,
+      );
+    }
+
+    final encounter = await encounterRepo.getMostRecentForVocabulary(
+      vocabularyId,
+    );
+
+    return _VocabWithContext(
+      vocab: vocab,
+      encounterContext: encounter?.context,
+    );
+  }
+}
+
+class _VocabWithContext {
+  _VocabWithContext({required this.vocab, this.encounterContext});
+
+  final Vocabulary vocab;
+  final String? encounterContext;
 }

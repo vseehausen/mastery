@@ -13,8 +13,10 @@ final allVocabularyProvider = StreamProvider<List<Vocabulary>>((ref) {
 });
 
 /// Provider for a single vocabulary entry by ID
-final vocabularyByIdProvider =
-    FutureProvider.family<Vocabulary?, String>((ref, id) async {
+final vocabularyByIdProvider = FutureProvider.family<Vocabulary?, String>((
+  ref,
+  id,
+) async {
   final vocabRepo = ref.watch(vocabularyRepositoryProvider);
   return vocabRepo.getById(id);
 });
@@ -31,10 +33,10 @@ final vocabularyCountProvider = FutureProvider<int>((ref) async {
 /// Provider for searching vocabulary
 final vocabularySearchProvider =
     FutureProvider.family<List<Vocabulary>, String>((ref, query) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return [];
-  if (query.isEmpty) return [];
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return [];
+      if (query.isEmpty) return [];
 
-  final vocabRepo = ref.watch(vocabularyRepositoryProvider);
-  return vocabRepo.search(userId: userId, query: query);
-});
+      final vocabRepo = ref.watch(vocabularyRepositoryProvider);
+      return vocabRepo.search(userId: userId, query: query);
+    });

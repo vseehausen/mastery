@@ -7,17 +7,13 @@ import '../../helpers/test_helpers.dart';
 void main() {
   group('VocabularySearchBar', () {
     testWidgets('displays search icon', (tester) async {
-      await tester.pumpTestWidget(
-        const VocabularySearchBar(),
-      );
+      await tester.pumpTestWidget(const VocabularySearchBar());
 
       expect(find.byIcon(Icons.search), findsOneWidget);
     });
 
     testWidgets('displays placeholder text', (tester) async {
-      await tester.pumpTestWidget(
-        const VocabularySearchBar(),
-      );
+      await tester.pumpTestWidget(const VocabularySearchBar());
 
       expect(find.text('Search words...'), findsOneWidget);
     });
@@ -26,9 +22,7 @@ void main() {
       String? changedText;
 
       await tester.pumpTestWidget(
-        VocabularySearchBar(
-          onChanged: (text) => changedText = text,
-        ),
+        VocabularySearchBar(onChanged: (text) => changedText = text),
       );
 
       await tester.enterText(find.byType(TextField), 'ephemeral');
@@ -38,11 +32,7 @@ void main() {
     testWidgets('shows close button when text is entered', (tester) async {
       final controller = TextEditingController(text: 'test');
 
-      await tester.pumpTestWidget(
-        VocabularySearchBar(
-          controller: controller,
-        ),
-      );
+      await tester.pumpTestWidget(VocabularySearchBar(controller: controller));
 
       // Widget uses Icons.close not Icons.clear
       expect(find.byIcon(Icons.close), findsOneWidget);
@@ -51,11 +41,7 @@ void main() {
     testWidgets('hides close button when text is empty', (tester) async {
       final controller = TextEditingController();
 
-      await tester.pumpTestWidget(
-        VocabularySearchBar(
-          controller: controller,
-        ),
-      );
+      await tester.pumpTestWidget(VocabularySearchBar(controller: controller));
 
       expect(find.byIcon(Icons.close), findsNothing);
     });
@@ -73,7 +59,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.close));
       await tester.pump();
-      
+
       expect(controller.text, isEmpty);
       expect(cleared, true);
     });

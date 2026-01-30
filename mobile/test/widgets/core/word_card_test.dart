@@ -89,7 +89,9 @@ void main() {
         ),
       );
 
-      final wordText = tester.widget<Text>(find.text('supercalifragilisticexpialidocious'));
+      final wordText = tester.widget<Text>(
+        find.text('supercalifragilisticexpialidocious'),
+      );
       expect(wordText.maxLines, 1);
       expect(wordText.overflow, TextOverflow.ellipsis);
     });
@@ -98,15 +100,18 @@ void main() {
       await tester.pumpTestWidget(
         WordCard(
           word: 'test',
-          definition: 'This is a very long definition that should span multiple lines and eventually get truncated with an ellipsis at the end.',
+          definition:
+              'This is a very long definition that should span multiple lines and eventually get truncated with an ellipsis at the end.',
           status: LearningStatus.unknown,
           onTap: () {},
         ),
       );
 
-      final defText = tester.widget<Text>(find.text(
-        'This is a very long definition that should span multiple lines and eventually get truncated with an ellipsis at the end.',
-      ));
+      final defText = tester.widget<Text>(
+        find.text(
+          'This is a very long definition that should span multiple lines and eventually get truncated with an ellipsis at the end.',
+        ),
+      );
       expect(defText.maxLines, 2);
       expect(defText.overflow, TextOverflow.ellipsis);
     });

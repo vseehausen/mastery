@@ -11,43 +11,43 @@ class Languages extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Books table - source books containing highlights
-class Books extends Table {
+/// Sources table - origin container (book, website, document, manual)
+class Sources extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
-  TextColumn get languageId => text().nullable()();
+  TextColumn get type => text()(); // 'book', 'website', 'document', 'manual'
   TextColumn get title => text().withLength(max: 500)();
   TextColumn get author => text().withLength(max: 255).nullable()();
   TextColumn get asin => text().withLength(max: 20).nullable()();
-  IntColumn get highlightCount => integer().withDefault(const Constant(0))();
+  TextColumn get url => text().nullable()();
+  TextColumn get domain => text().withLength(max: 255).nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
   DateTimeColumn get lastSyncedAt => dateTime().nullable()();
-  BoolColumn get isPendingSync => boolean().withDefault(const Constant(false))();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get version => integer().withDefault(const Constant(1))();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Highlights table - individual text passages from books
-class Highlights extends Table {
+/// Encounters table - a vocabulary word seen in a source, with context
+class Encounters extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
-  TextColumn get bookId => text()();
-  TextColumn get content => text()();
-  TextColumn get type => text()(); // 'highlight' or 'note'
-  TextColumn get location => text().nullable()();
-  IntColumn get page => integer().nullable()();
-  DateTimeColumn get kindleDate => dateTime().nullable()();
-  TextColumn get note => text().nullable()();
+  TextColumn get vocabularyId => text()();
+  TextColumn get sourceId => text().nullable()();
   TextColumn get context => text().nullable()();
-  TextColumn get contentHash => text().withLength(max: 64)();
+  TextColumn get locatorJson => text().nullable()();
+  DateTimeColumn get occurredAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
   DateTimeColumn get lastSyncedAt => dateTime().nullable()();
-  BoolColumn get isPendingSync => boolean().withDefault(const Constant(false))();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
   IntColumn get version => integer().withDefault(const Constant(1))();
 
   @override
@@ -73,23 +73,19 @@ class ImportSessions extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Vocabulary table - words looked up on Kindle via Vocabulary Builder
+/// Vocabulary table - word identity only
 class Vocabularys extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
   TextColumn get word => text().withLength(max: 100)();
   TextColumn get stem => text().withLength(max: 100).nullable()();
-  TextColumn get context => text().nullable()();
-  TextColumn get bookTitle => text().nullable()();
-  TextColumn get bookAuthor => text().nullable()();
-  TextColumn get bookAsin => text().withLength(max: 20).nullable()();
-  DateTimeColumn get lookupTimestamp => dateTime().nullable()();
   TextColumn get contentHash => text().withLength(max: 64)();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
   DateTimeColumn get lastSyncedAt => dateTime().nullable()();
-  BoolColumn get isPendingSync => boolean().withDefault(const Constant(false))();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
   IntColumn get version => integer().withDefault(const Constant(1))();
 
   @override
@@ -99,7 +95,8 @@ class Vocabularys extends Table {
 /// Sync outbox table - queue for pending sync operations (local only)
 class SyncOutbox extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get entityTable => text()(); // 'books' or 'highlights'
+  TextColumn get entityTable =>
+      text()(); // 'sources', 'encounters', 'vocabulary'
   TextColumn get recordId => text()();
   TextColumn get operation => text()(); // 'insert', 'update', 'delete'
   TextColumn get payload => text()(); // JSON
@@ -189,8 +186,7 @@ class LearningSessions extends Table {
   IntColumn get itemsCompleted => integer().withDefault(const Constant(0))();
   IntColumn get newWordsPresented => integer().withDefault(const Constant(0))();
   IntColumn get reviewsPresented => integer().withDefault(const Constant(0))();
-  RealColumn get accuracyRate =>
-      real().nullable()(); // Computed at session end
+  RealColumn get accuracyRate => real().nullable()(); // Computed at session end
   IntColumn get avgResponseTimeMs =>
       integer().nullable()(); // Computed at session end
   // Outcome: 0=in_progress, 1=complete, 2=partial, 3=expired

@@ -112,26 +112,26 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
   const since = lastSyncedAt || '1970-01-01T00:00:00Z';
   console.log(`[sync/pull] userId=${userId}, since=${since}`);
 
-  // Fetch books modified since lastSyncedAt
-  const { data: books, error: booksError } = await client
-    .from('books')
+  // Fetch sources modified since lastSyncedAt
+  const { data: sources, error: sourcesError } = await client
+    .from('sources')
     .select('*')
     .eq('user_id', userId)
     .gt('updated_at', since);
 
-  if (booksError) {
-    return errorResponse('Failed to fetch books', 500);
+  if (sourcesError) {
+    return errorResponse('Failed to fetch sources', 500);
   }
 
-  // Fetch highlights modified since lastSyncedAt
-  const { data: highlights, error: highlightsError } = await client
-    .from('highlights')
+  // Fetch encounters modified since lastSyncedAt
+  const { data: encounters, error: encountersError } = await client
+    .from('encounters')
     .select('*')
     .eq('user_id', userId)
     .gt('updated_at', since);
 
-  if (highlightsError) {
-    return errorResponse('Failed to fetch highlights', 500);
+  if (encountersError) {
+    return errorResponse('Failed to fetch encounters', 500);
   }
 
   // Fetch vocabulary modified since lastSyncedAt
@@ -191,11 +191,11 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
 
   const syncedAt = new Date().toISOString();
 
-  console.log(`[sync/pull] Returning: vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}`);
+  console.log(`[sync/pull] Returning: sources=${sources?.length || 0}, encounters=${encounters?.length || 0}, vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}`);
 
   return jsonResponse({
-    books: books || [],
-    highlights: highlights || [],
+    sources: sources || [],
+    encounters: encounters || [],
     vocabulary: vocabulary || [],
     learning_cards: learning_cards || [],
     learning_sessions: learning_sessions || [],

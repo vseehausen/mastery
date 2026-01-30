@@ -51,8 +51,9 @@ class ReviewLogRepository {
 
   /// Get a review log by ID
   Future<ReviewLog?> getById(String id) {
-    return (_db.select(_db.reviewLogs)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.reviewLogs,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get all review logs for a session
@@ -73,12 +74,16 @@ class ReviewLogRepository {
 
   /// Get average response time for a user (for telemetry/estimation)
   /// Uses the last N reviews to compute a rolling average
-  Future<double> getAverageResponseTime(String userId, {int windowSize = 50}) async {
-    final logs = await (_db.select(_db.reviewLogs)
-          ..where((t) => t.userId.equals(userId))
-          ..orderBy([(t) => OrderingTerm.desc(t.reviewedAt)])
-          ..limit(windowSize))
-        .get();
+  Future<double> getAverageResponseTime(
+    String userId, {
+    int windowSize = 50,
+  }) async {
+    final logs =
+        await (_db.select(_db.reviewLogs)
+              ..where((t) => t.userId.equals(userId))
+              ..orderBy([(t) => OrderingTerm.desc(t.reviewedAt)])
+              ..limit(windowSize))
+            .get();
 
     if (logs.isEmpty) {
       return 15000.0; // Default 15 seconds in ms
@@ -90,9 +95,9 @@ class ReviewLogRepository {
 
   /// Get review count for a user
   Future<int> getReviewCount(String userId) async {
-    final logs = await (_db.select(_db.reviewLogs)
-          ..where((t) => t.userId.equals(userId)))
-        .get();
+    final logs = await (_db.select(
+      _db.reviewLogs,
+    )..where((t) => t.userId.equals(userId))).get();
     return logs.length;
   }
 
@@ -107,17 +112,16 @@ class ReviewLogRepository {
 
   /// Get logs pending sync
   Future<List<ReviewLog>> getPendingSync() {
-    return (_db.select(_db.reviewLogs)
-          ..where((t) => t.isPendingSync.equals(true)))
-        .get();
+    return (_db.select(
+      _db.reviewLogs,
+    )..where((t) => t.isPendingSync.equals(true))).get();
   }
 
   /// Mark log as synced
   Future<void> markSynced(String id) async {
-    await (_db.update(_db.reviewLogs)..where((t) => t.id.equals(id)))
-        .write(const ReviewLogsCompanion(
-      isPendingSync: Value(false),
-    ));
+    await (_db.update(_db.reviewLogs)..where((t) => t.id.equals(id))).write(
+      const ReviewLogsCompanion(isPendingSync: Value(false)),
+    );
   }
 
   /// Compute accuracy rate for a session (fraction of reviews rated Good/Easy)

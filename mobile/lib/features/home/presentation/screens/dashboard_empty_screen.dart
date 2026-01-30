@@ -33,7 +33,8 @@ class DashboardEmptyScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          (user?.userMetadata?['full_name'] as String?) ?? 'Learner',
+                          (user?.userMetadata?['full_name'] as String?) ??
+                              'Learner',
                           style: MasteryTextStyles.displayLarge.copyWith(
                             fontSize: 24,
                             color: isDark ? Colors.white : Colors.black,

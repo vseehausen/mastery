@@ -18,7 +18,9 @@ class OAuthButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark ? MasteryColors.borderDark : MasteryColors.borderLight;
+    final borderColor = isDark
+        ? MasteryColors.borderDark
+        : MasteryColors.borderLight;
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return Material(

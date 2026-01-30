@@ -31,13 +31,16 @@ class LearningCardRepository {
 
   /// Get a learning card by ID
   Future<LearningCard?> getById(String id) {
-    return (_db.select(_db.learningCards)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.learningCards,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get a learning card by vocabulary ID
   Future<LearningCard?> getByVocabularyId(
-      String userId, String vocabularyId) async {
+    String userId,
+    String vocabularyId,
+  ) async {
     return (_db.select(_db.learningCards)
           ..where((t) => t.userId.equals(userId))
           ..where((t) => t.vocabularyId.equals(vocabularyId))
@@ -72,8 +75,10 @@ class LearningCardRepository {
 
   /// Get due cards sorted by priority score (for session planning)
   /// Priority is computed based on overdue days, retrievability, and lapses
-  Future<List<LearningCard>> getDueCardsSorted(String userId,
-      {int? limit}) async {
+  Future<List<LearningCard>> getDueCardsSorted(
+    String userId, {
+    int? limit,
+  }) async {
     final now = DateTime.now().toUtc();
     final dueCards = await getDueCards(userId);
 
@@ -155,20 +160,23 @@ class LearningCardRepository {
     required bool isLeech,
   }) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.learningCards)..where((t) => t.id.equals(cardId)))
-        .write(LearningCardsCompanion(
-      state: Value(state),
-      due: Value(due),
-      stability: Value(stability),
-      difficulty: Value(difficulty),
-      reps: Value(reps),
-      lapses: Value(lapses),
-      isLeech: Value(isLeech),
-      lastReview: Value(now),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-      version: Value((await getById(cardId))!.version + 1),
-    ));
+    await (_db.update(
+      _db.learningCards,
+    )..where((t) => t.id.equals(cardId))).write(
+      LearningCardsCompanion(
+        state: Value(state),
+        due: Value(due),
+        stability: Value(stability),
+        difficulty: Value(difficulty),
+        reps: Value(reps),
+        lapses: Value(lapses),
+        isLeech: Value(isLeech),
+        lastReview: Value(now),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+        version: Value((await getById(cardId))!.version + 1),
+      ),
+    );
 
     return (await getById(cardId))!;
   }
@@ -176,29 +184,31 @@ class LearningCardRepository {
   /// Soft delete a learning card
   Future<void> delete(String id) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.learningCards)..where((t) => t.id.equals(id)))
-        .write(LearningCardsCompanion(
-      deletedAt: Value(now),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(_db.learningCards)..where((t) => t.id.equals(id))).write(
+      LearningCardsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
   }
 
   /// Get cards pending sync
   Future<List<LearningCard>> getPendingSync() {
-    return (_db.select(_db.learningCards)
-          ..where((t) => t.isPendingSync.equals(true)))
-        .get();
+    return (_db.select(
+      _db.learningCards,
+    )..where((t) => t.isPendingSync.equals(true))).get();
   }
 
   /// Mark card as synced
   Future<void> markSynced(String id) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.learningCards)..where((t) => t.id.equals(id)))
-        .write(LearningCardsCompanion(
-      isPendingSync: const Value(false),
-      lastSyncedAt: Value(now),
-    ));
+    await (_db.update(_db.learningCards)..where((t) => t.id.equals(id))).write(
+      LearningCardsCompanion(
+        isPendingSync: const Value(false),
+        lastSyncedAt: Value(now),
+      ),
+    );
   }
 
   /// Create learning cards for all vocabulary items that don't have one yet
@@ -215,8 +225,9 @@ class LearningCardRepository {
     final existingVocabIds = existingCards.map((c) => c.vocabularyId).toSet();
 
     // Find vocabulary without cards
-    final vocabWithoutCards =
-        allVocab.where((v) => !existingVocabIds.contains(v.id)).toList();
+    final vocabWithoutCards = allVocab
+        .where((v) => !existingVocabIds.contains(v.id))
+        .toList();
 
     // Create cards for each
     final now = DateTime.now().toUtc();

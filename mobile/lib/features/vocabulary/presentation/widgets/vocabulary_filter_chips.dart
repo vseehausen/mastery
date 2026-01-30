@@ -4,10 +4,7 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Filter chips for vocabulary status filtering
 class VocabularyFilterChips extends StatefulWidget {
-  const VocabularyFilterChips({
-    super.key,
-    required this.onFilterChanged,
-  });
+  const VocabularyFilterChips({super.key, required this.onFilterChanged});
 
   final ValueChanged<LearningStatus?> onFilterChanged;
 
@@ -100,13 +97,17 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor
-              : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.grey[200]),
           borderRadius: BorderRadius.circular(24),
         ),
         child: Text(
           label,
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isSelected ? Colors.white : (isDark ? Colors.white : Colors.black),
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white : Colors.black),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),

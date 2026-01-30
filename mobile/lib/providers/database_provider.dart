@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/database.dart';
-import '../data/repositories/book_repository.dart';
+import '../data/repositories/encounter_repository.dart';
 import '../data/repositories/learning_card_repository.dart';
 import '../data/repositories/review_log_repository.dart';
 import '../data/repositories/session_repository.dart';
+import '../data/repositories/source_repository.dart';
 import '../data/repositories/streak_repository.dart';
 import '../data/repositories/sync_outbox_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
@@ -17,10 +18,16 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
-/// Provider for BookRepository
-final bookRepositoryProvider = Provider<BookRepository>((ref) {
+/// Provider for SourceRepository
+final sourceRepositoryProvider = Provider<SourceRepository>((ref) {
   final db = ref.watch(databaseProvider);
-  return BookRepository(db);
+  return SourceRepository(db);
+});
+
+/// Provider for EncounterRepository
+final encounterRepositoryProvider = Provider<EncounterRepository>((ref) {
+  final db = ref.watch(databaseProvider);
+  return EncounterRepository(db);
 });
 
 /// Provider for SyncOutboxRepository

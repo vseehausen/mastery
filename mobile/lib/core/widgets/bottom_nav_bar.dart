@@ -30,7 +30,9 @@ class BottomNavBar extends StatelessWidget {
         color: bgColor,
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey[300]!,
           ),
         ),
       ),

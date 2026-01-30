@@ -7,10 +7,7 @@ import 'presentation/screens/oauth_loading_screen.dart';
 
 /// Auth guard widget that shows login if user is not authenticated
 class AuthGuard extends ConsumerWidget {
-  const AuthGuard({
-    super.key,
-    required this.child,
-  });
+  const AuthGuard({super.key, required this.child});
 
   final Widget child;
 
@@ -46,11 +43,8 @@ class AuthGuard extends ConsumerWidget {
         }
         return child;
       },
-      loading: () => const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
           child: Column(

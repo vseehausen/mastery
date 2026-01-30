@@ -49,11 +49,7 @@ void main() {
 
     testWidgets('has outline style border', (tester) async {
       await tester.pumpTestWidget(
-        OAuthButton(
-          icon: Icons.email,
-          label: 'Test',
-          onPressed: () {},
-        ),
+        OAuthButton(icon: Icons.email, label: 'Test', onPressed: () {}),
       );
 
       final container = tester.widget<Container>(find.byType(Container));

@@ -63,7 +63,7 @@ final todayProgressProvider = AutoDisposeFutureProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TodayProgressRef = AutoDisposeFutureProviderRef<double>;
-String _$hasItemsToReviewHash() => r'9fb8657a80e6fa04806893189d048c62ff7086bf';
+String _$hasItemsToReviewHash() => r'3a3d0c5c6639762fc5ff5ad9420aef183424777f';
 
 /// Provides whether there are items available to review
 ///

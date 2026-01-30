@@ -1,5 +1,5 @@
 // Parse vocab.db Edge Function - parses Kindle Vocabulary Builder SQLite database
-// and stores entries directly in the vocabulary table
+// and stores entries in vocabulary + encounters + sources tables
 
 import { handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient, createServiceClient, getUserId } from '../_shared/supabase.ts';
@@ -17,7 +17,7 @@ interface ParsedVocabularyEntry {
   contentHash: string;
 }
 
-interface ParsedBook {
+interface ParsedSource {
   id: string;
   title: string;
   author: string | null;
@@ -37,13 +37,12 @@ Deno.serve(async (req) => {
   // Get user ID from auth
   let userId = await getUserId(req);
   let isDevMode = false;
-  
+
   // For development: allow passing userId with a dev secret header
-  // This is safer than using the service role key
   if (!userId) {
     const devSecret = Deno.env.get('DEV_SECRET');
     const providedSecret = req.headers.get('X-Dev-Secret');
-    
+
     if (devSecret && providedSecret === devSecret) {
       try {
         const body = await req.clone().json();
@@ -57,7 +56,7 @@ Deno.serve(async (req) => {
       }
     }
   }
-  
+
   if (!userId) {
     return unauthorizedResponse();
   }
@@ -96,7 +95,7 @@ Deno.serve(async (req) => {
 
     // Initialize sql.js
     const SQL = await initSqlJs();
-    
+
     let db: Database;
     try {
       db = new SQL.Database(fileBuffer);
@@ -106,11 +105,11 @@ Deno.serve(async (req) => {
 
     // Parse vocabulary entries
     const entries: ParsedVocabularyEntry[] = [];
-    const booksMap = new Map<string, ParsedBook>();
+    const sourcesMap = new Map<string, ParsedSource>();
 
     try {
       const result = db.exec(`
-        SELECT 
+        SELECT
           w.id as word_id,
           w.word,
           w.stem,
@@ -129,7 +128,7 @@ Deno.serve(async (req) => {
 
       if (result.length > 0) {
         const rows = result[0].values;
-        
+
         for (const row of rows) {
           const [
             _wordId,
@@ -147,9 +146,9 @@ Deno.serve(async (req) => {
           // Skip entries without a word
           if (!word) continue;
 
-          // Track unique books
-          if (bookId && bookTitle && !booksMap.has(bookId as string)) {
-            booksMap.set(bookId as string, {
+          // Track unique sources (books)
+          if (bookId && bookTitle && !sourcesMap.has(bookId as string)) {
+            sourcesMap.set(bookId as string, {
               id: bookId as string,
               title: bookTitle as string,
               author: (bookAuthor as string) || null,
@@ -167,11 +166,10 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Generate content hash for deduplication
+          // Generate content hash for deduplication: hash(word|stem)
           const contentHash = await generateContentHash(
             word as string,
-            context as string | null,
-            bookTitle as string | null
+            (stem as string) || null,
           );
 
           entries.push({
@@ -193,60 +191,46 @@ Deno.serve(async (req) => {
       db.close();
     }
 
-    const books = Array.from(booksMap.values());
+    const sources = Array.from(sourcesMap.values());
 
-    // Upsert books and build a map of kindle_book_id -> database book_id
-    const bookIdMap = new Map<string, string>();
-    
-    for (const book of books) {
-      // Check if book exists by ASIN or title+author
-      let existingBook = null;
-      
-      if (book.asin) {
-        const { data } = await client
-          .from('books')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('asin', book.asin)
-          .single();
-        existingBook = data;
+    // Upsert sources and build a map of kindle_book_id -> database source_id
+    const sourceIdMap = new Map<string, string>();
+
+    for (const source of sources) {
+      // Try to find existing source by type+title+author
+      const query = client
+        .from('sources')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'book')
+        .eq('title', source.title);
+
+      if (source.author) {
+        query.eq('author', source.author);
       }
-      
-      if (!existingBook && book.title) {
-        const query = client
-          .from('books')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('title', book.title);
-        
-        if (book.author) {
-          query.eq('author', book.author);
-        }
-        
-        const { data } = await query.single();
-        existingBook = data;
-      }
-      
-      if (existingBook) {
-        bookIdMap.set(book.id, existingBook.id);
+
+      const { data: existingSource } = await query.single();
+
+      if (existingSource) {
+        sourceIdMap.set(source.id, existingSource.id);
       } else {
-        // Insert new book
-        const { data: newBook, error } = await client
-          .from('books')
+        // Insert new source
+        const { data: newSource, error } = await client
+          .from('sources')
           .insert({
             user_id: userId,
-            title: book.title,
-            author: book.author,
-            asin: book.asin,
-            source: 'kindle',
+            type: 'book',
+            title: source.title,
+            author: source.author,
+            asin: source.asin,
           })
           .select('id')
           .single();
-        
-        if (newBook) {
-          bookIdMap.set(book.id, newBook.id);
+
+        if (newSource) {
+          sourceIdMap.set(source.id, newSource.id);
         } else if (error) {
-          console.error('Book insert error:', error);
+          console.error('Source insert error:', error);
         }
       }
     }
@@ -275,49 +259,37 @@ Deno.serve(async (req) => {
     // Get existing vocabulary hashes for deduplication
     const { data: existingVocab } = await client
       .from('vocabulary')
-      .select('content_hash')
+      .select('id, content_hash')
       .eq('user_id', userId);
 
-    const existingHashes = new Set(existingVocab?.map(v => v.content_hash) || []);
+    const existingHashMap = new Map<string, string>();
+    for (const v of existingVocab || []) {
+      existingHashMap.set(v.content_hash, v.id);
+    }
 
-    // Filter out duplicates
-    const newEntries = entries.filter(e => !existingHashes.has(e.contentHash));
-    const skipped = entries.length - newEntries.length;
+    // Separate new vocab entries from existing ones
+    const newEntries = entries.filter(e => !existingHashMap.has(e.contentHash));
+    const existingEntries = entries.filter(e => existingHashMap.has(e.contentHash));
+    const skipped = 0; // We still create encounters for existing vocab
 
-    // Insert new vocabulary entries
+    // Insert new vocabulary entries (word identity only)
     let imported = 0;
+    let encountersCreated = 0;
     const errors: string[] = [];
 
-    // Process in batches of 100 for efficiency
+    // Process new vocabulary in batches of 100
     const batchSize = 100;
     for (let i = 0; i < newEntries.length; i += batchSize) {
       const batch = newEntries.slice(i, i + batchSize);
-      
-      const vocabRecords = batch.map(entry => {
-        // Find book_id from the map using the kindle book key
-        let bookId: string | null = null;
-        if (entry.bookTitle) {
-          // Find the book by matching title
-          for (const [kindleId, book] of booksMap.entries()) {
-            if (book.title === entry.bookTitle) {
-              bookId = bookIdMap.get(kindleId) || null;
-              break;
-            }
-          }
-        }
-        
-        return {
-          user_id: userId,
-          word: entry.word,
-          stem: entry.stem,
-          context: entry.context,
-          book_id: bookId,
-          lookup_timestamp: entry.lookupTimestamp,
-          content_hash: entry.contentHash,
-          is_pending_sync: false,
-          version: 1,
-        };
-      });
+
+      const vocabRecords = batch.map(entry => ({
+        user_id: userId,
+        word: entry.word,
+        stem: entry.stem,
+        content_hash: entry.contentHash,
+        is_pending_sync: false,
+        version: 1,
+      }));
 
       const { error } = await client
         .from('vocabulary')
@@ -325,23 +297,31 @@ Deno.serve(async (req) => {
 
       if (error) {
         console.error('Insert error:', error);
-        errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
+        errors.push(`Vocab batch ${i / batchSize + 1}: ${error.message}`);
       } else {
         imported += batch.length;
 
-        // After successful vocabulary insert, create learning cards
+        // Fetch inserted vocab IDs
         const contentHashes = batch.map(e => e.contentHash);
         const { data: insertedVocab } = await client
           .from('vocabulary')
-          .select('id')
+          .select('id, content_hash')
           .eq('user_id', userId)
           .in('content_hash', contentHashes);
 
+        // Update hash map with newly inserted vocab
+        if (insertedVocab) {
+          for (const v of insertedVocab) {
+            existingHashMap.set(v.content_hash, v.id);
+          }
+        }
+
+        // Create learning cards for new vocabulary
         if (insertedVocab && insertedVocab.length > 0) {
           const learningCards = insertedVocab.map(v => ({
             user_id: userId,
             vocabulary_id: v.id,
-            state: 0,        // new
+            state: 0,
             due: new Date().toISOString(),
             stability: 0.0,
             difficulty: 0.0,
@@ -361,8 +341,52 @@ Deno.serve(async (req) => {
 
           if (cardError) {
             console.error('Learning card creation error:', cardError);
-            // Don't add to errors array - vocabulary import succeeded
           }
+        }
+      }
+    }
+
+    // Create encounters for ALL entries (both new and existing vocab)
+    const allEntries = [...newEntries, ...existingEntries];
+    for (let i = 0; i < allEntries.length; i += batchSize) {
+      const batch = allEntries.slice(i, i + batchSize);
+
+      const encounterRecords = batch.map(entry => {
+        // Find source_id for this entry's book
+        let sourceId: string | null = null;
+        if (entry.bookTitle) {
+          for (const [kindleId, source] of sourcesMap.entries()) {
+            if (source.title === entry.bookTitle) {
+              sourceId = sourceIdMap.get(kindleId) || null;
+              break;
+            }
+          }
+        }
+
+        const vocabularyId = existingHashMap.get(entry.contentHash);
+
+        return {
+          user_id: userId,
+          vocabulary_id: vocabularyId,
+          source_id: sourceId,
+          context: entry.context,
+          locator_json: entry.lookupTimestamp ? JSON.stringify({ kindle_date: entry.lookupTimestamp }) : null,
+          occurred_at: entry.lookupTimestamp,
+          is_pending_sync: false,
+          version: 1,
+        };
+      }).filter(r => r.vocabulary_id != null);
+
+      if (encounterRecords.length > 0) {
+        const { error: encError } = await client
+          .from('encounters')
+          .insert(encounterRecords);
+
+        if (encError) {
+          console.error('Encounter insert error:', encError);
+          errors.push(`Encounter batch ${i / batchSize + 1}: ${encError.message}`);
+        } else {
+          encountersCreated += encounterRecords.length;
         }
       }
     }
@@ -384,8 +408,9 @@ Deno.serve(async (req) => {
     return jsonResponse({
       totalParsed: entries.length,
       imported,
+      encounters: encountersCreated,
       skipped,
-      books: books.length,
+      books: sources.length,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
@@ -396,13 +421,11 @@ Deno.serve(async (req) => {
 
 async function generateContentHash(
   word: string,
-  context: string | null,
-  bookTitle: string | null
+  stem: string | null,
 ): Promise<string> {
   const normalized = [
     word.toLowerCase().trim(),
-    (context || '').trim(),
-    (bookTitle || '').trim(),
+    (stem || '').toLowerCase().trim(),
   ].join('|');
 
   const encoder = new TextEncoder();

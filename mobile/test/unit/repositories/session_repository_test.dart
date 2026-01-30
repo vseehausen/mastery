@@ -46,14 +46,13 @@ void main() {
         expect(session.expiresAt.minute, equals(59));
         expect(session.expiresAt.second, equals(59));
         // The hour depends on timezone offset, so we just verify it's later today
-        expect(
-          session.expiresAt.isAfter(DateTime.now().toUtc()),
-          isTrue,
-        );
+        expect(session.expiresAt.isAfter(DateTime.now().toUtc()), isTrue);
       });
 
       test('uses custom expiresAt when provided', () async {
-        final customExpiry = DateTime.now().add(const Duration(hours: 2)).toUtc();
+        final customExpiry = DateTime.now()
+            .add(const Duration(hours: 2))
+            .toUtc();
         final session = await repository.create(
           userId: 'user-1',
           plannedMinutes: 10,
@@ -245,7 +244,9 @@ void main() {
     group('expireStaleSessions', () {
       test('marks expired sessions as expired', () async {
         // Create a session with past expiry
-        final pastExpiry = DateTime.now().subtract(const Duration(hours: 1)).toUtc();
+        final pastExpiry = DateTime.now()
+            .subtract(const Duration(hours: 1))
+            .toUtc();
         final session = await repository.create(
           userId: 'user-1',
           plannedMinutes: 10,
@@ -261,10 +262,7 @@ void main() {
       });
 
       test('does not expire active sessions', () async {
-        await repository.create(
-          userId: 'user-1',
-          plannedMinutes: 10,
-        );
+        await repository.create(userId: 'user-1', plannedMinutes: 10);
 
         final expiredCount = await repository.expireStaleSessions('user-1');
 

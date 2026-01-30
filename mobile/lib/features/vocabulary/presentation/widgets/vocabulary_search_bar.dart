@@ -16,8 +16,9 @@ class VocabularySearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor =
-        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300];
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.grey[300];
 
     return TextField(
       controller: controller,
@@ -50,7 +51,9 @@ class VocabularySearchBar extends StatelessWidget {
           ),
         ),
         filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+        fillColor: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
       ),
     );

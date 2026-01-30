@@ -3,12 +3,7 @@ import '../../../../core/theme/text_styles.dart';
 
 /// Card displaying user profile information
 class ProfileCard extends StatelessWidget {
-  const ProfileCard({
-    super.key,
-    this.name,
-    this.email,
-    this.onTap,
-  });
+  const ProfileCard({super.key, this.name, this.email, this.onTap});
 
   final String? name;
   final String? email;
@@ -23,7 +18,9 @@ class ProfileCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark

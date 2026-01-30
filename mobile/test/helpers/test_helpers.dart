@@ -36,54 +36,79 @@ extension WidgetTesterExtensions on WidgetTester {
     List<Override>? overrides,
     ThemeMode themeMode = ThemeMode.light,
   }) async {
-    await pumpWidget(createTestableWidget(
-      child: widget,
-      overrides: overrides,
-      themeMode: themeMode,
-    ));
+    await pumpWidget(
+      createTestableWidget(
+        child: widget,
+        overrides: overrides,
+        themeMode: themeMode,
+      ),
+    );
   }
 }
 
 /// Sample test data generators
 class TestData {
   static const String testUserId = 'test-user-123';
-  static const String testBookTitle = 'Test Book';
-  static const String testBookAuthor = 'Test Author';
+  static const String testSourceTitle = 'Test Book';
+  static const String testSourceAuthor = 'Test Author';
 
   static VocabularysCompanion createVocabularyCompanion({
     String? id,
     String? userId,
     String? word,
     String? contentHash,
-    String? bookTitle,
-    String? context,
+    String? stem,
   }) {
     final now = DateTime.now();
     return VocabularysCompanion.insert(
       id: id ?? 'vocab-${DateTime.now().millisecondsSinceEpoch}',
       userId: userId ?? testUserId,
       word: word ?? 'ephemeral',
-      contentHash: contentHash ?? 'hash-${DateTime.now().millisecondsSinceEpoch}',
-      bookTitle: Value(bookTitle ?? testBookTitle),
-      bookAuthor: const Value(testBookAuthor),
-      context: Value(context ?? 'The ephemeral nature of things.'),
+      contentHash:
+          contentHash ?? 'hash-${DateTime.now().millisecondsSinceEpoch}',
+      stem: Value(stem),
       createdAt: now,
       updatedAt: now,
     );
   }
 
-  static BooksCompanion createBookCompanion({
+  static SourcesCompanion createSourceCompanion({
     String? id,
     String? userId,
+    String? type,
     String? title,
     String? author,
+    String? asin,
   }) {
     final now = DateTime.now();
-    return BooksCompanion.insert(
-      id: id ?? 'book-${DateTime.now().millisecondsSinceEpoch}',
+    return SourcesCompanion.insert(
+      id: id ?? 'source-${DateTime.now().millisecondsSinceEpoch}',
       userId: userId ?? testUserId,
-      title: title ?? testBookTitle,
-      author: Value(author ?? testBookAuthor),
+      type: type ?? 'book',
+      title: title ?? testSourceTitle,
+      author: Value(author ?? testSourceAuthor),
+      asin: Value(asin),
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  static EncountersCompanion createEncounterCompanion({
+    String? id,
+    String? userId,
+    required String vocabularyId,
+    String? sourceId,
+    String? context,
+    DateTime? occurredAt,
+  }) {
+    final now = DateTime.now();
+    return EncountersCompanion.insert(
+      id: id ?? 'enc-${DateTime.now().millisecondsSinceEpoch}',
+      userId: userId ?? testUserId,
+      vocabularyId: vocabularyId,
+      sourceId: Value(sourceId),
+      context: Value(context ?? 'The ephemeral nature of things.'),
+      occurredAt: Value(occurredAt ?? now),
       createdAt: now,
       updatedAt: now,
     );

@@ -33,7 +33,9 @@ class SettingsSection extends StatelessWidget {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey[50],
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark

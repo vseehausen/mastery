@@ -37,29 +37,32 @@ void main() {
         expect(result.isLeech, isFalse);
       });
 
-      test('processes a review card with Again rating and increments lapses', () {
-        final card = _createTestCard(
-          id: 'card-1',
-          vocabularyId: 'vocab-1',
-          state: CardState.review,
-          due: DateTime.now().subtract(const Duration(days: 1)).toUtc(),
-          stability: 10.0,
-          difficulty: 5.0,
-          reps: 5,
-          lapses: 0,
-        );
+      test(
+        'processes a review card with Again rating and increments lapses',
+        () {
+          final card = _createTestCard(
+            id: 'card-1',
+            vocabularyId: 'vocab-1',
+            state: CardState.review,
+            due: DateTime.now().subtract(const Duration(days: 1)).toUtc(),
+            stability: 10.0,
+            difficulty: 5.0,
+            reps: 5,
+            lapses: 0,
+          );
 
-        final result = scheduler.reviewCard(
-          card: card,
-          rating: ReviewRating.again,
-          interactionMode: 0,
-        );
+          final result = scheduler.reviewCard(
+            card: card,
+            rating: ReviewRating.again,
+            interactionMode: 0,
+          );
 
-        // Rating Again on review card increments lapses
-        expect(result.updatedCard.lapses, equals(1));
-        // Reps should not increment for Again rating
-        expect(result.updatedCard.reps, equals(5));
-      });
+          // Rating Again on review card increments lapses
+          expect(result.updatedCard.lapses, equals(1));
+          // Reps should not increment for Again rating
+          expect(result.updatedCard.reps, equals(5));
+        },
+      );
 
       test('marks card as leech when lapses reach threshold', () {
         final card = _createTestCard(

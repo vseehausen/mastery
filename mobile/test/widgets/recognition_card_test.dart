@@ -31,7 +31,9 @@ void main() {
       expect(find.text('ephemeral'), findsOneWidget);
     });
 
-    testWidgets('displays all answer options (correct + distractors)', (tester) async {
+    testWidgets('displays all answer options (correct + distractors)', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         RecognitionCard(
           word: 'ephemeral',
@@ -48,7 +50,9 @@ void main() {
       expect(find.text('expensive'), findsOneWidget);
     });
 
-    testWidgets('calls onAnswer with true when correct answer tapped', (tester) async {
+    testWidgets('calls onAnswer with true when correct answer tapped', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         RecognitionCard(
           word: 'ephemeral',
@@ -66,7 +70,9 @@ void main() {
       expect(wasCorrect, isTrue);
     });
 
-    testWidgets('calls onAnswer with false when wrong answer tapped', (tester) async {
+    testWidgets('calls onAnswer with false when wrong answer tapped', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         RecognitionCard(
           word: 'ephemeral',

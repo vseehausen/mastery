@@ -12,9 +12,9 @@ class StreakRepository {
 
   /// Get streak for a user (creates with defaults if not exists)
   Future<Streak> get(String userId) async {
-    var streak = await (_db.select(_db.streaks)
-          ..where((t) => t.userId.equals(userId)))
-        .getSingleOrNull();
+    var streak = await (_db.select(
+      _db.streaks,
+    )..where((t) => t.userId.equals(userId))).getSingleOrNull();
 
     streak ??= await _create(userId);
 
@@ -36,8 +36,9 @@ class StreakRepository {
   }
 
   Future<Streak?> _getById(String id) {
-    return (_db.select(_db.streaks)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.streaks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Increment streak (call when session is completed)
@@ -50,8 +51,7 @@ class StreakRepository {
     // Check if already incremented today
     if (streak.lastCompletedDate != null) {
       final lastDate = streak.lastCompletedDate!;
-      final lastDay =
-          DateTime(lastDate.year, lastDate.month, lastDate.day);
+      final lastDay = DateTime(lastDate.year, lastDate.month, lastDate.day);
 
       if (lastDay == today) {
         // Already incremented today, do nothing
@@ -60,17 +60,21 @@ class StreakRepository {
     }
 
     final newCount = streak.currentCount + 1;
-    final newLongest =
-        newCount > streak.longestCount ? newCount : streak.longestCount;
+    final newLongest = newCount > streak.longestCount
+        ? newCount
+        : streak.longestCount;
 
-    await (_db.update(_db.streaks)..where((t) => t.userId.equals(userId)))
-        .write(StreaksCompanion(
-      currentCount: Value(newCount),
-      longestCount: Value(newLongest),
-      lastCompletedDate: Value(now),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(
+      _db.streaks,
+    )..where((t) => t.userId.equals(userId))).write(
+      StreaksCompanion(
+        currentCount: Value(newCount),
+        longestCount: Value(newLongest),
+        lastCompletedDate: Value(now),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
 
     return (await get(userId));
   }
@@ -82,12 +86,15 @@ class StreakRepository {
     // Ensure streak exists
     await get(userId);
 
-    await (_db.update(_db.streaks)..where((t) => t.userId.equals(userId)))
-        .write(StreaksCompanion(
-      currentCount: const Value(0),
-      updatedAt: Value(now),
-      isPendingSync: const Value(true),
-    ));
+    await (_db.update(
+      _db.streaks,
+    )..where((t) => t.userId.equals(userId))).write(
+      StreaksCompanion(
+        currentCount: const Value(0),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
 
     return (await get(userId));
   }
@@ -123,12 +130,15 @@ class StreakRepository {
 
     if (streak.currentCount > streak.longestCount) {
       final now = DateTime.now().toUtc();
-      await (_db.update(_db.streaks)..where((t) => t.userId.equals(userId)))
-          .write(StreaksCompanion(
-        longestCount: Value(streak.currentCount),
-        updatedAt: Value(now),
-        isPendingSync: const Value(true),
-      ));
+      await (_db.update(
+        _db.streaks,
+      )..where((t) => t.userId.equals(userId))).write(
+        StreaksCompanion(
+          longestCount: Value(streak.currentCount),
+          updatedAt: Value(now),
+          isPendingSync: const Value(true),
+        ),
+      );
     }
   }
 
@@ -151,18 +161,19 @@ class StreakRepository {
 
   /// Get streaks pending sync
   Future<List<Streak>> getPendingSync() {
-    return (_db.select(_db.streaks)
-          ..where((t) => t.isPendingSync.equals(true)))
-        .get();
+    return (_db.select(
+      _db.streaks,
+    )..where((t) => t.isPendingSync.equals(true))).get();
   }
 
   /// Mark streak as synced
   Future<void> markSynced(String id) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.streaks)..where((t) => t.id.equals(id)))
-        .write(StreaksCompanion(
-      isPendingSync: const Value(false),
-      lastSyncedAt: Value(now),
-    ));
+    await (_db.update(_db.streaks)..where((t) => t.id.equals(id))).write(
+      StreaksCompanion(
+        isPendingSync: const Value(false),
+        lastSyncedAt: Value(now),
+      ),
+    );
   }
 }

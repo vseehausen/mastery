@@ -7,19 +7,14 @@ import '../../helpers/test_helpers.dart';
 void main() {
   group('AuthLogo', () {
     testWidgets('displays title', (tester) async {
-      await tester.pumpTestWidget(
-        const AuthLogo(title: 'Welcome to Mastery'),
-      );
+      await tester.pumpTestWidget(const AuthLogo(title: 'Welcome to Mastery'));
 
       expect(find.text('Welcome to Mastery'), findsOneWidget);
     });
 
     testWidgets('displays subtitle when provided', (tester) async {
       await tester.pumpTestWidget(
-        const AuthLogo(
-          title: 'Welcome',
-          subtitle: 'Sign in to continue',
-        ),
+        const AuthLogo(title: 'Welcome', subtitle: 'Sign in to continue'),
       );
 
       expect(find.text('Welcome'), findsOneWidget);
@@ -27,9 +22,7 @@ void main() {
     });
 
     testWidgets('does not display subtitle when not provided', (tester) async {
-      await tester.pumpTestWidget(
-        const AuthLogo(title: 'Title Only'),
-      );
+      await tester.pumpTestWidget(const AuthLogo(title: 'Title Only'));
 
       expect(find.text('Title Only'), findsOneWidget);
       // Should only have one Text widget for the title
@@ -37,19 +30,14 @@ void main() {
     });
 
     testWidgets('displays logo icon', (tester) async {
-      await tester.pumpTestWidget(
-        const AuthLogo(title: 'Test'),
-      );
+      await tester.pumpTestWidget(const AuthLogo(title: 'Test'));
 
       expect(find.byIcon(Icons.auto_stories), findsOneWidget);
     });
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        const AuthLogo(
-          title: 'Dark Theme',
-          subtitle: 'Testing dark mode',
-        ),
+        const AuthLogo(title: 'Dark Theme', subtitle: 'Testing dark mode'),
         themeMode: ThemeMode.dark,
       );
 
@@ -58,9 +46,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        const AuthLogo(
-          title: 'Light Theme',
-        ),
+        const AuthLogo(title: 'Light Theme'),
         themeMode: ThemeMode.light,
       );
 

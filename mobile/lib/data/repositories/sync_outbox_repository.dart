@@ -28,13 +28,15 @@ class SyncOutboxRepository {
 
   /// Get all pending sync items
   Future<List<SyncOutboxData>> getPendingItems() async {
-    return (_db.select(_db.syncOutbox)
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-        .get();
+    return (_db.select(
+      _db.syncOutbox,
+    )..orderBy([(t) => OrderingTerm.asc(t.createdAt)])).get();
   }
 
   /// Get pending items with retry count under limit
-  Future<List<SyncOutboxData>> getPendingItemsForSync({int maxRetries = 3}) async {
+  Future<List<SyncOutboxData>> getPendingItemsForSync({
+    int maxRetries = 3,
+  }) async {
     return (_db.select(_db.syncOutbox)
           ..where((t) => t.retryCount.isSmallerThan(Variable(maxRetries)))
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
@@ -48,8 +50,9 @@ class SyncOutboxRepository {
 
   /// Get a single item by ID
   Future<SyncOutboxData?> getById(int id) async {
-    return (_db.select(_db.syncOutbox)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.syncOutbox,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Increment retry count and record error
@@ -72,9 +75,9 @@ class SyncOutboxRepository {
 
   /// Get count of pending items
   Future<int> getPendingCount() async {
-    final result = await (_db.selectOnly(_db.syncOutbox)
-          ..addColumns([_db.syncOutbox.id.count()]))
-        .getSingle();
+    final result = await (_db.selectOnly(
+      _db.syncOutbox,
+    )..addColumns([_db.syncOutbox.id.count()])).getSingle();
     return result.read(_db.syncOutbox.id.count()) ?? 0;
   }
 }

@@ -24,14 +24,12 @@ void main() {
           userId: TestData.testUserId,
           word: 'ephemeral',
           contentHash: 'hash-123',
-          bookTitle: TestData.testBookTitle,
-          context: 'The ephemeral nature of beauty.',
+          stem: 'ephemer',
         );
 
         expect(vocab.word, 'ephemeral');
         expect(vocab.userId, TestData.testUserId);
-        expect(vocab.bookTitle, TestData.testBookTitle);
-        expect(vocab.context, 'The ephemeral nature of beauty.');
+        expect(vocab.stem, 'ephemer');
         expect(vocab.isPendingSync, true);
       });
 

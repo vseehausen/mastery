@@ -45,16 +45,11 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
           height: widget.height,
           width: widget.width ?? double.infinity,
           decoration: BoxDecoration(
-            borderRadius:
-                widget.borderRadius ?? BorderRadius.circular(8),
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [
-                Colors.grey[300]!,
-                Colors.grey[200]!,
-                Colors.grey[300]!,
-              ],
+              colors: [Colors.grey[300]!, Colors.grey[200]!, Colors.grey[300]!],
               stops: [
                 _controller.value - 0.3,
                 _controller.value,

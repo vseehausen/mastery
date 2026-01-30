@@ -16,10 +16,7 @@ void main() {
 
     testWidgets('displays value when provided', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Language',
-          value: 'English',
-        ),
+        const SettingsListItem(label: 'Language', value: 'English'),
       );
 
       expect(find.text('Language'), findsOneWidget);
@@ -27,27 +24,20 @@ void main() {
     });
 
     testWidgets('does not display value when not provided', (tester) async {
-      await tester.pumpTestWidget(
-        const SettingsListItem(label: 'Simple Item'),
-      );
+      await tester.pumpTestWidget(const SettingsListItem(label: 'Simple Item'));
 
       expect(find.text('Simple Item'), findsOneWidget);
     });
 
     testWidgets('shows chevron icon by default', (tester) async {
-      await tester.pumpTestWidget(
-        const SettingsListItem(label: 'Test'),
-      );
+      await tester.pumpTestWidget(const SettingsListItem(label: 'Test'));
 
       expect(find.byIcon(Icons.chevron_right), findsOneWidget);
     });
 
     testWidgets('hides chevron when isDanger is true', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Delete Account',
-          isDanger: true,
-        ),
+        const SettingsListItem(label: 'Delete Account', isDanger: true),
       );
 
       expect(find.byIcon(Icons.chevron_right), findsNothing);
@@ -55,10 +45,7 @@ void main() {
 
     testWidgets('shows trailing widget when provided', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Custom',
-          trailing: Icon(Icons.star),
-        ),
+        const SettingsListItem(label: 'Custom', trailing: Icon(Icons.star)),
       );
 
       expect(find.byIcon(Icons.star), findsOneWidget);
@@ -69,10 +56,7 @@ void main() {
       var tapped = false;
 
       await tester.pumpTestWidget(
-        SettingsListItem(
-          label: 'Tappable',
-          onTap: () => tapped = true,
-        ),
+        SettingsListItem(label: 'Tappable', onTap: () => tapped = true),
       );
 
       await tester.tap(find.text('Tappable'));
@@ -81,10 +65,7 @@ void main() {
 
     testWidgets('applies danger style when isDanger is true', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Delete',
-          isDanger: true,
-        ),
+        const SettingsListItem(label: 'Delete', isDanger: true),
       );
 
       final textWidget = tester.widget<Text>(find.text('Delete'));
@@ -93,10 +74,7 @@ void main() {
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Dark Item',
-          value: 'Value',
-        ),
+        const SettingsListItem(label: 'Dark Item', value: 'Value'),
         themeMode: ThemeMode.dark,
       );
 
@@ -105,9 +83,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        const SettingsListItem(
-          label: 'Light Item',
-        ),
+        const SettingsListItem(label: 'Light Item'),
         themeMode: ThemeMode.light,
       );
 

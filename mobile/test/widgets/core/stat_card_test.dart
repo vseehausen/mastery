@@ -8,10 +8,7 @@ void main() {
   group('StatCard', () {
     testWidgets('displays label and value', (tester) async {
       await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Total Words',
-          value: '1,234',
-        ),
+        const StatCard(label: 'Total Words', value: '1,234'),
       );
 
       expect(find.text('Total Words'), findsOneWidget);
@@ -20,23 +17,14 @@ void main() {
 
     testWidgets('displays icon when provided', (tester) async {
       await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Books',
-          value: '5',
-          icon: Icons.book,
-        ),
+        const StatCard(label: 'Books', value: '5', icon: Icons.book),
       );
 
       expect(find.byIcon(Icons.book), findsOneWidget);
     });
 
     testWidgets('does not display icon when not provided', (tester) async {
-      await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Count',
-          value: '10',
-        ),
-      );
+      await tester.pumpTestWidget(const StatCard(label: 'Count', value: '10'));
 
       expect(find.byType(Icon), findsNothing);
     });
@@ -57,10 +45,7 @@ void main() {
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Dark Card',
-          value: '100',
-        ),
+        const StatCard(label: 'Dark Card', value: '100'),
         themeMode: ThemeMode.dark,
       );
 
@@ -70,10 +55,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Light Card',
-          value: '200',
-        ),
+        const StatCard(label: 'Light Card', value: '200'),
         themeMode: ThemeMode.light,
       );
 
@@ -81,12 +63,7 @@ void main() {
     });
 
     testWidgets('has rounded corners', (tester) async {
-      await tester.pumpTestWidget(
-        const StatCard(
-          label: 'Rounded',
-          value: '0',
-        ),
-      );
+      await tester.pumpTestWidget(const StatCard(label: 'Rounded', value: '0'));
 
       final container = tester.widget<Container>(find.byType(Container).first);
       final decoration = container.decoration as BoxDecoration;

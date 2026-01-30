@@ -311,11 +311,11 @@ class LanguagesCompanion extends UpdateCompanion<Language> {
   }
 }
 
-class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
+class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $BooksTable(this.attachedDatabase, [this._alias]);
+  $SourcesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -334,16 +334,14 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _languageIdMeta = const VerificationMeta(
-    'languageId',
-  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
-  late final GeneratedColumn<String> languageId = GeneratedColumn<String>(
-    'language_id',
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.string,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
@@ -375,774 +373,24 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _highlightCountMeta = const VerificationMeta(
-    'highlightCount',
-  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
   @override
-  late final GeneratedColumn<int> highlightCount = GeneratedColumn<int>(
-    'highlight_count',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
-    'lastSyncedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
-    'last_synced_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
-    'isPendingSync',
-  );
-  @override
-  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
-    'is_pending_sync',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_pending_sync" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    userId,
-    languageId,
-    title,
-    author,
-    asin,
-    highlightCount,
-    createdAt,
-    updatedAt,
-    deletedAt,
-    lastSyncedAt,
-    isPendingSync,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'books';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Book> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('user_id')) {
-      context.handle(
-        _userIdMeta,
-        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_userIdMeta);
-    }
-    if (data.containsKey('language_id')) {
-      context.handle(
-        _languageIdMeta,
-        languageId.isAcceptableOrUnknown(data['language_id']!, _languageIdMeta),
-      );
-    }
-    if (data.containsKey('title')) {
-      context.handle(
-        _titleMeta,
-        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_titleMeta);
-    }
-    if (data.containsKey('author')) {
-      context.handle(
-        _authorMeta,
-        author.isAcceptableOrUnknown(data['author']!, _authorMeta),
-      );
-    }
-    if (data.containsKey('asin')) {
-      context.handle(
-        _asinMeta,
-        asin.isAcceptableOrUnknown(data['asin']!, _asinMeta),
-      );
-    }
-    if (data.containsKey('highlight_count')) {
-      context.handle(
-        _highlightCountMeta,
-        highlightCount.isAcceptableOrUnknown(
-          data['highlight_count']!,
-          _highlightCountMeta,
-        ),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('last_synced_at')) {
-      context.handle(
-        _lastSyncedAtMeta,
-        lastSyncedAt.isAcceptableOrUnknown(
-          data['last_synced_at']!,
-          _lastSyncedAtMeta,
-        ),
-      );
-    }
-    if (data.containsKey('is_pending_sync')) {
-      context.handle(
-        _isPendingSyncMeta,
-        isPendingSync.isAcceptableOrUnknown(
-          data['is_pending_sync']!,
-          _isPendingSyncMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Book map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Book(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      userId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}user_id'],
-      )!,
-      languageId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}language_id'],
-      ),
-      title: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}title'],
-      )!,
-      author: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}author'],
-      ),
-      asin: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}asin'],
-      ),
-      highlightCount: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}highlight_count'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      lastSyncedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_synced_at'],
-      ),
-      isPendingSync: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_pending_sync'],
-      )!,
-    );
-  }
-
-  @override
-  $BooksTable createAlias(String alias) {
-    return $BooksTable(attachedDatabase, alias);
-  }
-}
-
-class Book extends DataClass implements Insertable<Book> {
-  final String id;
-  final String userId;
-  final String? languageId;
-  final String title;
-  final String? author;
-  final String? asin;
-  final int highlightCount;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final DateTime? deletedAt;
-  final DateTime? lastSyncedAt;
-  final bool isPendingSync;
-  const Book({
-    required this.id,
-    required this.userId,
-    this.languageId,
-    required this.title,
-    this.author,
-    this.asin,
-    required this.highlightCount,
-    required this.createdAt,
-    required this.updatedAt,
-    this.deletedAt,
-    this.lastSyncedAt,
-    required this.isPendingSync,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['user_id'] = Variable<String>(userId);
-    if (!nullToAbsent || languageId != null) {
-      map['language_id'] = Variable<String>(languageId);
-    }
-    map['title'] = Variable<String>(title);
-    if (!nullToAbsent || author != null) {
-      map['author'] = Variable<String>(author);
-    }
-    if (!nullToAbsent || asin != null) {
-      map['asin'] = Variable<String>(asin);
-    }
-    map['highlight_count'] = Variable<int>(highlightCount);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    if (!nullToAbsent || lastSyncedAt != null) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
-    }
-    map['is_pending_sync'] = Variable<bool>(isPendingSync);
-    return map;
-  }
-
-  BooksCompanion toCompanion(bool nullToAbsent) {
-    return BooksCompanion(
-      id: Value(id),
-      userId: Value(userId),
-      languageId: languageId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(languageId),
-      title: Value(title),
-      author: author == null && nullToAbsent
-          ? const Value.absent()
-          : Value(author),
-      asin: asin == null && nullToAbsent ? const Value.absent() : Value(asin),
-      highlightCount: Value(highlightCount),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      lastSyncedAt: lastSyncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastSyncedAt),
-      isPendingSync: Value(isPendingSync),
-    );
-  }
-
-  factory Book.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Book(
-      id: serializer.fromJson<String>(json['id']),
-      userId: serializer.fromJson<String>(json['userId']),
-      languageId: serializer.fromJson<String?>(json['languageId']),
-      title: serializer.fromJson<String>(json['title']),
-      author: serializer.fromJson<String?>(json['author']),
-      asin: serializer.fromJson<String?>(json['asin']),
-      highlightCount: serializer.fromJson<int>(json['highlightCount']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
-      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'userId': serializer.toJson<String>(userId),
-      'languageId': serializer.toJson<String?>(languageId),
-      'title': serializer.toJson<String>(title),
-      'author': serializer.toJson<String?>(author),
-      'asin': serializer.toJson<String?>(asin),
-      'highlightCount': serializer.toJson<int>(highlightCount),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
-      'isPendingSync': serializer.toJson<bool>(isPendingSync),
-    };
-  }
-
-  Book copyWith({
-    String? id,
-    String? userId,
-    Value<String?> languageId = const Value.absent(),
-    String? title,
-    Value<String?> author = const Value.absent(),
-    Value<String?> asin = const Value.absent(),
-    int? highlightCount,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    Value<DateTime?> lastSyncedAt = const Value.absent(),
-    bool? isPendingSync,
-  }) => Book(
-    id: id ?? this.id,
-    userId: userId ?? this.userId,
-    languageId: languageId.present ? languageId.value : this.languageId,
-    title: title ?? this.title,
-    author: author.present ? author.value : this.author,
-    asin: asin.present ? asin.value : this.asin,
-    highlightCount: highlightCount ?? this.highlightCount,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
-    isPendingSync: isPendingSync ?? this.isPendingSync,
-  );
-  Book copyWithCompanion(BooksCompanion data) {
-    return Book(
-      id: data.id.present ? data.id.value : this.id,
-      userId: data.userId.present ? data.userId.value : this.userId,
-      languageId: data.languageId.present
-          ? data.languageId.value
-          : this.languageId,
-      title: data.title.present ? data.title.value : this.title,
-      author: data.author.present ? data.author.value : this.author,
-      asin: data.asin.present ? data.asin.value : this.asin,
-      highlightCount: data.highlightCount.present
-          ? data.highlightCount.value
-          : this.highlightCount,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      lastSyncedAt: data.lastSyncedAt.present
-          ? data.lastSyncedAt.value
-          : this.lastSyncedAt,
-      isPendingSync: data.isPendingSync.present
-          ? data.isPendingSync.value
-          : this.isPendingSync,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Book(')
-          ..write('id: $id, ')
-          ..write('userId: $userId, ')
-          ..write('languageId: $languageId, ')
-          ..write('title: $title, ')
-          ..write('author: $author, ')
-          ..write('asin: $asin, ')
-          ..write('highlightCount: $highlightCount, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('isPendingSync: $isPendingSync')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    userId,
-    languageId,
-    title,
-    author,
-    asin,
-    highlightCount,
-    createdAt,
-    updatedAt,
-    deletedAt,
-    lastSyncedAt,
-    isPendingSync,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Book &&
-          other.id == this.id &&
-          other.userId == this.userId &&
-          other.languageId == this.languageId &&
-          other.title == this.title &&
-          other.author == this.author &&
-          other.asin == this.asin &&
-          other.highlightCount == this.highlightCount &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.deletedAt == this.deletedAt &&
-          other.lastSyncedAt == this.lastSyncedAt &&
-          other.isPendingSync == this.isPendingSync);
-}
-
-class BooksCompanion extends UpdateCompanion<Book> {
-  final Value<String> id;
-  final Value<String> userId;
-  final Value<String?> languageId;
-  final Value<String> title;
-  final Value<String?> author;
-  final Value<String?> asin;
-  final Value<int> highlightCount;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  final Value<DateTime?> deletedAt;
-  final Value<DateTime?> lastSyncedAt;
-  final Value<bool> isPendingSync;
-  final Value<int> rowid;
-  const BooksCompanion({
-    this.id = const Value.absent(),
-    this.userId = const Value.absent(),
-    this.languageId = const Value.absent(),
-    this.title = const Value.absent(),
-    this.author = const Value.absent(),
-    this.asin = const Value.absent(),
-    this.highlightCount = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.isPendingSync = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  BooksCompanion.insert({
-    required String id,
-    required String userId,
-    this.languageId = const Value.absent(),
-    required String title,
-    this.author = const Value.absent(),
-    this.asin = const Value.absent(),
-    this.highlightCount = const Value.absent(),
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    this.deletedAt = const Value.absent(),
-    this.lastSyncedAt = const Value.absent(),
-    this.isPendingSync = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       userId = Value(userId),
-       title = Value(title),
-       createdAt = Value(createdAt),
-       updatedAt = Value(updatedAt);
-  static Insertable<Book> custom({
-    Expression<String>? id,
-    Expression<String>? userId,
-    Expression<String>? languageId,
-    Expression<String>? title,
-    Expression<String>? author,
-    Expression<String>? asin,
-    Expression<int>? highlightCount,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<DateTime>? deletedAt,
-    Expression<DateTime>? lastSyncedAt,
-    Expression<bool>? isPendingSync,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (userId != null) 'user_id': userId,
-      if (languageId != null) 'language_id': languageId,
-      if (title != null) 'title': title,
-      if (author != null) 'author': author,
-      if (asin != null) 'asin': asin,
-      if (highlightCount != null) 'highlight_count': highlightCount,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
-      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  BooksCompanion copyWith({
-    Value<String>? id,
-    Value<String>? userId,
-    Value<String?>? languageId,
-    Value<String>? title,
-    Value<String?>? author,
-    Value<String?>? asin,
-    Value<int>? highlightCount,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
-    Value<DateTime?>? deletedAt,
-    Value<DateTime?>? lastSyncedAt,
-    Value<bool>? isPendingSync,
-    Value<int>? rowid,
-  }) {
-    return BooksCompanion(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      languageId: languageId ?? this.languageId,
-      title: title ?? this.title,
-      author: author ?? this.author,
-      asin: asin ?? this.asin,
-      highlightCount: highlightCount ?? this.highlightCount,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      deletedAt: deletedAt ?? this.deletedAt,
-      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-      isPendingSync: isPendingSync ?? this.isPendingSync,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (userId.present) {
-      map['user_id'] = Variable<String>(userId.value);
-    }
-    if (languageId.present) {
-      map['language_id'] = Variable<String>(languageId.value);
-    }
-    if (title.present) {
-      map['title'] = Variable<String>(title.value);
-    }
-    if (author.present) {
-      map['author'] = Variable<String>(author.value);
-    }
-    if (asin.present) {
-      map['asin'] = Variable<String>(asin.value);
-    }
-    if (highlightCount.present) {
-      map['highlight_count'] = Variable<int>(highlightCount.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (lastSyncedAt.present) {
-      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
-    }
-    if (isPendingSync.present) {
-      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('BooksCompanion(')
-          ..write('id: $id, ')
-          ..write('userId: $userId, ')
-          ..write('languageId: $languageId, ')
-          ..write('title: $title, ')
-          ..write('author: $author, ')
-          ..write('asin: $asin, ')
-          ..write('highlightCount: $highlightCount, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('lastSyncedAt: $lastSyncedAt, ')
-          ..write('isPendingSync: $isPendingSync, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $HighlightsTable extends Highlights
-    with TableInfo<$HighlightsTable, Highlight> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $HighlightsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
-  @override
-  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
-    'user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
-  @override
-  late final GeneratedColumn<String> bookId = GeneratedColumn<String>(
-    'book_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _contentMeta = const VerificationMeta(
-    'content',
-  );
-  @override
-  late final GeneratedColumn<String> content = GeneratedColumn<String>(
-    'content',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
-  @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _locationMeta = const VerificationMeta(
-    'location',
-  );
-  @override
-  late final GeneratedColumn<String> location = GeneratedColumn<String>(
-    'location',
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _pageMeta = const VerificationMeta('page');
+  static const VerificationMeta _domainMeta = const VerificationMeta('domain');
   @override
-  late final GeneratedColumn<int> page = GeneratedColumn<int>(
-    'page',
+  late final GeneratedColumn<String> domain = GeneratedColumn<String>(
+    'domain',
     aliasedName,
     true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _kindleDateMeta = const VerificationMeta(
-    'kindleDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> kindleDate = GeneratedColumn<DateTime>(
-    'kindle_date',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 255),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
-  static const VerificationMeta _contextMeta = const VerificationMeta(
-    'context',
-  );
-  @override
-  late final GeneratedColumn<String> context = GeneratedColumn<String>(
-    'context',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _contentHashMeta = const VerificationMeta(
-    'contentHash',
-  );
-  @override
-  late final GeneratedColumn<String> contentHash = GeneratedColumn<String>(
-    'content_hash',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 64),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -1219,15 +467,12 @@ class $HighlightsTable extends Highlights
   List<GeneratedColumn> get $columns => [
     id,
     userId,
-    bookId,
-    content,
     type,
-    location,
-    page,
-    kindleDate,
-    note,
-    context,
-    contentHash,
+    title,
+    author,
+    asin,
+    url,
+    domain,
     createdAt,
     updatedAt,
     deletedAt,
@@ -1239,10 +484,10 @@ class $HighlightsTable extends Highlights
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'highlights';
+  static const String $name = 'sources';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Highlight> instance, {
+    Insertable<Source> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1260,22 +505,6 @@ class $HighlightsTable extends Highlights
     } else if (isInserting) {
       context.missing(_userIdMeta);
     }
-    if (data.containsKey('book_id')) {
-      context.handle(
-        _bookIdMeta,
-        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_bookIdMeta);
-    }
-    if (data.containsKey('content')) {
-      context.handle(
-        _contentMeta,
-        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_contentMeta);
-    }
     if (data.containsKey('type')) {
       context.handle(
         _typeMeta,
@@ -1284,46 +513,37 @@ class $HighlightsTable extends Highlights
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
-    if (data.containsKey('location')) {
+    if (data.containsKey('title')) {
       context.handle(
-        _locationMeta,
-        location.isAcceptableOrUnknown(data['location']!, _locationMeta),
-      );
-    }
-    if (data.containsKey('page')) {
-      context.handle(
-        _pageMeta,
-        page.isAcceptableOrUnknown(data['page']!, _pageMeta),
-      );
-    }
-    if (data.containsKey('kindle_date')) {
-      context.handle(
-        _kindleDateMeta,
-        kindleDate.isAcceptableOrUnknown(data['kindle_date']!, _kindleDateMeta),
-      );
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('context')) {
-      context.handle(
-        _contextMeta,
-        this.context.isAcceptableOrUnknown(data['context']!, _contextMeta),
-      );
-    }
-    if (data.containsKey('content_hash')) {
-      context.handle(
-        _contentHashMeta,
-        contentHash.isAcceptableOrUnknown(
-          data['content_hash']!,
-          _contentHashMeta,
-        ),
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
       );
     } else if (isInserting) {
-      context.missing(_contentHashMeta);
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('author')) {
+      context.handle(
+        _authorMeta,
+        author.isAcceptableOrUnknown(data['author']!, _authorMeta),
+      );
+    }
+    if (data.containsKey('asin')) {
+      context.handle(
+        _asinMeta,
+        asin.isAcceptableOrUnknown(data['asin']!, _asinMeta),
+      );
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    }
+    if (data.containsKey('domain')) {
+      context.handle(
+        _domainMeta,
+        domain.isAcceptableOrUnknown(data['domain']!, _domainMeta),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -1377,9 +597,9 @@ class $HighlightsTable extends Highlights
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Highlight map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Source map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Highlight(
+    return Source(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1388,42 +608,30 @@ class $HighlightsTable extends Highlights
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
       )!,
-      bookId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}book_id'],
-      )!,
-      content: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}content'],
-      )!,
       type: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
-      location: attachedDatabase.typeMapping.read(
+      title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}location'],
-      ),
-      page: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}page'],
-      ),
-      kindleDate: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}kindle_date'],
-      ),
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      context: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}context'],
-      ),
-      contentHash: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}content_hash'],
+        data['${effectivePrefix}title'],
       )!,
+      author: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author'],
+      ),
+      asin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asin'],
+      ),
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      ),
+      domain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}domain'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1452,41 +660,35 @@ class $HighlightsTable extends Highlights
   }
 
   @override
-  $HighlightsTable createAlias(String alias) {
-    return $HighlightsTable(attachedDatabase, alias);
+  $SourcesTable createAlias(String alias) {
+    return $SourcesTable(attachedDatabase, alias);
   }
 }
 
-class Highlight extends DataClass implements Insertable<Highlight> {
+class Source extends DataClass implements Insertable<Source> {
   final String id;
   final String userId;
-  final String bookId;
-  final String content;
   final String type;
-  final String? location;
-  final int? page;
-  final DateTime? kindleDate;
-  final String? note;
-  final String? context;
-  final String contentHash;
+  final String title;
+  final String? author;
+  final String? asin;
+  final String? url;
+  final String? domain;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
   final DateTime? lastSyncedAt;
   final bool isPendingSync;
   final int version;
-  const Highlight({
+  const Source({
     required this.id,
     required this.userId,
-    required this.bookId,
-    required this.content,
     required this.type,
-    this.location,
-    this.page,
-    this.kindleDate,
-    this.note,
-    this.context,
-    required this.contentHash,
+    required this.title,
+    this.author,
+    this.asin,
+    this.url,
+    this.domain,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -1499,25 +701,20 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
-    map['book_id'] = Variable<String>(bookId);
-    map['content'] = Variable<String>(content);
     map['type'] = Variable<String>(type);
-    if (!nullToAbsent || location != null) {
-      map['location'] = Variable<String>(location);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || author != null) {
+      map['author'] = Variable<String>(author);
     }
-    if (!nullToAbsent || page != null) {
-      map['page'] = Variable<int>(page);
+    if (!nullToAbsent || asin != null) {
+      map['asin'] = Variable<String>(asin);
     }
-    if (!nullToAbsent || kindleDate != null) {
-      map['kindle_date'] = Variable<DateTime>(kindleDate);
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
     }
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
+    if (!nullToAbsent || domain != null) {
+      map['domain'] = Variable<String>(domain);
     }
-    if (!nullToAbsent || context != null) {
-      map['context'] = Variable<String>(context);
-    }
-    map['content_hash'] = Variable<String>(contentHash);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || deletedAt != null) {
@@ -1531,25 +728,20 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     return map;
   }
 
-  HighlightsCompanion toCompanion(bool nullToAbsent) {
-    return HighlightsCompanion(
+  SourcesCompanion toCompanion(bool nullToAbsent) {
+    return SourcesCompanion(
       id: Value(id),
       userId: Value(userId),
-      bookId: Value(bookId),
-      content: Value(content),
       type: Value(type),
-      location: location == null && nullToAbsent
+      title: Value(title),
+      author: author == null && nullToAbsent
           ? const Value.absent()
-          : Value(location),
-      page: page == null && nullToAbsent ? const Value.absent() : Value(page),
-      kindleDate: kindleDate == null && nullToAbsent
+          : Value(author),
+      asin: asin == null && nullToAbsent ? const Value.absent() : Value(asin),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+      domain: domain == null && nullToAbsent
           ? const Value.absent()
-          : Value(kindleDate),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      context: context == null && nullToAbsent
-          ? const Value.absent()
-          : Value(context),
-      contentHash: Value(contentHash),
+          : Value(domain),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       deletedAt: deletedAt == null && nullToAbsent
@@ -1563,23 +755,20 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     );
   }
 
-  factory Highlight.fromJson(
+  factory Source.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Highlight(
+    return Source(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
-      bookId: serializer.fromJson<String>(json['bookId']),
-      content: serializer.fromJson<String>(json['content']),
       type: serializer.fromJson<String>(json['type']),
-      location: serializer.fromJson<String?>(json['location']),
-      page: serializer.fromJson<int?>(json['page']),
-      kindleDate: serializer.fromJson<DateTime?>(json['kindleDate']),
-      note: serializer.fromJson<String?>(json['note']),
-      context: serializer.fromJson<String?>(json['context']),
-      contentHash: serializer.fromJson<String>(json['contentHash']),
+      title: serializer.fromJson<String>(json['title']),
+      author: serializer.fromJson<String?>(json['author']),
+      asin: serializer.fromJson<String?>(json['asin']),
+      url: serializer.fromJson<String?>(json['url']),
+      domain: serializer.fromJson<String?>(json['domain']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -1594,15 +783,12 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
-      'bookId': serializer.toJson<String>(bookId),
-      'content': serializer.toJson<String>(content),
       'type': serializer.toJson<String>(type),
-      'location': serializer.toJson<String?>(location),
-      'page': serializer.toJson<int?>(page),
-      'kindleDate': serializer.toJson<DateTime?>(kindleDate),
-      'note': serializer.toJson<String?>(note),
-      'context': serializer.toJson<String?>(context),
-      'contentHash': serializer.toJson<String>(contentHash),
+      'title': serializer.toJson<String>(title),
+      'author': serializer.toJson<String?>(author),
+      'asin': serializer.toJson<String?>(asin),
+      'url': serializer.toJson<String?>(url),
+      'domain': serializer.toJson<String?>(domain),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -1612,36 +798,30 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     };
   }
 
-  Highlight copyWith({
+  Source copyWith({
     String? id,
     String? userId,
-    String? bookId,
-    String? content,
     String? type,
-    Value<String?> location = const Value.absent(),
-    Value<int?> page = const Value.absent(),
-    Value<DateTime?> kindleDate = const Value.absent(),
-    Value<String?> note = const Value.absent(),
-    Value<String?> context = const Value.absent(),
-    String? contentHash,
+    String? title,
+    Value<String?> author = const Value.absent(),
+    Value<String?> asin = const Value.absent(),
+    Value<String?> url = const Value.absent(),
+    Value<String?> domain = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
     Value<DateTime?> lastSyncedAt = const Value.absent(),
     bool? isPendingSync,
     int? version,
-  }) => Highlight(
+  }) => Source(
     id: id ?? this.id,
     userId: userId ?? this.userId,
-    bookId: bookId ?? this.bookId,
-    content: content ?? this.content,
     type: type ?? this.type,
-    location: location.present ? location.value : this.location,
-    page: page.present ? page.value : this.page,
-    kindleDate: kindleDate.present ? kindleDate.value : this.kindleDate,
-    note: note.present ? note.value : this.note,
-    context: context.present ? context.value : this.context,
-    contentHash: contentHash ?? this.contentHash,
+    title: title ?? this.title,
+    author: author.present ? author.value : this.author,
+    asin: asin.present ? asin.value : this.asin,
+    url: url.present ? url.value : this.url,
+    domain: domain.present ? domain.value : this.domain,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -1649,23 +829,16 @@ class Highlight extends DataClass implements Insertable<Highlight> {
     isPendingSync: isPendingSync ?? this.isPendingSync,
     version: version ?? this.version,
   );
-  Highlight copyWithCompanion(HighlightsCompanion data) {
-    return Highlight(
+  Source copyWithCompanion(SourcesCompanion data) {
+    return Source(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
-      bookId: data.bookId.present ? data.bookId.value : this.bookId,
-      content: data.content.present ? data.content.value : this.content,
       type: data.type.present ? data.type.value : this.type,
-      location: data.location.present ? data.location.value : this.location,
-      page: data.page.present ? data.page.value : this.page,
-      kindleDate: data.kindleDate.present
-          ? data.kindleDate.value
-          : this.kindleDate,
-      note: data.note.present ? data.note.value : this.note,
-      context: data.context.present ? data.context.value : this.context,
-      contentHash: data.contentHash.present
-          ? data.contentHash.value
-          : this.contentHash,
+      title: data.title.present ? data.title.value : this.title,
+      author: data.author.present ? data.author.value : this.author,
+      asin: data.asin.present ? data.asin.value : this.asin,
+      url: data.url.present ? data.url.value : this.url,
+      domain: data.domain.present ? data.domain.value : this.domain,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -1681,18 +854,15 @@ class Highlight extends DataClass implements Insertable<Highlight> {
 
   @override
   String toString() {
-    return (StringBuffer('Highlight(')
+    return (StringBuffer('Source(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
-          ..write('bookId: $bookId, ')
-          ..write('content: $content, ')
           ..write('type: $type, ')
-          ..write('location: $location, ')
-          ..write('page: $page, ')
-          ..write('kindleDate: $kindleDate, ')
-          ..write('note: $note, ')
-          ..write('context: $context, ')
-          ..write('contentHash: $contentHash, ')
+          ..write('title: $title, ')
+          ..write('author: $author, ')
+          ..write('asin: $asin, ')
+          ..write('url: $url, ')
+          ..write('domain: $domain, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -1707,15 +877,12 @@ class Highlight extends DataClass implements Insertable<Highlight> {
   int get hashCode => Object.hash(
     id,
     userId,
-    bookId,
-    content,
     type,
-    location,
-    page,
-    kindleDate,
-    note,
-    context,
-    contentHash,
+    title,
+    author,
+    asin,
+    url,
+    domain,
     createdAt,
     updatedAt,
     deletedAt,
@@ -1726,18 +893,15 @@ class Highlight extends DataClass implements Insertable<Highlight> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Highlight &&
+      (other is Source &&
           other.id == this.id &&
           other.userId == this.userId &&
-          other.bookId == this.bookId &&
-          other.content == this.content &&
           other.type == this.type &&
-          other.location == this.location &&
-          other.page == this.page &&
-          other.kindleDate == this.kindleDate &&
-          other.note == this.note &&
-          other.context == this.context &&
-          other.contentHash == this.contentHash &&
+          other.title == this.title &&
+          other.author == this.author &&
+          other.asin == this.asin &&
+          other.url == this.url &&
+          other.domain == this.domain &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
@@ -1746,18 +910,15 @@ class Highlight extends DataClass implements Insertable<Highlight> {
           other.version == this.version);
 }
 
-class HighlightsCompanion extends UpdateCompanion<Highlight> {
+class SourcesCompanion extends UpdateCompanion<Source> {
   final Value<String> id;
   final Value<String> userId;
-  final Value<String> bookId;
-  final Value<String> content;
   final Value<String> type;
-  final Value<String?> location;
-  final Value<int?> page;
-  final Value<DateTime?> kindleDate;
-  final Value<String?> note;
-  final Value<String?> context;
-  final Value<String> contentHash;
+  final Value<String> title;
+  final Value<String?> author;
+  final Value<String?> asin;
+  final Value<String?> url;
+  final Value<String?> domain;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -1765,18 +926,15 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
   final Value<bool> isPendingSync;
   final Value<int> version;
   final Value<int> rowid;
-  const HighlightsCompanion({
+  const SourcesCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
-    this.bookId = const Value.absent(),
-    this.content = const Value.absent(),
     this.type = const Value.absent(),
-    this.location = const Value.absent(),
-    this.page = const Value.absent(),
-    this.kindleDate = const Value.absent(),
-    this.note = const Value.absent(),
-    this.context = const Value.absent(),
-    this.contentHash = const Value.absent(),
+    this.title = const Value.absent(),
+    this.author = const Value.absent(),
+    this.asin = const Value.absent(),
+    this.url = const Value.absent(),
+    this.domain = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -1785,18 +943,15 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     this.version = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  HighlightsCompanion.insert({
+  SourcesCompanion.insert({
     required String id,
     required String userId,
-    required String bookId,
-    required String content,
     required String type,
-    this.location = const Value.absent(),
-    this.page = const Value.absent(),
-    this.kindleDate = const Value.absent(),
-    this.note = const Value.absent(),
-    this.context = const Value.absent(),
-    required String contentHash,
+    required String title,
+    this.author = const Value.absent(),
+    this.asin = const Value.absent(),
+    this.url = const Value.absent(),
+    this.domain = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
@@ -1806,24 +961,19 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
-       bookId = Value(bookId),
-       content = Value(content),
        type = Value(type),
-       contentHash = Value(contentHash),
+       title = Value(title),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
-  static Insertable<Highlight> custom({
+  static Insertable<Source> custom({
     Expression<String>? id,
     Expression<String>? userId,
-    Expression<String>? bookId,
-    Expression<String>? content,
     Expression<String>? type,
-    Expression<String>? location,
-    Expression<int>? page,
-    Expression<DateTime>? kindleDate,
-    Expression<String>? note,
-    Expression<String>? context,
-    Expression<String>? contentHash,
+    Expression<String>? title,
+    Expression<String>? author,
+    Expression<String>? asin,
+    Expression<String>? url,
+    Expression<String>? domain,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -1835,15 +985,12 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
-      if (bookId != null) 'book_id': bookId,
-      if (content != null) 'content': content,
       if (type != null) 'type': type,
-      if (location != null) 'location': location,
-      if (page != null) 'page': page,
-      if (kindleDate != null) 'kindle_date': kindleDate,
-      if (note != null) 'note': note,
-      if (context != null) 'context': context,
-      if (contentHash != null) 'content_hash': contentHash,
+      if (title != null) 'title': title,
+      if (author != null) 'author': author,
+      if (asin != null) 'asin': asin,
+      if (url != null) 'url': url,
+      if (domain != null) 'domain': domain,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -1854,18 +1001,15 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     });
   }
 
-  HighlightsCompanion copyWith({
+  SourcesCompanion copyWith({
     Value<String>? id,
     Value<String>? userId,
-    Value<String>? bookId,
-    Value<String>? content,
     Value<String>? type,
-    Value<String?>? location,
-    Value<int?>? page,
-    Value<DateTime?>? kindleDate,
-    Value<String?>? note,
-    Value<String?>? context,
-    Value<String>? contentHash,
+    Value<String>? title,
+    Value<String?>? author,
+    Value<String?>? asin,
+    Value<String?>? url,
+    Value<String?>? domain,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -1874,18 +1018,15 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     Value<int>? version,
     Value<int>? rowid,
   }) {
-    return HighlightsCompanion(
+    return SourcesCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      bookId: bookId ?? this.bookId,
-      content: content ?? this.content,
       type: type ?? this.type,
-      location: location ?? this.location,
-      page: page ?? this.page,
-      kindleDate: kindleDate ?? this.kindleDate,
-      note: note ?? this.note,
-      context: context ?? this.context,
-      contentHash: contentHash ?? this.contentHash,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      asin: asin ?? this.asin,
+      url: url ?? this.url,
+      domain: domain ?? this.domain,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -1905,32 +1046,23 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
     }
-    if (bookId.present) {
-      map['book_id'] = Variable<String>(bookId.value);
-    }
-    if (content.present) {
-      map['content'] = Variable<String>(content.value);
-    }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
-    if (location.present) {
-      map['location'] = Variable<String>(location.value);
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
     }
-    if (page.present) {
-      map['page'] = Variable<int>(page.value);
+    if (author.present) {
+      map['author'] = Variable<String>(author.value);
     }
-    if (kindleDate.present) {
-      map['kindle_date'] = Variable<DateTime>(kindleDate.value);
+    if (asin.present) {
+      map['asin'] = Variable<String>(asin.value);
     }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
     }
-    if (context.present) {
-      map['context'] = Variable<String>(context.value);
-    }
-    if (contentHash.present) {
-      map['content_hash'] = Variable<String>(contentHash.value);
+    if (domain.present) {
+      map['domain'] = Variable<String>(domain.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1958,18 +1090,792 @@ class HighlightsCompanion extends UpdateCompanion<Highlight> {
 
   @override
   String toString() {
-    return (StringBuffer('HighlightsCompanion(')
+    return (StringBuffer('SourcesCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
-          ..write('bookId: $bookId, ')
-          ..write('content: $content, ')
           ..write('type: $type, ')
-          ..write('location: $location, ')
-          ..write('page: $page, ')
-          ..write('kindleDate: $kindleDate, ')
-          ..write('note: $note, ')
+          ..write('title: $title, ')
+          ..write('author: $author, ')
+          ..write('asin: $asin, ')
+          ..write('url: $url, ')
+          ..write('domain: $domain, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EncountersTable extends Encounters
+    with TableInfo<$EncountersTable, Encounter> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EncountersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vocabularyIdMeta = const VerificationMeta(
+    'vocabularyId',
+  );
+  @override
+  late final GeneratedColumn<String> vocabularyId = GeneratedColumn<String>(
+    'vocabulary_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contextMeta = const VerificationMeta(
+    'context',
+  );
+  @override
+  late final GeneratedColumn<String> context = GeneratedColumn<String>(
+    'context',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _locatorJsonMeta = const VerificationMeta(
+    'locatorJson',
+  );
+  @override
+  late final GeneratedColumn<String> locatorJson = GeneratedColumn<String>(
+    'locator_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    vocabularyId,
+    sourceId,
+    context,
+    locatorJson,
+    occurredAt,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'encounters';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Encounter> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('vocabulary_id')) {
+      context.handle(
+        _vocabularyIdMeta,
+        vocabularyId.isAcceptableOrUnknown(
+          data['vocabulary_id']!,
+          _vocabularyIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyIdMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('context')) {
+      context.handle(
+        _contextMeta,
+        this.context.isAcceptableOrUnknown(data['context']!, _contextMeta),
+      );
+    }
+    if (data.containsKey('locator_json')) {
+      context.handle(
+        _locatorJsonMeta,
+        locatorJson.isAcceptableOrUnknown(
+          data['locator_json']!,
+          _locatorJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Encounter map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Encounter(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      vocabularyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vocabulary_id'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      context: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}context'],
+      ),
+      locatorJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}locator_json'],
+      ),
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $EncountersTable createAlias(String alias) {
+    return $EncountersTable(attachedDatabase, alias);
+  }
+}
+
+class Encounter extends DataClass implements Insertable<Encounter> {
+  final String id;
+  final String userId;
+  final String vocabularyId;
+  final String? sourceId;
+  final String? context;
+  final String? locatorJson;
+  final DateTime? occurredAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const Encounter({
+    required this.id,
+    required this.userId,
+    required this.vocabularyId,
+    this.sourceId,
+    this.context,
+    this.locatorJson,
+    this.occurredAt,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['vocabulary_id'] = Variable<String>(vocabularyId);
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    if (!nullToAbsent || context != null) {
+      map['context'] = Variable<String>(context);
+    }
+    if (!nullToAbsent || locatorJson != null) {
+      map['locator_json'] = Variable<String>(locatorJson);
+    }
+    if (!nullToAbsent || occurredAt != null) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  EncountersCompanion toCompanion(bool nullToAbsent) {
+    return EncountersCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      vocabularyId: Value(vocabularyId),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      context: context == null && nullToAbsent
+          ? const Value.absent()
+          : Value(context),
+      locatorJson: locatorJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(locatorJson),
+      occurredAt: occurredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(occurredAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory Encounter.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Encounter(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      vocabularyId: serializer.fromJson<String>(json['vocabularyId']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      context: serializer.fromJson<String?>(json['context']),
+      locatorJson: serializer.fromJson<String?>(json['locatorJson']),
+      occurredAt: serializer.fromJson<DateTime?>(json['occurredAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'vocabularyId': serializer.toJson<String>(vocabularyId),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'context': serializer.toJson<String?>(context),
+      'locatorJson': serializer.toJson<String?>(locatorJson),
+      'occurredAt': serializer.toJson<DateTime?>(occurredAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  Encounter copyWith({
+    String? id,
+    String? userId,
+    String? vocabularyId,
+    Value<String?> sourceId = const Value.absent(),
+    Value<String?> context = const Value.absent(),
+    Value<String?> locatorJson = const Value.absent(),
+    Value<DateTime?> occurredAt = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => Encounter(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    vocabularyId: vocabularyId ?? this.vocabularyId,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    context: context.present ? context.value : this.context,
+    locatorJson: locatorJson.present ? locatorJson.value : this.locatorJson,
+    occurredAt: occurredAt.present ? occurredAt.value : this.occurredAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  Encounter copyWithCompanion(EncountersCompanion data) {
+    return Encounter(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      vocabularyId: data.vocabularyId.present
+          ? data.vocabularyId.value
+          : this.vocabularyId,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      context: data.context.present ? data.context.value : this.context,
+      locatorJson: data.locatorJson.present
+          ? data.locatorJson.value
+          : this.locatorJson,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Encounter(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('sourceId: $sourceId, ')
           ..write('context: $context, ')
-          ..write('contentHash: $contentHash, ')
+          ..write('locatorJson: $locatorJson, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    vocabularyId,
+    sourceId,
+    context,
+    locatorJson,
+    occurredAt,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Encounter &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.vocabularyId == this.vocabularyId &&
+          other.sourceId == this.sourceId &&
+          other.context == this.context &&
+          other.locatorJson == this.locatorJson &&
+          other.occurredAt == this.occurredAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class EncountersCompanion extends UpdateCompanion<Encounter> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> vocabularyId;
+  final Value<String?> sourceId;
+  final Value<String?> context;
+  final Value<String?> locatorJson;
+  final Value<DateTime?> occurredAt;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const EncountersCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.vocabularyId = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.context = const Value.absent(),
+    this.locatorJson = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EncountersCompanion.insert({
+    required String id,
+    required String userId,
+    required String vocabularyId,
+    this.sourceId = const Value.absent(),
+    this.context = const Value.absent(),
+    this.locatorJson = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       vocabularyId = Value(vocabularyId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Encounter> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? vocabularyId,
+    Expression<String>? sourceId,
+    Expression<String>? context,
+    Expression<String>? locatorJson,
+    Expression<DateTime>? occurredAt,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (vocabularyId != null) 'vocabulary_id': vocabularyId,
+      if (sourceId != null) 'source_id': sourceId,
+      if (context != null) 'context': context,
+      if (locatorJson != null) 'locator_json': locatorJson,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EncountersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? vocabularyId,
+    Value<String?>? sourceId,
+    Value<String?>? context,
+    Value<String?>? locatorJson,
+    Value<DateTime?>? occurredAt,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return EncountersCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      vocabularyId: vocabularyId ?? this.vocabularyId,
+      sourceId: sourceId ?? this.sourceId,
+      context: context ?? this.context,
+      locatorJson: locatorJson ?? this.locatorJson,
+      occurredAt: occurredAt ?? this.occurredAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (vocabularyId.present) {
+      map['vocabulary_id'] = Variable<String>(vocabularyId.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (context.present) {
+      map['context'] = Variable<String>(context.value);
+    }
+    if (locatorJson.present) {
+      map['locator_json'] = Variable<String>(locatorJson.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EncountersCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('context: $context, ')
+          ..write('locatorJson: $locatorJson, ')
+          ..write('occurredAt: $occurredAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -3248,63 +3154,6 @@ class $VocabularysTable extends Vocabularys
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _contextMeta = const VerificationMeta(
-    'context',
-  );
-  @override
-  late final GeneratedColumn<String> context = GeneratedColumn<String>(
-    'context',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _bookTitleMeta = const VerificationMeta(
-    'bookTitle',
-  );
-  @override
-  late final GeneratedColumn<String> bookTitle = GeneratedColumn<String>(
-    'book_title',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _bookAuthorMeta = const VerificationMeta(
-    'bookAuthor',
-  );
-  @override
-  late final GeneratedColumn<String> bookAuthor = GeneratedColumn<String>(
-    'book_author',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _bookAsinMeta = const VerificationMeta(
-    'bookAsin',
-  );
-  @override
-  late final GeneratedColumn<String> bookAsin = GeneratedColumn<String>(
-    'book_asin',
-    aliasedName,
-    true,
-    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _lookupTimestampMeta = const VerificationMeta(
-    'lookupTimestamp',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lookupTimestamp =
-      GeneratedColumn<DateTime>(
-        'lookup_timestamp',
-        aliasedName,
-        true,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: false,
-      );
   static const VerificationMeta _contentHashMeta = const VerificationMeta(
     'contentHash',
   );
@@ -3394,11 +3243,6 @@ class $VocabularysTable extends Vocabularys
     userId,
     word,
     stem,
-    context,
-    bookTitle,
-    bookAuthor,
-    bookAsin,
-    lookupTimestamp,
     contentHash,
     createdAt,
     updatedAt,
@@ -3444,39 +3288,6 @@ class $VocabularysTable extends Vocabularys
       context.handle(
         _stemMeta,
         stem.isAcceptableOrUnknown(data['stem']!, _stemMeta),
-      );
-    }
-    if (data.containsKey('context')) {
-      context.handle(
-        _contextMeta,
-        this.context.isAcceptableOrUnknown(data['context']!, _contextMeta),
-      );
-    }
-    if (data.containsKey('book_title')) {
-      context.handle(
-        _bookTitleMeta,
-        bookTitle.isAcceptableOrUnknown(data['book_title']!, _bookTitleMeta),
-      );
-    }
-    if (data.containsKey('book_author')) {
-      context.handle(
-        _bookAuthorMeta,
-        bookAuthor.isAcceptableOrUnknown(data['book_author']!, _bookAuthorMeta),
-      );
-    }
-    if (data.containsKey('book_asin')) {
-      context.handle(
-        _bookAsinMeta,
-        bookAsin.isAcceptableOrUnknown(data['book_asin']!, _bookAsinMeta),
-      );
-    }
-    if (data.containsKey('lookup_timestamp')) {
-      context.handle(
-        _lookupTimestampMeta,
-        lookupTimestamp.isAcceptableOrUnknown(
-          data['lookup_timestamp']!,
-          _lookupTimestampMeta,
-        ),
       );
     }
     if (data.containsKey('content_hash')) {
@@ -3561,26 +3372,6 @@ class $VocabularysTable extends Vocabularys
         DriftSqlType.string,
         data['${effectivePrefix}stem'],
       ),
-      context: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}context'],
-      ),
-      bookTitle: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}book_title'],
-      ),
-      bookAuthor: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}book_author'],
-      ),
-      bookAsin: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}book_asin'],
-      ),
-      lookupTimestamp: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}lookup_timestamp'],
-      ),
       contentHash: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}content_hash'],
@@ -3623,11 +3414,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
   final String userId;
   final String word;
   final String? stem;
-  final String? context;
-  final String? bookTitle;
-  final String? bookAuthor;
-  final String? bookAsin;
-  final DateTime? lookupTimestamp;
   final String contentHash;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -3640,11 +3426,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
     required this.userId,
     required this.word,
     this.stem,
-    this.context,
-    this.bookTitle,
-    this.bookAuthor,
-    this.bookAsin,
-    this.lookupTimestamp,
     required this.contentHash,
     required this.createdAt,
     required this.updatedAt,
@@ -3661,21 +3442,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
     map['word'] = Variable<String>(word);
     if (!nullToAbsent || stem != null) {
       map['stem'] = Variable<String>(stem);
-    }
-    if (!nullToAbsent || context != null) {
-      map['context'] = Variable<String>(context);
-    }
-    if (!nullToAbsent || bookTitle != null) {
-      map['book_title'] = Variable<String>(bookTitle);
-    }
-    if (!nullToAbsent || bookAuthor != null) {
-      map['book_author'] = Variable<String>(bookAuthor);
-    }
-    if (!nullToAbsent || bookAsin != null) {
-      map['book_asin'] = Variable<String>(bookAsin);
-    }
-    if (!nullToAbsent || lookupTimestamp != null) {
-      map['lookup_timestamp'] = Variable<DateTime>(lookupTimestamp);
     }
     map['content_hash'] = Variable<String>(contentHash);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -3697,21 +3463,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
       userId: Value(userId),
       word: Value(word),
       stem: stem == null && nullToAbsent ? const Value.absent() : Value(stem),
-      context: context == null && nullToAbsent
-          ? const Value.absent()
-          : Value(context),
-      bookTitle: bookTitle == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bookTitle),
-      bookAuthor: bookAuthor == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bookAuthor),
-      bookAsin: bookAsin == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bookAsin),
-      lookupTimestamp: lookupTimestamp == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lookupTimestamp),
       contentHash: Value(contentHash),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -3736,11 +3487,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
       userId: serializer.fromJson<String>(json['userId']),
       word: serializer.fromJson<String>(json['word']),
       stem: serializer.fromJson<String?>(json['stem']),
-      context: serializer.fromJson<String?>(json['context']),
-      bookTitle: serializer.fromJson<String?>(json['bookTitle']),
-      bookAuthor: serializer.fromJson<String?>(json['bookAuthor']),
-      bookAsin: serializer.fromJson<String?>(json['bookAsin']),
-      lookupTimestamp: serializer.fromJson<DateTime?>(json['lookupTimestamp']),
       contentHash: serializer.fromJson<String>(json['contentHash']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -3758,11 +3504,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
       'userId': serializer.toJson<String>(userId),
       'word': serializer.toJson<String>(word),
       'stem': serializer.toJson<String?>(stem),
-      'context': serializer.toJson<String?>(context),
-      'bookTitle': serializer.toJson<String?>(bookTitle),
-      'bookAuthor': serializer.toJson<String?>(bookAuthor),
-      'bookAsin': serializer.toJson<String?>(bookAsin),
-      'lookupTimestamp': serializer.toJson<DateTime?>(lookupTimestamp),
       'contentHash': serializer.toJson<String>(contentHash),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -3778,11 +3519,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
     String? userId,
     String? word,
     Value<String?> stem = const Value.absent(),
-    Value<String?> context = const Value.absent(),
-    Value<String?> bookTitle = const Value.absent(),
-    Value<String?> bookAuthor = const Value.absent(),
-    Value<String?> bookAsin = const Value.absent(),
-    Value<DateTime?> lookupTimestamp = const Value.absent(),
     String? contentHash,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -3795,13 +3531,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
     userId: userId ?? this.userId,
     word: word ?? this.word,
     stem: stem.present ? stem.value : this.stem,
-    context: context.present ? context.value : this.context,
-    bookTitle: bookTitle.present ? bookTitle.value : this.bookTitle,
-    bookAuthor: bookAuthor.present ? bookAuthor.value : this.bookAuthor,
-    bookAsin: bookAsin.present ? bookAsin.value : this.bookAsin,
-    lookupTimestamp: lookupTimestamp.present
-        ? lookupTimestamp.value
-        : this.lookupTimestamp,
     contentHash: contentHash ?? this.contentHash,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3816,15 +3545,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
       userId: data.userId.present ? data.userId.value : this.userId,
       word: data.word.present ? data.word.value : this.word,
       stem: data.stem.present ? data.stem.value : this.stem,
-      context: data.context.present ? data.context.value : this.context,
-      bookTitle: data.bookTitle.present ? data.bookTitle.value : this.bookTitle,
-      bookAuthor: data.bookAuthor.present
-          ? data.bookAuthor.value
-          : this.bookAuthor,
-      bookAsin: data.bookAsin.present ? data.bookAsin.value : this.bookAsin,
-      lookupTimestamp: data.lookupTimestamp.present
-          ? data.lookupTimestamp.value
-          : this.lookupTimestamp,
       contentHash: data.contentHash.present
           ? data.contentHash.value
           : this.contentHash,
@@ -3848,11 +3568,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
           ..write('userId: $userId, ')
           ..write('word: $word, ')
           ..write('stem: $stem, ')
-          ..write('context: $context, ')
-          ..write('bookTitle: $bookTitle, ')
-          ..write('bookAuthor: $bookAuthor, ')
-          ..write('bookAsin: $bookAsin, ')
-          ..write('lookupTimestamp: $lookupTimestamp, ')
           ..write('contentHash: $contentHash, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -3870,11 +3585,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
     userId,
     word,
     stem,
-    context,
-    bookTitle,
-    bookAuthor,
-    bookAsin,
-    lookupTimestamp,
     contentHash,
     createdAt,
     updatedAt,
@@ -3891,11 +3601,6 @@ class Vocabulary extends DataClass implements Insertable<Vocabulary> {
           other.userId == this.userId &&
           other.word == this.word &&
           other.stem == this.stem &&
-          other.context == this.context &&
-          other.bookTitle == this.bookTitle &&
-          other.bookAuthor == this.bookAuthor &&
-          other.bookAsin == this.bookAsin &&
-          other.lookupTimestamp == this.lookupTimestamp &&
           other.contentHash == this.contentHash &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -3910,11 +3615,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
   final Value<String> userId;
   final Value<String> word;
   final Value<String?> stem;
-  final Value<String?> context;
-  final Value<String?> bookTitle;
-  final Value<String?> bookAuthor;
-  final Value<String?> bookAsin;
-  final Value<DateTime?> lookupTimestamp;
   final Value<String> contentHash;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -3928,11 +3628,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
     this.userId = const Value.absent(),
     this.word = const Value.absent(),
     this.stem = const Value.absent(),
-    this.context = const Value.absent(),
-    this.bookTitle = const Value.absent(),
-    this.bookAuthor = const Value.absent(),
-    this.bookAsin = const Value.absent(),
-    this.lookupTimestamp = const Value.absent(),
     this.contentHash = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -3947,11 +3642,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
     required String userId,
     required String word,
     this.stem = const Value.absent(),
-    this.context = const Value.absent(),
-    this.bookTitle = const Value.absent(),
-    this.bookAuthor = const Value.absent(),
-    this.bookAsin = const Value.absent(),
-    this.lookupTimestamp = const Value.absent(),
     required String contentHash,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -3971,11 +3661,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
     Expression<String>? userId,
     Expression<String>? word,
     Expression<String>? stem,
-    Expression<String>? context,
-    Expression<String>? bookTitle,
-    Expression<String>? bookAuthor,
-    Expression<String>? bookAsin,
-    Expression<DateTime>? lookupTimestamp,
     Expression<String>? contentHash,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -3990,11 +3675,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
       if (userId != null) 'user_id': userId,
       if (word != null) 'word': word,
       if (stem != null) 'stem': stem,
-      if (context != null) 'context': context,
-      if (bookTitle != null) 'book_title': bookTitle,
-      if (bookAuthor != null) 'book_author': bookAuthor,
-      if (bookAsin != null) 'book_asin': bookAsin,
-      if (lookupTimestamp != null) 'lookup_timestamp': lookupTimestamp,
       if (contentHash != null) 'content_hash': contentHash,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -4011,11 +3691,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
     Value<String>? userId,
     Value<String>? word,
     Value<String?>? stem,
-    Value<String?>? context,
-    Value<String?>? bookTitle,
-    Value<String?>? bookAuthor,
-    Value<String?>? bookAsin,
-    Value<DateTime?>? lookupTimestamp,
     Value<String>? contentHash,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -4030,11 +3705,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
       userId: userId ?? this.userId,
       word: word ?? this.word,
       stem: stem ?? this.stem,
-      context: context ?? this.context,
-      bookTitle: bookTitle ?? this.bookTitle,
-      bookAuthor: bookAuthor ?? this.bookAuthor,
-      bookAsin: bookAsin ?? this.bookAsin,
-      lookupTimestamp: lookupTimestamp ?? this.lookupTimestamp,
       contentHash: contentHash ?? this.contentHash,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -4060,21 +3730,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
     }
     if (stem.present) {
       map['stem'] = Variable<String>(stem.value);
-    }
-    if (context.present) {
-      map['context'] = Variable<String>(context.value);
-    }
-    if (bookTitle.present) {
-      map['book_title'] = Variable<String>(bookTitle.value);
-    }
-    if (bookAuthor.present) {
-      map['book_author'] = Variable<String>(bookAuthor.value);
-    }
-    if (bookAsin.present) {
-      map['book_asin'] = Variable<String>(bookAsin.value);
-    }
-    if (lookupTimestamp.present) {
-      map['lookup_timestamp'] = Variable<DateTime>(lookupTimestamp.value);
     }
     if (contentHash.present) {
       map['content_hash'] = Variable<String>(contentHash.value);
@@ -4110,11 +3765,6 @@ class VocabularysCompanion extends UpdateCompanion<Vocabulary> {
           ..write('userId: $userId, ')
           ..write('word: $word, ')
           ..write('stem: $stem, ')
-          ..write('context: $context, ')
-          ..write('bookTitle: $bookTitle, ')
-          ..write('bookAuthor: $bookAuthor, ')
-          ..write('bookAsin: $bookAsin, ')
-          ..write('lookupTimestamp: $lookupTimestamp, ')
           ..write('contentHash: $contentHash, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -8255,8 +7905,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LanguagesTable languages = $LanguagesTable(this);
-  late final $BooksTable books = $BooksTable(this);
-  late final $HighlightsTable highlights = $HighlightsTable(this);
+  late final $SourcesTable sources = $SourcesTable(this);
+  late final $EncountersTable encounters = $EncountersTable(this);
   late final $ImportSessionsTable importSessions = $ImportSessionsTable(this);
   late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
   late final $VocabularysTable vocabularys = $VocabularysTable(this);
@@ -8274,8 +7924,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     languages,
-    books,
-    highlights,
+    sources,
+    encounters,
     importSessions,
     syncOutbox,
     vocabularys,
@@ -8465,41 +8115,46 @@ typedef $$LanguagesTableProcessedTableManager =
       Language,
       PrefetchHooks Function()
     >;
-typedef $$BooksTableCreateCompanionBuilder =
-    BooksCompanion Function({
+typedef $$SourcesTableCreateCompanionBuilder =
+    SourcesCompanion Function({
       required String id,
       required String userId,
-      Value<String?> languageId,
+      required String type,
       required String title,
       Value<String?> author,
       Value<String?> asin,
-      Value<int> highlightCount,
+      Value<String?> url,
+      Value<String?> domain,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<DateTime?> deletedAt,
       Value<DateTime?> lastSyncedAt,
       Value<bool> isPendingSync,
+      Value<int> version,
       Value<int> rowid,
     });
-typedef $$BooksTableUpdateCompanionBuilder =
-    BooksCompanion Function({
+typedef $$SourcesTableUpdateCompanionBuilder =
+    SourcesCompanion Function({
       Value<String> id,
       Value<String> userId,
-      Value<String?> languageId,
+      Value<String> type,
       Value<String> title,
       Value<String?> author,
       Value<String?> asin,
-      Value<int> highlightCount,
+      Value<String?> url,
+      Value<String?> domain,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> deletedAt,
       Value<DateTime?> lastSyncedAt,
       Value<bool> isPendingSync,
+      Value<int> version,
       Value<int> rowid,
     });
 
-class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
-  $$BooksTableFilterComposer({
+class $$SourcesTableFilterComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8516,8 +8171,8 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get languageId => $composableBuilder(
-    column: $table.languageId,
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8536,373 +8191,13 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get highlightCount => $composableBuilder(
-    column: $table.highlightCount,
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
-    column: $table.lastSyncedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isPendingSync => $composableBuilder(
-    column: $table.isPendingSync,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$BooksTableOrderingComposer
-    extends Composer<_$AppDatabase, $BooksTable> {
-  $$BooksTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get userId => $composableBuilder(
-    column: $table.userId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get languageId => $composableBuilder(
-    column: $table.languageId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get title => $composableBuilder(
-    column: $table.title,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get author => $composableBuilder(
-    column: $table.author,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get asin => $composableBuilder(
-    column: $table.asin,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get highlightCount => $composableBuilder(
-    column: $table.highlightCount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
-    column: $table.lastSyncedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
-    column: $table.isPendingSync,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$BooksTableAnnotationComposer
-    extends Composer<_$AppDatabase, $BooksTable> {
-  $$BooksTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get userId =>
-      $composableBuilder(column: $table.userId, builder: (column) => column);
-
-  GeneratedColumn<String> get languageId => $composableBuilder(
-    column: $table.languageId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => column);
-
-  GeneratedColumn<String> get author =>
-      $composableBuilder(column: $table.author, builder: (column) => column);
-
-  GeneratedColumn<String> get asin =>
-      $composableBuilder(column: $table.asin, builder: (column) => column);
-
-  GeneratedColumn<int> get highlightCount => $composableBuilder(
-    column: $table.highlightCount,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
-    column: $table.lastSyncedAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
-    column: $table.isPendingSync,
-    builder: (column) => column,
-  );
-}
-
-class $$BooksTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $BooksTable,
-          Book,
-          $$BooksTableFilterComposer,
-          $$BooksTableOrderingComposer,
-          $$BooksTableAnnotationComposer,
-          $$BooksTableCreateCompanionBuilder,
-          $$BooksTableUpdateCompanionBuilder,
-          (Book, BaseReferences<_$AppDatabase, $BooksTable, Book>),
-          Book,
-          PrefetchHooks Function()
-        > {
-  $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$BooksTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$BooksTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$BooksTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> userId = const Value.absent(),
-                Value<String?> languageId = const Value.absent(),
-                Value<String> title = const Value.absent(),
-                Value<String?> author = const Value.absent(),
-                Value<String?> asin = const Value.absent(),
-                Value<int> highlightCount = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<DateTime?> lastSyncedAt = const Value.absent(),
-                Value<bool> isPendingSync = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => BooksCompanion(
-                id: id,
-                userId: userId,
-                languageId: languageId,
-                title: title,
-                author: author,
-                asin: asin,
-                highlightCount: highlightCount,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                deletedAt: deletedAt,
-                lastSyncedAt: lastSyncedAt,
-                isPendingSync: isPendingSync,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String userId,
-                Value<String?> languageId = const Value.absent(),
-                required String title,
-                Value<String?> author = const Value.absent(),
-                Value<String?> asin = const Value.absent(),
-                Value<int> highlightCount = const Value.absent(),
-                required DateTime createdAt,
-                required DateTime updatedAt,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<DateTime?> lastSyncedAt = const Value.absent(),
-                Value<bool> isPendingSync = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => BooksCompanion.insert(
-                id: id,
-                userId: userId,
-                languageId: languageId,
-                title: title,
-                author: author,
-                asin: asin,
-                highlightCount: highlightCount,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                deletedAt: deletedAt,
-                lastSyncedAt: lastSyncedAt,
-                isPendingSync: isPendingSync,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$BooksTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $BooksTable,
-      Book,
-      $$BooksTableFilterComposer,
-      $$BooksTableOrderingComposer,
-      $$BooksTableAnnotationComposer,
-      $$BooksTableCreateCompanionBuilder,
-      $$BooksTableUpdateCompanionBuilder,
-      (Book, BaseReferences<_$AppDatabase, $BooksTable, Book>),
-      Book,
-      PrefetchHooks Function()
-    >;
-typedef $$HighlightsTableCreateCompanionBuilder =
-    HighlightsCompanion Function({
-      required String id,
-      required String userId,
-      required String bookId,
-      required String content,
-      required String type,
-      Value<String?> location,
-      Value<int?> page,
-      Value<DateTime?> kindleDate,
-      Value<String?> note,
-      Value<String?> context,
-      required String contentHash,
-      required DateTime createdAt,
-      required DateTime updatedAt,
-      Value<DateTime?> deletedAt,
-      Value<DateTime?> lastSyncedAt,
-      Value<bool> isPendingSync,
-      Value<int> version,
-      Value<int> rowid,
-    });
-typedef $$HighlightsTableUpdateCompanionBuilder =
-    HighlightsCompanion Function({
-      Value<String> id,
-      Value<String> userId,
-      Value<String> bookId,
-      Value<String> content,
-      Value<String> type,
-      Value<String?> location,
-      Value<int?> page,
-      Value<DateTime?> kindleDate,
-      Value<String?> note,
-      Value<String?> context,
-      Value<String> contentHash,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-      Value<DateTime?> deletedAt,
-      Value<DateTime?> lastSyncedAt,
-      Value<bool> isPendingSync,
-      Value<int> version,
-      Value<int> rowid,
-    });
-
-class $$HighlightsTableFilterComposer
-    extends Composer<_$AppDatabase, $HighlightsTable> {
-  $$HighlightsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get userId => $composableBuilder(
-    column: $table.userId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bookId => $composableBuilder(
-    column: $table.bookId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get content => $composableBuilder(
-    column: $table.content,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get location => $composableBuilder(
-    column: $table.location,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get page => $composableBuilder(
-    column: $table.page,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get kindleDate => $composableBuilder(
-    column: $table.kindleDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get context => $composableBuilder(
-    column: $table.context,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get contentHash => $composableBuilder(
-    column: $table.contentHash,
+  ColumnFilters<String> get domain => $composableBuilder(
+    column: $table.domain,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8937,9 +8232,9 @@ class $$HighlightsTableFilterComposer
   );
 }
 
-class $$HighlightsTableOrderingComposer
-    extends Composer<_$AppDatabase, $HighlightsTable> {
-  $$HighlightsTableOrderingComposer({
+class $$SourcesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8956,48 +8251,33 @@ class $$HighlightsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get bookId => $composableBuilder(
-    column: $table.bookId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get content => $composableBuilder(
-    column: $table.content,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get location => $composableBuilder(
-    column: $table.location,
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get page => $composableBuilder(
-    column: $table.page,
+  ColumnOrderings<String> get author => $composableBuilder(
+    column: $table.author,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get kindleDate => $composableBuilder(
-    column: $table.kindleDate,
+  ColumnOrderings<String> get asin => $composableBuilder(
+    column: $table.asin,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get context => $composableBuilder(
-    column: $table.context,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get contentHash => $composableBuilder(
-    column: $table.contentHash,
+  ColumnOrderings<String> get domain => $composableBuilder(
+    column: $table.domain,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9032,9 +8312,9 @@ class $$HighlightsTableOrderingComposer
   );
 }
 
-class $$HighlightsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $HighlightsTable> {
-  $$HighlightsTableAnnotationComposer({
+class $$SourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -9047,34 +8327,381 @@ class $$HighlightsTableAnnotationComposer
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
-  GeneratedColumn<String> get bookId =>
-      $composableBuilder(column: $table.bookId, builder: (column) => column);
-
-  GeneratedColumn<String> get content =>
-      $composableBuilder(column: $table.content, builder: (column) => column);
-
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
-  GeneratedColumn<String> get location =>
-      $composableBuilder(column: $table.location, builder: (column) => column);
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
 
-  GeneratedColumn<int> get page =>
-      $composableBuilder(column: $table.page, builder: (column) => column);
+  GeneratedColumn<String> get author =>
+      $composableBuilder(column: $table.author, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get kindleDate => $composableBuilder(
-    column: $table.kindleDate,
+  GeneratedColumn<String> get asin =>
+      $composableBuilder(column: $table.asin, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get domain =>
+      $composableBuilder(column: $table.domain, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$SourcesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SourcesTable,
+          Source,
+          $$SourcesTableFilterComposer,
+          $$SourcesTableOrderingComposer,
+          $$SourcesTableAnnotationComposer,
+          $$SourcesTableCreateCompanionBuilder,
+          $$SourcesTableUpdateCompanionBuilder,
+          (Source, BaseReferences<_$AppDatabase, $SourcesTable, Source>),
+          Source,
+          PrefetchHooks Function()
+        > {
+  $$SourcesTableTableManager(_$AppDatabase db, $SourcesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SourcesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> author = const Value.absent(),
+                Value<String?> asin = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<String?> domain = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SourcesCompanion(
+                id: id,
+                userId: userId,
+                type: type,
+                title: title,
+                author: author,
+                asin: asin,
+                url: url,
+                domain: domain,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String type,
+                required String title,
+                Value<String?> author = const Value.absent(),
+                Value<String?> asin = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<String?> domain = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SourcesCompanion.insert(
+                id: id,
+                userId: userId,
+                type: type,
+                title: title,
+                author: author,
+                asin: asin,
+                url: url,
+                domain: domain,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SourcesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SourcesTable,
+      Source,
+      $$SourcesTableFilterComposer,
+      $$SourcesTableOrderingComposer,
+      $$SourcesTableAnnotationComposer,
+      $$SourcesTableCreateCompanionBuilder,
+      $$SourcesTableUpdateCompanionBuilder,
+      (Source, BaseReferences<_$AppDatabase, $SourcesTable, Source>),
+      Source,
+      PrefetchHooks Function()
+    >;
+typedef $$EncountersTableCreateCompanionBuilder =
+    EncountersCompanion Function({
+      required String id,
+      required String userId,
+      required String vocabularyId,
+      Value<String?> sourceId,
+      Value<String?> context,
+      Value<String?> locatorJson,
+      Value<DateTime?> occurredAt,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$EncountersTableUpdateCompanionBuilder =
+    EncountersCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> vocabularyId,
+      Value<String?> sourceId,
+      Value<String?> context,
+      Value<String?> locatorJson,
+      Value<DateTime?> occurredAt,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$EncountersTableFilterComposer
+    extends Composer<_$AppDatabase, $EncountersTable> {
+  $$EncountersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get context => $composableBuilder(
+    column: $table.context,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locatorJson => $composableBuilder(
+    column: $table.locatorJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EncountersTableOrderingComposer
+    extends Composer<_$AppDatabase, $EncountersTable> {
+  $$EncountersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get context => $composableBuilder(
+    column: $table.context,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get locatorJson => $composableBuilder(
+    column: $table.locatorJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EncountersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EncountersTable> {
+  $$EncountersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
 
   GeneratedColumn<String> get context =>
       $composableBuilder(column: $table.context, builder: (column) => column);
 
-  GeneratedColumn<String> get contentHash => $composableBuilder(
-    column: $table.contentHash,
+  GeneratedColumn<String> get locatorJson => $composableBuilder(
+    column: $table.locatorJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
     builder: (column) => column,
   );
 
@@ -9101,48 +8728,44 @@ class $$HighlightsTableAnnotationComposer
       $composableBuilder(column: $table.version, builder: (column) => column);
 }
 
-class $$HighlightsTableTableManager
+class $$EncountersTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $HighlightsTable,
-          Highlight,
-          $$HighlightsTableFilterComposer,
-          $$HighlightsTableOrderingComposer,
-          $$HighlightsTableAnnotationComposer,
-          $$HighlightsTableCreateCompanionBuilder,
-          $$HighlightsTableUpdateCompanionBuilder,
+          $EncountersTable,
+          Encounter,
+          $$EncountersTableFilterComposer,
+          $$EncountersTableOrderingComposer,
+          $$EncountersTableAnnotationComposer,
+          $$EncountersTableCreateCompanionBuilder,
+          $$EncountersTableUpdateCompanionBuilder,
           (
-            Highlight,
-            BaseReferences<_$AppDatabase, $HighlightsTable, Highlight>,
+            Encounter,
+            BaseReferences<_$AppDatabase, $EncountersTable, Encounter>,
           ),
-          Highlight,
+          Encounter,
           PrefetchHooks Function()
         > {
-  $$HighlightsTableTableManager(_$AppDatabase db, $HighlightsTable table)
+  $$EncountersTableTableManager(_$AppDatabase db, $EncountersTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$HighlightsTableFilterComposer($db: db, $table: table),
+              $$EncountersTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$HighlightsTableOrderingComposer($db: db, $table: table),
+              $$EncountersTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$HighlightsTableAnnotationComposer($db: db, $table: table),
+              $$EncountersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> userId = const Value.absent(),
-                Value<String> bookId = const Value.absent(),
-                Value<String> content = const Value.absent(),
-                Value<String> type = const Value.absent(),
-                Value<String?> location = const Value.absent(),
-                Value<int?> page = const Value.absent(),
-                Value<DateTime?> kindleDate = const Value.absent(),
-                Value<String?> note = const Value.absent(),
+                Value<String> vocabularyId = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
                 Value<String?> context = const Value.absent(),
-                Value<String> contentHash = const Value.absent(),
+                Value<String?> locatorJson = const Value.absent(),
+                Value<DateTime?> occurredAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -9150,18 +8773,14 @@ class $$HighlightsTableTableManager
                 Value<bool> isPendingSync = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => HighlightsCompanion(
+              }) => EncountersCompanion(
                 id: id,
                 userId: userId,
-                bookId: bookId,
-                content: content,
-                type: type,
-                location: location,
-                page: page,
-                kindleDate: kindleDate,
-                note: note,
+                vocabularyId: vocabularyId,
+                sourceId: sourceId,
                 context: context,
-                contentHash: contentHash,
+                locatorJson: locatorJson,
+                occurredAt: occurredAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -9174,15 +8793,11 @@ class $$HighlightsTableTableManager
               ({
                 required String id,
                 required String userId,
-                required String bookId,
-                required String content,
-                required String type,
-                Value<String?> location = const Value.absent(),
-                Value<int?> page = const Value.absent(),
-                Value<DateTime?> kindleDate = const Value.absent(),
-                Value<String?> note = const Value.absent(),
+                required String vocabularyId,
+                Value<String?> sourceId = const Value.absent(),
                 Value<String?> context = const Value.absent(),
-                required String contentHash,
+                Value<String?> locatorJson = const Value.absent(),
+                Value<DateTime?> occurredAt = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -9190,18 +8805,14 @@ class $$HighlightsTableTableManager
                 Value<bool> isPendingSync = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => HighlightsCompanion.insert(
+              }) => EncountersCompanion.insert(
                 id: id,
                 userId: userId,
-                bookId: bookId,
-                content: content,
-                type: type,
-                location: location,
-                page: page,
-                kindleDate: kindleDate,
-                note: note,
+                vocabularyId: vocabularyId,
+                sourceId: sourceId,
                 context: context,
-                contentHash: contentHash,
+                locatorJson: locatorJson,
+                occurredAt: occurredAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -9218,18 +8829,18 @@ class $$HighlightsTableTableManager
       );
 }
 
-typedef $$HighlightsTableProcessedTableManager =
+typedef $$EncountersTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $HighlightsTable,
-      Highlight,
-      $$HighlightsTableFilterComposer,
-      $$HighlightsTableOrderingComposer,
-      $$HighlightsTableAnnotationComposer,
-      $$HighlightsTableCreateCompanionBuilder,
-      $$HighlightsTableUpdateCompanionBuilder,
-      (Highlight, BaseReferences<_$AppDatabase, $HighlightsTable, Highlight>),
-      Highlight,
+      $EncountersTable,
+      Encounter,
+      $$EncountersTableFilterComposer,
+      $$EncountersTableOrderingComposer,
+      $$EncountersTableAnnotationComposer,
+      $$EncountersTableCreateCompanionBuilder,
+      $$EncountersTableUpdateCompanionBuilder,
+      (Encounter, BaseReferences<_$AppDatabase, $EncountersTable, Encounter>),
+      Encounter,
       PrefetchHooks Function()
     >;
 typedef $$ImportSessionsTableCreateCompanionBuilder =
@@ -9836,11 +9447,6 @@ typedef $$VocabularysTableCreateCompanionBuilder =
       required String userId,
       required String word,
       Value<String?> stem,
-      Value<String?> context,
-      Value<String?> bookTitle,
-      Value<String?> bookAuthor,
-      Value<String?> bookAsin,
-      Value<DateTime?> lookupTimestamp,
       required String contentHash,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -9856,11 +9462,6 @@ typedef $$VocabularysTableUpdateCompanionBuilder =
       Value<String> userId,
       Value<String> word,
       Value<String?> stem,
-      Value<String?> context,
-      Value<String?> bookTitle,
-      Value<String?> bookAuthor,
-      Value<String?> bookAsin,
-      Value<DateTime?> lookupTimestamp,
       Value<String> contentHash,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -9897,31 +9498,6 @@ class $$VocabularysTableFilterComposer
 
   ColumnFilters<String> get stem => $composableBuilder(
     column: $table.stem,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get context => $composableBuilder(
-    column: $table.context,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bookTitle => $composableBuilder(
-    column: $table.bookTitle,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bookAuthor => $composableBuilder(
-    column: $table.bookAuthor,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bookAsin => $composableBuilder(
-    column: $table.bookAsin,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lookupTimestamp => $composableBuilder(
-    column: $table.lookupTimestamp,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9990,31 +9566,6 @@ class $$VocabularysTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get context => $composableBuilder(
-    column: $table.context,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bookTitle => $composableBuilder(
-    column: $table.bookTitle,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bookAuthor => $composableBuilder(
-    column: $table.bookAuthor,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bookAsin => $composableBuilder(
-    column: $table.bookAsin,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lookupTimestamp => $composableBuilder(
-    column: $table.lookupTimestamp,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get contentHash => $composableBuilder(
     column: $table.contentHash,
     builder: (column) => ColumnOrderings(column),
@@ -10071,25 +9622,6 @@ class $$VocabularysTableAnnotationComposer
 
   GeneratedColumn<String> get stem =>
       $composableBuilder(column: $table.stem, builder: (column) => column);
-
-  GeneratedColumn<String> get context =>
-      $composableBuilder(column: $table.context, builder: (column) => column);
-
-  GeneratedColumn<String> get bookTitle =>
-      $composableBuilder(column: $table.bookTitle, builder: (column) => column);
-
-  GeneratedColumn<String> get bookAuthor => $composableBuilder(
-    column: $table.bookAuthor,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get bookAsin =>
-      $composableBuilder(column: $table.bookAsin, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lookupTimestamp => $composableBuilder(
-    column: $table.lookupTimestamp,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get contentHash => $composableBuilder(
     column: $table.contentHash,
@@ -10154,11 +9686,6 @@ class $$VocabularysTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<String> word = const Value.absent(),
                 Value<String?> stem = const Value.absent(),
-                Value<String?> context = const Value.absent(),
-                Value<String?> bookTitle = const Value.absent(),
-                Value<String?> bookAuthor = const Value.absent(),
-                Value<String?> bookAsin = const Value.absent(),
-                Value<DateTime?> lookupTimestamp = const Value.absent(),
                 Value<String> contentHash = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -10172,11 +9699,6 @@ class $$VocabularysTableTableManager
                 userId: userId,
                 word: word,
                 stem: stem,
-                context: context,
-                bookTitle: bookTitle,
-                bookAuthor: bookAuthor,
-                bookAsin: bookAsin,
-                lookupTimestamp: lookupTimestamp,
                 contentHash: contentHash,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -10192,11 +9714,6 @@ class $$VocabularysTableTableManager
                 required String userId,
                 required String word,
                 Value<String?> stem = const Value.absent(),
-                Value<String?> context = const Value.absent(),
-                Value<String?> bookTitle = const Value.absent(),
-                Value<String?> bookAuthor = const Value.absent(),
-                Value<String?> bookAsin = const Value.absent(),
-                Value<DateTime?> lookupTimestamp = const Value.absent(),
                 required String contentHash,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -10210,11 +9727,6 @@ class $$VocabularysTableTableManager
                 userId: userId,
                 word: word,
                 stem: stem,
-                context: context,
-                bookTitle: bookTitle,
-                bookAuthor: bookAuthor,
-                bookAsin: bookAsin,
-                lookupTimestamp: lookupTimestamp,
                 contentHash: contentHash,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -12181,10 +11693,10 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$LanguagesTableTableManager get languages =>
       $$LanguagesTableTableManager(_db, _db.languages);
-  $$BooksTableTableManager get books =>
-      $$BooksTableTableManager(_db, _db.books);
-  $$HighlightsTableTableManager get highlights =>
-      $$HighlightsTableTableManager(_db, _db.highlights);
+  $$SourcesTableTableManager get sources =>
+      $$SourcesTableTableManager(_db, _db.sources);
+  $$EncountersTableTableManager get encounters =>
+      $$EncountersTableTableManager(_db, _db.encounters);
   $$ImportSessionsTableTableManager get importSessions =>
       $$ImportSessionsTableTableManager(_db, _db.importSessions);
   $$SyncOutboxTableTableManager get syncOutbox =>

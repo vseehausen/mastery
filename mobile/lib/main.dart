@@ -28,9 +28,7 @@ class MasteryApp extends StatelessWidget {
       theme: MasteryTheme.light,
       darkTheme: MasteryTheme.dark,
       builder: (context, child) {
-        return ScaffoldMessenger(
-          child: child ?? const SizedBox.shrink(),
-        );
+        return ScaffoldMessenger(child: child ?? const SizedBox.shrink());
       },
       home: const AuthGuard(child: HomeScreen()),
     );
@@ -76,4 +74,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
-

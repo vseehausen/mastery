@@ -8,14 +8,13 @@ class AuthDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor =
-        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300];
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.grey[300];
 
     return Row(
       children: [
-        Expanded(
-          child: Divider(color: borderColor, thickness: 1),
-        ),
+        Expanded(child: Divider(color: borderColor, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Text(
@@ -25,9 +24,7 @@ class AuthDivider extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
-          child: Divider(color: borderColor, thickness: 1),
-        ),
+        Expanded(child: Divider(color: borderColor, thickness: 1)),
       ],
     );
   }

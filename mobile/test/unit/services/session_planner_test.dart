@@ -9,37 +9,55 @@ void main() {
       // Testing the logic directly since SessionPlanner requires mocked dependencies
       test('returns Recognition for new cards', () {
         // New card (state=0) should use Recognition mode
-        final mode = _selectInteractionMode(state: CardState.newCard, stability: 10.0);
+        final mode = _selectInteractionMode(
+          state: CardState.newCard,
+          stability: 10.0,
+        );
         expect(mode, equals(InteractionMode.recognition));
       });
 
       test('returns Recognition for learning cards', () {
         // Learning card (state=1) should use Recognition mode
-        final mode = _selectInteractionMode(state: CardState.learning, stability: 10.0);
+        final mode = _selectInteractionMode(
+          state: CardState.learning,
+          stability: 10.0,
+        );
         expect(mode, equals(InteractionMode.recognition));
       });
 
       test('returns Recognition for relearning cards', () {
         // Relearning card (state=3) should use Recognition mode
-        final mode = _selectInteractionMode(state: CardState.relearning, stability: 10.0);
+        final mode = _selectInteractionMode(
+          state: CardState.relearning,
+          stability: 10.0,
+        );
         expect(mode, equals(InteractionMode.recognition));
       });
 
       test('returns Recognition for review cards with low stability', () {
         // Review card (state=2) with stability < 7 days should use Recognition
-        final mode = _selectInteractionMode(state: CardState.review, stability: 5.0);
+        final mode = _selectInteractionMode(
+          state: CardState.review,
+          stability: 5.0,
+        );
         expect(mode, equals(InteractionMode.recognition));
       });
 
       test('returns Recall for mature review cards', () {
         // Review card (state=2) with stability >= 7 days should use Recall
-        final mode = _selectInteractionMode(state: CardState.review, stability: 10.0);
+        final mode = _selectInteractionMode(
+          state: CardState.review,
+          stability: 10.0,
+        );
         expect(mode, equals(InteractionMode.recall));
       });
 
       test('returns Recognition for review cards exactly at threshold', () {
         // Review card with stability exactly 7 days should use Recall (>= 7)
-        final mode = _selectInteractionMode(state: CardState.review, stability: 7.0);
+        final mode = _selectInteractionMode(
+          state: CardState.review,
+          stability: 7.0,
+        );
         expect(mode, equals(InteractionMode.recall));
       });
     });

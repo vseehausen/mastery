@@ -9,9 +9,7 @@ void main() {
   group('VocabularyFilterChips', () {
     testWidgets('displays all filter options', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          onFilterChanged: (_) {},
-        ),
+        VocabularyFilterChips(onFilterChanged: (_) {}),
       );
 
       expect(find.text('All'), findsOneWidget);
@@ -20,7 +18,9 @@ void main() {
       expect(find.text('Known'), findsOneWidget);
     });
 
-    testWidgets('calls onFilterChanged with null when All is tapped', (tester) async {
+    testWidgets('calls onFilterChanged with null when All is tapped', (
+      tester,
+    ) async {
       LearningStatus? selectedStatus = LearningStatus.known;
 
       await tester.pumpTestWidget(
@@ -35,26 +35,27 @@ void main() {
       expect(selectedStatus, isNull);
     });
 
-    testWidgets('calls onFilterChanged with correct status when chip is tapped', (tester) async {
-      LearningStatus? selectedStatus;
+    testWidgets(
+      'calls onFilterChanged with correct status when chip is tapped',
+      (tester) async {
+        LearningStatus? selectedStatus;
 
-      await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          onFilterChanged: (status) => selectedStatus = status,
-        ),
-      );
+        await tester.pumpTestWidget(
+          VocabularyFilterChips(
+            onFilterChanged: (status) => selectedStatus = status,
+          ),
+        );
 
-      await tester.tap(find.text('Learning'));
-      await tester.pump();
+        await tester.tap(find.text('Learning'));
+        await tester.pump();
 
-      expect(selectedStatus, LearningStatus.learning);
-    });
+        expect(selectedStatus, LearningStatus.learning);
+      },
+    );
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          onFilterChanged: (_) {},
-        ),
+        VocabularyFilterChips(onFilterChanged: (_) {}),
         themeMode: ThemeMode.dark,
       );
 
@@ -63,9 +64,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          onFilterChanged: (_) {},
-        ),
+        VocabularyFilterChips(onFilterChanged: (_) {}),
         themeMode: ThemeMode.light,
       );
 

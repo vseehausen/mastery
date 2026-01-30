@@ -8,10 +8,7 @@ void main() {
   group('BottomNavBar', () {
     testWidgets('displays all four navigation tabs', (tester) async {
       await tester.pumpTestWidget(
-        BottomNavBar(
-          selectedIndex: 0,
-          onTabSelected: (_) {},
-        ),
+        BottomNavBar(selectedIndex: 0, onTabSelected: (_) {}),
       );
 
       expect(find.text('Home'), findsOneWidget);
@@ -22,10 +19,7 @@ void main() {
 
     testWidgets('displays correct icons', (tester) async {
       await tester.pumpTestWidget(
-        BottomNavBar(
-          selectedIndex: 0,
-          onTabSelected: (_) {},
-        ),
+        BottomNavBar(selectedIndex: 0, onTabSelected: (_) {}),
       );
 
       expect(find.byIcon(Icons.home_outlined), findsOneWidget);
@@ -34,7 +28,9 @@ void main() {
       expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
     });
 
-    testWidgets('calls onTabSelected with correct index when tab is tapped', (tester) async {
+    testWidgets('calls onTabSelected with correct index when tab is tapped', (
+      tester,
+    ) async {
       int? selectedIndex;
 
       await tester.pumpTestWidget(
@@ -55,10 +51,7 @@ void main() {
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        BottomNavBar(
-          selectedIndex: 1,
-          onTabSelected: (_) {},
-        ),
+        BottomNavBar(selectedIndex: 1, onTabSelected: (_) {}),
         themeMode: ThemeMode.dark,
       );
 
@@ -68,10 +61,7 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        BottomNavBar(
-          selectedIndex: 2,
-          onTabSelected: (_) {},
-        ),
+        BottomNavBar(selectedIndex: 2, onTabSelected: (_) {}),
         themeMode: ThemeMode.light,
       );
 

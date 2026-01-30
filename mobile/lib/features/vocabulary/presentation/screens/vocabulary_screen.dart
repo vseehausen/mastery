@@ -10,9 +10,7 @@ import '../../vocabulary_detail_screen.dart';
 
 /// Vocabulary list screen with search and filtering
 class VocabularyScreenNew extends ConsumerStatefulWidget {
-  const VocabularyScreenNew({
-    super.key,
-  });
+  const VocabularyScreenNew({super.key});
 
   @override
   ConsumerState<VocabularyScreenNew> createState() =>
@@ -77,16 +75,16 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
             // Vocabulary list
             Expanded(
               child: vocabularyAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stack) => _buildErrorState(error),
                 data: (vocabulary) {
                   // Filter by search query
                   final filtered = vocabulary
-                      .where((v) => v.word
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()))
+                      .where(
+                        (v) => v.word.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
                       .toList();
 
                   // Filter by status (would need status field in Vocabulary model)
@@ -108,14 +106,12 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                         final vocab = filtered[index];
                         return WordCard(
                           word: vocab.word,
-                          definition: vocab.context ?? 'No definition',
-                          status: LearningStatus
-                              .unknown, // Mock status for now
+                          definition: vocab.stem ?? vocab.word,
+                          status: LearningStatus.unknown, // Mock status for now
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (context) =>
-                                    VocabularyDetailScreen(
+                                builder: (context) => VocabularyDetailScreen(
                                   vocabularyId: vocab.id,
                                 ),
                               ),
@@ -177,11 +173,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red,
-          ),
+          const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
             'Error: $error',

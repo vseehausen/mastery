@@ -23,16 +23,22 @@ class DashboardScreen extends ConsumerWidget {
     final vocabularyAsync = ref.watch(allVocabularyProvider);
 
     // Get avatar URL from user metadata
-    final avatarUrl = currentUser.valueOrNull?.userMetadata?['avatar_url'] as String?;
+    final avatarUrl =
+        currentUser.valueOrNull?.userMetadata?['avatar_url'] as String?;
 
     // Convert vocabulary to recent words format
     final recentWords = vocabularyAsync.when(
-      data: (vocabs) => vocabs.take(2).map((v) => {
-        'id': v.id,
-        'word': v.word,
-        'definition': v.context ?? 'No context',
-        'status': LearningStatus.unknown,
-      }).toList(),
+      data: (vocabs) => vocabs
+          .take(2)
+          .map(
+            (v) => {
+              'id': v.id,
+              'word': v.word,
+              'definition': v.stem ?? v.word,
+              'status': LearningStatus.unknown,
+            },
+          )
+          .toList(),
       loading: () => <Map<String, dynamic>>[],
       error: (_, _) => <Map<String, dynamic>>[],
     );
@@ -64,7 +70,8 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          (user?.userMetadata?['full_name'] as String?) ?? 'Learner',
+                          (user?.userMetadata?['full_name'] as String?) ??
+                              'Learner',
                           style: MasteryTextStyles.displayLarge.copyWith(
                             fontSize: 24,
                             color: isDark ? Colors.white : Colors.black,
@@ -80,7 +87,9 @@ class DashboardScreen extends ConsumerWidget {
                     onTap: () => onSwitchTab(3),
                     child: CircleAvatar(
                       radius: 24,
-                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      backgroundImage: avatarUrl != null
+                          ? NetworkImage(avatarUrl)
+                          : null,
                       child: avatarUrl == null
                           ? const Icon(Icons.person, color: Colors.white)
                           : null,

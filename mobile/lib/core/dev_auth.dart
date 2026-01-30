@@ -44,10 +44,7 @@ class DevAuth {
           'apikey': _serviceRoleKey!,
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'type': 'magiclink',
-          'email': _devUserEmail,
-        }),
+        body: jsonEncode({'type': 'magiclink', 'email': _devUserEmail}),
       );
 
       if (response.statusCode != 200) {
@@ -60,7 +57,7 @@ class DevAuth {
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (kDebugMode) print('[DevAuth] Response: $data');
-      
+
       // The generate_link endpoint returns the link directly at the top level
       final actionLink = data['action_link'] as String?;
       if (actionLink == null) {
@@ -73,16 +70,16 @@ class DevAuth {
       final fragment = uri.fragment; // Token is in the fragment for PKCE
       final fragmentParams = Uri.splitQueryString(fragment);
       var token = fragmentParams['access_token'];
-      
+
       // If access_token in fragment, we can set the session directly
       if (token != null) {
         final refreshToken = fragmentParams['refresh_token'];
         if (kDebugMode) print('[DevAuth] Got tokens from fragment');
-        
+
         await Supabase.instance.client.auth.setSession(refreshToken ?? token);
         return Supabase.instance.client.auth.currentUser != null;
       }
-      
+
       // Otherwise try query param token for OTP verification
       token = uri.queryParameters['token'];
       if (token == null) {
@@ -99,7 +96,9 @@ class DevAuth {
 
       if (authResponse.session != null) {
         if (kDebugMode) {
-          print('[DevAuth] Successfully logged in as ${authResponse.user?.email}');
+          print(
+            '[DevAuth] Successfully logged in as ${authResponse.user?.email}',
+          );
         }
         return true;
       }

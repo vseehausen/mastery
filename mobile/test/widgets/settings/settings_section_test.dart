@@ -11,9 +11,7 @@ void main() {
       await tester.pumpTestWidget(
         const SettingsSection(
           title: 'ACCOUNT',
-          children: [
-            SettingsListItem(label: 'Profile'),
-          ],
+          children: [SettingsListItem(label: 'Profile')],
         ),
       );
 
@@ -39,9 +37,7 @@ void main() {
       await tester.pumpTestWidget(
         const SettingsSection(
           title: 'DARK',
-          children: [
-            SettingsListItem(label: 'Test'),
-          ],
+          children: [SettingsListItem(label: 'Test')],
         ),
         themeMode: ThemeMode.dark,
       );
@@ -53,9 +49,7 @@ void main() {
       await tester.pumpTestWidget(
         const SettingsSection(
           title: 'LIGHT',
-          children: [
-            SettingsListItem(label: 'Test'),
-          ],
+          children: [SettingsListItem(label: 'Test')],
         ),
         themeMode: ThemeMode.light,
       );

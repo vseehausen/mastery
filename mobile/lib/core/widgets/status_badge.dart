@@ -4,11 +4,7 @@ import '../theme/text_styles.dart';
 
 /// Status badge for vocabulary learning status
 class StatusBadge extends StatelessWidget {
-  const StatusBadge({
-    super.key,
-    required this.status,
-    this.compact = false,
-  });
+  const StatusBadge({super.key, required this.status, this.compact = false});
 
   final LearningStatus status;
   final bool compact;
@@ -27,7 +23,7 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Get colors based on status
     final (bgColor, textColor) = _getColors(isDark);
 
@@ -42,11 +38,9 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         _label,
-        style: (compact ? MasteryTextStyles.caption : MasteryTextStyles.bodySmall)
-            .copyWith(
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
+        style:
+            (compact ? MasteryTextStyles.caption : MasteryTextStyles.bodySmall)
+                .copyWith(color: textColor, fontWeight: FontWeight.w500),
       ),
     );
   }

@@ -9,27 +9,29 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [
-  Languages,
-  Books,
-  Highlights,
-  ImportSessions,
-  SyncOutbox,
-  Vocabularys,
-  // Learning feature tables (004-calm-srs-learning)
-  LearningCards,
-  ReviewLogs,
-  LearningSessions,
-  UserLearningPreferences,
-  Streaks,
-])
+@DriftDatabase(
+  tables: [
+    Languages,
+    Sources,
+    Encounters,
+    ImportSessions,
+    SyncOutbox,
+    Vocabularys,
+    // Learning feature tables (004-calm-srs-learning)
+    LearningCards,
+    ReviewLogs,
+    LearningSessions,
+    UserLearningPreferences,
+    Streaks,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -37,30 +39,38 @@ class AppDatabase extends _$AppDatabase {
       onCreate: (Migrator m) async {
         await m.createAll();
         // Seed English language
-        await into(languages).insert(LanguagesCompanion.insert(
-          id: 'en-default',
-          code: 'en',
-          name: 'English',
-          createdAt: DateTime.now(),
-        ));
+        await into(languages).insert(
+          LanguagesCompanion.insert(
+            id: 'en-default',
+            code: 'en',
+            name: 'English',
+            createdAt: DateTime.now(),
+          ),
+        );
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Migration from version 1 to 2: Add vocabulary table
-        if (from < 2) {
-          await m.createTable(vocabularys);
-        }
-        // Migration from version 2 to 3: Recreate vocabulary table with new schema
-        if (from < 3) {
+        // Destructive migration: drop old tables, create new ones
+        if (from < 5) {
+          // Drop old tables that no longer exist
+          await m.deleteTable('books');
+          await m.deleteTable('highlights');
+
+          // Recreate vocabulary without book fields
           await m.deleteTable('vocabularys');
           await m.createTable(vocabularys);
-        }
-        // Migration from version 3 to 4: Add learning feature tables
-        if (from < 4) {
-          await m.createTable(learningCards);
-          await m.createTable(reviewLogs);
-          await m.createTable(learningSessions);
-          await m.createTable(userLearningPreferences);
-          await m.createTable(streaks);
+
+          // Create new tables
+          await m.createTable(sources);
+          await m.createTable(encounters);
+
+          // Ensure learning tables exist
+          if (from < 4) {
+            await m.createTable(learningCards);
+            await m.createTable(reviewLogs);
+            await m.createTable(learningSessions);
+            await m.createTable(userLearningPreferences);
+            await m.createTable(streaks);
+          }
         }
       },
     );

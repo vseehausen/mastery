@@ -1,6 +1,6 @@
 # Mastery Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-28
+Auto-generated from all feature plans. Last updated: 2026-01-30
 
 ## Active Technologies
 - Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno) (002-vocabulary-import-display)
@@ -173,6 +173,7 @@ cd supabase && supabase functions deploy
 7. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
 
 ## Recent Changes
+- Schema refactor: Replaced `books`/`highlights` with `sources`/`encounters` model. Vocabulary is now pure word identity; context lives in encounters.
 - 004-calm-srs-learning: Added Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync)
 - 003-user-auth: Added Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in
 - 002-vocabulary-import-display: Added Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno)
@@ -180,15 +181,16 @@ cd supabase && supabase functions deploy
 
 ## Key Entities
 
-- **Highlight**: Text passage with content, location, type, sync metadata
-- **Book**: Source containing highlights (title, author, ASIN)
+- **Source**: Origin container (book, website, document, manual) with title, author, optional ASIN/URL/domain
+- **Encounter**: A vocabulary word seen in a source, with context, locator, and occurred_at timestamp
+- **Vocabulary**: Word identity (word, stem, content_hash) — one entry per unique word, linked to multiple encounters
 - **ImportSession**: Record of import operation
-- **Language**: Supported vocabulary language (English first)
+- **LearningCard**: FSRS spaced repetition card linked to vocabulary
 
 ## Sync Strategy
 
 - Local SQLite stores data for offline access
-- SyncOutbox queues changes for cloud sync
+- SyncOutbox queues changes for cloud sync (vocabulary, sources, encounters, learning_cards)
 - Last-write-wins conflict resolution (updatedAt timestamp)
 - Supabase Edge Functions handle sync/push and sync/pull
 

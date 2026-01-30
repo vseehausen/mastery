@@ -7,13 +7,13 @@ import '../../domain/repositories/auth_repository.dart';
 /// Supabase implementation of AuthRepository
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._client)
-      : _googleSignIn = GoogleSignIn(
-          scopes: ['email'],
-          // iOS client ID from Google Cloud Console
-          clientId: Platform.isIOS
-              ? '771280991163-45gom2dnikc42h0ajt4cre62mds5v9u2.apps.googleusercontent.com'
-              : null,
-        );
+    : _googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+        // iOS client ID from Google Cloud Console
+        clientId: Platform.isIOS
+            ? '771280991163-45gom2dnikc42h0ajt4cre62mds5v9u2.apps.googleusercontent.com'
+            : null,
+      );
 
   final SupabaseClient _client;
   final GoogleSignIn _googleSignIn;
@@ -29,10 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    return _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    return _client.auth.signInWithPassword(email: email, password: password);
   }
 
   @override
@@ -40,10 +37,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    return _client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    return _client.auth.signUp(email: email, password: password);
   }
 
   @override

@@ -4,9 +4,8 @@ import '../repositories/sync_outbox_repository.dart';
 
 /// Background sync worker for syncing changes when device is online
 class BackgroundSyncWorker {
-  BackgroundSyncWorker({
-    required SyncOutboxRepository outboxRepo,
-  }) : _outboxRepo = outboxRepo;
+  BackgroundSyncWorker({required SyncOutboxRepository outboxRepo})
+    : _outboxRepo = outboxRepo;
 
   final SyncOutboxRepository _outboxRepo;
   static const Duration _syncInterval = Duration(minutes: 15);
@@ -64,7 +63,9 @@ class BackgroundSyncWorker {
       // In a real implementation, this would call the sync service
       // For now, we just log the pending items
       for (final item in pending) {
-        debugPrint('[BackgroundSync] Pending: ${item.entityTable} - ${item.operation}');
+        debugPrint(
+          '[BackgroundSync] Pending: ${item.entityTable} - ${item.operation}',
+        );
       }
 
       debugPrint('[BackgroundSync] Sync completed successfully');

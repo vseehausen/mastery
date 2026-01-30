@@ -62,7 +62,7 @@ class DistractorService {
           (v) => Distractor(
             itemId: v.id,
             surfaceForm: v.word,
-            gloss: v.context ?? v.word,
+            gloss: v.stem ?? v.word,
           ),
         ),
         ...fallbacks,
@@ -74,7 +74,7 @@ class DistractorService {
           (v) => Distractor(
             itemId: v.id,
             surfaceForm: v.word,
-            gloss: v.context ?? v.word,
+            gloss: v.stem ?? v.word,
           ),
         )
         .toList();

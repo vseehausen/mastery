@@ -19,7 +19,8 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = backgroundColor ??
+    final bgColor =
+        backgroundColor ??
         (isDark ? Colors.grey[900] : const Color(0xFFF5F5F5));
     final textColor = isDark ? Colors.white : Colors.black;
 
@@ -29,7 +30,9 @@ class StatCard extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.grey[300]!,
         ),
       ),
       child: Column(

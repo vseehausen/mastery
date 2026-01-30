@@ -66,8 +66,7 @@ class ShadowBrainCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progressPercent / 100,
                 minHeight: 8,
-                backgroundColor:
-                    isDark ? Colors.grey[800] : Colors.grey[200],
+                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).primaryColor,
                 ),

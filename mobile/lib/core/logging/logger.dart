@@ -2,12 +2,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
 /// Log levels for structured logging
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-}
+enum LogLevel { debug, info, warning, error }
 
 /// Structured logger for the Mastery app
 class Logger {
@@ -41,7 +36,12 @@ class Logger {
     _log(LogLevel.error, message, error, stackTrace);
   }
 
-  void _log(LogLevel level, String message, Object? error, StackTrace? stackTrace) {
+  void _log(
+    LogLevel level,
+    String message,
+    Object? error,
+    StackTrace? stackTrace,
+  ) {
     if (!_enabled) return;
 
     final timestamp = DateTime.now().toIso8601String();

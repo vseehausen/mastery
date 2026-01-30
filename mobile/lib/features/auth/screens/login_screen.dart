@@ -49,19 +49,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const Text(
                   'Welcome to Mastery',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sign in to continue',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 48),
 
@@ -166,10 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                        : const Text('Sign In', style: TextStyle(fontSize: 16)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -401,13 +392,9 @@ class _OAuthButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
-        side: BorderSide(
-          color: borderColor ?? backgroundColor,
-        ),
+        side: BorderSide(color: borderColor ?? backgroundColor),
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -416,10 +403,7 @@ class _OAuthButton extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -452,9 +436,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     return AlertDialog(
       title: const Text('Reset Password'),
       content: _sent
-          ? const Text(
-              'Password reset email sent. Please check your inbox.',
-            )
+          ? const Text('Password reset email sent. Please check your inbox.')
           : TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,

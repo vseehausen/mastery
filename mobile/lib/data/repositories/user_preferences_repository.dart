@@ -43,9 +43,9 @@ class UserPreferencesRepository {
 
   /// Get preferences for a user
   Future<UserLearningPreference?> get(String userId) {
-    return (_db.select(_db.userLearningPreferences)
-          ..where((t) => t.userId.equals(userId)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.userLearningPreferences,
+    )..where((t) => t.userId.equals(userId))).getSingleOrNull();
   }
 
   /// Get preferences for a user, creating with defaults if not exists
@@ -87,8 +87,9 @@ class UserPreferencesRepository {
       final companion = UserLearningPreferencesCompanion.insert(
         id: _uuid.v4(),
         userId: userId,
-        dailyTimeTargetMinutes:
-            Value(dailyTimeTargetMinutes ?? defaultDailyTimeTargetMinutes),
+        dailyTimeTargetMinutes: Value(
+          dailyTimeTargetMinutes ?? defaultDailyTimeTargetMinutes,
+        ),
         targetRetention: Value(targetRetention ?? defaultTargetRetention),
         intensity: Value(intensity ?? defaultIntensity),
         newWordSuppressionActive: Value(newWordSuppressionActive ?? false),
@@ -99,23 +100,26 @@ class UserPreferencesRepository {
       await _db.into(_db.userLearningPreferences).insert(companion);
     } else {
       // Update existing
-      await (_db.update(_db.userLearningPreferences)
-            ..where((t) => t.userId.equals(userId)))
-          .write(UserLearningPreferencesCompanion(
-        dailyTimeTargetMinutes: dailyTimeTargetMinutes != null
-            ? Value(dailyTimeTargetMinutes)
-            : const Value.absent(),
-        targetRetention: targetRetention != null
-            ? Value(targetRetention)
-            : const Value.absent(),
-        intensity:
-            intensity != null ? Value(intensity) : const Value.absent(),
-        newWordSuppressionActive: newWordSuppressionActive != null
-            ? Value(newWordSuppressionActive)
-            : const Value.absent(),
-        updatedAt: Value(now),
-        isPendingSync: const Value(true),
-      ));
+      await (_db.update(
+        _db.userLearningPreferences,
+      )..where((t) => t.userId.equals(userId))).write(
+        UserLearningPreferencesCompanion(
+          dailyTimeTargetMinutes: dailyTimeTargetMinutes != null
+              ? Value(dailyTimeTargetMinutes)
+              : const Value.absent(),
+          targetRetention: targetRetention != null
+              ? Value(targetRetention)
+              : const Value.absent(),
+          intensity: intensity != null
+              ? Value(intensity)
+              : const Value.absent(),
+          newWordSuppressionActive: newWordSuppressionActive != null
+              ? Value(newWordSuppressionActive)
+              : const Value.absent(),
+          updatedAt: Value(now),
+          isPendingSync: const Value(true),
+        ),
+      );
     }
 
     return (await get(userId))!;
@@ -123,7 +127,9 @@ class UserPreferencesRepository {
 
   /// Update daily time target
   Future<UserLearningPreference> updateDailyTimeTarget(
-      String userId, int minutes) async {
+    String userId,
+    int minutes,
+  ) async {
     // Clamp to valid range
     final clampedMinutes = minutes.clamp(1, 60);
     return upsert(userId: userId, dailyTimeTargetMinutes: clampedMinutes);
@@ -131,7 +137,9 @@ class UserPreferencesRepository {
 
   /// Update target retention
   Future<UserLearningPreference> updateTargetRetention(
-      String userId, double retention) async {
+    String userId,
+    double retention,
+  ) async {
     // Clamp to valid range
     final clampedRetention = retention.clamp(0.85, 0.95);
     return upsert(userId: userId, targetRetention: clampedRetention);
@@ -139,7 +147,9 @@ class UserPreferencesRepository {
 
   /// Update intensity
   Future<UserLearningPreference> updateIntensity(
-      String userId, int intensity) async {
+    String userId,
+    int intensity,
+  ) async {
     // Clamp to valid range
     final clampedIntensity = intensity.clamp(0, 2);
     return upsert(userId: userId, intensity: clampedIntensity);
@@ -147,25 +157,29 @@ class UserPreferencesRepository {
 
   /// Update new word suppression state (for hysteresis)
   Future<UserLearningPreference> updateNewWordSuppression(
-      String userId, bool suppressed) async {
+    String userId,
+    bool suppressed,
+  ) async {
     return upsert(userId: userId, newWordSuppressionActive: suppressed);
   }
 
   /// Get preferences pending sync
   Future<List<UserLearningPreference>> getPendingSync() {
-    return (_db.select(_db.userLearningPreferences)
-          ..where((t) => t.isPendingSync.equals(true)))
-        .get();
+    return (_db.select(
+      _db.userLearningPreferences,
+    )..where((t) => t.isPendingSync.equals(true))).get();
   }
 
   /// Mark preferences as synced
   Future<void> markSynced(String id) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.userLearningPreferences)
-          ..where((t) => t.id.equals(id)))
-        .write(UserLearningPreferencesCompanion(
-      isPendingSync: const Value(false),
-      lastSyncedAt: Value(now),
-    ));
+    await (_db.update(
+      _db.userLearningPreferences,
+    )..where((t) => t.id.equals(id))).write(
+      UserLearningPreferencesCompanion(
+        isPendingSync: const Value(false),
+        lastSyncedAt: Value(now),
+      ),
+    );
   }
 }

@@ -36,10 +36,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -64,7 +61,9 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -73,8 +72,9 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: MasteryTextStyles.bodySmall
-                                .copyWith(color: Colors.red),
+                            style: MasteryTextStyles.bodySmall.copyWith(
+                              color: Colors.red,
+                            ),
                           ),
                         ),
                       ],

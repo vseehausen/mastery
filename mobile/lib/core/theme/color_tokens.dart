@@ -75,7 +75,10 @@ class MasteryColors {
     }
   }
 
-  static Color getStatusMutedColor(LearningStatus status, {bool isDark = false}) {
+  static Color getStatusMutedColor(
+    LearningStatus status, {
+    bool isDark = false,
+  }) {
     switch (status) {
       case LearningStatus.known:
         return isDark ? knownMutedDark : knownMutedLight;
@@ -87,8 +90,4 @@ class MasteryColors {
   }
 }
 
-enum LearningStatus {
-  known,
-  learning,
-  unknown,
-}
+enum LearningStatus { known, learning, unknown }

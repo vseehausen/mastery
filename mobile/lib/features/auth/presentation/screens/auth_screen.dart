@@ -48,7 +48,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -57,8 +59,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: MasteryTextStyles.bodySmall
-                              .copyWith(color: Colors.red),
+                          style: MasteryTextStyles.bodySmall.copyWith(
+                            color: Colors.red,
+                          ),
                         ),
                       ),
                     ],
@@ -92,8 +95,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     : () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) =>
-                                const EmailSignUpScreen(),
+                            builder: (context) => const EmailSignUpScreen(),
                           ),
                         );
                       },
@@ -118,8 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         : () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (context) =>
-                                    const EmailSignInScreen(),
+                                builder: (context) => const EmailSignInScreen(),
                               ),
                             );
                           },

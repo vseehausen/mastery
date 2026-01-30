@@ -36,9 +36,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -51,19 +49,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const Text(
                   'Join Mastery',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Create an account to sync your highlights',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 32),
 
@@ -234,37 +226,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.mark_email_read,
-                size: 80,
-                color: Colors.green,
-              ),
+              const Icon(Icons.mark_email_read, size: 80, color: Colors.green),
               const SizedBox(height: 24),
               const Text(
                 'Check Your Email',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Text(
                 'We sent a verification email to:\n${_emailController.text}',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 8),
               Text(
                 'Please click the link in the email to verify your account.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
               ),
               const SizedBox(height: 32),
               FilledButton(
@@ -299,7 +278,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      
+
       // Check if user was automatically signed in (session exists)
       if (response.session != null && response.user != null) {
         // User was auto-signed in, navigate back to home

@@ -323,8 +323,8 @@ class SyncService {
   Future<SyncPullResult> pullChanges(DateTime? lastSyncedAt) async {
     if (_isSyncing) {
       return SyncPullResult(
-        books: 0,
-        highlights: 0,
+        sources: 0,
+        encounters: 0,
         vocabulary: 0,
         error: 'Sync already in progress',
       );
@@ -332,8 +332,8 @@ class SyncService {
 
     if (!SupabaseConfig.isAuthenticated) {
       return SyncPullResult(
-        books: 0,
-        highlights: 0,
+        sources: 0,
+        encounters: 0,
         vocabulary: 0,
         error: 'Not authenticated',
       );
@@ -345,6 +345,20 @@ class SyncService {
       final since = (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
           .toIso8601String();
       final client = SupabaseConfig.client;
+
+      // Fetch sources directly from Supabase
+      final sourcesResponse = await client
+          .from('sources')
+          .select()
+          .gt('updated_at', since);
+      final sourcesList = sourcesResponse as List<dynamic>;
+
+      // Fetch encounters directly from Supabase
+      final encountersResponse = await client
+          .from('encounters')
+          .select()
+          .gt('updated_at', since);
+      final encountersList = encountersResponse as List<dynamic>;
 
       // Fetch vocabulary directly from Supabase
       final vocabResponse = await client
@@ -381,9 +395,60 @@ class SyncService {
           .gt('updated_at', since);
       final userPreferences = prefsResponse as List<dynamic>;
 
-      // Books and highlights (keeping empty for now - not used in learning)
-      final books = <dynamic>[];
-      final highlights = <dynamic>[];
+      // Save sources to local database
+      for (final item in sourcesList) {
+        final s = item as Map<String, dynamic>;
+        final entry = SourcesCompanion(
+          id: Value(s['id'] as String),
+          userId: Value(s['user_id'] as String),
+          type: Value(s['type'] as String),
+          title: Value(s['title'] as String),
+          author: Value(s['author'] as String?),
+          asin: Value(s['asin'] as String?),
+          url: Value(s['url'] as String?),
+          domain: Value(s['domain'] as String?),
+          createdAt: Value(DateTime.parse(s['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(s['updated_at'] as String)),
+          deletedAt: Value(
+            s['deleted_at'] != null
+                ? DateTime.parse(s['deleted_at'] as String)
+                : null,
+          ),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+          version: Value(s['version'] as int? ?? 1),
+        );
+        await _db.into(_db.sources).insertOnConflictUpdate(entry);
+      }
+
+      // Save encounters to local database
+      for (final item in encountersList) {
+        final e = item as Map<String, dynamic>;
+        final entry = EncountersCompanion(
+          id: Value(e['id'] as String),
+          userId: Value(e['user_id'] as String),
+          vocabularyId: Value(e['vocabulary_id'] as String),
+          sourceId: Value(e['source_id'] as String?),
+          context: Value(e['context'] as String?),
+          locatorJson: Value(e['locator_json'] as String?),
+          occurredAt: Value(
+            e['occurred_at'] != null
+                ? DateTime.parse(e['occurred_at'] as String)
+                : null,
+          ),
+          createdAt: Value(DateTime.parse(e['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(e['updated_at'] as String)),
+          deletedAt: Value(
+            e['deleted_at'] != null
+                ? DateTime.parse(e['deleted_at'] as String)
+                : null,
+          ),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+          version: Value(e['version'] as int? ?? 1),
+        );
+        await _db.into(_db.encounters).insertOnConflictUpdate(entry);
+      }
 
       // Save vocabulary to local database
       for (final item in vocabulary) {
@@ -393,20 +458,17 @@ class SyncService {
           userId: Value(v['user_id'] as String),
           word: Value(v['word'] as String),
           stem: Value(v['stem'] as String?),
-          context: Value(v['context'] as String?),
-          bookTitle: Value(v['book_title'] as String?),
-          bookAuthor: Value(v['book_author'] as String?),
-          bookAsin: Value(v['book_asin'] as String?),
           contentHash: Value(v['content_hash'] as String),
-          lookupTimestamp: Value(
-            v['lookup_timestamp'] != null
-                ? DateTime.parse(v['lookup_timestamp'] as String)
-                : null,
-          ),
           createdAt: Value(DateTime.parse(v['created_at'] as String)),
           updatedAt: Value(DateTime.parse(v['updated_at'] as String)),
+          deletedAt: Value(
+            v['deleted_at'] != null
+                ? DateTime.parse(v['deleted_at'] as String)
+                : null,
+          ),
           lastSyncedAt: Value(DateTime.now()),
           isPendingSync: const Value(false),
+          version: Value(v['version'] as int? ?? 1),
         );
         await _db.into(_db.vocabularys).insertOnConflictUpdate(entry);
       }
@@ -523,8 +585,8 @@ class SyncService {
       }
 
       return SyncPullResult(
-        books: books.length,
-        highlights: highlights.length,
+        sources: sourcesList.length,
+        encounters: encountersList.length,
         vocabulary: vocabulary.length,
         learningCards: learningCards.length,
         learningSessions: learningSessions.length,
@@ -533,8 +595,8 @@ class SyncService {
       );
     } catch (e) {
       return SyncPullResult(
-        books: 0,
-        highlights: 0,
+        sources: 0,
+        encounters: 0,
         vocabulary: 0,
         error: e.toString(),
       );
@@ -561,20 +623,20 @@ class SyncService {
     DateTime syncedAt,
   ) async {
     for (final item in items) {
-      if (item.entityTable == 'books') {
+      if (item.entityTable == 'sources') {
         await (_db.update(
-          _db.books,
-        )..where((b) => b.id.equals(item.recordId))).write(
-          BooksCompanion(
+          _db.sources,
+        )..where((s) => s.id.equals(item.recordId))).write(
+          SourcesCompanion(
             lastSyncedAt: Value(syncedAt),
             isPendingSync: const Value(false),
           ),
         );
-      } else if (item.entityTable == 'highlights') {
+      } else if (item.entityTable == 'encounters') {
         await (_db.update(
-          _db.highlights,
-        )..where((h) => h.id.equals(item.recordId))).write(
-          HighlightsCompanion(
+          _db.encounters,
+        )..where((e) => e.id.equals(item.recordId))).write(
+          EncountersCompanion(
             lastSyncedAt: Value(syncedAt),
             isPendingSync: const Value(false),
           ),
@@ -607,8 +669,8 @@ class SyncPushResult {
 /// Result of a sync pull operation
 class SyncPullResult {
   SyncPullResult({
-    required this.books,
-    required this.highlights,
+    required this.sources,
+    required this.encounters,
     required this.vocabulary,
     this.learningCards = 0,
     this.learningSessions = 0,
@@ -617,8 +679,8 @@ class SyncPullResult {
     this.error,
   });
 
-  final int books;
-  final int highlights;
+  final int sources;
+  final int encounters;
   final int vocabulary;
   final int learningCards;
   final int learningSessions;

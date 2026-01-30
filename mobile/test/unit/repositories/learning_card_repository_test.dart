@@ -101,7 +101,10 @@ void main() {
       });
 
       test('returns null for non-existent vocabulary', () async {
-        final retrieved = await repository.getByVocabularyId('user-1', 'non-existent');
+        final retrieved = await repository.getByVocabularyId(
+          'user-1',
+          'non-existent',
+        );
         expect(retrieved, isNull);
       });
     });
@@ -164,7 +167,10 @@ void main() {
     group('updateAfterReview', () {
       test('updates card with new FSRS values', () async {
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
 
         final updated = await repository.updateAfterReview(
           cardId: card.id,
@@ -187,7 +193,10 @@ void main() {
 
       test('marks card as leech when isLeech is true', () async {
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
 
         final updated = await repository.updateAfterReview(
           cardId: card.id,
@@ -213,7 +222,10 @@ void main() {
 
         // Create a leech card
         final vocabId2 = await createTestVocabulary('user-1');
-        final leechCard = await repository.create(userId: 'user-1', vocabularyId: vocabId2);
+        final leechCard = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId2,
+        );
         await repository.updateAfterReview(
           cardId: leechCard.id,
           state: CardState.review,
@@ -236,7 +248,10 @@ void main() {
       test('returns count of overdue cards', () async {
         // Create a due card (not new)
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
         await repository.updateAfterReview(
           cardId: card.id,
           state: CardState.review,
@@ -266,7 +281,10 @@ void main() {
     group('delete', () {
       test('soft deletes card', () async {
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
 
         await repository.delete(card.id);
 
@@ -279,7 +297,10 @@ void main() {
     group('getPendingSync', () {
       test('returns cards with isPendingSync=true', () async {
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
 
         // Update card to set isPendingSync
         await repository.updateAfterReview(
@@ -303,7 +324,10 @@ void main() {
     group('markSynced', () {
       test('clears pending sync flag and sets synced timestamp', () async {
         final vocabId = await createTestVocabulary('user-1');
-        final card = await repository.create(userId: 'user-1', vocabularyId: vocabId);
+        final card = await repository.create(
+          userId: 'user-1',
+          vocabularyId: vocabId,
+        );
 
         // Set pending sync
         await repository.updateAfterReview(
