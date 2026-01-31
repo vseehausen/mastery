@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase_client.dart';
 import '../database/database.dart';
@@ -321,7 +322,10 @@ class SyncService {
 
   /// Pull remote changes from the server using direct Supabase queries
   Future<SyncPullResult> pullChanges(DateTime? lastSyncedAt) async {
+    debugPrint('[SyncService] pullChanges called');
+    
     if (_isSyncing) {
+      debugPrint('[SyncService] Already syncing, skipping');
       return SyncPullResult(
         sources: 0,
         encounters: 0,
@@ -331,6 +335,7 @@ class SyncService {
     }
 
     if (!SupabaseConfig.isAuthenticated) {
+      debugPrint('[SyncService] Not authenticated');
       return SyncPullResult(
         sources: 0,
         encounters: 0,
@@ -340,11 +345,13 @@ class SyncService {
     }
 
     _isSyncing = true;
+    debugPrint('[SyncService] Starting pull...');
 
     try {
       final since = (lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
           .toIso8601String();
       final client = SupabaseConfig.client;
+      debugPrint('[SyncService] Fetching data since: $since');
 
       // Fetch sources directly from Supabase
       final sourcesResponse = await client
@@ -352,6 +359,7 @@ class SyncService {
           .select()
           .gt('updated_at', since);
       final sourcesList = sourcesResponse as List<dynamic>;
+      debugPrint('[SyncService] Fetched ${sourcesList.length} sources');
 
       // Fetch encounters directly from Supabase
       final encountersResponse = await client
@@ -366,6 +374,7 @@ class SyncService {
           .select()
           .gt('updated_at', since);
       final vocabulary = vocabResponse as List<dynamic>;
+      debugPrint('[SyncService] Fetched ${vocabulary.length} vocabulary items');
 
       // Fetch learning_cards directly from Supabase
       final cardsResponse = await client
@@ -373,6 +382,7 @@ class SyncService {
           .select()
           .gt('updated_at', since);
       final learningCards = cardsResponse as List<dynamic>;
+      debugPrint('[SyncService] Fetched ${learningCards.length} learning cards');
 
       // Fetch learning_sessions directly from Supabase
       final sessionsResponse = await client
@@ -584,6 +594,7 @@ class SyncService {
             .insertOnConflictUpdate(entry);
       }
 
+      debugPrint('[SyncService] Pull complete: ${vocabulary.length} vocab, ${learningCards.length} cards');
       return SyncPullResult(
         sources: sourcesList.length,
         encounters: encountersList.length,
@@ -593,7 +604,9 @@ class SyncService {
         streaks: streaks.length,
         userPreferences: userPreferences.length,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[SyncService] Pull error: $e');
+      debugPrint('[SyncService] Stack: $stack');
       return SyncPullResult(
         sources: 0,
         encounters: 0,
@@ -607,13 +620,17 @@ class SyncService {
 
   /// Full sync (push then pull)
   Future<SyncResult> sync() async {
+    debugPrint('[SyncService] sync() called');
     final pushResult = await pushChanges();
+    debugPrint('[SyncService] push done, error: ${pushResult.error}');
     if (pushResult.error != null) {
+      debugPrint('[SyncService] push had error, skipping pull');
       return SyncResult(push: pushResult, pull: null);
     }
 
     // TODO: Get last sync timestamp from preferences
     final pullResult = await pullChanges(null);
+    debugPrint('[SyncService] pull done, vocab: ${pullResult.vocabulary}');
 
     return SyncResult(push: pushResult, pull: pullResult);
   }

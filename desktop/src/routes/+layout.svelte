@@ -30,7 +30,7 @@
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-        goto('/auth/sign-in');
+        goto('/auth');
       }
     });
 

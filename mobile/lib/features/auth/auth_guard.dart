@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/database_provider.dart';
 import 'presentation/screens/auth_screen.dart';
@@ -10,6 +11,14 @@ class AuthGuard extends ConsumerWidget {
   const AuthGuard({super.key, required this.child});
 
   final Widget child;
+
+  /// Check if error is a refresh token error that should trigger sign out
+  bool _isRefreshTokenError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('refresh token') ||
+        message.contains('refresh_token') ||
+        message.contains('invalid_grant');
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +37,17 @@ class AuthGuard extends ConsumerWidget {
       }
     });
 
+    // Auto-clear session on refresh token errors
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      next.whenOrNull(
+        error: (error, stack) {
+          if (_isRefreshTokenError(error)) {
+            Supabase.instance.client.auth.signOut();
+          }
+        },
+      );
+    });
+
     return authState.when(
       data: (state) {
         if (!isAuthenticated) {
@@ -41,33 +61,37 @@ class AuthGuard extends ConsumerWidget {
           }
           return const AuthScreen();
         }
+        // Start realtime sync when authenticated (provider auto-starts)
+        ref.watch(realtimeSyncServiceProvider);
         return child;
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Authentication error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const AuthScreen(),
-                    ),
-                  );
-                },
-                child: const Text('Go to Sign In'),
-              ),
-            ],
+      error: (error, stack) {
+        // If it's a refresh token error, show auth screen directly
+        if (_isRefreshTokenError(error)) {
+          return const AuthScreen();
+        }
+        return Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Authentication error: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Supabase.instance.client.auth.signOut();
+                  },
+                  child: const Text('Go to Sign In'),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

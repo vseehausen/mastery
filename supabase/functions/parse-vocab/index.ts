@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
     // Separate new vocab entries from existing ones
     const newEntries = entries.filter(e => !existingHashMap.has(e.contentHash));
     const existingEntries = entries.filter(e => existingHashMap.has(e.contentHash));
-    const skipped = 0; // We still create encounters for existing vocab
+    const skipped = existingEntries.length; // Existing vocab - encounters still created
 
     // Insert new vocabulary entries (word identity only)
     let imported = 0;
@@ -293,7 +293,10 @@ Deno.serve(async (req) => {
 
       const { error } = await client
         .from('vocabulary')
-        .insert(vocabRecords);
+        .upsert(vocabRecords, {
+          onConflict: 'user_id,content_hash',
+          ignoreDuplicates: true
+        });
 
       if (error) {
         console.error('Insert error:', error);
@@ -410,7 +413,6 @@ Deno.serve(async (req) => {
       imported,
       encounters: encountersCreated,
       skipped,
-      books: sources.length,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {

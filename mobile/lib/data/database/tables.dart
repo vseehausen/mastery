@@ -18,7 +18,7 @@ class Sources extends Table {
   TextColumn get type => text()(); // 'book', 'website', 'document', 'manual'
   TextColumn get title => text().withLength(max: 500)();
   TextColumn get author => text().withLength(max: 255).nullable()();
-  TextColumn get asin => text().withLength(max: 20).nullable()();
+  TextColumn get asin => text().withLength(max: 50).nullable()();
   TextColumn get url => text().nullable()();
   TextColumn get domain => text().withLength(max: 255).nullable()();
   DateTimeColumn get createdAt => dateTime()();

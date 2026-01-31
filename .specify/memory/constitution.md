@@ -83,20 +83,19 @@ When complexity is unavoidable, document in the implementation plan:
 
 **Rationale**: Simpler code is easier to understand, test, maintain, and debug. Over-engineering creates technical debt.
 
-### V. Offline-First Architecture
+### V. Online-Required Architecture
 
-All client applications MUST function without network connectivity:
-- **Local-First Data**: Core data is stored locally and synced when online
-- **Graceful Degradation**: Features that require network clearly indicate status
-- **Conflict Resolution**: Define sync conflict strategy per data type
-- **Queue Operations**: Network operations queue when offline, execute when connected
+All client applications require an active internet connection:
+- **Local Caching**: Local SQLite/storage caches data for performance, not for offline use
+- **Online Operations**: Sync, meaning generation, and enrichment are online-only
+- **Connection Status**: App clearly indicates when connection is unavailable and features are degraded
 
 **Platform Requirements**:
-- Mobile (Flutter): SQLite/Drift for local storage, background sync
-- Extension: IndexedDB or chrome.storage for local data
-- Desktop (Tauri): Local file system with sync queue
+- Mobile (Flutter): SQLite/Drift for local cache, Supabase for online operations
+- Extension: chrome.storage for local cache
+- Desktop (Tauri): Local file system cache with online sync
 
-**Rationale**: Users expect apps to work reliably regardless of network conditions. Reading/studying often happens offline (planes, commutes, remote areas).
+**Rationale**: Core features (meaning generation, AI enrichment, sync) depend on backend services. Designing for full offline would add significant complexity without matching actual usage patterns.
 
 ## Technology Stack
 

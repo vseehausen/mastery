@@ -369,7 +369,7 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     'asin',
     aliasedName,
     true,
-    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );

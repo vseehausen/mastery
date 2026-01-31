@@ -39,7 +39,10 @@ export function createServiceClient() {
 /// This is the recommended approach per Supabase docs.
 export async function getUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.error("No Authorization header or missing Bearer prefix");
+    return null;
+  }
 
   const token = authHeader.slice(7);
   const supabase = getSupabaseAdmin();
@@ -47,7 +50,7 @@ export async function getUserId(req: Request): Promise<string | null> {
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
-    console.error("JWT verification failed:", error?.message);
+    console.error("JWT verification failed:", error?.message, "| error code:", error?.code);
     return null;
   }
 

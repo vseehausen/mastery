@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/word_card.dart';
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../providers/database_provider.dart';
 import '../widgets/vocabulary_search_bar.dart';
 import '../widgets/vocabulary_filter_chips.dart';
 import '../../vocabulary_provider.dart';
@@ -96,6 +97,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
+                      debugPrint('[VocabScreen] Pull to refresh triggered');
+                      final syncService = ref.read(syncServiceProvider);
+                      final result = await syncService.sync();
+                      debugPrint('[VocabScreen] Sync done: ${result.pull?.vocabulary ?? 0} vocab');
                       ref.invalidate(allVocabularyProvider);
                     },
                     child: ListView.builder(
@@ -160,6 +165,19 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () async {
+              debugPrint('[VocabScreen] Sync button pressed');
+              final syncService = ref.read(syncServiceProvider);
+              debugPrint('[VocabScreen] Calling sync...');
+              final result = await syncService.sync();
+              debugPrint('[VocabScreen] Sync result: ${result.pull?.vocabulary ?? 0} vocab');
+              ref.invalidate(allVocabularyProvider);
+            },
+            icon: const Icon(Icons.sync),
+            label: const Text('Sync from Cloud'),
           ),
         ],
       ),

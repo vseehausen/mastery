@@ -9,7 +9,9 @@ import '../data/repositories/streak_repository.dart';
 import '../data/repositories/sync_outbox_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
 import '../data/repositories/vocabulary_repository.dart';
+import '../data/services/realtime_sync_service.dart';
 import '../data/services/sync_service.dart';
+import 'auth_provider.dart';
 
 /// Provider for the app database
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -63,4 +65,18 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     userPreferencesRepository: userPrefsRepo,
     reviewLogRepository: reviewLogRepo,
   );
+});
+
+/// Provider for RealtimeSyncService - auto-syncs when server data changes
+final realtimeSyncServiceProvider = Provider<RealtimeSyncService?>((ref) {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return null;
+
+  final syncService = ref.watch(syncServiceProvider);
+  final service = RealtimeSyncService(syncService, userId);
+  
+  service.start();
+  ref.onDispose(() => service.stop());
+  
+  return service;
 });

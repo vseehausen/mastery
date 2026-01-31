@@ -5,7 +5,6 @@ export interface ImportResult {
   totalParsed: number;
   imported: number;
   skipped: number;
-  books: number;
   error?: string;
 }
 
@@ -15,7 +14,6 @@ export interface ImportSession {
   totalParsed: number;
   imported: number;
   skipped: number;
-  books: number;
   status: 'success' | 'error';
   error?: string;
 }
@@ -51,7 +49,6 @@ export async function importFromKindle(): Promise<ImportResult> {
       totalParsed: data.totalParsed || 0,
       imported: data.imported || 0,
       skipped: data.skipped || 0,
-      books: data.books || 0,
       error: data.errors ? data.errors.join('; ') : undefined,
     };
   } catch (error) {
@@ -83,7 +80,6 @@ export async function getImportHistory(): Promise<ImportSession[]> {
         totalParsed: row.total_found || 0,
         imported: row.imported || 0,
         skipped: row.skipped || 0,
-        books: 0,
         status: hasErrors ? 'error' : 'success',
         error: hasErrors ? `${row.errors} errors` : undefined,
       };

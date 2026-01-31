@@ -86,10 +86,6 @@
                 <span class="font-semibold text-foreground">{session.skipped}</span>
                 <span class="text-muted-foreground"> skipped</span>
               </div>
-              <div>
-                <span class="font-semibold text-foreground">{session.books}</span>
-                <span class="text-muted-foreground"> books</span>
-              </div>
             </div>
 
             <!-- Error Message -->

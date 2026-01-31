@@ -27,6 +27,18 @@ class SupabaseConfig {
         logLevel: RealtimeLogLevel.info,
       ),
     );
+
+    // Handle auth errors globally
+    Supabase.instance.client.auth.onAuthStateChange.listen(
+      (data) {},
+      onError: (Object error, StackTrace stackTrace) {
+        if (error is AuthException &&
+            error.message.contains('Refresh Token Not Found')) {
+          // Clear invalid session
+          Supabase.instance.client.auth.signOut();
+        }
+      },
+    );
   }
 
   /// Get the Supabase client instance

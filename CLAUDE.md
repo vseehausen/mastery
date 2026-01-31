@@ -9,6 +9,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-30
 - Supabase Auth (session tokens stored locally per platform) (003-user-auth)
 - Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync) (004-calm-srs-learning)
 - SQLite via Drift (local, offline-first), PostgreSQL via Supabase (cloud sync) (004-calm-srs-learning)
+- Dart 3.x (Flutter 3.x), TypeScript (Deno Edge Functions), Rust 1.75+ (Tauri) + `fsrs: ^2.0.1`, `drift` (SQLite ORM), `flutter_riverpod`, `supabase_flutter`, `shadcn_ui` (005-meaning-graph)
+- SQLite via Drift (mobile local cache), PostgreSQL via Supabase (cloud) (005-meaning-graph)
 
 - **Mobile**: Flutter 3.x (Dart 3.x), Drift, Supabase Flutter SDK
 - **Desktop**: Tauri 2.x (Rust), nusb, mountpoints
@@ -51,7 +53,7 @@ cd desktop && npm run tauri dev
 
 # Backend
 cd supabase && supabase db push
-cd supabase && supabase functions deploy
+cd supabase && supabase functions deploy --no-verify-jwt  # ALL functions need this flag
 ```
 
 ## Code Style
@@ -169,14 +171,13 @@ cd supabase && supabase functions deploy
 3. **Flutter Analyze Gate**: `flutter analyze` MUST pass with zero issues (no errors, warnings, or info) before any commit.
 4. **Observability**: Structured logging, error tracking, metrics
 5. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
-6. **Offline-First**: Local-first data, sync when online, last-write-wins
+6. **Online-Required**: App requires an active internet connection. Local SQLite caches data for performance but is not designed for offline use. Backend services (sync, meaning generation) assume connectivity.
 7. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
 
 ## Recent Changes
+- 005-meaning-graph: Added Dart 3.x (Flutter 3.x), TypeScript (Deno Edge Functions), Rust 1.75+ (Tauri) + `fsrs: ^2.0.1`, `drift` (SQLite ORM), `flutter_riverpod`, `supabase_flutter`, `shadcn_ui`
 - Schema refactor: Replaced `books`/`highlights` with `sources`/`encounters` model. Vocabulary is now pure word identity; context lives in encounters.
 - 004-calm-srs-learning: Added Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync)
-- 003-user-auth: Added Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in
-- 002-vocabulary-import-display: Added Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno)
 
 
 ## Key Entities
@@ -214,7 +215,7 @@ cd supabase && supabase functions deploy
 
 - **Desktop**: Rust handles **only** native hardware access (Kindle USB/MTP). All other logic (auth, API calls, UI state, data processing) happens in Svelte frontend. Keep Rust minimal.
 - **Mobile**: Import feature removed—capture is desktop-only. Mobile focuses on vocabulary display, learning, and sync.
-- **Edge Functions**: `parse-vocab` handles SQLite parsing and creates `import_sessions` records.
+- **Edge Functions**: `parse-vocab` handles SQLite parsing and creates `import_sessions` records. Deploy with `--no-verify-jwt` flag to let functions handle auth manually (required for proper error handling when tokens are invalid).
 - **OAuth**: Uses web-based OAuth flow with deep link callback (`mastery://auth/callback`). Deep links only work in built `.app` bundle, not dev mode.
 
 ## Quality Checks - REQUIRED AFTER EVERY TASK

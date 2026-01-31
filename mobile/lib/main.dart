@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,11 +12,21 @@ import 'features/learn/screens/session_home_screen.dart';
 import 'features/vocabulary/presentation/screens/vocabulary_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
-  await SupabaseConfig.initialize();
-  runApp(const ProviderScope(child: MasteryApp()));
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load(fileName: '.env');
+    try {
+      await SupabaseConfig.initialize();
+    } catch (e) {
+      debugPrint('Supabase init failed: $e');
+      // App can still run, will show auth screen
+    }
+    runApp(const ProviderScope(child: MasteryApp()));
+  }, (error, stack) {
+    debugPrint('Uncaught error: $error');
+    debugPrint('Stack: $stack');
+  });
 }
 
 class MasteryApp extends StatelessWidget {
