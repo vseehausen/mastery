@@ -23,6 +23,12 @@ part 'database.g.dart';
     LearningSessions,
     UserLearningPreferences,
     Streaks,
+    // Meaning graph tables (005-meaning-graph)
+    Meanings,
+    Cues,
+    ConfusableSets,
+    ConfusableSetMembers,
+    MeaningEdits,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -31,7 +37,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -71,6 +77,20 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(userLearningPreferences);
             await m.createTable(streaks);
           }
+        }
+        // 005-meaning-graph: Add meaning graph tables and new columns
+        if (from < 6) {
+          await m.createTable(meanings);
+          await m.createTable(cues);
+          await m.createTable(confusableSets);
+          await m.createTable(confusableSetMembers);
+          await m.createTable(meaningEdits);
+          // Add new columns to existing tables
+          await m.addColumn(
+              userLearningPreferences, userLearningPreferences.nativeLanguageCode);
+          await m.addColumn(
+              userLearningPreferences, userLearningPreferences.meaningDisplayMode);
+          await m.addColumn(reviewLogs, reviewLogs.cueType);
         }
       },
     );

@@ -163,6 +163,8 @@ class ReviewLogs extends Table {
   DateTimeColumn get reviewedAt => dateTime()(); // UTC
   TextColumn get sessionId =>
       text().nullable()(); // References LearningSessions.id
+  // Cue type used for this review (005-meaning-graph)
+  TextColumn get cueType => text().withLength(max: 20).nullable()();
   BoolColumn get isPendingSync =>
       boolean().withDefault(const Constant(false))();
 
@@ -214,11 +216,127 @@ class UserLearningPreferences extends Table {
   // Hysteresis tracking for new-word suppression
   BoolColumn get newWordSuppressionActive =>
       boolean().withDefault(const Constant(false))();
+  // Meaning graph settings (005-meaning-graph)
+  TextColumn get nativeLanguageCode =>
+      text().withLength(max: 5).withDefault(const Constant('de'))();
+  TextColumn get meaningDisplayMode =>
+      text().withLength(max: 10).withDefault(const Constant('both'))(); // 'native', 'english', 'both'
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get lastSyncedAt => dateTime().nullable()();
   BoolColumn get isPendingSync =>
       boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+// =============================================================================
+// Meaning Graph Tables (005-meaning-graph)
+// =============================================================================
+
+/// Meanings table - distinct senses for a vocabulary word
+/// One vocabulary can have multiple meanings.
+class Meanings extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get vocabularyId => text()(); // References Vocabularys.id
+  TextColumn get languageCode => text().withLength(max: 5)();
+  TextColumn get primaryTranslation => text()();
+  TextColumn get alternativeTranslations =>
+      text().withDefault(const Constant('[]'))(); // JSON array
+  TextColumn get englishDefinition => text()();
+  TextColumn get extendedDefinition => text().nullable()();
+  TextColumn get partOfSpeech => text().withLength(max: 20).nullable()();
+  TextColumn get synonyms =>
+      text().withDefault(const Constant('[]'))(); // JSON array
+  RealColumn get confidence =>
+      real().withDefault(const Constant(1.0))(); // 0.0-1.0
+  BoolColumn get isPrimary =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get isActive =>
+      boolean().withDefault(const Constant(true))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  TextColumn get source =>
+      text().withDefault(const Constant('ai'))(); // 'ai', 'deepl', 'google', 'context', 'user'
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cues table - pre-generated prompt triggers for learning sessions
+/// Each cue belongs to one meaning.
+class Cues extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get meaningId => text()(); // References Meanings.id
+  TextColumn get cueType =>
+      text().withLength(max: 20)(); // 'translation', 'definition', 'synonym', 'context_cloze', 'disambiguation'
+  TextColumn get promptText => text()();
+  TextColumn get answerText => text()();
+  TextColumn get hintText => text().nullable()();
+  TextColumn get metadata =>
+      text().withDefault(const Constant('{}'))(); // JSON object
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Confusable sets table - groups of commonly confused words
+class ConfusableSets extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get languageCode => text().withLength(max: 5)();
+  TextColumn get words => text()(); // JSON array
+  TextColumn get explanations => text()(); // JSON map: word → explanation
+  TextColumn get exampleSentences =>
+      text().withDefault(const Constant('{}'))(); // JSON map: word → sentence
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  DateTimeColumn get lastSyncedAt => dateTime().nullable()();
+  BoolColumn get isPendingSync =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get version => integer().withDefault(const Constant(1))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Confusable set members table - join table linking vocabulary to confusable sets
+class ConfusableSetMembers extends Table {
+  TextColumn get id => text()();
+  TextColumn get confusableSetId => text()(); // References ConfusableSets.id
+  TextColumn get vocabularyId => text()(); // References Vocabularys.id
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Meaning edits table - tracks user overrides of auto-generated data
+class MeaningEdits extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get meaningId => text()(); // References Meanings.id
+  TextColumn get fieldName => text().withLength(max: 50)();
+  TextColumn get originalValue => text()();
+  TextColumn get userValue => text()();
+  DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};

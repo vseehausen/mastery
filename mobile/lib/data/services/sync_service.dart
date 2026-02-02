@@ -4,7 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase_client.dart';
 import '../database/database.dart';
+import '../repositories/confusable_set_repository.dart';
+import '../repositories/cue_repository.dart';
 import '../repositories/learning_card_repository.dart';
+import '../repositories/meaning_repository.dart';
 import '../repositories/review_log_repository.dart';
 import '../repositories/session_repository.dart';
 import '../repositories/streak_repository.dart';
@@ -21,13 +24,19 @@ class SyncService {
     StreakRepository? streakRepository,
     UserPreferencesRepository? userPreferencesRepository,
     ReviewLogRepository? reviewLogRepository,
+    MeaningRepository? meaningRepository,
+    CueRepository? cueRepository,
+    ConfusableSetRepository? confusableSetRepository,
   }) : _outboxRepo = outboxRepo,
        _db = db,
        _learningCardRepository = learningCardRepository,
        _sessionRepository = sessionRepository,
        _streakRepository = streakRepository,
        _userPreferencesRepository = userPreferencesRepository,
-       _reviewLogRepository = reviewLogRepository;
+       _reviewLogRepository = reviewLogRepository,
+       _meaningRepository = meaningRepository,
+       _cueRepository = cueRepository,
+       _confusableSetRepository = confusableSetRepository;
 
   final SyncOutboxRepository _outboxRepo;
   final AppDatabase _db;
@@ -36,6 +45,9 @@ class SyncService {
   final StreakRepository? _streakRepository;
   final UserPreferencesRepository? _userPreferencesRepository;
   final ReviewLogRepository? _reviewLogRepository;
+  final MeaningRepository? _meaningRepository;
+  final CueRepository? _cueRepository;
+  final ConfusableSetRepository? _confusableSetRepository;
 
   bool _isSyncing = false;
 
@@ -188,6 +200,45 @@ class SyncService {
       }
     }
 
+    // Meanings
+    if (_meaningRepository != null) {
+      final pendingMeanings = await _meaningRepository.getPendingSync();
+      for (final meaning in pendingMeanings) {
+        changes.add({
+          'table': 'meanings',
+          'operation': 'upsert',
+          'id': meaning.id,
+          'data': _meaningToJson(meaning),
+        });
+      }
+    }
+
+    // Cues
+    if (_cueRepository != null) {
+      final pendingCues = await _cueRepository.getPendingSync();
+      for (final cue in pendingCues) {
+        changes.add({
+          'table': 'cues',
+          'operation': 'upsert',
+          'id': cue.id,
+          'data': _cueToJson(cue),
+        });
+      }
+    }
+
+    // Confusable sets
+    if (_confusableSetRepository != null) {
+      final pendingSets = await _confusableSetRepository.getPendingSync();
+      for (final set in pendingSets) {
+        changes.add({
+          'table': 'confusable_sets',
+          'operation': 'upsert',
+          'id': set.id,
+          'data': _confusableSetToJson(set),
+        });
+      }
+    }
+
     return changes;
   }
 
@@ -225,6 +276,27 @@ class SyncService {
       final pendingLogs = await _reviewLogRepository.getPendingSync();
       for (final log in pendingLogs) {
         await _reviewLogRepository.markSynced(log.id);
+      }
+    }
+
+    if (_meaningRepository != null) {
+      final pendingMeanings = await _meaningRepository.getPendingSync();
+      for (final meaning in pendingMeanings) {
+        await _meaningRepository.markSynced(meaning.id);
+      }
+    }
+
+    if (_cueRepository != null) {
+      final pendingCues = await _cueRepository.getPendingSync();
+      for (final cue in pendingCues) {
+        await _cueRepository.markSynced(cue.id);
+      }
+    }
+
+    if (_confusableSetRepository != null) {
+      final pendingSets = await _confusableSetRepository.getPendingSync();
+      for (final set in pendingSets) {
+        await _confusableSetRepository.markSynced(set.id);
       }
     }
   }
@@ -296,6 +368,65 @@ class SyncService {
       'new_word_suppression_active': pref.newWordSuppressionActive,
       'created_at': pref.createdAt.toIso8601String(),
       'updated_at': pref.updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Convert Meaning to JSON for sync
+  Map<String, dynamic> _meaningToJson(Meaning meaning) {
+    return {
+      'id': meaning.id,
+      'user_id': meaning.userId,
+      'vocabulary_id': meaning.vocabularyId,
+      'language_code': meaning.languageCode,
+      'primary_translation': meaning.primaryTranslation,
+      'alternative_translations': meaning.alternativeTranslations,
+      'english_definition': meaning.englishDefinition,
+      'extended_definition': meaning.extendedDefinition,
+      'part_of_speech': meaning.partOfSpeech,
+      'synonyms': meaning.synonyms,
+      'confidence': meaning.confidence,
+      'is_primary': meaning.isPrimary,
+      'is_active': meaning.isActive,
+      'sort_order': meaning.sortOrder,
+      'source': meaning.source,
+      'created_at': meaning.createdAt.toIso8601String(),
+      'updated_at': meaning.updatedAt.toIso8601String(),
+      'deleted_at': meaning.deletedAt?.toIso8601String(),
+      'version': meaning.version,
+    };
+  }
+
+  /// Convert Cue to JSON for sync
+  Map<String, dynamic> _cueToJson(Cue cue) {
+    return {
+      'id': cue.id,
+      'user_id': cue.userId,
+      'meaning_id': cue.meaningId,
+      'cue_type': cue.cueType,
+      'prompt_text': cue.promptText,
+      'answer_text': cue.answerText,
+      'hint_text': cue.hintText,
+      'metadata': cue.metadata,
+      'created_at': cue.createdAt.toIso8601String(),
+      'updated_at': cue.updatedAt.toIso8601String(),
+      'deleted_at': cue.deletedAt?.toIso8601String(),
+      'version': cue.version,
+    };
+  }
+
+  /// Convert ConfusableSet to JSON for sync
+  Map<String, dynamic> _confusableSetToJson(ConfusableSet set) {
+    return {
+      'id': set.id,
+      'user_id': set.userId,
+      'language_code': set.languageCode,
+      'words': set.words,
+      'explanations': set.explanations,
+      'example_sentences': set.exampleSentences,
+      'created_at': set.createdAt.toIso8601String(),
+      'updated_at': set.updatedAt.toIso8601String(),
+      'deleted_at': set.deletedAt?.toIso8601String(),
+      'version': set.version,
     };
   }
 
@@ -594,7 +725,137 @@ class SyncService {
             .insertOnConflictUpdate(entry);
       }
 
-      debugPrint('[SyncService] Pull complete: ${vocabulary.length} vocab, ${learningCards.length} cards');
+      // Fetch and save meanings
+      final meaningsResponse = await client
+          .from('meanings')
+          .select()
+          .gt('updated_at', since);
+      final meaningsList = meaningsResponse as List<dynamic>;
+
+      for (final item in meaningsList) {
+        final m = item as Map<String, dynamic>;
+        final entry = MeaningsCompanion(
+          id: Value(m['id'] as String),
+          userId: Value(m['user_id'] as String),
+          vocabularyId: Value(m['vocabulary_id'] as String),
+          languageCode: Value(m['language_code'] as String),
+          primaryTranslation: Value(m['primary_translation'] as String),
+          alternativeTranslations: Value(
+            m['alternative_translations'] as String? ?? '[]',
+          ),
+          englishDefinition: Value(m['english_definition'] as String),
+          extendedDefinition: Value(m['extended_definition'] as String?),
+          partOfSpeech: Value(m['part_of_speech'] as String?),
+          synonyms: Value(m['synonyms'] as String? ?? '[]'),
+          confidence: Value(
+            (m['confidence'] as num?)?.toDouble() ?? 1.0,
+          ),
+          isPrimary: Value(m['is_primary'] as bool? ?? false),
+          isActive: Value(m['is_active'] as bool? ?? true),
+          sortOrder: Value(m['sort_order'] as int? ?? 0),
+          source: Value(m['source'] as String? ?? 'ai'),
+          createdAt: Value(DateTime.parse(m['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(m['updated_at'] as String)),
+          deletedAt: Value(
+            m['deleted_at'] != null
+                ? DateTime.parse(m['deleted_at'] as String)
+                : null,
+          ),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+          version: Value(m['version'] as int? ?? 1),
+        );
+        await _db.into(_db.meanings).insertOnConflictUpdate(entry);
+      }
+
+      // Fetch and save cues
+      final cuesResponse = await client
+          .from('cues')
+          .select()
+          .gt('updated_at', since);
+      final cuesList = cuesResponse as List<dynamic>;
+
+      for (final item in cuesList) {
+        final c = item as Map<String, dynamic>;
+        final entry = CuesCompanion(
+          id: Value(c['id'] as String),
+          userId: Value(c['user_id'] as String),
+          meaningId: Value(c['meaning_id'] as String),
+          cueType: Value(c['cue_type'] as String),
+          promptText: Value(c['prompt_text'] as String),
+          answerText: Value(c['answer_text'] as String),
+          hintText: Value(c['hint_text'] as String?),
+          metadata: Value(c['metadata'] as String? ?? '{}'),
+          createdAt: Value(DateTime.parse(c['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(c['updated_at'] as String)),
+          deletedAt: Value(
+            c['deleted_at'] != null
+                ? DateTime.parse(c['deleted_at'] as String)
+                : null,
+          ),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+          version: Value(c['version'] as int? ?? 1),
+        );
+        await _db.into(_db.cues).insertOnConflictUpdate(entry);
+      }
+
+      // Fetch and save confusable sets
+      final confusableSetsResponse = await client
+          .from('confusable_sets')
+          .select()
+          .gt('updated_at', since);
+      final confusableSetsList = confusableSetsResponse as List<dynamic>;
+
+      for (final item in confusableSetsList) {
+        final cs = item as Map<String, dynamic>;
+        final entry = ConfusableSetsCompanion(
+          id: Value(cs['id'] as String),
+          userId: Value(cs['user_id'] as String),
+          languageCode: Value(cs['language_code'] as String),
+          words: Value(cs['words'] as String),
+          explanations: Value(cs['explanations'] as String),
+          exampleSentences: Value(
+            cs['example_sentences'] as String? ?? '{}',
+          ),
+          createdAt: Value(DateTime.parse(cs['created_at'] as String)),
+          updatedAt: Value(DateTime.parse(cs['updated_at'] as String)),
+          deletedAt: Value(
+            cs['deleted_at'] != null
+                ? DateTime.parse(cs['deleted_at'] as String)
+                : null,
+          ),
+          lastSyncedAt: Value(DateTime.now()),
+          isPendingSync: const Value(false),
+          version: Value(cs['version'] as int? ?? 1),
+        );
+        await _db.into(_db.confusableSets).insertOnConflictUpdate(entry);
+      }
+
+      // Fetch and save confusable set members
+      final membersResponse = await client
+          .from('confusable_set_members')
+          .select();
+      final membersList = membersResponse as List<dynamic>;
+
+      for (final item in membersList) {
+        final mb = item as Map<String, dynamic>;
+        final entry = ConfusableSetMembersCompanion(
+          id: Value(mb['id'] as String),
+          confusableSetId: Value(mb['confusable_set_id'] as String),
+          vocabularyId: Value(mb['vocabulary_id'] as String),
+          createdAt: Value(DateTime.parse(mb['created_at'] as String)),
+        );
+        await _db
+            .into(_db.confusableSetMembers)
+            .insertOnConflictUpdate(entry);
+      }
+
+      debugPrint(
+        '[SyncService] Pull complete: ${vocabulary.length} vocab, '
+        '${learningCards.length} cards, ${meaningsList.length} meanings, '
+        '${cuesList.length} cues, ${confusableSetsList.length} confusable sets',
+      );
       return SyncPullResult(
         sources: sourcesList.length,
         encounters: encountersList.length,
@@ -603,6 +864,9 @@ class SyncService {
         learningSessions: learningSessions.length,
         streaks: streaks.length,
         userPreferences: userPreferences.length,
+        meanings: meaningsList.length,
+        cues: cuesList.length,
+        confusableSets: confusableSetsList.length,
       );
     } catch (e, stack) {
       debugPrint('[SyncService] Pull error: $e');
@@ -667,6 +931,33 @@ class SyncService {
             isPendingSync: const Value(false),
           ),
         );
+      } else if (item.entityTable == 'meanings') {
+        await (_db.update(
+          _db.meanings,
+        )..where((m) => m.id.equals(item.recordId))).write(
+          MeaningsCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
+      } else if (item.entityTable == 'cues') {
+        await (_db.update(
+          _db.cues,
+        )..where((c) => c.id.equals(item.recordId))).write(
+          CuesCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
+      } else if (item.entityTable == 'confusable_sets') {
+        await (_db.update(
+          _db.confusableSets,
+        )..where((s) => s.id.equals(item.recordId))).write(
+          ConfusableSetsCompanion(
+            lastSyncedAt: Value(syncedAt),
+            isPendingSync: const Value(false),
+          ),
+        );
       }
     }
   }
@@ -693,6 +984,9 @@ class SyncPullResult {
     this.learningSessions = 0,
     this.streaks = 0,
     this.userPreferences = 0,
+    this.meanings = 0,
+    this.cues = 0,
+    this.confusableSets = 0,
     this.error,
   });
 
@@ -703,6 +997,9 @@ class SyncPullResult {
   final int learningSessions;
   final int streaks;
   final int userPreferences;
+  final int meanings;
+  final int cues;
+  final int confusableSets;
   final String? error;
 
   bool get hasError => error != null;

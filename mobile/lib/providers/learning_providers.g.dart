@@ -96,6 +96,77 @@ final userPreferencesRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef UserPreferencesRepositoryRef = ProviderRef<UserPreferencesRepository>;
+String _$meaningRepositoryHash() => r'60a5151684494a77250a12803f5618df76b678e4';
+
+/// See also [meaningRepository].
+@ProviderFor(meaningRepository)
+final meaningRepositoryProvider = Provider<MeaningRepository>.internal(
+  meaningRepository,
+  name: r'meaningRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$meaningRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef MeaningRepositoryRef = ProviderRef<MeaningRepository>;
+String _$cueRepositoryHash() => r'ddfbec1b819446525a01e4e8621d53e6134695f2';
+
+/// See also [cueRepository].
+@ProviderFor(cueRepository)
+final cueRepositoryProvider = Provider<CueRepository>.internal(
+  cueRepository,
+  name: r'cueRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$cueRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CueRepositoryRef = ProviderRef<CueRepository>;
+String _$confusableSetRepositoryHash() =>
+    r'8a525aadcacdfed31cfed88d7edc0fa58ab4b961';
+
+/// See also [confusableSetRepository].
+@ProviderFor(confusableSetRepository)
+final confusableSetRepositoryProvider =
+    Provider<ConfusableSetRepository>.internal(
+      confusableSetRepository,
+      name: r'confusableSetRepositoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$confusableSetRepositoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ConfusableSetRepositoryRef = ProviderRef<ConfusableSetRepository>;
+String _$meaningEditRepositoryHash() =>
+    r'78fd9a97ded123e87b1ad5c4b57144f7c9256819';
+
+/// See also [meaningEditRepository].
+@ProviderFor(meaningEditRepository)
+final meaningEditRepositoryProvider = Provider<MeaningEditRepository>.internal(
+  meaningEditRepository,
+  name: r'meaningEditRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$meaningEditRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef MeaningEditRepositoryRef = ProviderRef<MeaningEditRepository>;
 String _$srsSchedulerHash() => r'18ab2bfad219da17987466dde001336ccd82432c';
 
 /// Copied from Dart SDK
@@ -259,7 +330,7 @@ final telemetryServiceProvider = Provider<TelemetryService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TelemetryServiceRef = ProviderRef<TelemetryService>;
-String _$sessionPlannerHash() => r'c45700eda1697010cb96761ba2e77240a7588765';
+String _$sessionPlannerHash() => r'211ca042eb5ed31424559683edf0dab28397b877';
 
 /// See also [sessionPlanner].
 @ProviderFor(sessionPlanner)
@@ -293,5 +364,22 @@ final distractorServiceProvider = Provider<DistractorService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DistractorServiceRef = ProviderRef<DistractorService>;
+String _$enrichmentServiceHash() => r'1dc75e958aa42901552a35b864ac8162420cc1a4';
+
+/// See also [enrichmentService].
+@ProviderFor(enrichmentService)
+final enrichmentServiceProvider = Provider<EnrichmentService>.internal(
+  enrichmentService,
+  name: r'enrichmentServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$enrichmentServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef EnrichmentServiceRef = ProviderRef<EnrichmentService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

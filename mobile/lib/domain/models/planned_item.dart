@@ -1,4 +1,5 @@
 import '../../data/database/database.dart';
+import '../models/cue_type.dart';
 
 /// Model representing a planned item in a session
 class PlannedItem {
@@ -6,6 +7,7 @@ class PlannedItem {
     required this.learningCard,
     required this.interactionMode,
     required this.priority,
+    this.cueType,
   });
 
   /// The learning card to present
@@ -16,6 +18,9 @@ class PlannedItem {
 
   /// Priority score (higher = more urgent)
   final double priority;
+
+  /// The cue type for this item (assigned by CueSelector)
+  final CueType? cueType;
 
   /// Whether this is a recognition (MCQ) item
   bool get isRecognition => interactionMode == 0;

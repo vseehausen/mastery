@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/database_provider.dart';
+import '../../providers/learning_providers.dart';
 import 'presentation/screens/auth_screen.dart';
 import 'presentation/screens/oauth_loading_screen.dart';
 
@@ -29,9 +30,16 @@ class AuthGuard extends ConsumerWidget {
     // Trigger sync when user becomes authenticated
     ref.listen<bool>(isAuthenticatedProvider, (previous, next) {
       if (previous == false && next == true) {
-        // User just logged in - trigger sync
+        // User just logged in - trigger sync, then replenish enrichment buffer
         final syncService = ref.read(syncServiceProvider);
-        syncService.sync();
+        syncService.sync().then((result) {
+          if (result.pull != null && result.pull!.vocabulary > 0) {
+            final userId = ref.read(currentUserIdProvider);
+            if (userId != null) {
+              ref.read(enrichmentServiceProvider).replenishIfNeeded(userId);
+            }
+          }
+        });
         // Clear OAuth flag when authenticated
         ref.read(oauthInProgressProvider.notifier).state = false;
       }

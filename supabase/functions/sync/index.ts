@@ -189,9 +189,68 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     return errorResponse('Failed to fetch user preferences', 500);
   }
 
+  // Fetch meanings modified since lastSyncedAt
+  const { data: meanings, error: meaningsError } = await client
+    .from('meanings')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (meaningsError) {
+    return errorResponse('Failed to fetch meanings', 500);
+  }
+
+  // Fetch cues modified since lastSyncedAt
+  const { data: cues, error: cuesError } = await client
+    .from('cues')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (cuesError) {
+    return errorResponse('Failed to fetch cues', 500);
+  }
+
+  // Fetch confusable_sets modified since lastSyncedAt
+  const { data: confusable_sets, error: confusableSetsError } = await client
+    .from('confusable_sets')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since);
+
+  if (confusableSetsError) {
+    return errorResponse('Failed to fetch confusable sets', 500);
+  }
+
+  // Fetch confusable_set_members (join table - no updated_at, fetch all for user's sets)
+  const confusableSetIds = (confusable_sets || []).map((s: { id: string }) => s.id);
+  let confusable_set_members: unknown[] = [];
+  if (confusableSetIds.length > 0) {
+    const { data: members, error: membersError } = await client
+      .from('confusable_set_members')
+      .select('*')
+      .in_('confusable_set_id', confusableSetIds);
+
+    if (membersError) {
+      return errorResponse('Failed to fetch confusable set members', 500);
+    }
+    confusable_set_members = members || [];
+  }
+
+  // Fetch meaning_edits (append-only, no updated_at - fetch by created_at)
+  const { data: meaning_edits, error: meaningEditsError } = await client
+    .from('meaning_edits')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('created_at', since);
+
+  if (meaningEditsError) {
+    return errorResponse('Failed to fetch meaning edits', 500);
+  }
+
   const syncedAt = new Date().toISOString();
 
-  console.log(`[sync/pull] Returning: sources=${sources?.length || 0}, encounters=${encounters?.length || 0}, vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}`);
+  console.log(`[sync/pull] Returning: sources=${sources?.length || 0}, encounters=${encounters?.length || 0}, vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}, meanings=${meanings?.length || 0}, cues=${cues?.length || 0}`);
 
   return jsonResponse({
     sources: sources || [],
@@ -201,6 +260,11 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     learning_sessions: learning_sessions || [],
     streaks: streaks || [],
     user_learning_preferences: user_learning_preferences || [],
+    meanings: meanings || [],
+    cues: cues || [],
+    confusable_sets: confusable_sets || [],
+    confusable_set_members,
+    meaning_edits: meaning_edits || [],
     syncedAt,
   });
 }

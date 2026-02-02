@@ -1,8 +1,14 @@
+import 'dart:developer' as developer;
+
 import '../../data/database/database.dart';
+import '../../data/repositories/confusable_set_repository.dart';
+import '../../data/repositories/encounter_repository.dart';
 import '../../data/repositories/learning_card_repository.dart';
+import '../../data/repositories/meaning_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import '../models/planned_item.dart';
 import '../models/session_plan.dart';
+import 'cue_selector.dart';
 import 'srs_scheduler.dart';
 import 'telemetry_service.dart';
 
@@ -22,15 +28,27 @@ class SessionPlanner {
     required UserPreferencesRepository userPreferencesRepository,
     required TelemetryService telemetryService,
     required SrsScheduler srsScheduler,
+    MeaningRepository? meaningRepository,
+    ConfusableSetRepository? confusableSetRepository,
+    EncounterRepository? encounterRepository,
+    CueSelector? cueSelector,
   }) : _learningCardRepository = learningCardRepository,
        _userPreferencesRepository = userPreferencesRepository,
        _telemetryService = telemetryService,
-       _srsScheduler = srsScheduler;
+       _srsScheduler = srsScheduler,
+       _meaningRepository = meaningRepository,
+       _confusableSetRepository = confusableSetRepository,
+       _encounterRepository = encounterRepository,
+       _cueSelector = cueSelector ?? CueSelector();
 
   final LearningCardRepository _learningCardRepository;
   final UserPreferencesRepository _userPreferencesRepository;
   final TelemetryService _telemetryService;
   final SrsScheduler _srsScheduler;
+  final MeaningRepository? _meaningRepository;
+  final ConfusableSetRepository? _confusableSetRepository;
+  final EncounterRepository? _encounterRepository;
+  final CueSelector _cueSelector;
 
   /// Build a session plan for the current user
   Future<SessionPlan> buildSessionPlan({
@@ -139,12 +157,29 @@ class SessionPlanner {
       newWordCount++;
     }
 
+    // Assign cue types to items with meaning data
+    final itemsWithCues = await _assignCueTypes(items);
+
+    // Log session composition
+    final cueTypeCounts = <String, int>{};
+    for (final item in itemsWithCues) {
+      final key = item.cueType?.name ?? 'translation';
+      cueTypeCounts[key] = (cueTypeCounts[key] ?? 0) + 1;
+    }
+    developer.log(
+      'Session plan: ${itemsWithCues.length} items, '
+      'cueTypes=$cueTypeCounts, '
+      'reviews=$reviewCount, leeches=$leechCount, new=$newWordCount',
+      name: 'SessionPlanner',
+    );
+
     // Compute estimated duration
-    final estimatedDurationSeconds = (items.length * estimatedSecondsPerItem)
+    final estimatedDurationSeconds = (itemsWithCues.length *
+            estimatedSecondsPerItem)
         .round();
 
     return SessionPlan(
-      items: items,
+      items: itemsWithCues,
       estimatedDurationSeconds: estimatedDurationSeconds,
       newWordCount: newWordCount,
       reviewCount: reviewCount,
@@ -172,6 +207,46 @@ class SessionPlanner {
   /// Compute priority score for external use
   double computePriorityScore(LearningCard card) {
     return _computePriorityScore(card);
+  }
+
+  /// Assign cue types to planned items using CueSelector.
+  /// Falls back to translation cue when meaning data is unavailable.
+  Future<List<PlannedItem>> _assignCueTypes(List<PlannedItem> items) async {
+    if (_meaningRepository == null) return items;
+
+    final result = <PlannedItem>[];
+    for (final item in items) {
+      final vocabId = item.vocabularyId;
+      final hasMeaning = await _meaningRepository.hasEnrichedMeanings(vocabId);
+
+      var hasEncounterContext = false;
+      if (_encounterRepository != null) {
+        final encounters = await _encounterRepository
+            .getForVocabulary(vocabId);
+        hasEncounterContext = encounters.any((e) => e.context != null);
+      }
+
+      var hasConfusables = false;
+      if (_confusableSetRepository != null) {
+        hasConfusables = await _confusableSetRepository
+            .hasConfusables(vocabId);
+      }
+
+      final cueType = _cueSelector.selectCueType(
+        card: item.learningCard,
+        hasMeaning: hasMeaning,
+        hasEncounterContext: hasEncounterContext,
+        hasConfusables: hasConfusables,
+      );
+
+      result.add(PlannedItem(
+        learningCard: item.learningCard,
+        interactionMode: item.interactionMode,
+        priority: item.priority,
+        cueType: cueType,
+      ));
+    }
+    return result;
   }
 
   /// Determine if new-word introduction should be suppressed (hysteresis logic)

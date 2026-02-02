@@ -9,6 +9,7 @@ import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/database/database.dart';
 import '../../../domain/models/learning_enums.dart';
+import '../../../domain/models/cue_type.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
 import '../../../domain/services/distractor_service.dart';
@@ -18,8 +19,12 @@ import '../../../providers/database_provider.dart';
 import '../../../providers/learning_providers.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
+import '../widgets/definition_cue_card.dart';
 import '../widgets/recall_card.dart';
 import '../widgets/recognition_card.dart';
+import '../widgets/cloze_cue_card.dart';
+import '../widgets/disambiguation_card.dart';
+import '../widgets/synonym_cue_card.dart';
 import '../widgets/session_progress_bar.dart';
 import '../widgets/session_timer.dart';
 import 'session_complete_screen.dart';
@@ -601,9 +606,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Widget _buildItemCard(PlannedItem item, bool isDark) {
-    // Get vocabulary data and encounter context for the item
     return FutureBuilder<_VocabWithContext>(
-      future: _loadVocabWithContext(item.vocabularyId),
+      future: _loadVocabWithContext(item.vocabularyId, item.cueType),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -621,18 +625,54 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             context: data.encounterContext,
             onAnswer: _handleRecognitionAnswer,
           );
-        } else {
-          return RecallCard(
-            word: data.vocab.word,
-            answer: contextText,
-            onGrade: _handleRecallGrade,
-          );
+        }
+
+        // Dispatch based on cue type
+        switch (item.cueType) {
+          case CueType.definition:
+            return DefinitionCueCard(
+              definition: data.promptText ?? contextText,
+              targetWord: data.answerText ?? data.vocab.word,
+              hintText: data.hintText,
+              onGrade: _handleRecallGrade,
+            );
+          case CueType.synonym:
+            return SynonymCueCard(
+              synonymPhrase: data.promptText ?? contextText,
+              targetWord: data.answerText ?? data.vocab.word,
+              onGrade: _handleRecallGrade,
+            );
+          case CueType.disambiguation:
+            return DisambiguationCard(
+              clozeSentence: data.promptText ?? contextText,
+              options: data.disambiguationOptions ?? [data.vocab.word],
+              correctIndex: data.disambiguationCorrectIndex ?? 0,
+              explanation: data.hintText ?? '',
+              onGrade: _handleRecallGrade,
+            );
+          case CueType.contextCloze:
+            return ClozeCueCard(
+              sentenceWithBlank: data.promptText ?? contextText,
+              targetWord: data.answerText ?? data.vocab.word,
+              hintText: data.hintText,
+              onGrade: _handleRecallGrade,
+            );
+          case CueType.translation:
+          case null:
+            return RecallCard(
+              word: data.vocab.word,
+              answer: contextText,
+              onGrade: _handleRecallGrade,
+            );
         }
       },
     );
   }
 
-  Future<_VocabWithContext> _loadVocabWithContext(String vocabularyId) async {
+  Future<_VocabWithContext> _loadVocabWithContext(
+    String vocabularyId,
+    CueType? cueType,
+  ) async {
     final vocabRepo = ref.read(vocabularyRepositoryProvider);
     final encounterRepo = ref.read(encounterRepositoryProvider);
 
@@ -660,16 +700,81 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       vocabularyId,
     );
 
+    // Load cue data for non-translation cue types
+    String? promptText;
+    String? answerText;
+    String? hintText;
+    List<String>? disambiguationOptions;
+    int? disambiguationCorrectIndex;
+
+    if (cueType != null && cueType != CueType.translation) {
+      final cueRepo = ref.read(cueRepositoryProvider);
+      final cues = await cueRepo.getForVocabulary(vocabularyId);
+      final cueTypeStr = cueType.toDbString();
+
+      final matchingCue = cues.cast<Cue?>().firstWhere(
+            (c) => c!.cueType == cueTypeStr,
+            orElse: () => null,
+          );
+
+      if (matchingCue != null) {
+        promptText = matchingCue.promptText;
+        answerText = matchingCue.answerText;
+        hintText = matchingCue.hintText;
+
+        // Parse disambiguation metadata
+        if (cueType == CueType.disambiguation) {
+          final metadata = matchingCue.metadata;
+          if (metadata.isNotEmpty && metadata != '{}') {
+            try {
+              final parsed = Uri.splitQueryString(metadata);
+              final optionsStr = parsed['options'];
+              if (optionsStr != null) {
+                disambiguationOptions = optionsStr.split(',');
+              }
+              final correctStr = parsed['correct_index'];
+              if (correctStr != null) {
+                disambiguationCorrectIndex = int.tryParse(correctStr);
+              }
+            } catch (_) {
+              // Fall back to answer text as single option
+            }
+          }
+          // Default: use answerText as correct option
+          disambiguationOptions ??= [answerText];
+          disambiguationCorrectIndex ??= 0;
+        }
+      }
+    }
+
     return _VocabWithContext(
       vocab: vocab,
       encounterContext: encounter?.context,
+      promptText: promptText,
+      answerText: answerText,
+      hintText: hintText,
+      disambiguationOptions: disambiguationOptions,
+      disambiguationCorrectIndex: disambiguationCorrectIndex,
     );
   }
 }
 
 class _VocabWithContext {
-  _VocabWithContext({required this.vocab, this.encounterContext});
+  _VocabWithContext({
+    required this.vocab,
+    this.encounterContext,
+    this.promptText,
+    this.answerText,
+    this.hintText,
+    this.disambiguationOptions,
+    this.disambiguationCorrectIndex,
+  });
 
   final Vocabulary vocab;
   final String? encounterContext;
+  final String? promptText;
+  final String? answerText;
+  final String? hintText;
+  final List<String>? disambiguationOptions;
+  final int? disambiguationCorrectIndex;
 }

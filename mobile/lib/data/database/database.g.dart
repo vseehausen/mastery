@@ -4889,6 +4889,18 @@ class $ReviewLogsTable extends ReviewLogs
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _cueTypeMeta = const VerificationMeta(
+    'cueType',
+  );
+  @override
+  late final GeneratedColumn<String> cueType = GeneratedColumn<String>(
+    'cue_type',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
     'isPendingSync',
   );
@@ -4921,6 +4933,7 @@ class $ReviewLogsTable extends ReviewLogs
     retrievabilityAtReview,
     reviewedAt,
     sessionId,
+    cueType,
     isPendingSync,
   ];
   @override
@@ -5077,6 +5090,12 @@ class $ReviewLogsTable extends ReviewLogs
         sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
       );
     }
+    if (data.containsKey('cue_type')) {
+      context.handle(
+        _cueTypeMeta,
+        cueType.isAcceptableOrUnknown(data['cue_type']!, _cueTypeMeta),
+      );
+    }
     if (data.containsKey('is_pending_sync')) {
       context.handle(
         _isPendingSyncMeta,
@@ -5155,6 +5174,10 @@ class $ReviewLogsTable extends ReviewLogs
         DriftSqlType.string,
         data['${effectivePrefix}session_id'],
       ),
+      cueType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cue_type'],
+      ),
       isPendingSync: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_pending_sync'],
@@ -5184,6 +5207,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
   final double retrievabilityAtReview;
   final DateTime reviewedAt;
   final String? sessionId;
+  final String? cueType;
   final bool isPendingSync;
   const ReviewLog({
     required this.id,
@@ -5201,6 +5225,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
     required this.retrievabilityAtReview,
     required this.reviewedAt,
     this.sessionId,
+    this.cueType,
     required this.isPendingSync,
   });
   @override
@@ -5222,6 +5247,9 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
     map['reviewed_at'] = Variable<DateTime>(reviewedAt);
     if (!nullToAbsent || sessionId != null) {
       map['session_id'] = Variable<String>(sessionId);
+    }
+    if (!nullToAbsent || cueType != null) {
+      map['cue_type'] = Variable<String>(cueType);
     }
     map['is_pending_sync'] = Variable<bool>(isPendingSync);
     return map;
@@ -5246,6 +5274,9 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
       sessionId: sessionId == null && nullToAbsent
           ? const Value.absent()
           : Value(sessionId),
+      cueType: cueType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cueType),
       isPendingSync: Value(isPendingSync),
     );
   }
@@ -5273,6 +5304,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
       ),
       reviewedAt: serializer.fromJson<DateTime>(json['reviewedAt']),
       sessionId: serializer.fromJson<String?>(json['sessionId']),
+      cueType: serializer.fromJson<String?>(json['cueType']),
       isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
     );
   }
@@ -5297,6 +5329,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
       ),
       'reviewedAt': serializer.toJson<DateTime>(reviewedAt),
       'sessionId': serializer.toJson<String?>(sessionId),
+      'cueType': serializer.toJson<String?>(cueType),
       'isPendingSync': serializer.toJson<bool>(isPendingSync),
     };
   }
@@ -5317,6 +5350,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
     double? retrievabilityAtReview,
     DateTime? reviewedAt,
     Value<String?> sessionId = const Value.absent(),
+    Value<String?> cueType = const Value.absent(),
     bool? isPendingSync,
   }) => ReviewLog(
     id: id ?? this.id,
@@ -5335,6 +5369,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
         retrievabilityAtReview ?? this.retrievabilityAtReview,
     reviewedAt: reviewedAt ?? this.reviewedAt,
     sessionId: sessionId.present ? sessionId.value : this.sessionId,
+    cueType: cueType.present ? cueType.value : this.cueType,
     isPendingSync: isPendingSync ?? this.isPendingSync,
   );
   ReviewLog copyWithCompanion(ReviewLogsCompanion data) {
@@ -5376,6 +5411,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
           ? data.reviewedAt.value
           : this.reviewedAt,
       sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      cueType: data.cueType.present ? data.cueType.value : this.cueType,
       isPendingSync: data.isPendingSync.present
           ? data.isPendingSync.value
           : this.isPendingSync,
@@ -5400,6 +5436,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
           ..write('retrievabilityAtReview: $retrievabilityAtReview, ')
           ..write('reviewedAt: $reviewedAt, ')
           ..write('sessionId: $sessionId, ')
+          ..write('cueType: $cueType, ')
           ..write('isPendingSync: $isPendingSync')
           ..write(')'))
         .toString();
@@ -5422,6 +5459,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
     retrievabilityAtReview,
     reviewedAt,
     sessionId,
+    cueType,
     isPendingSync,
   );
   @override
@@ -5443,6 +5481,7 @@ class ReviewLog extends DataClass implements Insertable<ReviewLog> {
           other.retrievabilityAtReview == this.retrievabilityAtReview &&
           other.reviewedAt == this.reviewedAt &&
           other.sessionId == this.sessionId &&
+          other.cueType == this.cueType &&
           other.isPendingSync == this.isPendingSync);
 }
 
@@ -5462,6 +5501,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
   final Value<double> retrievabilityAtReview;
   final Value<DateTime> reviewedAt;
   final Value<String?> sessionId;
+  final Value<String?> cueType;
   final Value<bool> isPendingSync;
   final Value<int> rowid;
   const ReviewLogsCompanion({
@@ -5480,6 +5520,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
     this.retrievabilityAtReview = const Value.absent(),
     this.reviewedAt = const Value.absent(),
     this.sessionId = const Value.absent(),
+    this.cueType = const Value.absent(),
     this.isPendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5499,6 +5540,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
     required double retrievabilityAtReview,
     required DateTime reviewedAt,
     this.sessionId = const Value.absent(),
+    this.cueType = const Value.absent(),
     this.isPendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -5531,6 +5573,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
     Expression<double>? retrievabilityAtReview,
     Expression<DateTime>? reviewedAt,
     Expression<String>? sessionId,
+    Expression<String>? cueType,
     Expression<bool>? isPendingSync,
     Expression<int>? rowid,
   }) {
@@ -5551,6 +5594,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
         'retrievability_at_review': retrievabilityAtReview,
       if (reviewedAt != null) 'reviewed_at': reviewedAt,
       if (sessionId != null) 'session_id': sessionId,
+      if (cueType != null) 'cue_type': cueType,
       if (isPendingSync != null) 'is_pending_sync': isPendingSync,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5572,6 +5616,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
     Value<double>? retrievabilityAtReview,
     Value<DateTime>? reviewedAt,
     Value<String?>? sessionId,
+    Value<String?>? cueType,
     Value<bool>? isPendingSync,
     Value<int>? rowid,
   }) {
@@ -5592,6 +5637,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
           retrievabilityAtReview ?? this.retrievabilityAtReview,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       sessionId: sessionId ?? this.sessionId,
+      cueType: cueType ?? this.cueType,
       isPendingSync: isPendingSync ?? this.isPendingSync,
       rowid: rowid ?? this.rowid,
     );
@@ -5647,6 +5693,9 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
     if (sessionId.present) {
       map['session_id'] = Variable<String>(sessionId.value);
     }
+    if (cueType.present) {
+      map['cue_type'] = Variable<String>(cueType.value);
+    }
     if (isPendingSync.present) {
       map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
     }
@@ -5674,6 +5723,7 @@ class ReviewLogsCompanion extends UpdateCompanion<ReviewLog> {
           ..write('retrievabilityAtReview: $retrievabilityAtReview, ')
           ..write('reviewedAt: $reviewedAt, ')
           ..write('sessionId: $sessionId, ')
+          ..write('cueType: $cueType, ')
           ..write('isPendingSync: $isPendingSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6739,6 +6789,32 @@ class $UserLearningPreferencesTable extends UserLearningPreferences
         ),
         defaultValue: const Constant(false),
       );
+  static const VerificationMeta _nativeLanguageCodeMeta =
+      const VerificationMeta('nativeLanguageCode');
+  @override
+  late final GeneratedColumn<String> nativeLanguageCode =
+      GeneratedColumn<String>(
+        'native_language_code',
+        aliasedName,
+        false,
+        additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 5),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('de'),
+      );
+  static const VerificationMeta _meaningDisplayModeMeta =
+      const VerificationMeta('meaningDisplayMode');
+  @override
+  late final GeneratedColumn<String> meaningDisplayMode =
+      GeneratedColumn<String>(
+        'meaning_display_mode',
+        aliasedName,
+        false,
+        additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 10),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('both'),
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -6795,6 +6871,8 @@ class $UserLearningPreferencesTable extends UserLearningPreferences
     targetRetention,
     intensity,
     newWordSuppressionActive,
+    nativeLanguageCode,
+    meaningDisplayMode,
     createdAt,
     updatedAt,
     lastSyncedAt,
@@ -6855,6 +6933,24 @@ class $UserLearningPreferencesTable extends UserLearningPreferences
         newWordSuppressionActive.isAcceptableOrUnknown(
           data['new_word_suppression_active']!,
           _newWordSuppressionActiveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('native_language_code')) {
+      context.handle(
+        _nativeLanguageCodeMeta,
+        nativeLanguageCode.isAcceptableOrUnknown(
+          data['native_language_code']!,
+          _nativeLanguageCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('meaning_display_mode')) {
+      context.handle(
+        _meaningDisplayModeMeta,
+        meaningDisplayMode.isAcceptableOrUnknown(
+          data['meaning_display_mode']!,
+          _meaningDisplayModeMeta,
         ),
       );
     }
@@ -6925,6 +7021,14 @@ class $UserLearningPreferencesTable extends UserLearningPreferences
         DriftSqlType.bool,
         data['${effectivePrefix}new_word_suppression_active'],
       )!,
+      nativeLanguageCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}native_language_code'],
+      )!,
+      meaningDisplayMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meaning_display_mode'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -6958,6 +7062,8 @@ class UserLearningPreference extends DataClass
   final double targetRetention;
   final int intensity;
   final bool newWordSuppressionActive;
+  final String nativeLanguageCode;
+  final String meaningDisplayMode;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? lastSyncedAt;
@@ -6969,6 +7075,8 @@ class UserLearningPreference extends DataClass
     required this.targetRetention,
     required this.intensity,
     required this.newWordSuppressionActive,
+    required this.nativeLanguageCode,
+    required this.meaningDisplayMode,
     required this.createdAt,
     required this.updatedAt,
     this.lastSyncedAt,
@@ -6985,6 +7093,8 @@ class UserLearningPreference extends DataClass
     map['new_word_suppression_active'] = Variable<bool>(
       newWordSuppressionActive,
     );
+    map['native_language_code'] = Variable<String>(nativeLanguageCode);
+    map['meaning_display_mode'] = Variable<String>(meaningDisplayMode);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || lastSyncedAt != null) {
@@ -7002,6 +7112,8 @@ class UserLearningPreference extends DataClass
       targetRetention: Value(targetRetention),
       intensity: Value(intensity),
       newWordSuppressionActive: Value(newWordSuppressionActive),
+      nativeLanguageCode: Value(nativeLanguageCode),
+      meaningDisplayMode: Value(meaningDisplayMode),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       lastSyncedAt: lastSyncedAt == null && nullToAbsent
@@ -7027,6 +7139,12 @@ class UserLearningPreference extends DataClass
       newWordSuppressionActive: serializer.fromJson<bool>(
         json['newWordSuppressionActive'],
       ),
+      nativeLanguageCode: serializer.fromJson<String>(
+        json['nativeLanguageCode'],
+      ),
+      meaningDisplayMode: serializer.fromJson<String>(
+        json['meaningDisplayMode'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
@@ -7045,6 +7163,8 @@ class UserLearningPreference extends DataClass
       'newWordSuppressionActive': serializer.toJson<bool>(
         newWordSuppressionActive,
       ),
+      'nativeLanguageCode': serializer.toJson<String>(nativeLanguageCode),
+      'meaningDisplayMode': serializer.toJson<String>(meaningDisplayMode),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
@@ -7059,6 +7179,8 @@ class UserLearningPreference extends DataClass
     double? targetRetention,
     int? intensity,
     bool? newWordSuppressionActive,
+    String? nativeLanguageCode,
+    String? meaningDisplayMode,
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> lastSyncedAt = const Value.absent(),
@@ -7072,6 +7194,8 @@ class UserLearningPreference extends DataClass
     intensity: intensity ?? this.intensity,
     newWordSuppressionActive:
         newWordSuppressionActive ?? this.newWordSuppressionActive,
+    nativeLanguageCode: nativeLanguageCode ?? this.nativeLanguageCode,
+    meaningDisplayMode: meaningDisplayMode ?? this.meaningDisplayMode,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
@@ -7093,6 +7217,12 @@ class UserLearningPreference extends DataClass
       newWordSuppressionActive: data.newWordSuppressionActive.present
           ? data.newWordSuppressionActive.value
           : this.newWordSuppressionActive,
+      nativeLanguageCode: data.nativeLanguageCode.present
+          ? data.nativeLanguageCode.value
+          : this.nativeLanguageCode,
+      meaningDisplayMode: data.meaningDisplayMode.present
+          ? data.meaningDisplayMode.value
+          : this.meaningDisplayMode,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       lastSyncedAt: data.lastSyncedAt.present
@@ -7113,6 +7243,8 @@ class UserLearningPreference extends DataClass
           ..write('targetRetention: $targetRetention, ')
           ..write('intensity: $intensity, ')
           ..write('newWordSuppressionActive: $newWordSuppressionActive, ')
+          ..write('nativeLanguageCode: $nativeLanguageCode, ')
+          ..write('meaningDisplayMode: $meaningDisplayMode, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('lastSyncedAt: $lastSyncedAt, ')
@@ -7129,6 +7261,8 @@ class UserLearningPreference extends DataClass
     targetRetention,
     intensity,
     newWordSuppressionActive,
+    nativeLanguageCode,
+    meaningDisplayMode,
     createdAt,
     updatedAt,
     lastSyncedAt,
@@ -7144,6 +7278,8 @@ class UserLearningPreference extends DataClass
           other.targetRetention == this.targetRetention &&
           other.intensity == this.intensity &&
           other.newWordSuppressionActive == this.newWordSuppressionActive &&
+          other.nativeLanguageCode == this.nativeLanguageCode &&
+          other.meaningDisplayMode == this.meaningDisplayMode &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.lastSyncedAt == this.lastSyncedAt &&
@@ -7158,6 +7294,8 @@ class UserLearningPreferencesCompanion
   final Value<double> targetRetention;
   final Value<int> intensity;
   final Value<bool> newWordSuppressionActive;
+  final Value<String> nativeLanguageCode;
+  final Value<String> meaningDisplayMode;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> lastSyncedAt;
@@ -7170,6 +7308,8 @@ class UserLearningPreferencesCompanion
     this.targetRetention = const Value.absent(),
     this.intensity = const Value.absent(),
     this.newWordSuppressionActive = const Value.absent(),
+    this.nativeLanguageCode = const Value.absent(),
+    this.meaningDisplayMode = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.lastSyncedAt = const Value.absent(),
@@ -7183,6 +7323,8 @@ class UserLearningPreferencesCompanion
     this.targetRetention = const Value.absent(),
     this.intensity = const Value.absent(),
     this.newWordSuppressionActive = const Value.absent(),
+    this.nativeLanguageCode = const Value.absent(),
+    this.meaningDisplayMode = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.lastSyncedAt = const Value.absent(),
@@ -7199,6 +7341,8 @@ class UserLearningPreferencesCompanion
     Expression<double>? targetRetention,
     Expression<int>? intensity,
     Expression<bool>? newWordSuppressionActive,
+    Expression<String>? nativeLanguageCode,
+    Expression<String>? meaningDisplayMode,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? lastSyncedAt,
@@ -7214,6 +7358,10 @@ class UserLearningPreferencesCompanion
       if (intensity != null) 'intensity': intensity,
       if (newWordSuppressionActive != null)
         'new_word_suppression_active': newWordSuppressionActive,
+      if (nativeLanguageCode != null)
+        'native_language_code': nativeLanguageCode,
+      if (meaningDisplayMode != null)
+        'meaning_display_mode': meaningDisplayMode,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
@@ -7229,6 +7377,8 @@ class UserLearningPreferencesCompanion
     Value<double>? targetRetention,
     Value<int>? intensity,
     Value<bool>? newWordSuppressionActive,
+    Value<String>? nativeLanguageCode,
+    Value<String>? meaningDisplayMode,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? lastSyncedAt,
@@ -7244,6 +7394,8 @@ class UserLearningPreferencesCompanion
       intensity: intensity ?? this.intensity,
       newWordSuppressionActive:
           newWordSuppressionActive ?? this.newWordSuppressionActive,
+      nativeLanguageCode: nativeLanguageCode ?? this.nativeLanguageCode,
+      meaningDisplayMode: meaningDisplayMode ?? this.meaningDisplayMode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
@@ -7277,6 +7429,12 @@ class UserLearningPreferencesCompanion
         newWordSuppressionActive.value,
       );
     }
+    if (nativeLanguageCode.present) {
+      map['native_language_code'] = Variable<String>(nativeLanguageCode.value);
+    }
+    if (meaningDisplayMode.present) {
+      map['meaning_display_mode'] = Variable<String>(meaningDisplayMode.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -7304,6 +7462,8 @@ class UserLearningPreferencesCompanion
           ..write('targetRetention: $targetRetention, ')
           ..write('intensity: $intensity, ')
           ..write('newWordSuppressionActive: $newWordSuppressionActive, ')
+          ..write('nativeLanguageCode: $nativeLanguageCode, ')
+          ..write('meaningDisplayMode: $meaningDisplayMode, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('lastSyncedAt: $lastSyncedAt, ')
@@ -7901,6 +8061,3529 @@ class StreaksCompanion extends UpdateCompanion<Streak> {
   }
 }
 
+class $MeaningsTable extends Meanings with TableInfo<$MeaningsTable, Meaning> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MeaningsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vocabularyIdMeta = const VerificationMeta(
+    'vocabularyId',
+  );
+  @override
+  late final GeneratedColumn<String> vocabularyId = GeneratedColumn<String>(
+    'vocabulary_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _languageCodeMeta = const VerificationMeta(
+    'languageCode',
+  );
+  @override
+  late final GeneratedColumn<String> languageCode = GeneratedColumn<String>(
+    'language_code',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 5),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _primaryTranslationMeta =
+      const VerificationMeta('primaryTranslation');
+  @override
+  late final GeneratedColumn<String> primaryTranslation =
+      GeneratedColumn<String>(
+        'primary_translation',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _alternativeTranslationsMeta =
+      const VerificationMeta('alternativeTranslations');
+  @override
+  late final GeneratedColumn<String> alternativeTranslations =
+      GeneratedColumn<String>(
+        'alternative_translations',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _englishDefinitionMeta = const VerificationMeta(
+    'englishDefinition',
+  );
+  @override
+  late final GeneratedColumn<String> englishDefinition =
+      GeneratedColumn<String>(
+        'english_definition',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _extendedDefinitionMeta =
+      const VerificationMeta('extendedDefinition');
+  @override
+  late final GeneratedColumn<String> extendedDefinition =
+      GeneratedColumn<String>(
+        'extended_definition',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _partOfSpeechMeta = const VerificationMeta(
+    'partOfSpeech',
+  );
+  @override
+  late final GeneratedColumn<String> partOfSpeech = GeneratedColumn<String>(
+    'part_of_speech',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _synonymsMeta = const VerificationMeta(
+    'synonyms',
+  );
+  @override
+  late final GeneratedColumn<String> synonyms = GeneratedColumn<String>(
+    'synonyms',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _confidenceMeta = const VerificationMeta(
+    'confidence',
+  );
+  @override
+  late final GeneratedColumn<double> confidence = GeneratedColumn<double>(
+    'confidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1.0),
+  );
+  static const VerificationMeta _isPrimaryMeta = const VerificationMeta(
+    'isPrimary',
+  );
+  @override
+  late final GeneratedColumn<bool> isPrimary = GeneratedColumn<bool>(
+    'is_primary',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_primary" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ai'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    vocabularyId,
+    languageCode,
+    primaryTranslation,
+    alternativeTranslations,
+    englishDefinition,
+    extendedDefinition,
+    partOfSpeech,
+    synonyms,
+    confidence,
+    isPrimary,
+    isActive,
+    sortOrder,
+    source,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meanings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Meaning> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('vocabulary_id')) {
+      context.handle(
+        _vocabularyIdMeta,
+        vocabularyId.isAcceptableOrUnknown(
+          data['vocabulary_id']!,
+          _vocabularyIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyIdMeta);
+    }
+    if (data.containsKey('language_code')) {
+      context.handle(
+        _languageCodeMeta,
+        languageCode.isAcceptableOrUnknown(
+          data['language_code']!,
+          _languageCodeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_languageCodeMeta);
+    }
+    if (data.containsKey('primary_translation')) {
+      context.handle(
+        _primaryTranslationMeta,
+        primaryTranslation.isAcceptableOrUnknown(
+          data['primary_translation']!,
+          _primaryTranslationMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_primaryTranslationMeta);
+    }
+    if (data.containsKey('alternative_translations')) {
+      context.handle(
+        _alternativeTranslationsMeta,
+        alternativeTranslations.isAcceptableOrUnknown(
+          data['alternative_translations']!,
+          _alternativeTranslationsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('english_definition')) {
+      context.handle(
+        _englishDefinitionMeta,
+        englishDefinition.isAcceptableOrUnknown(
+          data['english_definition']!,
+          _englishDefinitionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_englishDefinitionMeta);
+    }
+    if (data.containsKey('extended_definition')) {
+      context.handle(
+        _extendedDefinitionMeta,
+        extendedDefinition.isAcceptableOrUnknown(
+          data['extended_definition']!,
+          _extendedDefinitionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('part_of_speech')) {
+      context.handle(
+        _partOfSpeechMeta,
+        partOfSpeech.isAcceptableOrUnknown(
+          data['part_of_speech']!,
+          _partOfSpeechMeta,
+        ),
+      );
+    }
+    if (data.containsKey('synonyms')) {
+      context.handle(
+        _synonymsMeta,
+        synonyms.isAcceptableOrUnknown(data['synonyms']!, _synonymsMeta),
+      );
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+        _confidenceMeta,
+        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
+      );
+    }
+    if (data.containsKey('is_primary')) {
+      context.handle(
+        _isPrimaryMeta,
+        isPrimary.isAcceptableOrUnknown(data['is_primary']!, _isPrimaryMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Meaning map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Meaning(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      vocabularyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vocabulary_id'],
+      )!,
+      languageCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language_code'],
+      )!,
+      primaryTranslation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}primary_translation'],
+      )!,
+      alternativeTranslations: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}alternative_translations'],
+      )!,
+      englishDefinition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}english_definition'],
+      )!,
+      extendedDefinition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}extended_definition'],
+      ),
+      partOfSpeech: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}part_of_speech'],
+      ),
+      synonyms: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}synonyms'],
+      )!,
+      confidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}confidence'],
+      )!,
+      isPrimary: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_primary'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $MeaningsTable createAlias(String alias) {
+    return $MeaningsTable(attachedDatabase, alias);
+  }
+}
+
+class Meaning extends DataClass implements Insertable<Meaning> {
+  final String id;
+  final String userId;
+  final String vocabularyId;
+  final String languageCode;
+  final String primaryTranslation;
+  final String alternativeTranslations;
+  final String englishDefinition;
+  final String? extendedDefinition;
+  final String? partOfSpeech;
+  final String synonyms;
+  final double confidence;
+  final bool isPrimary;
+  final bool isActive;
+  final int sortOrder;
+  final String source;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const Meaning({
+    required this.id,
+    required this.userId,
+    required this.vocabularyId,
+    required this.languageCode,
+    required this.primaryTranslation,
+    required this.alternativeTranslations,
+    required this.englishDefinition,
+    this.extendedDefinition,
+    this.partOfSpeech,
+    required this.synonyms,
+    required this.confidence,
+    required this.isPrimary,
+    required this.isActive,
+    required this.sortOrder,
+    required this.source,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['vocabulary_id'] = Variable<String>(vocabularyId);
+    map['language_code'] = Variable<String>(languageCode);
+    map['primary_translation'] = Variable<String>(primaryTranslation);
+    map['alternative_translations'] = Variable<String>(alternativeTranslations);
+    map['english_definition'] = Variable<String>(englishDefinition);
+    if (!nullToAbsent || extendedDefinition != null) {
+      map['extended_definition'] = Variable<String>(extendedDefinition);
+    }
+    if (!nullToAbsent || partOfSpeech != null) {
+      map['part_of_speech'] = Variable<String>(partOfSpeech);
+    }
+    map['synonyms'] = Variable<String>(synonyms);
+    map['confidence'] = Variable<double>(confidence);
+    map['is_primary'] = Variable<bool>(isPrimary);
+    map['is_active'] = Variable<bool>(isActive);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['source'] = Variable<String>(source);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  MeaningsCompanion toCompanion(bool nullToAbsent) {
+    return MeaningsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      vocabularyId: Value(vocabularyId),
+      languageCode: Value(languageCode),
+      primaryTranslation: Value(primaryTranslation),
+      alternativeTranslations: Value(alternativeTranslations),
+      englishDefinition: Value(englishDefinition),
+      extendedDefinition: extendedDefinition == null && nullToAbsent
+          ? const Value.absent()
+          : Value(extendedDefinition),
+      partOfSpeech: partOfSpeech == null && nullToAbsent
+          ? const Value.absent()
+          : Value(partOfSpeech),
+      synonyms: Value(synonyms),
+      confidence: Value(confidence),
+      isPrimary: Value(isPrimary),
+      isActive: Value(isActive),
+      sortOrder: Value(sortOrder),
+      source: Value(source),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory Meaning.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Meaning(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      vocabularyId: serializer.fromJson<String>(json['vocabularyId']),
+      languageCode: serializer.fromJson<String>(json['languageCode']),
+      primaryTranslation: serializer.fromJson<String>(
+        json['primaryTranslation'],
+      ),
+      alternativeTranslations: serializer.fromJson<String>(
+        json['alternativeTranslations'],
+      ),
+      englishDefinition: serializer.fromJson<String>(json['englishDefinition']),
+      extendedDefinition: serializer.fromJson<String?>(
+        json['extendedDefinition'],
+      ),
+      partOfSpeech: serializer.fromJson<String?>(json['partOfSpeech']),
+      synonyms: serializer.fromJson<String>(json['synonyms']),
+      confidence: serializer.fromJson<double>(json['confidence']),
+      isPrimary: serializer.fromJson<bool>(json['isPrimary']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      source: serializer.fromJson<String>(json['source']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'vocabularyId': serializer.toJson<String>(vocabularyId),
+      'languageCode': serializer.toJson<String>(languageCode),
+      'primaryTranslation': serializer.toJson<String>(primaryTranslation),
+      'alternativeTranslations': serializer.toJson<String>(
+        alternativeTranslations,
+      ),
+      'englishDefinition': serializer.toJson<String>(englishDefinition),
+      'extendedDefinition': serializer.toJson<String?>(extendedDefinition),
+      'partOfSpeech': serializer.toJson<String?>(partOfSpeech),
+      'synonyms': serializer.toJson<String>(synonyms),
+      'confidence': serializer.toJson<double>(confidence),
+      'isPrimary': serializer.toJson<bool>(isPrimary),
+      'isActive': serializer.toJson<bool>(isActive),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'source': serializer.toJson<String>(source),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  Meaning copyWith({
+    String? id,
+    String? userId,
+    String? vocabularyId,
+    String? languageCode,
+    String? primaryTranslation,
+    String? alternativeTranslations,
+    String? englishDefinition,
+    Value<String?> extendedDefinition = const Value.absent(),
+    Value<String?> partOfSpeech = const Value.absent(),
+    String? synonyms,
+    double? confidence,
+    bool? isPrimary,
+    bool? isActive,
+    int? sortOrder,
+    String? source,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => Meaning(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    vocabularyId: vocabularyId ?? this.vocabularyId,
+    languageCode: languageCode ?? this.languageCode,
+    primaryTranslation: primaryTranslation ?? this.primaryTranslation,
+    alternativeTranslations:
+        alternativeTranslations ?? this.alternativeTranslations,
+    englishDefinition: englishDefinition ?? this.englishDefinition,
+    extendedDefinition: extendedDefinition.present
+        ? extendedDefinition.value
+        : this.extendedDefinition,
+    partOfSpeech: partOfSpeech.present ? partOfSpeech.value : this.partOfSpeech,
+    synonyms: synonyms ?? this.synonyms,
+    confidence: confidence ?? this.confidence,
+    isPrimary: isPrimary ?? this.isPrimary,
+    isActive: isActive ?? this.isActive,
+    sortOrder: sortOrder ?? this.sortOrder,
+    source: source ?? this.source,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  Meaning copyWithCompanion(MeaningsCompanion data) {
+    return Meaning(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      vocabularyId: data.vocabularyId.present
+          ? data.vocabularyId.value
+          : this.vocabularyId,
+      languageCode: data.languageCode.present
+          ? data.languageCode.value
+          : this.languageCode,
+      primaryTranslation: data.primaryTranslation.present
+          ? data.primaryTranslation.value
+          : this.primaryTranslation,
+      alternativeTranslations: data.alternativeTranslations.present
+          ? data.alternativeTranslations.value
+          : this.alternativeTranslations,
+      englishDefinition: data.englishDefinition.present
+          ? data.englishDefinition.value
+          : this.englishDefinition,
+      extendedDefinition: data.extendedDefinition.present
+          ? data.extendedDefinition.value
+          : this.extendedDefinition,
+      partOfSpeech: data.partOfSpeech.present
+          ? data.partOfSpeech.value
+          : this.partOfSpeech,
+      synonyms: data.synonyms.present ? data.synonyms.value : this.synonyms,
+      confidence: data.confidence.present
+          ? data.confidence.value
+          : this.confidence,
+      isPrimary: data.isPrimary.present ? data.isPrimary.value : this.isPrimary,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      source: data.source.present ? data.source.value : this.source,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Meaning(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('languageCode: $languageCode, ')
+          ..write('primaryTranslation: $primaryTranslation, ')
+          ..write('alternativeTranslations: $alternativeTranslations, ')
+          ..write('englishDefinition: $englishDefinition, ')
+          ..write('extendedDefinition: $extendedDefinition, ')
+          ..write('partOfSpeech: $partOfSpeech, ')
+          ..write('synonyms: $synonyms, ')
+          ..write('confidence: $confidence, ')
+          ..write('isPrimary: $isPrimary, ')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    userId,
+    vocabularyId,
+    languageCode,
+    primaryTranslation,
+    alternativeTranslations,
+    englishDefinition,
+    extendedDefinition,
+    partOfSpeech,
+    synonyms,
+    confidence,
+    isPrimary,
+    isActive,
+    sortOrder,
+    source,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Meaning &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.vocabularyId == this.vocabularyId &&
+          other.languageCode == this.languageCode &&
+          other.primaryTranslation == this.primaryTranslation &&
+          other.alternativeTranslations == this.alternativeTranslations &&
+          other.englishDefinition == this.englishDefinition &&
+          other.extendedDefinition == this.extendedDefinition &&
+          other.partOfSpeech == this.partOfSpeech &&
+          other.synonyms == this.synonyms &&
+          other.confidence == this.confidence &&
+          other.isPrimary == this.isPrimary &&
+          other.isActive == this.isActive &&
+          other.sortOrder == this.sortOrder &&
+          other.source == this.source &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class MeaningsCompanion extends UpdateCompanion<Meaning> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> vocabularyId;
+  final Value<String> languageCode;
+  final Value<String> primaryTranslation;
+  final Value<String> alternativeTranslations;
+  final Value<String> englishDefinition;
+  final Value<String?> extendedDefinition;
+  final Value<String?> partOfSpeech;
+  final Value<String> synonyms;
+  final Value<double> confidence;
+  final Value<bool> isPrimary;
+  final Value<bool> isActive;
+  final Value<int> sortOrder;
+  final Value<String> source;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const MeaningsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.vocabularyId = const Value.absent(),
+    this.languageCode = const Value.absent(),
+    this.primaryTranslation = const Value.absent(),
+    this.alternativeTranslations = const Value.absent(),
+    this.englishDefinition = const Value.absent(),
+    this.extendedDefinition = const Value.absent(),
+    this.partOfSpeech = const Value.absent(),
+    this.synonyms = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.isPrimary = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MeaningsCompanion.insert({
+    required String id,
+    required String userId,
+    required String vocabularyId,
+    required String languageCode,
+    required String primaryTranslation,
+    this.alternativeTranslations = const Value.absent(),
+    required String englishDefinition,
+    this.extendedDefinition = const Value.absent(),
+    this.partOfSpeech = const Value.absent(),
+    this.synonyms = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.isPrimary = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.source = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       vocabularyId = Value(vocabularyId),
+       languageCode = Value(languageCode),
+       primaryTranslation = Value(primaryTranslation),
+       englishDefinition = Value(englishDefinition),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Meaning> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? vocabularyId,
+    Expression<String>? languageCode,
+    Expression<String>? primaryTranslation,
+    Expression<String>? alternativeTranslations,
+    Expression<String>? englishDefinition,
+    Expression<String>? extendedDefinition,
+    Expression<String>? partOfSpeech,
+    Expression<String>? synonyms,
+    Expression<double>? confidence,
+    Expression<bool>? isPrimary,
+    Expression<bool>? isActive,
+    Expression<int>? sortOrder,
+    Expression<String>? source,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (vocabularyId != null) 'vocabulary_id': vocabularyId,
+      if (languageCode != null) 'language_code': languageCode,
+      if (primaryTranslation != null) 'primary_translation': primaryTranslation,
+      if (alternativeTranslations != null)
+        'alternative_translations': alternativeTranslations,
+      if (englishDefinition != null) 'english_definition': englishDefinition,
+      if (extendedDefinition != null) 'extended_definition': extendedDefinition,
+      if (partOfSpeech != null) 'part_of_speech': partOfSpeech,
+      if (synonyms != null) 'synonyms': synonyms,
+      if (confidence != null) 'confidence': confidence,
+      if (isPrimary != null) 'is_primary': isPrimary,
+      if (isActive != null) 'is_active': isActive,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (source != null) 'source': source,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MeaningsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? vocabularyId,
+    Value<String>? languageCode,
+    Value<String>? primaryTranslation,
+    Value<String>? alternativeTranslations,
+    Value<String>? englishDefinition,
+    Value<String?>? extendedDefinition,
+    Value<String?>? partOfSpeech,
+    Value<String>? synonyms,
+    Value<double>? confidence,
+    Value<bool>? isPrimary,
+    Value<bool>? isActive,
+    Value<int>? sortOrder,
+    Value<String>? source,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return MeaningsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      vocabularyId: vocabularyId ?? this.vocabularyId,
+      languageCode: languageCode ?? this.languageCode,
+      primaryTranslation: primaryTranslation ?? this.primaryTranslation,
+      alternativeTranslations:
+          alternativeTranslations ?? this.alternativeTranslations,
+      englishDefinition: englishDefinition ?? this.englishDefinition,
+      extendedDefinition: extendedDefinition ?? this.extendedDefinition,
+      partOfSpeech: partOfSpeech ?? this.partOfSpeech,
+      synonyms: synonyms ?? this.synonyms,
+      confidence: confidence ?? this.confidence,
+      isPrimary: isPrimary ?? this.isPrimary,
+      isActive: isActive ?? this.isActive,
+      sortOrder: sortOrder ?? this.sortOrder,
+      source: source ?? this.source,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (vocabularyId.present) {
+      map['vocabulary_id'] = Variable<String>(vocabularyId.value);
+    }
+    if (languageCode.present) {
+      map['language_code'] = Variable<String>(languageCode.value);
+    }
+    if (primaryTranslation.present) {
+      map['primary_translation'] = Variable<String>(primaryTranslation.value);
+    }
+    if (alternativeTranslations.present) {
+      map['alternative_translations'] = Variable<String>(
+        alternativeTranslations.value,
+      );
+    }
+    if (englishDefinition.present) {
+      map['english_definition'] = Variable<String>(englishDefinition.value);
+    }
+    if (extendedDefinition.present) {
+      map['extended_definition'] = Variable<String>(extendedDefinition.value);
+    }
+    if (partOfSpeech.present) {
+      map['part_of_speech'] = Variable<String>(partOfSpeech.value);
+    }
+    if (synonyms.present) {
+      map['synonyms'] = Variable<String>(synonyms.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<double>(confidence.value);
+    }
+    if (isPrimary.present) {
+      map['is_primary'] = Variable<bool>(isPrimary.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MeaningsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('languageCode: $languageCode, ')
+          ..write('primaryTranslation: $primaryTranslation, ')
+          ..write('alternativeTranslations: $alternativeTranslations, ')
+          ..write('englishDefinition: $englishDefinition, ')
+          ..write('extendedDefinition: $extendedDefinition, ')
+          ..write('partOfSpeech: $partOfSpeech, ')
+          ..write('synonyms: $synonyms, ')
+          ..write('confidence: $confidence, ')
+          ..write('isPrimary: $isPrimary, ')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CuesTable extends Cues with TableInfo<$CuesTable, Cue> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CuesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _meaningIdMeta = const VerificationMeta(
+    'meaningId',
+  );
+  @override
+  late final GeneratedColumn<String> meaningId = GeneratedColumn<String>(
+    'meaning_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cueTypeMeta = const VerificationMeta(
+    'cueType',
+  );
+  @override
+  late final GeneratedColumn<String> cueType = GeneratedColumn<String>(
+    'cue_type',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptTextMeta = const VerificationMeta(
+    'promptText',
+  );
+  @override
+  late final GeneratedColumn<String> promptText = GeneratedColumn<String>(
+    'prompt_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _answerTextMeta = const VerificationMeta(
+    'answerText',
+  );
+  @override
+  late final GeneratedColumn<String> answerText = GeneratedColumn<String>(
+    'answer_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hintTextMeta = const VerificationMeta(
+    'hintText',
+  );
+  @override
+  late final GeneratedColumn<String> hintText = GeneratedColumn<String>(
+    'hint_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _metadataMeta = const VerificationMeta(
+    'metadata',
+  );
+  @override
+  late final GeneratedColumn<String> metadata = GeneratedColumn<String>(
+    'metadata',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    meaningId,
+    cueType,
+    promptText,
+    answerText,
+    hintText,
+    metadata,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cues';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Cue> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('meaning_id')) {
+      context.handle(
+        _meaningIdMeta,
+        meaningId.isAcceptableOrUnknown(data['meaning_id']!, _meaningIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_meaningIdMeta);
+    }
+    if (data.containsKey('cue_type')) {
+      context.handle(
+        _cueTypeMeta,
+        cueType.isAcceptableOrUnknown(data['cue_type']!, _cueTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cueTypeMeta);
+    }
+    if (data.containsKey('prompt_text')) {
+      context.handle(
+        _promptTextMeta,
+        promptText.isAcceptableOrUnknown(data['prompt_text']!, _promptTextMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_promptTextMeta);
+    }
+    if (data.containsKey('answer_text')) {
+      context.handle(
+        _answerTextMeta,
+        answerText.isAcceptableOrUnknown(data['answer_text']!, _answerTextMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_answerTextMeta);
+    }
+    if (data.containsKey('hint_text')) {
+      context.handle(
+        _hintTextMeta,
+        hintText.isAcceptableOrUnknown(data['hint_text']!, _hintTextMeta),
+      );
+    }
+    if (data.containsKey('metadata')) {
+      context.handle(
+        _metadataMeta,
+        metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Cue map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Cue(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      meaningId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meaning_id'],
+      )!,
+      cueType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cue_type'],
+      )!,
+      promptText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prompt_text'],
+      )!,
+      answerText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}answer_text'],
+      )!,
+      hintText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hint_text'],
+      ),
+      metadata: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metadata'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $CuesTable createAlias(String alias) {
+    return $CuesTable(attachedDatabase, alias);
+  }
+}
+
+class Cue extends DataClass implements Insertable<Cue> {
+  final String id;
+  final String userId;
+  final String meaningId;
+  final String cueType;
+  final String promptText;
+  final String answerText;
+  final String? hintText;
+  final String metadata;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const Cue({
+    required this.id,
+    required this.userId,
+    required this.meaningId,
+    required this.cueType,
+    required this.promptText,
+    required this.answerText,
+    this.hintText,
+    required this.metadata,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['meaning_id'] = Variable<String>(meaningId);
+    map['cue_type'] = Variable<String>(cueType);
+    map['prompt_text'] = Variable<String>(promptText);
+    map['answer_text'] = Variable<String>(answerText);
+    if (!nullToAbsent || hintText != null) {
+      map['hint_text'] = Variable<String>(hintText);
+    }
+    map['metadata'] = Variable<String>(metadata);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  CuesCompanion toCompanion(bool nullToAbsent) {
+    return CuesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      meaningId: Value(meaningId),
+      cueType: Value(cueType),
+      promptText: Value(promptText),
+      answerText: Value(answerText),
+      hintText: hintText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hintText),
+      metadata: Value(metadata),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory Cue.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Cue(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      meaningId: serializer.fromJson<String>(json['meaningId']),
+      cueType: serializer.fromJson<String>(json['cueType']),
+      promptText: serializer.fromJson<String>(json['promptText']),
+      answerText: serializer.fromJson<String>(json['answerText']),
+      hintText: serializer.fromJson<String?>(json['hintText']),
+      metadata: serializer.fromJson<String>(json['metadata']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'meaningId': serializer.toJson<String>(meaningId),
+      'cueType': serializer.toJson<String>(cueType),
+      'promptText': serializer.toJson<String>(promptText),
+      'answerText': serializer.toJson<String>(answerText),
+      'hintText': serializer.toJson<String?>(hintText),
+      'metadata': serializer.toJson<String>(metadata),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  Cue copyWith({
+    String? id,
+    String? userId,
+    String? meaningId,
+    String? cueType,
+    String? promptText,
+    String? answerText,
+    Value<String?> hintText = const Value.absent(),
+    String? metadata,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => Cue(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    meaningId: meaningId ?? this.meaningId,
+    cueType: cueType ?? this.cueType,
+    promptText: promptText ?? this.promptText,
+    answerText: answerText ?? this.answerText,
+    hintText: hintText.present ? hintText.value : this.hintText,
+    metadata: metadata ?? this.metadata,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  Cue copyWithCompanion(CuesCompanion data) {
+    return Cue(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      meaningId: data.meaningId.present ? data.meaningId.value : this.meaningId,
+      cueType: data.cueType.present ? data.cueType.value : this.cueType,
+      promptText: data.promptText.present
+          ? data.promptText.value
+          : this.promptText,
+      answerText: data.answerText.present
+          ? data.answerText.value
+          : this.answerText,
+      hintText: data.hintText.present ? data.hintText.value : this.hintText,
+      metadata: data.metadata.present ? data.metadata.value : this.metadata,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Cue(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('meaningId: $meaningId, ')
+          ..write('cueType: $cueType, ')
+          ..write('promptText: $promptText, ')
+          ..write('answerText: $answerText, ')
+          ..write('hintText: $hintText, ')
+          ..write('metadata: $metadata, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    meaningId,
+    cueType,
+    promptText,
+    answerText,
+    hintText,
+    metadata,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Cue &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.meaningId == this.meaningId &&
+          other.cueType == this.cueType &&
+          other.promptText == this.promptText &&
+          other.answerText == this.answerText &&
+          other.hintText == this.hintText &&
+          other.metadata == this.metadata &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class CuesCompanion extends UpdateCompanion<Cue> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> meaningId;
+  final Value<String> cueType;
+  final Value<String> promptText;
+  final Value<String> answerText;
+  final Value<String?> hintText;
+  final Value<String> metadata;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const CuesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.meaningId = const Value.absent(),
+    this.cueType = const Value.absent(),
+    this.promptText = const Value.absent(),
+    this.answerText = const Value.absent(),
+    this.hintText = const Value.absent(),
+    this.metadata = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CuesCompanion.insert({
+    required String id,
+    required String userId,
+    required String meaningId,
+    required String cueType,
+    required String promptText,
+    required String answerText,
+    this.hintText = const Value.absent(),
+    this.metadata = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       meaningId = Value(meaningId),
+       cueType = Value(cueType),
+       promptText = Value(promptText),
+       answerText = Value(answerText),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Cue> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? meaningId,
+    Expression<String>? cueType,
+    Expression<String>? promptText,
+    Expression<String>? answerText,
+    Expression<String>? hintText,
+    Expression<String>? metadata,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (meaningId != null) 'meaning_id': meaningId,
+      if (cueType != null) 'cue_type': cueType,
+      if (promptText != null) 'prompt_text': promptText,
+      if (answerText != null) 'answer_text': answerText,
+      if (hintText != null) 'hint_text': hintText,
+      if (metadata != null) 'metadata': metadata,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CuesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? meaningId,
+    Value<String>? cueType,
+    Value<String>? promptText,
+    Value<String>? answerText,
+    Value<String?>? hintText,
+    Value<String>? metadata,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return CuesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      meaningId: meaningId ?? this.meaningId,
+      cueType: cueType ?? this.cueType,
+      promptText: promptText ?? this.promptText,
+      answerText: answerText ?? this.answerText,
+      hintText: hintText ?? this.hintText,
+      metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (meaningId.present) {
+      map['meaning_id'] = Variable<String>(meaningId.value);
+    }
+    if (cueType.present) {
+      map['cue_type'] = Variable<String>(cueType.value);
+    }
+    if (promptText.present) {
+      map['prompt_text'] = Variable<String>(promptText.value);
+    }
+    if (answerText.present) {
+      map['answer_text'] = Variable<String>(answerText.value);
+    }
+    if (hintText.present) {
+      map['hint_text'] = Variable<String>(hintText.value);
+    }
+    if (metadata.present) {
+      map['metadata'] = Variable<String>(metadata.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CuesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('meaningId: $meaningId, ')
+          ..write('cueType: $cueType, ')
+          ..write('promptText: $promptText, ')
+          ..write('answerText: $answerText, ')
+          ..write('hintText: $hintText, ')
+          ..write('metadata: $metadata, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ConfusableSetsTable extends ConfusableSets
+    with TableInfo<$ConfusableSetsTable, ConfusableSet> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConfusableSetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _languageCodeMeta = const VerificationMeta(
+    'languageCode',
+  );
+  @override
+  late final GeneratedColumn<String> languageCode = GeneratedColumn<String>(
+    'language_code',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 5),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wordsMeta = const VerificationMeta('words');
+  @override
+  late final GeneratedColumn<String> words = GeneratedColumn<String>(
+    'words',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _explanationsMeta = const VerificationMeta(
+    'explanations',
+  );
+  @override
+  late final GeneratedColumn<String> explanations = GeneratedColumn<String>(
+    'explanations',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exampleSentencesMeta = const VerificationMeta(
+    'exampleSentences',
+  );
+  @override
+  late final GeneratedColumn<String> exampleSentences = GeneratedColumn<String>(
+    'example_sentences',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'last_synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPendingSyncMeta = const VerificationMeta(
+    'isPendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> isPendingSync = GeneratedColumn<bool>(
+    'is_pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    languageCode,
+    words,
+    explanations,
+    exampleSentences,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'confusable_sets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ConfusableSet> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('language_code')) {
+      context.handle(
+        _languageCodeMeta,
+        languageCode.isAcceptableOrUnknown(
+          data['language_code']!,
+          _languageCodeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_languageCodeMeta);
+    }
+    if (data.containsKey('words')) {
+      context.handle(
+        _wordsMeta,
+        words.isAcceptableOrUnknown(data['words']!, _wordsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wordsMeta);
+    }
+    if (data.containsKey('explanations')) {
+      context.handle(
+        _explanationsMeta,
+        explanations.isAcceptableOrUnknown(
+          data['explanations']!,
+          _explanationsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_explanationsMeta);
+    }
+    if (data.containsKey('example_sentences')) {
+      context.handle(
+        _exampleSentencesMeta,
+        exampleSentences.isAcceptableOrUnknown(
+          data['example_sentences']!,
+          _exampleSentencesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('last_synced_at')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['last_synced_at']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pending_sync')) {
+      context.handle(
+        _isPendingSyncMeta,
+        isPendingSync.isAcceptableOrUnknown(
+          data['is_pending_sync']!,
+          _isPendingSyncMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ConfusableSet map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ConfusableSet(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      languageCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language_code'],
+      )!,
+      words: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}words'],
+      )!,
+      explanations: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}explanations'],
+      )!,
+      exampleSentences: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}example_sentences'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_synced_at'],
+      ),
+      isPendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pending_sync'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  $ConfusableSetsTable createAlias(String alias) {
+    return $ConfusableSetsTable(attachedDatabase, alias);
+  }
+}
+
+class ConfusableSet extends DataClass implements Insertable<ConfusableSet> {
+  final String id;
+  final String userId;
+  final String languageCode;
+  final String words;
+  final String explanations;
+  final String exampleSentences;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final DateTime? lastSyncedAt;
+  final bool isPendingSync;
+  final int version;
+  const ConfusableSet({
+    required this.id,
+    required this.userId,
+    required this.languageCode,
+    required this.words,
+    required this.explanations,
+    required this.exampleSentences,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.lastSyncedAt,
+    required this.isPendingSync,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['language_code'] = Variable<String>(languageCode);
+    map['words'] = Variable<String>(words);
+    map['explanations'] = Variable<String>(explanations);
+    map['example_sentences'] = Variable<String>(exampleSentences);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt);
+    }
+    map['is_pending_sync'] = Variable<bool>(isPendingSync);
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  ConfusableSetsCompanion toCompanion(bool nullToAbsent) {
+    return ConfusableSetsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      languageCode: Value(languageCode),
+      words: Value(words),
+      explanations: Value(explanations),
+      exampleSentences: Value(exampleSentences),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+      isPendingSync: Value(isPendingSync),
+      version: Value(version),
+    );
+  }
+
+  factory ConfusableSet.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ConfusableSet(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      languageCode: serializer.fromJson<String>(json['languageCode']),
+      words: serializer.fromJson<String>(json['words']),
+      explanations: serializer.fromJson<String>(json['explanations']),
+      exampleSentences: serializer.fromJson<String>(json['exampleSentences']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+      isPendingSync: serializer.fromJson<bool>(json['isPendingSync']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'languageCode': serializer.toJson<String>(languageCode),
+      'words': serializer.toJson<String>(words),
+      'explanations': serializer.toJson<String>(explanations),
+      'exampleSentences': serializer.toJson<String>(exampleSentences),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+      'isPendingSync': serializer.toJson<bool>(isPendingSync),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  ConfusableSet copyWith({
+    String? id,
+    String? userId,
+    String? languageCode,
+    String? words,
+    String? explanations,
+    String? exampleSentences,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+    bool? isPendingSync,
+    int? version,
+  }) => ConfusableSet(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    languageCode: languageCode ?? this.languageCode,
+    words: words ?? this.words,
+    explanations: explanations ?? this.explanations,
+    exampleSentences: exampleSentences ?? this.exampleSentences,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+    isPendingSync: isPendingSync ?? this.isPendingSync,
+    version: version ?? this.version,
+  );
+  ConfusableSet copyWithCompanion(ConfusableSetsCompanion data) {
+    return ConfusableSet(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      languageCode: data.languageCode.present
+          ? data.languageCode.value
+          : this.languageCode,
+      words: data.words.present ? data.words.value : this.words,
+      explanations: data.explanations.present
+          ? data.explanations.value
+          : this.explanations,
+      exampleSentences: data.exampleSentences.present
+          ? data.exampleSentences.value
+          : this.exampleSentences,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+      isPendingSync: data.isPendingSync.present
+          ? data.isPendingSync.value
+          : this.isPendingSync,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfusableSet(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('languageCode: $languageCode, ')
+          ..write('words: $words, ')
+          ..write('explanations: $explanations, ')
+          ..write('exampleSentences: $exampleSentences, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    languageCode,
+    words,
+    explanations,
+    exampleSentences,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    lastSyncedAt,
+    isPendingSync,
+    version,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ConfusableSet &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.languageCode == this.languageCode &&
+          other.words == this.words &&
+          other.explanations == this.explanations &&
+          other.exampleSentences == this.exampleSentences &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.lastSyncedAt == this.lastSyncedAt &&
+          other.isPendingSync == this.isPendingSync &&
+          other.version == this.version);
+}
+
+class ConfusableSetsCompanion extends UpdateCompanion<ConfusableSet> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> languageCode;
+  final Value<String> words;
+  final Value<String> explanations;
+  final Value<String> exampleSentences;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<bool> isPendingSync;
+  final Value<int> version;
+  final Value<int> rowid;
+  const ConfusableSetsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.languageCode = const Value.absent(),
+    this.words = const Value.absent(),
+    this.explanations = const Value.absent(),
+    this.exampleSentences = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ConfusableSetsCompanion.insert({
+    required String id,
+    required String userId,
+    required String languageCode,
+    required String words,
+    required String explanations,
+    this.exampleSentences = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.isPendingSync = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       languageCode = Value(languageCode),
+       words = Value(words),
+       explanations = Value(explanations),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<ConfusableSet> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? languageCode,
+    Expression<String>? words,
+    Expression<String>? explanations,
+    Expression<String>? exampleSentences,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<bool>? isPendingSync,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (languageCode != null) 'language_code': languageCode,
+      if (words != null) 'words': words,
+      if (explanations != null) 'explanations': explanations,
+      if (exampleSentences != null) 'example_sentences': exampleSentences,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (lastSyncedAt != null) 'last_synced_at': lastSyncedAt,
+      if (isPendingSync != null) 'is_pending_sync': isPendingSync,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ConfusableSetsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? languageCode,
+    Value<String>? words,
+    Value<String>? explanations,
+    Value<String>? exampleSentences,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<DateTime?>? lastSyncedAt,
+    Value<bool>? isPendingSync,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return ConfusableSetsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      languageCode: languageCode ?? this.languageCode,
+      words: words ?? this.words,
+      explanations: explanations ?? this.explanations,
+      exampleSentences: exampleSentences ?? this.exampleSentences,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (languageCode.present) {
+      map['language_code'] = Variable<String>(languageCode.value);
+    }
+    if (words.present) {
+      map['words'] = Variable<String>(words.value);
+    }
+    if (explanations.present) {
+      map['explanations'] = Variable<String>(explanations.value);
+    }
+    if (exampleSentences.present) {
+      map['example_sentences'] = Variable<String>(exampleSentences.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (lastSyncedAt.present) {
+      map['last_synced_at'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (isPendingSync.present) {
+      map['is_pending_sync'] = Variable<bool>(isPendingSync.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfusableSetsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('languageCode: $languageCode, ')
+          ..write('words: $words, ')
+          ..write('explanations: $explanations, ')
+          ..write('exampleSentences: $exampleSentences, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('isPendingSync: $isPendingSync, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ConfusableSetMembersTable extends ConfusableSetMembers
+    with TableInfo<$ConfusableSetMembersTable, ConfusableSetMember> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConfusableSetMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confusableSetIdMeta = const VerificationMeta(
+    'confusableSetId',
+  );
+  @override
+  late final GeneratedColumn<String> confusableSetId = GeneratedColumn<String>(
+    'confusable_set_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vocabularyIdMeta = const VerificationMeta(
+    'vocabularyId',
+  );
+  @override
+  late final GeneratedColumn<String> vocabularyId = GeneratedColumn<String>(
+    'vocabulary_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    confusableSetId,
+    vocabularyId,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'confusable_set_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ConfusableSetMember> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('confusable_set_id')) {
+      context.handle(
+        _confusableSetIdMeta,
+        confusableSetId.isAcceptableOrUnknown(
+          data['confusable_set_id']!,
+          _confusableSetIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_confusableSetIdMeta);
+    }
+    if (data.containsKey('vocabulary_id')) {
+      context.handle(
+        _vocabularyIdMeta,
+        vocabularyId.isAcceptableOrUnknown(
+          data['vocabulary_id']!,
+          _vocabularyIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ConfusableSetMember map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ConfusableSetMember(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      confusableSetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}confusable_set_id'],
+      )!,
+      vocabularyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vocabulary_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ConfusableSetMembersTable createAlias(String alias) {
+    return $ConfusableSetMembersTable(attachedDatabase, alias);
+  }
+}
+
+class ConfusableSetMember extends DataClass
+    implements Insertable<ConfusableSetMember> {
+  final String id;
+  final String confusableSetId;
+  final String vocabularyId;
+  final DateTime createdAt;
+  const ConfusableSetMember({
+    required this.id,
+    required this.confusableSetId,
+    required this.vocabularyId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['confusable_set_id'] = Variable<String>(confusableSetId);
+    map['vocabulary_id'] = Variable<String>(vocabularyId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ConfusableSetMembersCompanion toCompanion(bool nullToAbsent) {
+    return ConfusableSetMembersCompanion(
+      id: Value(id),
+      confusableSetId: Value(confusableSetId),
+      vocabularyId: Value(vocabularyId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ConfusableSetMember.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ConfusableSetMember(
+      id: serializer.fromJson<String>(json['id']),
+      confusableSetId: serializer.fromJson<String>(json['confusableSetId']),
+      vocabularyId: serializer.fromJson<String>(json['vocabularyId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'confusableSetId': serializer.toJson<String>(confusableSetId),
+      'vocabularyId': serializer.toJson<String>(vocabularyId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ConfusableSetMember copyWith({
+    String? id,
+    String? confusableSetId,
+    String? vocabularyId,
+    DateTime? createdAt,
+  }) => ConfusableSetMember(
+    id: id ?? this.id,
+    confusableSetId: confusableSetId ?? this.confusableSetId,
+    vocabularyId: vocabularyId ?? this.vocabularyId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ConfusableSetMember copyWithCompanion(ConfusableSetMembersCompanion data) {
+    return ConfusableSetMember(
+      id: data.id.present ? data.id.value : this.id,
+      confusableSetId: data.confusableSetId.present
+          ? data.confusableSetId.value
+          : this.confusableSetId,
+      vocabularyId: data.vocabularyId.present
+          ? data.vocabularyId.value
+          : this.vocabularyId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfusableSetMember(')
+          ..write('id: $id, ')
+          ..write('confusableSetId: $confusableSetId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, confusableSetId, vocabularyId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ConfusableSetMember &&
+          other.id == this.id &&
+          other.confusableSetId == this.confusableSetId &&
+          other.vocabularyId == this.vocabularyId &&
+          other.createdAt == this.createdAt);
+}
+
+class ConfusableSetMembersCompanion
+    extends UpdateCompanion<ConfusableSetMember> {
+  final Value<String> id;
+  final Value<String> confusableSetId;
+  final Value<String> vocabularyId;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ConfusableSetMembersCompanion({
+    this.id = const Value.absent(),
+    this.confusableSetId = const Value.absent(),
+    this.vocabularyId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ConfusableSetMembersCompanion.insert({
+    required String id,
+    required String confusableSetId,
+    required String vocabularyId,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       confusableSetId = Value(confusableSetId),
+       vocabularyId = Value(vocabularyId),
+       createdAt = Value(createdAt);
+  static Insertable<ConfusableSetMember> custom({
+    Expression<String>? id,
+    Expression<String>? confusableSetId,
+    Expression<String>? vocabularyId,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (confusableSetId != null) 'confusable_set_id': confusableSetId,
+      if (vocabularyId != null) 'vocabulary_id': vocabularyId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ConfusableSetMembersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? confusableSetId,
+    Value<String>? vocabularyId,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ConfusableSetMembersCompanion(
+      id: id ?? this.id,
+      confusableSetId: confusableSetId ?? this.confusableSetId,
+      vocabularyId: vocabularyId ?? this.vocabularyId,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (confusableSetId.present) {
+      map['confusable_set_id'] = Variable<String>(confusableSetId.value);
+    }
+    if (vocabularyId.present) {
+      map['vocabulary_id'] = Variable<String>(vocabularyId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfusableSetMembersCompanion(')
+          ..write('id: $id, ')
+          ..write('confusableSetId: $confusableSetId, ')
+          ..write('vocabularyId: $vocabularyId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MeaningEditsTable extends MeaningEdits
+    with TableInfo<$MeaningEditsTable, MeaningEdit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MeaningEditsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _meaningIdMeta = const VerificationMeta(
+    'meaningId',
+  );
+  @override
+  late final GeneratedColumn<String> meaningId = GeneratedColumn<String>(
+    'meaning_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldNameMeta = const VerificationMeta(
+    'fieldName',
+  );
+  @override
+  late final GeneratedColumn<String> fieldName = GeneratedColumn<String>(
+    'field_name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalValueMeta = const VerificationMeta(
+    'originalValue',
+  );
+  @override
+  late final GeneratedColumn<String> originalValue = GeneratedColumn<String>(
+    'original_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userValueMeta = const VerificationMeta(
+    'userValue',
+  );
+  @override
+  late final GeneratedColumn<String> userValue = GeneratedColumn<String>(
+    'user_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    meaningId,
+    fieldName,
+    originalValue,
+    userValue,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meaning_edits';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MeaningEdit> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('meaning_id')) {
+      context.handle(
+        _meaningIdMeta,
+        meaningId.isAcceptableOrUnknown(data['meaning_id']!, _meaningIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_meaningIdMeta);
+    }
+    if (data.containsKey('field_name')) {
+      context.handle(
+        _fieldNameMeta,
+        fieldName.isAcceptableOrUnknown(data['field_name']!, _fieldNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldNameMeta);
+    }
+    if (data.containsKey('original_value')) {
+      context.handle(
+        _originalValueMeta,
+        originalValue.isAcceptableOrUnknown(
+          data['original_value']!,
+          _originalValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalValueMeta);
+    }
+    if (data.containsKey('user_value')) {
+      context.handle(
+        _userValueMeta,
+        userValue.isAcceptableOrUnknown(data['user_value']!, _userValueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userValueMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MeaningEdit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MeaningEdit(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      meaningId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meaning_id'],
+      )!,
+      fieldName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_name'],
+      )!,
+      originalValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_value'],
+      )!,
+      userValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_value'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MeaningEditsTable createAlias(String alias) {
+    return $MeaningEditsTable(attachedDatabase, alias);
+  }
+}
+
+class MeaningEdit extends DataClass implements Insertable<MeaningEdit> {
+  final String id;
+  final String userId;
+  final String meaningId;
+  final String fieldName;
+  final String originalValue;
+  final String userValue;
+  final DateTime createdAt;
+  const MeaningEdit({
+    required this.id,
+    required this.userId,
+    required this.meaningId,
+    required this.fieldName,
+    required this.originalValue,
+    required this.userValue,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['meaning_id'] = Variable<String>(meaningId);
+    map['field_name'] = Variable<String>(fieldName);
+    map['original_value'] = Variable<String>(originalValue);
+    map['user_value'] = Variable<String>(userValue);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  MeaningEditsCompanion toCompanion(bool nullToAbsent) {
+    return MeaningEditsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      meaningId: Value(meaningId),
+      fieldName: Value(fieldName),
+      originalValue: Value(originalValue),
+      userValue: Value(userValue),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory MeaningEdit.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MeaningEdit(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      meaningId: serializer.fromJson<String>(json['meaningId']),
+      fieldName: serializer.fromJson<String>(json['fieldName']),
+      originalValue: serializer.fromJson<String>(json['originalValue']),
+      userValue: serializer.fromJson<String>(json['userValue']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'meaningId': serializer.toJson<String>(meaningId),
+      'fieldName': serializer.toJson<String>(fieldName),
+      'originalValue': serializer.toJson<String>(originalValue),
+      'userValue': serializer.toJson<String>(userValue),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  MeaningEdit copyWith({
+    String? id,
+    String? userId,
+    String? meaningId,
+    String? fieldName,
+    String? originalValue,
+    String? userValue,
+    DateTime? createdAt,
+  }) => MeaningEdit(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    meaningId: meaningId ?? this.meaningId,
+    fieldName: fieldName ?? this.fieldName,
+    originalValue: originalValue ?? this.originalValue,
+    userValue: userValue ?? this.userValue,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  MeaningEdit copyWithCompanion(MeaningEditsCompanion data) {
+    return MeaningEdit(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      meaningId: data.meaningId.present ? data.meaningId.value : this.meaningId,
+      fieldName: data.fieldName.present ? data.fieldName.value : this.fieldName,
+      originalValue: data.originalValue.present
+          ? data.originalValue.value
+          : this.originalValue,
+      userValue: data.userValue.present ? data.userValue.value : this.userValue,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MeaningEdit(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('meaningId: $meaningId, ')
+          ..write('fieldName: $fieldName, ')
+          ..write('originalValue: $originalValue, ')
+          ..write('userValue: $userValue, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    meaningId,
+    fieldName,
+    originalValue,
+    userValue,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MeaningEdit &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.meaningId == this.meaningId &&
+          other.fieldName == this.fieldName &&
+          other.originalValue == this.originalValue &&
+          other.userValue == this.userValue &&
+          other.createdAt == this.createdAt);
+}
+
+class MeaningEditsCompanion extends UpdateCompanion<MeaningEdit> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> meaningId;
+  final Value<String> fieldName;
+  final Value<String> originalValue;
+  final Value<String> userValue;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const MeaningEditsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.meaningId = const Value.absent(),
+    this.fieldName = const Value.absent(),
+    this.originalValue = const Value.absent(),
+    this.userValue = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MeaningEditsCompanion.insert({
+    required String id,
+    required String userId,
+    required String meaningId,
+    required String fieldName,
+    required String originalValue,
+    required String userValue,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       meaningId = Value(meaningId),
+       fieldName = Value(fieldName),
+       originalValue = Value(originalValue),
+       userValue = Value(userValue),
+       createdAt = Value(createdAt);
+  static Insertable<MeaningEdit> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? meaningId,
+    Expression<String>? fieldName,
+    Expression<String>? originalValue,
+    Expression<String>? userValue,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (meaningId != null) 'meaning_id': meaningId,
+      if (fieldName != null) 'field_name': fieldName,
+      if (originalValue != null) 'original_value': originalValue,
+      if (userValue != null) 'user_value': userValue,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MeaningEditsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? meaningId,
+    Value<String>? fieldName,
+    Value<String>? originalValue,
+    Value<String>? userValue,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return MeaningEditsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      meaningId: meaningId ?? this.meaningId,
+      fieldName: fieldName ?? this.fieldName,
+      originalValue: originalValue ?? this.originalValue,
+      userValue: userValue ?? this.userValue,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (meaningId.present) {
+      map['meaning_id'] = Variable<String>(meaningId.value);
+    }
+    if (fieldName.present) {
+      map['field_name'] = Variable<String>(fieldName.value);
+    }
+    if (originalValue.present) {
+      map['original_value'] = Variable<String>(originalValue.value);
+    }
+    if (userValue.present) {
+      map['user_value'] = Variable<String>(userValue.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MeaningEditsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('meaningId: $meaningId, ')
+          ..write('fieldName: $fieldName, ')
+          ..write('originalValue: $originalValue, ')
+          ..write('userValue: $userValue, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7918,6 +11601,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UserLearningPreferencesTable userLearningPreferences =
       $UserLearningPreferencesTable(this);
   late final $StreaksTable streaks = $StreaksTable(this);
+  late final $MeaningsTable meanings = $MeaningsTable(this);
+  late final $CuesTable cues = $CuesTable(this);
+  late final $ConfusableSetsTable confusableSets = $ConfusableSetsTable(this);
+  late final $ConfusableSetMembersTable confusableSetMembers =
+      $ConfusableSetMembersTable(this);
+  late final $MeaningEditsTable meaningEdits = $MeaningEditsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7934,6 +11623,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     learningSessions,
     userLearningPreferences,
     streaks,
+    meanings,
+    cues,
+    confusableSets,
+    confusableSetMembers,
+    meaningEdits,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -10216,6 +13910,7 @@ typedef $$ReviewLogsTableCreateCompanionBuilder =
       required double retrievabilityAtReview,
       required DateTime reviewedAt,
       Value<String?> sessionId,
+      Value<String?> cueType,
       Value<bool> isPendingSync,
       Value<int> rowid,
     });
@@ -10236,6 +13931,7 @@ typedef $$ReviewLogsTableUpdateCompanionBuilder =
       Value<double> retrievabilityAtReview,
       Value<DateTime> reviewedAt,
       Value<String?> sessionId,
+      Value<String?> cueType,
       Value<bool> isPendingSync,
       Value<int> rowid,
     });
@@ -10321,6 +14017,11 @@ class $$ReviewLogsTableFilterComposer
 
   ColumnFilters<String> get sessionId => $composableBuilder(
     column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cueType => $composableBuilder(
+    column: $table.cueType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10414,6 +14115,11 @@ class $$ReviewLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get cueType => $composableBuilder(
+    column: $table.cueType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isPendingSync => $composableBuilder(
     column: $table.isPendingSync,
     builder: (column) => ColumnOrderings(column),
@@ -10496,6 +14202,9 @@ class $$ReviewLogsTableAnnotationComposer
   GeneratedColumn<String> get sessionId =>
       $composableBuilder(column: $table.sessionId, builder: (column) => column);
 
+  GeneratedColumn<String> get cueType =>
+      $composableBuilder(column: $table.cueType, builder: (column) => column);
+
   GeneratedColumn<bool> get isPendingSync => $composableBuilder(
     column: $table.isPendingSync,
     builder: (column) => column,
@@ -10548,6 +14257,7 @@ class $$ReviewLogsTableTableManager
                 Value<double> retrievabilityAtReview = const Value.absent(),
                 Value<DateTime> reviewedAt = const Value.absent(),
                 Value<String?> sessionId = const Value.absent(),
+                Value<String?> cueType = const Value.absent(),
                 Value<bool> isPendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReviewLogsCompanion(
@@ -10566,6 +14276,7 @@ class $$ReviewLogsTableTableManager
                 retrievabilityAtReview: retrievabilityAtReview,
                 reviewedAt: reviewedAt,
                 sessionId: sessionId,
+                cueType: cueType,
                 isPendingSync: isPendingSync,
                 rowid: rowid,
               ),
@@ -10586,6 +14297,7 @@ class $$ReviewLogsTableTableManager
                 required double retrievabilityAtReview,
                 required DateTime reviewedAt,
                 Value<String?> sessionId = const Value.absent(),
+                Value<String?> cueType = const Value.absent(),
                 Value<bool> isPendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReviewLogsCompanion.insert(
@@ -10604,6 +14316,7 @@ class $$ReviewLogsTableTableManager
                 retrievabilityAtReview: retrievabilityAtReview,
                 reviewedAt: reviewedAt,
                 sessionId: sessionId,
+                cueType: cueType,
                 isPendingSync: isPendingSync,
                 rowid: rowid,
               ),
@@ -11091,6 +14804,8 @@ typedef $$UserLearningPreferencesTableCreateCompanionBuilder =
       Value<double> targetRetention,
       Value<int> intensity,
       Value<bool> newWordSuppressionActive,
+      Value<String> nativeLanguageCode,
+      Value<String> meaningDisplayMode,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<DateTime?> lastSyncedAt,
@@ -11105,6 +14820,8 @@ typedef $$UserLearningPreferencesTableUpdateCompanionBuilder =
       Value<double> targetRetention,
       Value<int> intensity,
       Value<bool> newWordSuppressionActive,
+      Value<String> nativeLanguageCode,
+      Value<String> meaningDisplayMode,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> lastSyncedAt,
@@ -11148,6 +14865,16 @@ class $$UserLearningPreferencesTableFilterComposer
 
   ColumnFilters<bool> get newWordSuppressionActive => $composableBuilder(
     column: $table.newWordSuppressionActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nativeLanguageCode => $composableBuilder(
+    column: $table.nativeLanguageCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get meaningDisplayMode => $composableBuilder(
+    column: $table.meaningDisplayMode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11211,6 +14938,16 @@ class $$UserLearningPreferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get nativeLanguageCode => $composableBuilder(
+    column: $table.nativeLanguageCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get meaningDisplayMode => $composableBuilder(
+    column: $table.meaningDisplayMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -11262,6 +14999,16 @@ class $$UserLearningPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get newWordSuppressionActive => $composableBuilder(
     column: $table.newWordSuppressionActive,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get nativeLanguageCode => $composableBuilder(
+    column: $table.nativeLanguageCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get meaningDisplayMode => $composableBuilder(
+    column: $table.meaningDisplayMode,
     builder: (column) => column,
   );
 
@@ -11334,6 +15081,8 @@ class $$UserLearningPreferencesTableTableManager
                 Value<double> targetRetention = const Value.absent(),
                 Value<int> intensity = const Value.absent(),
                 Value<bool> newWordSuppressionActive = const Value.absent(),
+                Value<String> nativeLanguageCode = const Value.absent(),
+                Value<String> meaningDisplayMode = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> lastSyncedAt = const Value.absent(),
@@ -11346,6 +15095,8 @@ class $$UserLearningPreferencesTableTableManager
                 targetRetention: targetRetention,
                 intensity: intensity,
                 newWordSuppressionActive: newWordSuppressionActive,
+                nativeLanguageCode: nativeLanguageCode,
+                meaningDisplayMode: meaningDisplayMode,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastSyncedAt: lastSyncedAt,
@@ -11360,6 +15111,8 @@ class $$UserLearningPreferencesTableTableManager
                 Value<double> targetRetention = const Value.absent(),
                 Value<int> intensity = const Value.absent(),
                 Value<bool> newWordSuppressionActive = const Value.absent(),
+                Value<String> nativeLanguageCode = const Value.absent(),
+                Value<String> meaningDisplayMode = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<DateTime?> lastSyncedAt = const Value.absent(),
@@ -11372,6 +15125,8 @@ class $$UserLearningPreferencesTableTableManager
                 targetRetention: targetRetention,
                 intensity: intensity,
                 newWordSuppressionActive: newWordSuppressionActive,
+                nativeLanguageCode: nativeLanguageCode,
+                meaningDisplayMode: meaningDisplayMode,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastSyncedAt: lastSyncedAt,
@@ -11687,6 +15442,1681 @@ typedef $$StreaksTableProcessedTableManager =
       Streak,
       PrefetchHooks Function()
     >;
+typedef $$MeaningsTableCreateCompanionBuilder =
+    MeaningsCompanion Function({
+      required String id,
+      required String userId,
+      required String vocabularyId,
+      required String languageCode,
+      required String primaryTranslation,
+      Value<String> alternativeTranslations,
+      required String englishDefinition,
+      Value<String?> extendedDefinition,
+      Value<String?> partOfSpeech,
+      Value<String> synonyms,
+      Value<double> confidence,
+      Value<bool> isPrimary,
+      Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<String> source,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$MeaningsTableUpdateCompanionBuilder =
+    MeaningsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> vocabularyId,
+      Value<String> languageCode,
+      Value<String> primaryTranslation,
+      Value<String> alternativeTranslations,
+      Value<String> englishDefinition,
+      Value<String?> extendedDefinition,
+      Value<String?> partOfSpeech,
+      Value<String> synonyms,
+      Value<double> confidence,
+      Value<bool> isPrimary,
+      Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<String> source,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$MeaningsTableFilterComposer
+    extends Composer<_$AppDatabase, $MeaningsTable> {
+  $$MeaningsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get primaryTranslation => $composableBuilder(
+    column: $table.primaryTranslation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get alternativeTranslations => $composableBuilder(
+    column: $table.alternativeTranslations,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get englishDefinition => $composableBuilder(
+    column: $table.englishDefinition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get extendedDefinition => $composableBuilder(
+    column: $table.extendedDefinition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get partOfSpeech => $composableBuilder(
+    column: $table.partOfSpeech,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get synonyms => $composableBuilder(
+    column: $table.synonyms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPrimary => $composableBuilder(
+    column: $table.isPrimary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MeaningsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MeaningsTable> {
+  $$MeaningsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get primaryTranslation => $composableBuilder(
+    column: $table.primaryTranslation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get alternativeTranslations => $composableBuilder(
+    column: $table.alternativeTranslations,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get englishDefinition => $composableBuilder(
+    column: $table.englishDefinition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get extendedDefinition => $composableBuilder(
+    column: $table.extendedDefinition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get partOfSpeech => $composableBuilder(
+    column: $table.partOfSpeech,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get synonyms => $composableBuilder(
+    column: $table.synonyms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPrimary => $composableBuilder(
+    column: $table.isPrimary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MeaningsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MeaningsTable> {
+  $$MeaningsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get primaryTranslation => $composableBuilder(
+    column: $table.primaryTranslation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get alternativeTranslations => $composableBuilder(
+    column: $table.alternativeTranslations,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get englishDefinition => $composableBuilder(
+    column: $table.englishDefinition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get extendedDefinition => $composableBuilder(
+    column: $table.extendedDefinition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get partOfSpeech => $composableBuilder(
+    column: $table.partOfSpeech,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get synonyms =>
+      $composableBuilder(column: $table.synonyms, builder: (column) => column);
+
+  GeneratedColumn<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPrimary =>
+      $composableBuilder(column: $table.isPrimary, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$MeaningsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MeaningsTable,
+          Meaning,
+          $$MeaningsTableFilterComposer,
+          $$MeaningsTableOrderingComposer,
+          $$MeaningsTableAnnotationComposer,
+          $$MeaningsTableCreateCompanionBuilder,
+          $$MeaningsTableUpdateCompanionBuilder,
+          (Meaning, BaseReferences<_$AppDatabase, $MeaningsTable, Meaning>),
+          Meaning,
+          PrefetchHooks Function()
+        > {
+  $$MeaningsTableTableManager(_$AppDatabase db, $MeaningsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MeaningsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MeaningsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MeaningsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> vocabularyId = const Value.absent(),
+                Value<String> languageCode = const Value.absent(),
+                Value<String> primaryTranslation = const Value.absent(),
+                Value<String> alternativeTranslations = const Value.absent(),
+                Value<String> englishDefinition = const Value.absent(),
+                Value<String?> extendedDefinition = const Value.absent(),
+                Value<String?> partOfSpeech = const Value.absent(),
+                Value<String> synonyms = const Value.absent(),
+                Value<double> confidence = const Value.absent(),
+                Value<bool> isPrimary = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MeaningsCompanion(
+                id: id,
+                userId: userId,
+                vocabularyId: vocabularyId,
+                languageCode: languageCode,
+                primaryTranslation: primaryTranslation,
+                alternativeTranslations: alternativeTranslations,
+                englishDefinition: englishDefinition,
+                extendedDefinition: extendedDefinition,
+                partOfSpeech: partOfSpeech,
+                synonyms: synonyms,
+                confidence: confidence,
+                isPrimary: isPrimary,
+                isActive: isActive,
+                sortOrder: sortOrder,
+                source: source,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String vocabularyId,
+                required String languageCode,
+                required String primaryTranslation,
+                Value<String> alternativeTranslations = const Value.absent(),
+                required String englishDefinition,
+                Value<String?> extendedDefinition = const Value.absent(),
+                Value<String?> partOfSpeech = const Value.absent(),
+                Value<String> synonyms = const Value.absent(),
+                Value<double> confidence = const Value.absent(),
+                Value<bool> isPrimary = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MeaningsCompanion.insert(
+                id: id,
+                userId: userId,
+                vocabularyId: vocabularyId,
+                languageCode: languageCode,
+                primaryTranslation: primaryTranslation,
+                alternativeTranslations: alternativeTranslations,
+                englishDefinition: englishDefinition,
+                extendedDefinition: extendedDefinition,
+                partOfSpeech: partOfSpeech,
+                synonyms: synonyms,
+                confidence: confidence,
+                isPrimary: isPrimary,
+                isActive: isActive,
+                sortOrder: sortOrder,
+                source: source,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MeaningsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MeaningsTable,
+      Meaning,
+      $$MeaningsTableFilterComposer,
+      $$MeaningsTableOrderingComposer,
+      $$MeaningsTableAnnotationComposer,
+      $$MeaningsTableCreateCompanionBuilder,
+      $$MeaningsTableUpdateCompanionBuilder,
+      (Meaning, BaseReferences<_$AppDatabase, $MeaningsTable, Meaning>),
+      Meaning,
+      PrefetchHooks Function()
+    >;
+typedef $$CuesTableCreateCompanionBuilder =
+    CuesCompanion Function({
+      required String id,
+      required String userId,
+      required String meaningId,
+      required String cueType,
+      required String promptText,
+      required String answerText,
+      Value<String?> hintText,
+      Value<String> metadata,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$CuesTableUpdateCompanionBuilder =
+    CuesCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> meaningId,
+      Value<String> cueType,
+      Value<String> promptText,
+      Value<String> answerText,
+      Value<String?> hintText,
+      Value<String> metadata,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$CuesTableFilterComposer extends Composer<_$AppDatabase, $CuesTable> {
+  $$CuesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get meaningId => $composableBuilder(
+    column: $table.meaningId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cueType => $composableBuilder(
+    column: $table.cueType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promptText => $composableBuilder(
+    column: $table.promptText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get answerText => $composableBuilder(
+    column: $table.answerText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hintText => $composableBuilder(
+    column: $table.hintText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metadata => $composableBuilder(
+    column: $table.metadata,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CuesTableOrderingComposer extends Composer<_$AppDatabase, $CuesTable> {
+  $$CuesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get meaningId => $composableBuilder(
+    column: $table.meaningId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cueType => $composableBuilder(
+    column: $table.cueType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get promptText => $composableBuilder(
+    column: $table.promptText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get answerText => $composableBuilder(
+    column: $table.answerText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hintText => $composableBuilder(
+    column: $table.hintText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metadata => $composableBuilder(
+    column: $table.metadata,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CuesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CuesTable> {
+  $$CuesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get meaningId =>
+      $composableBuilder(column: $table.meaningId, builder: (column) => column);
+
+  GeneratedColumn<String> get cueType =>
+      $composableBuilder(column: $table.cueType, builder: (column) => column);
+
+  GeneratedColumn<String> get promptText => $composableBuilder(
+    column: $table.promptText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get answerText => $composableBuilder(
+    column: $table.answerText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get hintText =>
+      $composableBuilder(column: $table.hintText, builder: (column) => column);
+
+  GeneratedColumn<String> get metadata =>
+      $composableBuilder(column: $table.metadata, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$CuesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CuesTable,
+          Cue,
+          $$CuesTableFilterComposer,
+          $$CuesTableOrderingComposer,
+          $$CuesTableAnnotationComposer,
+          $$CuesTableCreateCompanionBuilder,
+          $$CuesTableUpdateCompanionBuilder,
+          (Cue, BaseReferences<_$AppDatabase, $CuesTable, Cue>),
+          Cue,
+          PrefetchHooks Function()
+        > {
+  $$CuesTableTableManager(_$AppDatabase db, $CuesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CuesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CuesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CuesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> meaningId = const Value.absent(),
+                Value<String> cueType = const Value.absent(),
+                Value<String> promptText = const Value.absent(),
+                Value<String> answerText = const Value.absent(),
+                Value<String?> hintText = const Value.absent(),
+                Value<String> metadata = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CuesCompanion(
+                id: id,
+                userId: userId,
+                meaningId: meaningId,
+                cueType: cueType,
+                promptText: promptText,
+                answerText: answerText,
+                hintText: hintText,
+                metadata: metadata,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String meaningId,
+                required String cueType,
+                required String promptText,
+                required String answerText,
+                Value<String?> hintText = const Value.absent(),
+                Value<String> metadata = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CuesCompanion.insert(
+                id: id,
+                userId: userId,
+                meaningId: meaningId,
+                cueType: cueType,
+                promptText: promptText,
+                answerText: answerText,
+                hintText: hintText,
+                metadata: metadata,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CuesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CuesTable,
+      Cue,
+      $$CuesTableFilterComposer,
+      $$CuesTableOrderingComposer,
+      $$CuesTableAnnotationComposer,
+      $$CuesTableCreateCompanionBuilder,
+      $$CuesTableUpdateCompanionBuilder,
+      (Cue, BaseReferences<_$AppDatabase, $CuesTable, Cue>),
+      Cue,
+      PrefetchHooks Function()
+    >;
+typedef $$ConfusableSetsTableCreateCompanionBuilder =
+    ConfusableSetsCompanion Function({
+      required String id,
+      required String userId,
+      required String languageCode,
+      required String words,
+      required String explanations,
+      Value<String> exampleSentences,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+typedef $$ConfusableSetsTableUpdateCompanionBuilder =
+    ConfusableSetsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> languageCode,
+      Value<String> words,
+      Value<String> explanations,
+      Value<String> exampleSentences,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<DateTime?> lastSyncedAt,
+      Value<bool> isPendingSync,
+      Value<int> version,
+      Value<int> rowid,
+    });
+
+class $$ConfusableSetsTableFilterComposer
+    extends Composer<_$AppDatabase, $ConfusableSetsTable> {
+  $$ConfusableSetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get words => $composableBuilder(
+    column: $table.words,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get explanations => $composableBuilder(
+    column: $table.explanations,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exampleSentences => $composableBuilder(
+    column: $table.exampleSentences,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ConfusableSetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConfusableSetsTable> {
+  $$ConfusableSetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get words => $composableBuilder(
+    column: $table.words,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get explanations => $composableBuilder(
+    column: $table.explanations,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exampleSentences => $composableBuilder(
+    column: $table.exampleSentences,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ConfusableSetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConfusableSetsTable> {
+  $$ConfusableSetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get languageCode => $composableBuilder(
+    column: $table.languageCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get words =>
+      $composableBuilder(column: $table.words, builder: (column) => column);
+
+  GeneratedColumn<String> get explanations => $composableBuilder(
+    column: $table.explanations,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get exampleSentences => $composableBuilder(
+    column: $table.exampleSentences,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncedAt => $composableBuilder(
+    column: $table.lastSyncedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPendingSync => $composableBuilder(
+    column: $table.isPendingSync,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+}
+
+class $$ConfusableSetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ConfusableSetsTable,
+          ConfusableSet,
+          $$ConfusableSetsTableFilterComposer,
+          $$ConfusableSetsTableOrderingComposer,
+          $$ConfusableSetsTableAnnotationComposer,
+          $$ConfusableSetsTableCreateCompanionBuilder,
+          $$ConfusableSetsTableUpdateCompanionBuilder,
+          (
+            ConfusableSet,
+            BaseReferences<_$AppDatabase, $ConfusableSetsTable, ConfusableSet>,
+          ),
+          ConfusableSet,
+          PrefetchHooks Function()
+        > {
+  $$ConfusableSetsTableTableManager(
+    _$AppDatabase db,
+    $ConfusableSetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConfusableSetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConfusableSetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ConfusableSetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> languageCode = const Value.absent(),
+                Value<String> words = const Value.absent(),
+                Value<String> explanations = const Value.absent(),
+                Value<String> exampleSentences = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ConfusableSetsCompanion(
+                id: id,
+                userId: userId,
+                languageCode: languageCode,
+                words: words,
+                explanations: explanations,
+                exampleSentences: exampleSentences,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String languageCode,
+                required String words,
+                required String explanations,
+                Value<String> exampleSentences = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<DateTime?> lastSyncedAt = const Value.absent(),
+                Value<bool> isPendingSync = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ConfusableSetsCompanion.insert(
+                id: id,
+                userId: userId,
+                languageCode: languageCode,
+                words: words,
+                explanations: explanations,
+                exampleSentences: exampleSentences,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                lastSyncedAt: lastSyncedAt,
+                isPendingSync: isPendingSync,
+                version: version,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ConfusableSetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ConfusableSetsTable,
+      ConfusableSet,
+      $$ConfusableSetsTableFilterComposer,
+      $$ConfusableSetsTableOrderingComposer,
+      $$ConfusableSetsTableAnnotationComposer,
+      $$ConfusableSetsTableCreateCompanionBuilder,
+      $$ConfusableSetsTableUpdateCompanionBuilder,
+      (
+        ConfusableSet,
+        BaseReferences<_$AppDatabase, $ConfusableSetsTable, ConfusableSet>,
+      ),
+      ConfusableSet,
+      PrefetchHooks Function()
+    >;
+typedef $$ConfusableSetMembersTableCreateCompanionBuilder =
+    ConfusableSetMembersCompanion Function({
+      required String id,
+      required String confusableSetId,
+      required String vocabularyId,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$ConfusableSetMembersTableUpdateCompanionBuilder =
+    ConfusableSetMembersCompanion Function({
+      Value<String> id,
+      Value<String> confusableSetId,
+      Value<String> vocabularyId,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ConfusableSetMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $ConfusableSetMembersTable> {
+  $$ConfusableSetMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get confusableSetId => $composableBuilder(
+    column: $table.confusableSetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ConfusableSetMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConfusableSetMembersTable> {
+  $$ConfusableSetMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get confusableSetId => $composableBuilder(
+    column: $table.confusableSetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ConfusableSetMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConfusableSetMembersTable> {
+  $$ConfusableSetMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get confusableSetId => $composableBuilder(
+    column: $table.confusableSetId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get vocabularyId => $composableBuilder(
+    column: $table.vocabularyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ConfusableSetMembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ConfusableSetMembersTable,
+          ConfusableSetMember,
+          $$ConfusableSetMembersTableFilterComposer,
+          $$ConfusableSetMembersTableOrderingComposer,
+          $$ConfusableSetMembersTableAnnotationComposer,
+          $$ConfusableSetMembersTableCreateCompanionBuilder,
+          $$ConfusableSetMembersTableUpdateCompanionBuilder,
+          (
+            ConfusableSetMember,
+            BaseReferences<
+              _$AppDatabase,
+              $ConfusableSetMembersTable,
+              ConfusableSetMember
+            >,
+          ),
+          ConfusableSetMember,
+          PrefetchHooks Function()
+        > {
+  $$ConfusableSetMembersTableTableManager(
+    _$AppDatabase db,
+    $ConfusableSetMembersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConfusableSetMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConfusableSetMembersTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ConfusableSetMembersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> confusableSetId = const Value.absent(),
+                Value<String> vocabularyId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ConfusableSetMembersCompanion(
+                id: id,
+                confusableSetId: confusableSetId,
+                vocabularyId: vocabularyId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String confusableSetId,
+                required String vocabularyId,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ConfusableSetMembersCompanion.insert(
+                id: id,
+                confusableSetId: confusableSetId,
+                vocabularyId: vocabularyId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ConfusableSetMembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ConfusableSetMembersTable,
+      ConfusableSetMember,
+      $$ConfusableSetMembersTableFilterComposer,
+      $$ConfusableSetMembersTableOrderingComposer,
+      $$ConfusableSetMembersTableAnnotationComposer,
+      $$ConfusableSetMembersTableCreateCompanionBuilder,
+      $$ConfusableSetMembersTableUpdateCompanionBuilder,
+      (
+        ConfusableSetMember,
+        BaseReferences<
+          _$AppDatabase,
+          $ConfusableSetMembersTable,
+          ConfusableSetMember
+        >,
+      ),
+      ConfusableSetMember,
+      PrefetchHooks Function()
+    >;
+typedef $$MeaningEditsTableCreateCompanionBuilder =
+    MeaningEditsCompanion Function({
+      required String id,
+      required String userId,
+      required String meaningId,
+      required String fieldName,
+      required String originalValue,
+      required String userValue,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$MeaningEditsTableUpdateCompanionBuilder =
+    MeaningEditsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> meaningId,
+      Value<String> fieldName,
+      Value<String> originalValue,
+      Value<String> userValue,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$MeaningEditsTableFilterComposer
+    extends Composer<_$AppDatabase, $MeaningEditsTable> {
+  $$MeaningEditsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get meaningId => $composableBuilder(
+    column: $table.meaningId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fieldName => $composableBuilder(
+    column: $table.fieldName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalValue => $composableBuilder(
+    column: $table.originalValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userValue => $composableBuilder(
+    column: $table.userValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MeaningEditsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MeaningEditsTable> {
+  $$MeaningEditsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get meaningId => $composableBuilder(
+    column: $table.meaningId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fieldName => $composableBuilder(
+    column: $table.fieldName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalValue => $composableBuilder(
+    column: $table.originalValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userValue => $composableBuilder(
+    column: $table.userValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MeaningEditsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MeaningEditsTable> {
+  $$MeaningEditsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get meaningId =>
+      $composableBuilder(column: $table.meaningId, builder: (column) => column);
+
+  GeneratedColumn<String> get fieldName =>
+      $composableBuilder(column: $table.fieldName, builder: (column) => column);
+
+  GeneratedColumn<String> get originalValue => $composableBuilder(
+    column: $table.originalValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get userValue =>
+      $composableBuilder(column: $table.userValue, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$MeaningEditsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MeaningEditsTable,
+          MeaningEdit,
+          $$MeaningEditsTableFilterComposer,
+          $$MeaningEditsTableOrderingComposer,
+          $$MeaningEditsTableAnnotationComposer,
+          $$MeaningEditsTableCreateCompanionBuilder,
+          $$MeaningEditsTableUpdateCompanionBuilder,
+          (
+            MeaningEdit,
+            BaseReferences<_$AppDatabase, $MeaningEditsTable, MeaningEdit>,
+          ),
+          MeaningEdit,
+          PrefetchHooks Function()
+        > {
+  $$MeaningEditsTableTableManager(_$AppDatabase db, $MeaningEditsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MeaningEditsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MeaningEditsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MeaningEditsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> meaningId = const Value.absent(),
+                Value<String> fieldName = const Value.absent(),
+                Value<String> originalValue = const Value.absent(),
+                Value<String> userValue = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MeaningEditsCompanion(
+                id: id,
+                userId: userId,
+                meaningId: meaningId,
+                fieldName: fieldName,
+                originalValue: originalValue,
+                userValue: userValue,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String meaningId,
+                required String fieldName,
+                required String originalValue,
+                required String userValue,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MeaningEditsCompanion.insert(
+                id: id,
+                userId: userId,
+                meaningId: meaningId,
+                fieldName: fieldName,
+                originalValue: originalValue,
+                userValue: userValue,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MeaningEditsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MeaningEditsTable,
+      MeaningEdit,
+      $$MeaningEditsTableFilterComposer,
+      $$MeaningEditsTableOrderingComposer,
+      $$MeaningEditsTableAnnotationComposer,
+      $$MeaningEditsTableCreateCompanionBuilder,
+      $$MeaningEditsTableUpdateCompanionBuilder,
+      (
+        MeaningEdit,
+        BaseReferences<_$AppDatabase, $MeaningEditsTable, MeaningEdit>,
+      ),
+      MeaningEdit,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11716,4 +17146,13 @@ class $AppDatabaseManager {
       );
   $$StreaksTableTableManager get streaks =>
       $$StreaksTableTableManager(_db, _db.streaks);
+  $$MeaningsTableTableManager get meanings =>
+      $$MeaningsTableTableManager(_db, _db.meanings);
+  $$CuesTableTableManager get cues => $$CuesTableTableManager(_db, _db.cues);
+  $$ConfusableSetsTableTableManager get confusableSets =>
+      $$ConfusableSetsTableTableManager(_db, _db.confusableSets);
+  $$ConfusableSetMembersTableTableManager get confusableSetMembers =>
+      $$ConfusableSetMembersTableTableManager(_db, _db.confusableSetMembers);
+  $$MeaningEditsTableTableManager get meaningEdits =>
+      $$MeaningEditsTableTableManager(_db, _db.meaningEdits);
 }

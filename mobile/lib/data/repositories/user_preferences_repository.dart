@@ -163,6 +163,48 @@ class UserPreferencesRepository {
     return upsert(userId: userId, newWordSuppressionActive: suppressed);
   }
 
+  /// Update native language code
+  Future<UserLearningPreference> updateNativeLanguageCode(
+    String userId,
+    String languageCode,
+  ) async {
+    final existing = await getOrCreateWithDefaults(userId);
+    final now = DateTime.now().toUtc();
+
+    await (_db.update(
+      _db.userLearningPreferences,
+    )..where((t) => t.userId.equals(userId))).write(
+      UserLearningPreferencesCompanion(
+        nativeLanguageCode: Value(languageCode),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
+
+    return (await get(userId)) ?? existing;
+  }
+
+  /// Update meaning display mode ('native', 'english', 'both')
+  Future<UserLearningPreference> updateMeaningDisplayMode(
+    String userId,
+    String displayMode,
+  ) async {
+    final existing = await getOrCreateWithDefaults(userId);
+    final now = DateTime.now().toUtc();
+
+    await (_db.update(
+      _db.userLearningPreferences,
+    )..where((t) => t.userId.equals(userId))).write(
+      UserLearningPreferencesCompanion(
+        meaningDisplayMode: Value(displayMode),
+        updatedAt: Value(now),
+        isPendingSync: const Value(true),
+      ),
+    );
+
+    return (await get(userId)) ?? existing;
+  }
+
   /// Get preferences pending sync
   Future<List<UserLearningPreference>> getPendingSync() {
     return (_db.select(

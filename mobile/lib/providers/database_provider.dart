@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/database.dart';
+import '../data/repositories/confusable_set_repository.dart';
+import '../data/repositories/cue_repository.dart';
 import '../data/repositories/encounter_repository.dart';
 import '../data/repositories/learning_card_repository.dart';
+import '../data/repositories/meaning_repository.dart';
 import '../data/repositories/review_log_repository.dart';
 import '../data/repositories/session_repository.dart';
 import '../data/repositories/source_repository.dart';
@@ -64,6 +67,9 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     streakRepository: streakRepo,
     userPreferencesRepository: userPrefsRepo,
     reviewLogRepository: reviewLogRepo,
+    meaningRepository: MeaningRepository(db),
+    cueRepository: CueRepository(db),
+    confusableSetRepository: ConfusableSetRepository(db),
   );
 });
 
