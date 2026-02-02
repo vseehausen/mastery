@@ -54,6 +54,13 @@ cd desktop && npm run tauri dev
 # Backend
 cd supabase && supabase db push
 cd supabase && supabase functions deploy --no-verify-jwt  # ALL functions need this flag
+
+# Edge Function Integration Tests (requires Docker Desktop running)
+supabase start
+supabase functions serve --no-verify-jwt --env-file supabase/.env.local
+# In another terminal:
+deno test --allow-all supabase/functions/tests/parse-vocab-test.ts
+supabase stop
 ```
 
 ## Code Style
