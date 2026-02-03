@@ -49,3 +49,4 @@ build/
 
 # Supabase
 .supabase/
+supabase/.branches/
