@@ -547,9 +547,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
 
         final data = snapshot.data!;
-        // Use translation as primary answer, fall back to context or word
-        final translationAnswer =
-            data.translation ?? data.encounterContext ?? data.vocab.word;
+        // Use translation as primary answer, fall back to definition or generating message
+        final translationAnswer = data.translation ??
+            data.definition ??
+            (data.encounterContext != null
+                ? data.encounterContext!
+                : 'Generating translation...');
 
         if (item.isRecognition) {
           return RecognitionCard(

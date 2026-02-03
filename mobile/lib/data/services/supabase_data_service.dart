@@ -86,14 +86,15 @@ class SupabaseDataService {
   }
 
   /// Get all vocabulary IDs that have meanings (are enriched)
-  Future<Set<String>> getEnrichedVocabularyIds(String userId) async {
+  Future<List<String>> getEnrichedVocabularyIds(String userId) async {
     final response = await _client
         .from('meanings')
         .select('vocabulary_id')
         .eq('user_id', userId)
         .isFilter('deleted_at', null);
     final list = List<Map<String, dynamic>>.from(response as List);
-    return list.map((m) => m['vocabulary_id'] as String).toSet();
+    // Use toSet().toList() to deduplicate
+    return list.map((m) => m['vocabulary_id'] as String).toSet().toList();
   }
 
   /// Update a meaning
@@ -153,11 +154,15 @@ class SupabaseDataService {
     return response;
   }
 
-  /// Get due cards (where due <= now)
+  /// Get due cards (where due <= now) - only returns cards with meanings
   Future<List<Map<String, dynamic>>> getDueCards(
     String userId, {
     int? limit,
   }) async {
+    // First get vocabulary IDs that have meanings
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return [];
+
     final now = DateTime.now().toUtc().toIso8601String();
     var query = _client
         .from('learning_cards')
@@ -166,6 +171,7 @@ class SupabaseDataService {
         .isFilter('deleted_at', null)
         .lte('due', now)
         .gt('state', 0) // Exclude new cards
+        .inFilter('vocabulary_id', enrichedIds)
         .order('due');
 
     if (limit != null) {
@@ -190,17 +196,22 @@ class SupabaseDataService {
     return response.count;
   }
 
-  /// Get new cards (state = 0)
+  /// Get new cards (state = 0) - only returns cards with meanings
   Future<List<Map<String, dynamic>>> getNewCards(
     String userId, {
     int? limit,
   }) async {
+    // First get vocabulary IDs that have meanings
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return [];
+
     var query = _client
         .from('learning_cards')
         .select()
         .eq('user_id', userId)
         .isFilter('deleted_at', null)
         .eq('state', 0)
+        .inFilter('vocabulary_id', enrichedIds)
         .order('created_at');
 
     if (limit != null) {
@@ -211,8 +222,12 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
-  /// Get leech cards
+  /// Get leech cards - only returns cards with meanings
   Future<List<Map<String, dynamic>>> getLeechCards(String userId) async {
+    // First get vocabulary IDs that have meanings
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return [];
+
     final now = DateTime.now().toUtc().toIso8601String();
     final response = await _client
         .from('learning_cards')
@@ -221,6 +236,7 @@ class SupabaseDataService {
         .isFilter('deleted_at', null)
         .eq('is_leech', true)
         .lte('due', now)
+        .inFilter('vocabulary_id', enrichedIds)
         .order('lapses', ascending: false);
     return List<Map<String, dynamic>>.from(response as List);
   }

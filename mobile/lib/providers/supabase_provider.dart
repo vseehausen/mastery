@@ -80,7 +80,8 @@ final enrichedVocabularyIdsProvider =
   if (userId == null) return <String>{};
 
   final service = ref.watch(supabaseDataServiceProvider);
-  return service.getEnrichedVocabularyIds(userId);
+  final list = await service.getEnrichedVocabularyIds(userId);
+  return list.toSet();
 });
 
 // =============================================================================
