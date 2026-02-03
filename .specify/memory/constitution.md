@@ -86,16 +86,16 @@ When complexity is unavoidable, document in the implementation plan:
 ### V. Online-Required Architecture
 
 All client applications require an active internet connection:
-- **Local Caching**: Local SQLite/storage caches data for performance, not for offline use
-- **Online Operations**: Sync, meaning generation, and enrichment are online-only
-- **Connection Status**: App clearly indicates when connection is unavailable and features are degraded
+- **No Local Database**: Mobile app uses direct Supabase queries with Riverpod caching (no local SQLite)
+- **Online Operations**: All features require connectivity — there is no offline mode
+- **Connection Status**: App indicates when connection is unavailable
 
 **Platform Requirements**:
-- Mobile (Flutter): SQLite/Drift for local cache, Supabase for online operations
+- Mobile (Flutter): Direct Supabase queries, Riverpod `FutureProvider.autoDispose` for caching
 - Extension: chrome.storage for local cache
-- Desktop (Tauri): Local file system cache with online sync
+- Desktop (Tauri): Local file system for Kindle import staging, online sync to Supabase
 
-**Rationale**: Core features (meaning generation, AI enrichment, sync) depend on backend services. Designing for full offline would add significant complexity without matching actual usage patterns.
+**Rationale**: Core features (meaning generation, AI enrichment, learning sessions) depend on backend services. Local-first architecture was removed to reduce complexity (~25k lines). The app is designed for connected use.
 
 ## Technology Stack
 
