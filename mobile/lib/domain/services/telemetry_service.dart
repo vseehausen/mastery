@@ -1,10 +1,10 @@
-import '../../data/repositories/review_log_repository.dart';
+import '../../data/services/supabase_data_service.dart';
 
 /// Service for computing telemetry data (time-per-item estimation)
 class TelemetryService {
-  TelemetryService(this._reviewLogRepository);
+  TelemetryService(this._dataService);
 
-  final ReviewLogRepository _reviewLogRepository;
+  final SupabaseDataService _dataService;
 
   /// Default time per item for new users (in seconds)
   static const defaultSecondsPerItem = 15.0;
@@ -18,7 +18,7 @@ class TelemetryService {
   /// Get estimated seconds per item for a user
   /// Uses rolling average from review logs, or default for new users
   Future<double> getEstimatedSecondsPerItem(String userId) async {
-    final reviewCount = await _reviewLogRepository.getReviewCount(userId);
+    final reviewCount = await _dataService.getReviewCount(userId);
 
     // Use default for new users without enough data
     if (reviewCount < minReviewsForTelemetry) {
@@ -26,7 +26,7 @@ class TelemetryService {
     }
 
     // Get average response time in milliseconds
-    final avgMs = await _reviewLogRepository.getAverageResponseTime(
+    final avgMs = await _dataService.getAverageResponseTime(
       userId,
       windowSize: rollingWindowSize,
     );

@@ -1,45 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/database/database.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../core/theme/color_tokens.dart';
 import '../../core/theme/text_styles.dart';
+import '../../domain/models/encounter.dart';
+import '../../domain/models/meaning.dart';
+import '../../domain/models/vocabulary.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/database_provider.dart';
-import '../../providers/learning_providers.dart';
-import 'vocabulary_provider.dart';
+import '../../providers/supabase_provider.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
 import 'presentation/widgets/learning_stats.dart';
 import 'presentation/widgets/meaning_card.dart';
 import 'presentation/widgets/meaning_editor.dart';
-
-/// Provider to load the most recent encounter for a vocabulary item
-final _primaryEncounterProvider = FutureProvider.family<Encounter?, String>((
-  ref,
-  vocabularyId,
-) async {
-  final encounterRepo = ref.watch(encounterRepositoryProvider);
-  return encounterRepo.getMostRecentForVocabulary(vocabularyId);
-});
-
-/// Provider to load source for an encounter
-final _sourceForEncounterProvider = FutureProvider.family<Source?, String?>((
-  ref,
-  sourceId,
-) async {
-  if (sourceId == null) return null;
-  final sourceRepo = ref.watch(sourceRepositoryProvider);
-  return sourceRepo.getById(sourceId);
-});
-
-/// Provider to load meanings for a vocabulary item
-final _meaningsProvider = FutureProvider.family<List<Meaning>, String>((
-  ref,
-  vocabularyId,
-) async {
-  final meaningRepo = ref.watch(meaningRepositoryProvider);
-  return meaningRepo.getForVocabulary(vocabularyId);
-});
 
 /// Detail screen for a single vocabulary entry
 class VocabularyDetailScreen extends ConsumerStatefulWidget {
@@ -88,12 +62,12 @@ class _VocabularyDetailScreenState
     );
   }
 
-  Widget _buildContent(BuildContext context, Vocabulary vocab) {
+  Widget _buildContent(BuildContext context, VocabularyModel vocab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final encounterAsync = ref.watch(_primaryEncounterProvider(vocab.id));
-    final meaningsAsync = ref.watch(_meaningsProvider(vocab.id));
+    final encounterAsync = ref.watch(mostRecentEncounterProvider(vocab.id));
+    final meaningsAsync = ref.watch(meaningsProvider(vocab.id));
 
-    // Trigger enrichment check for un-enriched words (T026)
+    // Trigger enrichment check for un-enriched words
     _triggerEnrichmentIfNeeded(meaningsAsync, vocab.id);
 
     return SafeArea(
@@ -117,7 +91,7 @@ class _VocabularyDetailScreenState
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: meaningsAsync.when(
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (e, s) => const SizedBox.shrink(),
                 data: (meanings) => _buildMeaningsSection(meanings, isDark),
               ),
             ),
@@ -131,7 +105,7 @@ class _VocabularyDetailScreenState
                   // Context from encounter
                   encounterAsync.when(
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (e, s) => const SizedBox.shrink(),
                     data: (encounter) {
                       if (encounter == null ||
                           encounter.context == null ||
@@ -195,59 +169,45 @@ class _VocabularyDetailScreenState
     );
   }
 
-  Widget _buildMeaningsSection(List<Meaning> meanings, bool isDark) {
+  Widget _buildMeaningsSection(List<MeaningModel> meanings, bool isDark) {
     if (meanings.isEmpty) {
       return _buildEnrichmentPlaceholder(isDark);
+    }
+
+    // Show only the first (primary) meaning directly
+    final meaning = meanings.first;
+
+    if (_editingMeaningId == meaning.id) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MeaningEditor(
+            meaning: meaning,
+            onSave: ({
+              String? primaryTranslation,
+              String? englishDefinition,
+            }) {
+              _handleMeaningSave(
+                meaning,
+                primaryTranslation: primaryTranslation,
+                englishDefinition: englishDefinition,
+              );
+            },
+            onCancel: () => setState(() => _editingMeaningId = null),
+          ),
+          const SizedBox(height: 24),
+        ],
+      );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Meanings',
-          style: MasteryTextStyles.bodyBold.copyWith(
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
+        MeaningCard(
+          meaning: meaning,
+          onEdit: () => setState(() => _editingMeaningId = meaning.id),
         ),
-        const SizedBox(height: 8),
-        ...meanings.map((meaning) {
-          if (_editingMeaningId == meaning.id) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: MeaningEditor(
-                meaning: meaning,
-                onSave: ({
-                  String? primaryTranslation,
-                  String? englishDefinition,
-                }) {
-                  _handleMeaningSave(
-                    meaning,
-                    primaryTranslation: primaryTranslation,
-                    englishDefinition: englishDefinition,
-                  );
-                },
-                onCancel: () => setState(() => _editingMeaningId = null),
-              ),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: MeaningCard(
-              meaning: meaning,
-              onEdit: () => setState(() => _editingMeaningId = meaning.id),
-              onPin: meaning.isPrimary
-                  ? null
-                  : () => _handlePinAsPrimary(meaning.id),
-              onActivate: meaning.isActive
-                  ? null
-                  : () => _handleActivateMeaning(meaning.id),
-              onReTranslate: () => _handleReTranslate(
-                meaning.vocabularyId,
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
       ],
     );
   }
@@ -294,7 +254,7 @@ class _VocabularyDetailScreenState
   }
 
   void _triggerEnrichmentIfNeeded(
-    AsyncValue<List<Meaning>> meaningsAsync,
+    AsyncValue<List<MeaningModel>> meaningsAsync,
     String vocabularyId,
   ) {
     if (_enrichmentTriggered) return;
@@ -302,29 +262,27 @@ class _VocabularyDetailScreenState
     meaningsAsync.whenData((meanings) {
       if (meanings.isEmpty) {
         _enrichmentTriggered = true;
-        final userId = ref.read(currentUserIdProvider);
-        if (userId != null) {
-          final enrichmentService = ref.read(enrichmentServiceProvider);
-          enrichmentService.replenishIfNeeded(userId);
-        }
+        // TODO: Trigger enrichment via Supabase edge function
+        // For now, just log that enrichment would be triggered
+        debugPrint('[VocabularyDetail] Would trigger enrichment for $vocabularyId');
       }
     });
   }
 
   Future<void> _handleMeaningSave(
-    Meaning meaning, {
+    MeaningModel meaning, {
     String? primaryTranslation,
     String? englishDefinition,
   }) async {
-    final meaningRepo = ref.read(meaningRepositoryProvider);
-    final editRepo = ref.read(meaningEditRepositoryProvider);
     final userId = ref.read(currentUserIdProvider);
-
     if (userId == null) return;
+
+    final service = ref.read(supabaseDataServiceProvider);
 
     // Record edits
     if (primaryTranslation != null) {
-      await editRepo.create(
+      await service.createMeaningEdit(
+        id: const Uuid().v4(),
         userId: userId,
         meaningId: meaning.id,
         fieldName: 'primary_translation',
@@ -333,7 +291,8 @@ class _VocabularyDetailScreenState
       );
     }
     if (englishDefinition != null) {
-      await editRepo.create(
+      await service.createMeaningEdit(
+        id: const Uuid().v4(),
         userId: userId,
         meaningId: meaning.id,
         fieldName: 'english_definition',
@@ -343,50 +302,25 @@ class _VocabularyDetailScreenState
     }
 
     // Apply the update
-    await meaningRepo.update(
+    await service.updateMeaning(
       id: meaning.id,
       primaryTranslation: primaryTranslation,
       englishDefinition: englishDefinition,
     );
 
     // Refresh meanings and exit edit mode
-    ref.invalidate(_meaningsProvider);
+    ref.invalidate(meaningsProvider(widget.vocabularyId));
     setState(() => _editingMeaningId = null);
   }
 
-  Future<void> _handleActivateMeaning(String meaningId) async {
-    final meaningRepo = ref.read(meaningRepositoryProvider);
-    await meaningRepo.update(id: meaningId, isActive: true);
-    ref.invalidate(_meaningsProvider);
-  }
-
-  Future<void> _handlePinAsPrimary(String meaningId) async {
-    final meaningRepo = ref.read(meaningRepositoryProvider);
-    await meaningRepo.pinAsPrimary(meaningId);
-    ref.invalidate(_meaningsProvider);
-  }
-
-  Future<void> _handleReTranslate(String vocabularyId) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-    final enrichmentService = ref.read(enrichmentServiceProvider);
-    await enrichmentService.reEnrich(
-      userId: userId,
-      vocabularyId: vocabularyId,
-    );
-    ref.invalidate(_meaningsProvider);
-  }
-
-  Widget _buildEncounterContext(Encounter encounter) {
-    final sourceAsync = ref.watch(
-      _sourceForEncounterProvider(encounter.sourceId),
-    );
+  Widget _buildEncounterContext(EncounterModel encounter) {
+    final sourceAsync = ref.watch(sourceByIdProvider(encounter.sourceId));
 
     return Column(
       children: [
         sourceAsync.when(
           loading: () => ContextCard(context: encounter.context),
-          error: (_, __) => ContextCard(context: encounter.context),
+          error: (e, s) => ContextCard(context: encounter.context),
           data: (source) => ContextCard(
             context: encounter.context,
             bookTitle: source?.title,

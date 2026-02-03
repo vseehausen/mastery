@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/color_tokens.dart';
 import '../theme/text_styles.dart';
-import 'status_badge.dart';
 
 /// Card widget for displaying vocabulary word in list
 class WordCard extends StatelessWidget {
@@ -9,14 +7,14 @@ class WordCard extends StatelessWidget {
     super.key,
     required this.word,
     required this.definition,
-    required this.status,
     required this.onTap,
+    this.isEnriched = false,
   });
 
   final String word;
   final String definition;
-  final LearningStatus status;
   final VoidCallback onTap;
+  final bool isEnriched;
 
   @override
   Widget build(BuildContext context) {
@@ -40,13 +38,29 @@ class WordCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        word,
-                        style: MasteryTextStyles.bodyBold.copyWith(
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              word,
+                              style: MasteryTextStyles.bodyBold.copyWith(
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isEnriched) ...[
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.amber[300]
+                                  : Colors.amber[700],
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -59,14 +73,6 @@ class WordCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 4),
-                    StatusBadge(status: status, compact: true),
-                  ],
                 ),
                 const SizedBox(width: 12),
                 Icon(

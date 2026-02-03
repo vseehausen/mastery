@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mastery/core/theme/color_tokens.dart';
 import 'package:mastery/core/widgets/word_card.dart';
-import 'package:mastery/core/widgets/status_badge.dart';
 
 import '../../helpers/test_helpers.dart';
 
@@ -13,7 +11,6 @@ void main() {
         WordCard(
           word: 'ephemeral',
           definition: 'lasting for a very short time',
-          status: LearningStatus.unknown,
           onTap: () {},
         ),
       );
@@ -22,18 +19,30 @@ void main() {
       expect(find.text('lasting for a very short time'), findsOneWidget);
     });
 
-    testWidgets('displays status badge', (tester) async {
+    testWidgets('displays enriched icon when isEnriched is true', (tester) async {
       await tester.pumpTestWidget(
         WordCard(
           word: 'test',
           definition: 'test definition',
-          status: LearningStatus.learning,
+          isEnriched: true,
           onTap: () {},
         ),
       );
 
-      expect(find.byType(StatusBadge), findsOneWidget);
-      expect(find.text('Learning'), findsOneWidget);
+      expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
+    });
+
+    testWidgets('does not display enriched icon when isEnriched is false', (tester) async {
+      await tester.pumpTestWidget(
+        WordCard(
+          word: 'test',
+          definition: 'test definition',
+          isEnriched: false,
+          onTap: () {},
+        ),
+      );
+
+      expect(find.byIcon(Icons.auto_awesome), findsNothing);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {
@@ -43,7 +52,6 @@ void main() {
         WordCard(
           word: 'test',
           definition: 'definition',
-          status: LearningStatus.known,
           onTap: () => tapped = true,
         ),
       );
@@ -57,7 +65,6 @@ void main() {
         WordCard(
           word: 'test',
           definition: 'definition',
-          status: LearningStatus.unknown,
           onTap: () {},
         ),
       );
@@ -70,7 +77,6 @@ void main() {
         WordCard(
           word: 'dark word',
           definition: 'dark definition',
-          status: LearningStatus.known,
           onTap: () {},
         ),
         themeMode: ThemeMode.dark,
@@ -84,7 +90,6 @@ void main() {
         WordCard(
           word: 'supercalifragilisticexpialidocious',
           definition: 'A very long word',
-          status: LearningStatus.unknown,
           onTap: () {},
         ),
       );
@@ -102,7 +107,6 @@ void main() {
           word: 'test',
           definition:
               'This is a very long definition that should span multiple lines and eventually get truncated with an ellipsis at the end.',
-          status: LearningStatus.unknown,
           onTap: () {},
         ),
       );
@@ -121,7 +125,6 @@ void main() {
         WordCard(
           word: 'test',
           definition: 'definition',
-          status: LearningStatus.unknown,
           onTap: () {},
         ),
       );

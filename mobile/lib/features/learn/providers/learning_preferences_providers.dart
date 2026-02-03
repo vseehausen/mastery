@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/database/database.dart';
+import '../../../domain/models/user_preferences.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/learning_providers.dart';
+import '../../../providers/supabase_provider.dart';
 
 part 'learning_preferences_providers.g.dart';
 
@@ -13,26 +13,28 @@ part 'learning_preferences_providers.g.dart';
 
 /// Provides the user's learning preferences
 @riverpod
-Future<UserLearningPreference?> userLearningPreferences(Ref ref) async {
+Future<UserPreferencesModel?> userLearningPreferences(Ref ref) async {
   final currentUser = ref.watch(currentUserProvider);
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return null;
 
-  final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
-  return userPrefsRepo.getOrCreateWithDefaults(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final prefsData = await dataService.getOrCreatePreferences(userId);
+  return UserPreferencesModel.fromJson(prefsData);
 }
 
 /// Notifier for managing user learning preferences
 @riverpod
 class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
   @override
-  Future<UserLearningPreference?> build() async {
+  Future<UserPreferencesModel?> build() async {
     final currentUser = ref.watch(currentUserProvider);
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return null;
 
-    final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
-    return userPrefsRepo.getOrCreateWithDefaults(userId);
+    final dataService = ref.watch(supabaseDataServiceProvider);
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    return UserPreferencesModel.fromJson(prefsData);
   }
 
   /// Update daily time target (1-60 minutes)
@@ -41,9 +43,15 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
-    final userPrefsRepo = ref.read(userPreferencesRepositoryProvider);
-    final updated = await userPrefsRepo.updateDailyTimeTarget(userId, minutes);
-    state = AsyncData(updated);
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      dailyTimeTargetMinutes: minutes,
+    );
+
+    // Refresh state
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
 
     // Invalidate related providers
     ref.invalidate(userLearningPreferencesProvider);
@@ -55,9 +63,15 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
-    final userPrefsRepo = ref.read(userPreferencesRepositoryProvider);
-    final updated = await userPrefsRepo.updateIntensity(userId, intensity);
-    state = AsyncData(updated);
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      intensity: intensity,
+    );
+
+    // Refresh state
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
 
     // Invalidate related providers
     ref.invalidate(userLearningPreferencesProvider);
@@ -69,12 +83,15 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
-    final userPrefsRepo = ref.read(userPreferencesRepositoryProvider);
-    final updated = await userPrefsRepo.updateTargetRetention(
-      userId,
-      retention,
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      targetRetention: retention,
     );
-    state = AsyncData(updated);
+
+    // Refresh state
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
 
     // Invalidate related providers
     ref.invalidate(userLearningPreferencesProvider);

@@ -1,5 +1,5 @@
-import '../../data/database/database.dart';
 import '../models/cue_type.dart';
+import 'learning_card.dart';
 
 /// Model representing a planned item in a session
 class PlannedItem {
@@ -11,7 +11,7 @@ class PlannedItem {
   });
 
   /// The learning card to present
-  final LearningCard learningCard;
+  final LearningCardModel learningCard;
 
   /// Interaction mode: 0=recognition (MCQ), 1=recall (self-grade)
   final int interactionMode;

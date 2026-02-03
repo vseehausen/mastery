@@ -110,6 +110,22 @@ enum IntensityEnum {
   }
 }
 
+/// Intensity constants class for backwards compatibility
+/// Use IntensityEnum for type-safe usage
+class Intensity {
+  const Intensity._();
+
+  static const int light = 0;
+  static const int normal = 1;
+  static const int intense = 2;
+
+  /// Get new word cap for a given intensity value and time budget
+  static int getNewWordCap(int intensityValue, int timeMinutes) {
+    final intensity = IntensityEnum.fromValue(intensityValue);
+    return intensity.getNewWordCap(timeMinutes);
+  }
+}
+
 /// Session outcome enum
 /// Maps to LearningSessions.outcome column
 enum SessionOutcomeEnum {

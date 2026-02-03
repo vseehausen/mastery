@@ -4,9 +4,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../data/database/database.dart';
-import '../../../data/repositories/user_preferences_repository.dart';
 import '../../../domain/models/learning_enums.dart';
+import '../../../domain/models/user_preferences.dart';
 import '../providers/learning_preferences_providers.dart';
 
 /// Screen for configuring learning preferences
@@ -43,7 +42,7 @@ class _LearningSettingsScreenState
     super.dispose();
   }
 
-  void _loadPreferences(UserLearningPreference prefs) {
+  void _loadPreferences(UserPreferencesModel prefs) {
     _selectedTimeTarget = prefs.dailyTimeTargetMinutes;
     _selectedIntensity = prefs.intensity;
     _selectedRetention = prefs.targetRetention;

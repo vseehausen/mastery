@@ -1,11 +1,8 @@
 import 'dart:developer' as developer;
 
-import '../../data/database/database.dart';
-import '../../data/repositories/confusable_set_repository.dart';
-import '../../data/repositories/encounter_repository.dart';
-import '../../data/repositories/learning_card_repository.dart';
-import '../../data/repositories/meaning_repository.dart';
-import '../../data/repositories/user_preferences_repository.dart';
+import '../../data/services/supabase_data_service.dart';
+import '../models/learning_card.dart';
+import '../models/learning_enums.dart';
 import '../models/planned_item.dart';
 import '../models/session_plan.dart';
 import 'cue_selector.dart';
@@ -24,30 +21,18 @@ class InteractionMode {
 /// Service for building time-boxed session plans
 class SessionPlanner {
   SessionPlanner({
-    required LearningCardRepository learningCardRepository,
-    required UserPreferencesRepository userPreferencesRepository,
+    required SupabaseDataService dataService,
     required TelemetryService telemetryService,
     required SrsScheduler srsScheduler,
-    MeaningRepository? meaningRepository,
-    ConfusableSetRepository? confusableSetRepository,
-    EncounterRepository? encounterRepository,
     CueSelector? cueSelector,
-  }) : _learningCardRepository = learningCardRepository,
-       _userPreferencesRepository = userPreferencesRepository,
+  }) : _dataService = dataService,
        _telemetryService = telemetryService,
        _srsScheduler = srsScheduler,
-       _meaningRepository = meaningRepository,
-       _confusableSetRepository = confusableSetRepository,
-       _encounterRepository = encounterRepository,
        _cueSelector = cueSelector ?? CueSelector();
 
-  final LearningCardRepository _learningCardRepository;
-  final UserPreferencesRepository _userPreferencesRepository;
+  final SupabaseDataService _dataService;
   final TelemetryService _telemetryService;
   final SrsScheduler _srsScheduler;
-  final MeaningRepository? _meaningRepository;
-  final ConfusableSetRepository? _confusableSetRepository;
-  final EncounterRepository? _encounterRepository;
   final CueSelector _cueSelector;
 
   /// Build a session plan for the current user
@@ -69,23 +54,23 @@ class SessionPlanner {
     }
 
     // Get overdue count for hysteresis check
-    final overdueCount = await _learningCardRepository.getOverdueCount(userId);
+    final overdueCount = await _dataService.getOverdueCount(userId);
 
     // Check if we should suppress new words (hysteresis)
-    final prefs = await _userPreferencesRepository.getOrCreateWithDefaults(
-      userId,
-    );
+    final prefs = await _dataService.getOrCreatePreferences(userId);
+    final previouslySuppressed =
+        prefs['new_word_suppression_active'] as bool? ?? false;
     final shouldSuppress = shouldSuppressNewWords(
       overdueCount: overdueCount,
       sessionCapacity: maxItems,
-      previouslySuppressed: prefs.newWordSuppressionActive,
+      previouslySuppressed: previouslySuppressed,
     );
 
     // Update suppression state if changed
-    if (shouldSuppress != prefs.newWordSuppressionActive) {
-      await _userPreferencesRepository.updateNewWordSuppression(
-        userId,
-        shouldSuppress,
+    if (shouldSuppress != previouslySuppressed) {
+      await _dataService.updatePreferences(
+        userId: userId,
+        newWordSuppressionActive: shouldSuppress,
       );
     }
 
@@ -95,12 +80,17 @@ class SessionPlanner {
         : Intensity.getNewWordCap(intensity, timeTargetMinutes);
 
     // Get cards in priority order
-    final dueCards = await _learningCardRepository.getDueCardsSorted(userId);
-    final leeches = await _learningCardRepository.getLeeches(userId);
-    final newCards = await _learningCardRepository.getNewCards(
+    final dueCardsData = await _dataService.getDueCards(userId);
+    final dueCards = dueCardsData.map(LearningCardModel.fromJson).toList();
+
+    final leechCardsData = await _dataService.getLeechCards(userId);
+    final leeches = leechCardsData.map(LearningCardModel.fromJson).toList();
+
+    final newCardsData = await _dataService.getNewCards(
       userId,
       limit: newWordCap,
     );
+    final newCards = newCardsData.map(LearningCardModel.fromJson).toList();
 
     // Build plan: due reviews first -> leeches -> new words
     final items = <PlannedItem>[];
@@ -189,13 +179,13 @@ class SessionPlanner {
 
   /// Select interaction mode for a card
   /// Currently using recall (self-grade) for all cards
-  int selectInteractionMode(LearningCard card) {
+  int selectInteractionMode(LearningCardModel card) {
     // Use recall mode for all cards - show word, reveal answer, self-grade
     return InteractionMode.recall;
   }
 
   /// Compute priority score for a card (higher = more urgent)
-  double _computePriorityScore(LearningCard card) {
+  double _computePriorityScore(LearningCardModel card) {
     final now = DateTime.now().toUtc();
     final overdueDays = now.difference(card.due).inDays.clamp(0, 365);
     final retrievability = _srsScheduler.getRetrievability(card, now: now);
@@ -205,32 +195,28 @@ class SessionPlanner {
   }
 
   /// Compute priority score for external use
-  double computePriorityScore(LearningCard card) {
+  double computePriorityScore(LearningCardModel card) {
     return _computePriorityScore(card);
   }
 
   /// Assign cue types to planned items using CueSelector.
   /// Falls back to translation cue when meaning data is unavailable.
   Future<List<PlannedItem>> _assignCueTypes(List<PlannedItem> items) async {
-    if (_meaningRepository == null) return items;
-
     final result = <PlannedItem>[];
     for (final item in items) {
       final vocabId = item.vocabularyId;
-      final hasMeaning = await _meaningRepository.hasEnrichedMeanings(vocabId);
+      final meanings = await _dataService.getMeanings(vocabId);
+      final hasMeaning = meanings.isNotEmpty;
 
-      var hasEncounterContext = false;
-      if (_encounterRepository != null) {
-        final encounters = await _encounterRepository
-            .getForVocabulary(vocabId);
-        hasEncounterContext = encounters.any((e) => e.context != null);
-      }
+      final encounters = await _dataService.getEncounters(vocabId);
+      final hasEncounterContext = encounters.any(
+        (e) => e['context'] != null && (e['context'] as String).isNotEmpty,
+      );
 
-      var hasConfusables = false;
-      if (_confusableSetRepository != null) {
-        hasConfusables = await _confusableSetRepository
-            .hasConfusables(vocabId);
-      }
+      final confusables = await _dataService.getConfusableSetsForVocabulary(
+        vocabId,
+      );
+      final hasConfusables = confusables.isNotEmpty;
 
       final cueType = _cueSelector.selectCueType(
         card: item.learningCard,

@@ -1,23 +1,124 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/repositories/auth_repository_impl.dart';
-import '../domain/repositories/auth_repository.dart';
 
 /// Provider for Supabase client
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });
 
-/// Provider for AuthRepository
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
+/// Simple auth service that wraps Supabase auth operations
+class AuthService {
+  AuthService(this._client);
+  final SupabaseClient _client;
+
+  Future<AuthResponse> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<AuthResponse> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return _client.auth.signUp(
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<void> signOut() async {
+    await _client.auth.signOut();
+  }
+
+  Future<void> resetPassword(String email) async {
+    await _client.auth.resetPasswordForEmail(email);
+  }
+
+  Future<AuthResponse> signInWithApple() async {
+    // Generate raw nonce
+    final rawNonce = _generateRandomString();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    // Get Apple credential
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+
+    final idToken = credential.identityToken;
+    if (idToken == null) {
+      throw Exception('No ID token returned from Apple');
+    }
+
+    return _client.auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
+  }
+
+  String _generateRandomString([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
+  }
+
+  Future<AuthResponse> signInWithGoogle() async {
+    const webClientId = '485055239401-ekmcq02mnuaivhsrui7f1h6hg47ocqme.apps.googleusercontent.com';
+    const iosClientId = '485055239401-6shii35u4fcfqvg1kvqb9aavijqhulsp.apps.googleusercontent.com';
+
+    final googleSignIn = GoogleSignIn(
+      clientId: iosClientId,
+      serverClientId: webClientId,
+    );
+
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      throw Exception('Google sign in cancelled');
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final accessToken = googleAuth.accessToken;
+    final idToken = googleAuth.idToken;
+
+    if (accessToken == null || idToken == null) {
+      throw Exception('No access token or ID token found');
+    }
+
+    return _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+  }
+}
+
+/// Provider for auth repository (backwards compatibility)
+final authRepositoryProvider = Provider<AuthService>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  return AuthRepositoryImpl(client);
+  return AuthService(client);
 });
 
 /// Provider for current user
 final currentUserProvider = StreamProvider<User?>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.authStateChanges.map((state) => state.session?.user);
+  final client = ref.watch(supabaseClientProvider);
+  return client.auth.onAuthStateChange.map((state) => state.session?.user);
 });
 
 /// Provider for current user ID (reactive - updates on auth state change)
@@ -34,8 +135,8 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 
 /// Provider for auth state changes
 final authStateProvider = StreamProvider<AuthState>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.authStateChanges;
+  final client = ref.watch(supabaseClientProvider);
+  return client.auth.onAuthStateChange;
 });
 
 /// Provider to track if OAuth is in progress (for loading screen)

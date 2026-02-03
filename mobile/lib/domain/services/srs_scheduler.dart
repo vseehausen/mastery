@@ -1,6 +1,6 @@
 import 'package:fsrs/fsrs.dart' as fsrs;
 
-import '../../data/database/database.dart';
+import '../models/learning_card.dart';
 
 /// Review rating enum values (maps to FSRS ratings)
 class ReviewRating {
@@ -144,7 +144,7 @@ class SrsScheduler {
 
   /// Process a user's review of a learning card and return the updated card state
   ReviewResult reviewCard({
-    required LearningCard card,
+    required LearningCardModel card,
     required int rating,
     required int interactionMode,
     DateTime? now,
@@ -219,7 +219,7 @@ class SrsScheduler {
   }
 
   /// Compute current probability of recall for a card
-  double getRetrievability(LearningCard card, {DateTime? now}) {
+  double getRetrievability(LearningCardModel card, {DateTime? now}) {
     final currentTime = now ?? DateTime.now().toUtc();
 
     // For new cards or cards with zero stability, return 1.0 (assumed known)
@@ -260,7 +260,7 @@ class SrsScheduler {
   }
 
   /// Convert LearningCard to FSRS Card
-  fsrs.Card _toFsrsCard(LearningCard card) {
+  fsrs.Card _toFsrsCard(LearningCardModel card) {
     // Generate a cardId from the vocabulary id hash (FSRS needs an int cardId)
     final cardId = card.vocabularyId.hashCode;
 

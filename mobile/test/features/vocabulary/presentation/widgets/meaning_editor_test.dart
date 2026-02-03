@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mastery/data/database/database.dart';
+import 'package:mastery/domain/models/meaning.dart';
 import 'package:mastery/features/vocabulary/presentation/widgets/meaning_editor.dart';
 
 import '../../../../helpers/test_helpers.dart';
 
-Meaning _createMeaning({
+MeaningModel _createMeaning({
   String primaryTranslation = 'effizient',
   String englishDefinition = 'Achieving results with minimal waste.',
 }) {
   final now = DateTime.now();
-  return Meaning(
+  return MeaningModel(
     id: 'meaning-1',
     userId: 'user-1',
     vocabularyId: 'vocab-1',
     languageCode: 'de',
     primaryTranslation: primaryTranslation,
-    alternativeTranslations: '[]',
+    alternativeTranslations: const [],
     englishDefinition: englishDefinition,
-    synonyms: '[]',
+    synonyms: const [],
     confidence: 0.9,
     isPrimary: true,
     isActive: true,
@@ -26,8 +26,6 @@ Meaning _createMeaning({
     source: 'openai',
     createdAt: now,
     updatedAt: now,
-    isPendingSync: false,
-    version: 1,
   );
 }
 

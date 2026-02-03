@@ -229,7 +229,7 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     const { data: members, error: membersError } = await client
       .from('confusable_set_members')
       .select('*')
-      .in_('confusable_set_id', confusableSetIds);
+      .in('confusable_set_id', confusableSetIds);
 
     if (membersError) {
       return errorResponse('Failed to fetch confusable set members', 500);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/word_card.dart';
-import '../../../../core/theme/color_tokens.dart';
 
 /// Recent words section for dashboard
 class RecentWordsSection extends StatelessWidget {
@@ -12,7 +11,7 @@ class RecentWordsSection extends StatelessWidget {
     this.onWordTap,
   });
 
-  final List<Map<String, dynamic>> words; // [{word, definition, status}, ...]
+  final List<Map<String, dynamic>> words; // [{word, definition, isEnriched}, ...]
   final VoidCallback? onSeeAll;
   final ValueChanged<Map<String, dynamic>>? onWordTap;
 
@@ -40,7 +39,7 @@ class RecentWordsSection extends StatelessWidget {
               return WordCard(
                 word: word['word'] as String,
                 definition: word['definition'] as String,
-                status: word['status'] as LearningStatus,
+                isEnriched: word['isEnriched'] as bool? ?? false,
                 onTap: () => onWordTap?.call(word),
               );
             },

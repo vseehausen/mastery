@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/color_tokens.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/learning_providers.dart';
+import '../../providers/supabase_provider.dart';
 
 /// Supported native languages for enrichment.
 const supportedLanguages = <String, String>{
@@ -37,15 +37,28 @@ class NativeLanguageSetting extends ConsumerWidget {
     final userId = ref.watch(currentUserIdProvider);
     if (userId == null) return const SizedBox.shrink();
 
-    final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
+    final prefsAsync = ref.watch(userPreferencesProvider);
 
-    return FutureBuilder<String>(
-      future: userPrefsRepo.getOrCreateWithDefaults(userId).then(
-            (p) => p.nativeLanguageCode,
+    return prefsAsync.when(
+      loading: () => ListTile(
+        title: Text(
+          'Native language',
+          style: MasteryTextStyles.body.copyWith(
+            color: isDark ? Colors.white : Colors.black,
           ),
-      builder: (context, snapshot) {
-        final currentCode = snapshot.data ?? 'de';
-
+        ),
+        subtitle: Text(
+          'Loading...',
+          style: MasteryTextStyles.bodySmall.copyWith(
+            color: isDark
+                ? MasteryColors.mutedForegroundDark
+                : MasteryColors.mutedForegroundLight,
+          ),
+        ),
+      ),
+      error: (e, s) => const SizedBox.shrink(),
+      data: (prefs) {
+        final currentCode = prefs.nativeLanguageCode;
         return ListTile(
           title: Text(
             'Native language',
@@ -91,10 +104,12 @@ class NativeLanguageSetting extends ConsumerWidget {
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
               onTap: () async {
-                final userPrefsRepo =
-                    ref.read(userPreferencesRepositoryProvider);
-                await userPrefsRepo.updateNativeLanguageCode(
-                    userId, entry.key);
+                final dataService = ref.read(supabaseDataServiceProvider);
+                await dataService.updatePreferences(
+                  userId: userId,
+                  nativeLanguageCode: entry.key,
+                );
+                ref.invalidate(userPreferencesProvider);
                 if (context.mounted) Navigator.pop(context);
               },
             );
@@ -115,15 +130,28 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
     final userId = ref.watch(currentUserIdProvider);
     if (userId == null) return const SizedBox.shrink();
 
-    final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
+    final prefsAsync = ref.watch(userPreferencesProvider);
 
-    return FutureBuilder<String>(
-      future: userPrefsRepo.getOrCreateWithDefaults(userId).then(
-            (p) => p.meaningDisplayMode,
+    return prefsAsync.when(
+      loading: () => ListTile(
+        title: Text(
+          'Meaning display',
+          style: MasteryTextStyles.body.copyWith(
+            color: isDark ? Colors.white : Colors.black,
           ),
-      builder: (context, snapshot) {
-        final currentMode = snapshot.data ?? 'both';
-
+        ),
+        subtitle: Text(
+          'Loading...',
+          style: MasteryTextStyles.bodySmall.copyWith(
+            color: isDark
+                ? MasteryColors.mutedForegroundDark
+                : MasteryColors.mutedForegroundLight,
+          ),
+        ),
+      ),
+      error: (e, s) => const SizedBox.shrink(),
+      data: (prefs) {
+        final currentMode = prefs.meaningDisplayMode;
         return ListTile(
           title: Text(
             'Meaning display',
@@ -145,8 +173,7 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
                 ? MasteryColors.mutedForegroundDark
                 : MasteryColors.mutedForegroundLight,
           ),
-          onTap: () => _showDisplayModePicker(
-              context, ref, userId, currentMode),
+          onTap: () => _showDisplayModePicker(context, ref, userId, currentMode),
         );
       },
     );
@@ -170,10 +197,12 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
               onTap: () async {
-                final userPrefsRepo =
-                    ref.read(userPreferencesRepositoryProvider);
-                await userPrefsRepo.updateMeaningDisplayMode(
-                    userId, entry.key);
+                final dataService = ref.read(supabaseDataServiceProvider);
+                await dataService.updatePreferences(
+                  userId: userId,
+                  meaningDisplayMode: entry.key,
+                );
+                ref.invalidate(userPreferencesProvider);
                 if (context.mounted) Navigator.pop(context);
               },
             );

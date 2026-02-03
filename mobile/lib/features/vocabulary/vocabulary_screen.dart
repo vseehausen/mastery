@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/database/database.dart';
+import '../../domain/models/vocabulary.dart';
 import 'vocabulary_detail_screen.dart';
 import 'vocabulary_provider.dart';
 
@@ -213,7 +213,7 @@ class _VocabularyScreenState extends ConsumerState<VocabularyScreen> {
 class _VocabularyCard extends StatelessWidget {
   const _VocabularyCard({required this.vocabulary, this.highlightQuery});
 
-  final Vocabulary vocabulary;
+  final VocabularyModel vocabulary;
   final String? highlightQuery;
 
   String _formatDate(DateTime date) {

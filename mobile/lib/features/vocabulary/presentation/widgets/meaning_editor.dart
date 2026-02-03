@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../data/database/database.dart';
+import '../../../../domain/models/meaning.dart';
 
 /// Inline editor for meaning translations and definitions.
 /// Allows editing primary translation, English definition, and pinning alternatives.
@@ -12,7 +12,7 @@ class MeaningEditor extends StatefulWidget {
     required this.onCancel,
   });
 
-  final Meaning meaning;
+  final MeaningModel meaning;
   final void Function({
     String? primaryTranslation,
     String? englishDefinition,
@@ -27,13 +27,14 @@ class _MeaningEditorState extends State<MeaningEditor> {
   late TextEditingController _translationController;
   late TextEditingController _definitionController;
 
+  String get _currentTranslation => widget.meaning.primaryTranslation;
+  String get _currentDefinition => widget.meaning.englishDefinition;
+
   @override
   void initState() {
     super.initState();
-    _translationController =
-        TextEditingController(text: widget.meaning.primaryTranslation);
-    _definitionController =
-        TextEditingController(text: widget.meaning.englishDefinition);
+    _translationController = TextEditingController(text: _currentTranslation);
+    _definitionController = TextEditingController(text: _currentDefinition);
   }
 
   @override
@@ -44,8 +45,8 @@ class _MeaningEditorState extends State<MeaningEditor> {
   }
 
   bool get _hasChanges {
-    return _translationController.text != widget.meaning.primaryTranslation ||
-        _definitionController.text != widget.meaning.englishDefinition;
+    return _translationController.text != _currentTranslation ||
+        _definitionController.text != _currentDefinition;
   }
 
   @override
@@ -147,12 +148,10 @@ class _MeaningEditorState extends State<MeaningEditor> {
     final newDefinition = _definitionController.text.trim();
 
     widget.onSave(
-      primaryTranslation: newTranslation != widget.meaning.primaryTranslation
-          ? newTranslation
-          : null,
-      englishDefinition: newDefinition != widget.meaning.englishDefinition
-          ? newDefinition
-          : null,
+      primaryTranslation:
+          newTranslation != _currentTranslation ? newTranslation : null,
+      englishDefinition:
+          newDefinition != _currentDefinition ? newDefinition : null,
     );
   }
 }

@@ -1,14 +1,14 @@
 import 'dart:math';
 
-import '../../data/database/database.dart';
-import '../../data/repositories/vocabulary_repository.dart';
+import '../../data/services/supabase_data_service.dart';
+import '../models/vocabulary.dart';
 
 /// Service for selecting distractor options for multiple choice questions
 /// Implements the contract from contracts/distractor-service.md
 class DistractorService {
-  DistractorService(this._vocabularyRepository);
+  DistractorService(this._dataService);
 
-  final VocabularyRepository _vocabularyRepository;
+  final SupabaseDataService _dataService;
   final _random = Random();
 
   /// Select distractors for a target vocabulary item
@@ -28,13 +28,16 @@ class DistractorService {
     int count = 3,
   }) async {
     // Get the target item to understand what we need
-    final targetItem = await _vocabularyRepository.getById(targetItemId);
-    if (targetItem == null) {
+    final targetData = await _dataService.getVocabularyById(targetItemId);
+    if (targetData == null) {
       return [];
     }
+    final targetItem = VocabularyModel.fromJson(targetData);
 
     // Get all vocabulary for this user (excluding target and excluded items)
-    final allVocabulary = await _vocabularyRepository.getAllForUser(userId);
+    final allVocabData = await _dataService.getVocabulary(userId);
+    final allVocabulary = allVocabData.map(VocabularyModel.fromJson).toList();
+
     final candidates = allVocabulary.where((v) {
       if (v.id == targetItemId) return false;
       if (excludeIds.contains(v.id)) return false;
@@ -81,7 +84,7 @@ class DistractorService {
   }
 
   /// Generate fallback distractors when not enough vocabulary exists
-  List<Distractor> _generateFallbackDistractors(Vocabulary target, int count) {
+  List<Distractor> _generateFallbackDistractors(VocabularyModel target, int count) {
     // Simple fallbacks - in production these would be from a larger pool
     final fallbacks = <String>[
       'something else',

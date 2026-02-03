@@ -6,7 +6,7 @@ part of 'session_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dailyTimeTargetHash() => r'0053924b0f4a5904ba70d4c07db8e16095dcd34e';
+String _$dailyTimeTargetHash() => r'b245bb86fcfaa0b0148a18f0834ef0de0561bea9';
 
 /// Provides the user's daily time target in minutes
 ///
@@ -25,7 +25,7 @@ final dailyTimeTargetProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DailyTimeTargetRef = AutoDisposeFutureProviderRef<int>;
-String _$hasCompletedTodayHash() => r'8972036d3d80f0b29f57b97bff3073d517c770b4';
+String _$hasCompletedTodayHash() => r'33ff5036d6d4b3bf7e88f3ee354b3f7474624317';
 
 /// Provides whether user has completed their session today
 ///
@@ -44,7 +44,7 @@ final hasCompletedTodayProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HasCompletedTodayRef = AutoDisposeFutureProviderRef<bool>;
-String _$todayProgressHash() => r'f77139975925c8d3f1b2ac1843bafaed48c9a9d4';
+String _$todayProgressHash() => r'4953370ad125c677788ae056760bb12c04d9e5cb';
 
 /// Provides today's progress (0.0 to 1.0)
 ///
@@ -63,7 +63,7 @@ final todayProgressProvider = AutoDisposeFutureProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TodayProgressRef = AutoDisposeFutureProviderRef<double>;
-String _$hasItemsToReviewHash() => r'3a3d0c5c6639762fc5ff5ad9420aef183424777f';
+String _$hasItemsToReviewHash() => r'c3becbe6a47f60d41902bf505915a55ff87138bd';
 
 /// Provides whether there are items available to review
 ///
@@ -82,14 +82,14 @@ final hasItemsToReviewProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HasItemsToReviewRef = AutoDisposeFutureProviderRef<bool>;
-String _$activeSessionHash() => r'acd5c68b894a1be6c7161932e458ea6f82518850';
+String _$activeSessionHash() => r'9a67a4fc6f7b0026ac1b8372a03874cc33dbacea';
 
 /// Provides the currently active session, if any
 ///
 /// Copied from [activeSession].
 @ProviderFor(activeSession)
 final activeSessionProvider =
-    AutoDisposeFutureProvider<LearningSession?>.internal(
+    AutoDisposeFutureProvider<LearningSessionModel?>.internal(
       activeSession,
       name: r'activeSessionProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -101,8 +101,8 @@ final activeSessionProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef ActiveSessionRef = AutoDisposeFutureProviderRef<LearningSession?>;
-String _$sessionPlanHash() => r'01f26fdca1682c37599a644e237940fd72957428';
+typedef ActiveSessionRef = AutoDisposeFutureProviderRef<LearningSessionModel?>;
+String _$sessionPlanHash() => r'358249e2ba2c614275d2bd4dd5587da4e33b1486';
 
 /// Provides the session plan for the current/new session
 ///
@@ -122,7 +122,7 @@ final sessionPlanProvider = AutoDisposeFutureProvider<SessionPlan?>.internal(
 // ignore: unused_element
 typedef SessionPlanRef = AutoDisposeFutureProviderRef<SessionPlan?>;
 String _$activeSessionNotifierHash() =>
-    r'866378928f95639dea76c70619050316af7a7d12';
+    r'47eb90f05bbd08e1ad7a6b68197281faa865b839';
 
 /// Notifier for managing active session state
 ///

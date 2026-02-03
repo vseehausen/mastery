@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mastery/core/theme/color_tokens.dart';
 import 'package:mastery/features/vocabulary/presentation/widgets/vocabulary_filter_chips.dart';
 
 import '../../helpers/test_helpers.dart';
@@ -13,43 +12,42 @@ void main() {
       );
 
       expect(find.text('All'), findsOneWidget);
-      expect(find.text('New'), findsOneWidget);
-      expect(find.text('Learning'), findsOneWidget);
-      expect(find.text('Known'), findsOneWidget);
+      expect(find.text('Enriched'), findsOneWidget);
+      expect(find.text('Not Enriched'), findsOneWidget);
     });
 
-    testWidgets('calls onFilterChanged with null when All is tapped', (
+    testWidgets('calls onFilterChanged with all when All is tapped', (
       tester,
     ) async {
-      LearningStatus? selectedStatus = LearningStatus.known;
+      VocabularyFilter selectedFilter = VocabularyFilter.enriched;
 
       await tester.pumpTestWidget(
         VocabularyFilterChips(
-          onFilterChanged: (status) => selectedStatus = status,
+          onFilterChanged: (filter) => selectedFilter = filter,
         ),
       );
 
       await tester.tap(find.text('All'));
       await tester.pump();
 
-      expect(selectedStatus, isNull);
+      expect(selectedFilter, VocabularyFilter.all);
     });
 
     testWidgets(
-      'calls onFilterChanged with correct status when chip is tapped',
+      'calls onFilterChanged with correct filter when chip is tapped',
       (tester) async {
-        LearningStatus? selectedStatus;
+        VocabularyFilter selectedFilter = VocabularyFilter.all;
 
         await tester.pumpTestWidget(
           VocabularyFilterChips(
-            onFilterChanged: (status) => selectedStatus = status,
+            onFilterChanged: (filter) => selectedFilter = filter,
           ),
         );
 
-        await tester.tap(find.text('Learning'));
+        await tester.tap(find.text('Enriched'));
         await tester.pump();
 
-        expect(selectedStatus, LearningStatus.learning);
+        expect(selectedFilter, VocabularyFilter.enriched);
       },
     );
 
@@ -69,6 +67,14 @@ void main() {
       );
 
       expect(find.text('All'), findsOneWidget);
+    });
+
+    testWidgets('shows sparkle icon on Enriched chip', (tester) async {
+      await tester.pumpTestWidget(
+        VocabularyFilterChips(onFilterChanged: (_) {}),
+      );
+
+      expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
     });
   });
 }

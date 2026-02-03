@@ -7,14 +7,14 @@ part of 'learning_preferences_providers.dart';
 // **************************************************************************
 
 String _$userLearningPreferencesHash() =>
-    r'63460c57ab722ee48cff55ab2cd73e5d4b72682b';
+    r'b2ba6de129c7f3ae27170a833f75f95711d2c9b9';
 
 /// Provides the user's learning preferences
 ///
 /// Copied from [userLearningPreferences].
 @ProviderFor(userLearningPreferences)
 final userLearningPreferencesProvider =
-    AutoDisposeFutureProvider<UserLearningPreference?>.internal(
+    AutoDisposeFutureProvider<UserPreferencesModel?>.internal(
       userLearningPreferences,
       name: r'userLearningPreferencesProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -27,9 +27,9 @@ final userLearningPreferencesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef UserLearningPreferencesRef =
-    AutoDisposeFutureProviderRef<UserLearningPreference?>;
+    AutoDisposeFutureProviderRef<UserPreferencesModel?>;
 String _$learningPreferencesNotifierHash() =>
-    r'137888523258e2b89d7dbd30162926e25b1d5523';
+    r'dbb11e30447b04d19640dcc990015bb9abe6ae62';
 
 /// Notifier for managing user learning preferences
 ///
@@ -38,7 +38,7 @@ String _$learningPreferencesNotifierHash() =>
 final learningPreferencesNotifierProvider =
     AutoDisposeAsyncNotifierProvider<
       LearningPreferencesNotifier,
-      UserLearningPreference?
+      UserPreferencesModel?
     >.internal(
       LearningPreferencesNotifier.new,
       name: r'learningPreferencesNotifierProvider',
@@ -50,6 +50,6 @@ final learningPreferencesNotifierProvider =
     );
 
 typedef _$LearningPreferencesNotifier =
-    AutoDisposeAsyncNotifier<UserLearningPreference?>;
+    AutoDisposeAsyncNotifier<UserPreferencesModel?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

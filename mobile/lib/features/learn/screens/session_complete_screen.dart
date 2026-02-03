@@ -4,7 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../providers/learning_providers.dart';
+import '../../../providers/supabase_provider.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
 import 'session_screen.dart';
@@ -46,10 +46,10 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     });
 
     try {
-      final sessionRepo = ref.read(sessionRepositoryProvider);
+      final dataService = ref.read(supabaseDataServiceProvider);
 
       // Add 2 minutes (120 seconds) of bonus time
-      await sessionRepo.addBonusTime(
+      await dataService.addBonusTime(
         sessionId: widget.sessionId,
         bonusSeconds: 120,
       );

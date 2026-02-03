@@ -5,7 +5,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/database_provider.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
@@ -252,17 +251,16 @@ class SessionHomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           ShadButton.outline(
-            onPressed: () async {
-              final syncService = ref.read(syncServiceProvider);
-              await syncService.sync();
+            onPressed: () {
+              // Refresh data from server
               ref.invalidate(hasItemsToReviewProvider);
             },
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sync, size: 16),
+                Icon(Icons.refresh, size: 16),
                 SizedBox(width: 8),
-                Text('Sync from Cloud'),
+                Text('Refresh'),
               ],
             ),
           ),

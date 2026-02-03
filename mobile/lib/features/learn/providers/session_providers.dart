@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/database/database.dart';
+import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/database_provider.dart';
 import '../../../providers/learning_providers.dart';
+import '../../../providers/supabase_provider.dart';
 
 part 'session_providers.g.dart';
 
@@ -21,9 +21,9 @@ Future<int> dailyTimeTarget(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return 10;
 
-  final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
-  final prefs = await userPrefsRepo.getOrCreateWithDefaults(userId);
-  return prefs.dailyTimeTargetMinutes;
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final prefs = await dataService.getOrCreatePreferences(userId);
+  return prefs['daily_time_target_minutes'] as int? ?? 10;
 }
 
 /// Provides whether user has completed their session today
@@ -33,8 +33,16 @@ Future<bool> hasCompletedToday(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return false;
 
-  final streakRepo = ref.watch(streakRepositoryProvider);
-  return streakRepo.hasCompletedToday(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final streak = await dataService.getOrCreateStreak(userId);
+  final lastCompletedStr = streak['last_completed_date'] as String?;
+  if (lastCompletedStr == null) return false;
+
+  final lastCompleted = DateTime.parse(lastCompletedStr);
+  final today = DateTime.now().toUtc();
+  return lastCompleted.year == today.year &&
+      lastCompleted.month == today.month &&
+      lastCompleted.day == today.day;
 }
 
 /// Provides today's progress (0.0 to 1.0)
@@ -44,13 +52,14 @@ Future<double> todayProgress(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return 0.0;
 
-  final sessionRepo = ref.watch(sessionRepositoryProvider);
-  final activeSession = await sessionRepo.getActiveSession(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final activeSessionData = await dataService.getActiveSession(userId);
 
-  if (activeSession == null) return 0.0;
+  if (activeSessionData == null) return 0.0;
 
-  final elapsed = activeSession.elapsedSeconds;
-  final planned = activeSession.plannedMinutes * 60;
+  final elapsed = activeSessionData['elapsed_seconds'] as int? ?? 0;
+  final plannedMinutes = activeSessionData['planned_minutes'] as int? ?? 10;
+  final planned = plannedMinutes * 60;
 
   if (planned <= 0) return 0.0;
   return (elapsed / planned).clamp(0.0, 1.0);
@@ -63,23 +72,22 @@ Future<bool> hasItemsToReview(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return false;
 
-  final learningCardRepo = ref.watch(learningCardRepositoryProvider);
-  final vocabRepo = ref.watch(vocabularyRepositoryProvider);
+  final dataService = ref.watch(supabaseDataServiceProvider);
 
   // Check for due cards or new cards
-  final dueCards = await learningCardRepo.getDueCards(userId, limit: 1);
+  final dueCards = await dataService.getDueCards(userId, limit: 1);
   if (dueCards.isNotEmpty) return true;
 
-  final newCards = await learningCardRepo.getNewCards(userId, limit: 1);
+  final newCards = await dataService.getNewCards(userId, limit: 1);
   if (newCards.isNotEmpty) return true;
 
   // Also check if there's vocabulary that doesn't have learning cards yet
-  final allVocab = await vocabRepo.getAllForUser(userId);
-  if (allVocab.isNotEmpty) {
+  final vocabCount = await dataService.countVocabulary(userId);
+  if (vocabCount > 0) {
     // There's vocabulary - cards will be created at import time on server
-    final existingCards = await learningCardRepo.getAll(userId);
+    final existingCards = await dataService.getLearningCards(userId);
     // If there are more vocab items than cards, we have items to review
-    if (allVocab.length > existingCards.length) return true;
+    if (vocabCount > existingCards.length) return true;
   }
 
   return false;
@@ -91,13 +99,15 @@ Future<bool> hasItemsToReview(Ref ref) async {
 
 /// Provides the currently active session, if any
 @riverpod
-Future<LearningSession?> activeSession(Ref ref) async {
+Future<LearningSessionModel?> activeSession(Ref ref) async {
   final currentUser = ref.watch(currentUserProvider);
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return null;
 
-  final sessionRepo = ref.watch(sessionRepositoryProvider);
-  return sessionRepo.getActiveSession(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final sessionData = await dataService.getActiveSession(userId);
+  if (sessionData == null) return null;
+  return LearningSessionModel.fromJson(sessionData);
 }
 
 /// Provides the session plan for the current/new session
@@ -108,14 +118,14 @@ Future<SessionPlan?> sessionPlan(Ref ref) async {
   if (userId == null) return null;
 
   final planner = ref.watch(sessionPlannerProvider);
-  final userPrefsRepo = ref.watch(userPreferencesRepositoryProvider);
-  final prefs = await userPrefsRepo.getOrCreateWithDefaults(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final prefs = await dataService.getOrCreatePreferences(userId);
 
   return planner.buildSessionPlan(
     userId: userId,
-    timeTargetMinutes: prefs.dailyTimeTargetMinutes,
-    intensity: prefs.intensity,
-    targetRetention: prefs.targetRetention,
+    timeTargetMinutes: prefs['daily_time_target_minutes'] as int? ?? 10,
+    intensity: prefs['intensity'] as int? ?? 1,
+    targetRetention: (prefs['target_retention'] as num?)?.toDouble() ?? 0.90,
   );
 }
 
@@ -134,7 +144,7 @@ class ActiveSessionState {
     this.isComplete = false,
   });
 
-  final LearningSession? session;
+  final LearningSessionModel? session;
   final SessionPlan? plan;
   final int currentItemIndex;
   final int elapsedSeconds;
@@ -151,12 +161,12 @@ class ActiveSessionState {
 
   int get remainingSeconds {
     if (session == null) return 0;
-    final planned = session!.plannedMinutes * 60 + (session!.bonusSeconds);
+    final planned = session!.plannedMinutes * 60 + session!.bonusSeconds;
     return (planned - elapsedSeconds).clamp(0, planned);
   }
 
   ActiveSessionState copyWith({
-    LearningSession? session,
+    LearningSessionModel? session,
     SessionPlan? plan,
     int? currentItemIndex,
     int? elapsedSeconds,
@@ -183,7 +193,7 @@ class ActiveSessionNotifier extends _$ActiveSessionNotifier {
   }
 
   /// Initialize the session with a plan
-  void initialize(LearningSession session, SessionPlan plan) {
+  void initialize(LearningSessionModel session, SessionPlan plan) {
     state = ActiveSessionState(
       session: session,
       plan: plan,

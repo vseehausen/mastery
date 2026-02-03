@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
-/// Filter chips for vocabulary status filtering
+/// Filter types for vocabulary list
+enum VocabularyFilter {
+  all,
+  enriched,
+  notEnriched,
+}
+
+/// Filter chips for vocabulary filtering
 class VocabularyFilterChips extends StatefulWidget {
   const VocabularyFilterChips({super.key, required this.onFilterChanged});
 
-  final ValueChanged<LearningStatus?> onFilterChanged;
+  final ValueChanged<VocabularyFilter> onFilterChanged;
 
   @override
   State<VocabularyFilterChips> createState() => _VocabularyFilterChipsState();
 }
 
 class _VocabularyFilterChipsState extends State<VocabularyFilterChips> {
-  LearningStatus? _selectedStatus;
+  VocabularyFilter _selectedFilter = VocabularyFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -26,43 +32,33 @@ class _VocabularyFilterChipsState extends State<VocabularyFilterChips> {
         children: [
           _FilterChip(
             label: 'All',
-            isSelected: _selectedStatus == null,
+            isSelected: _selectedFilter == VocabularyFilter.all,
             onTap: () {
-              setState(() => _selectedStatus = null);
-              widget.onFilterChanged(null);
+              setState(() => _selectedFilter = VocabularyFilter.all);
+              widget.onFilterChanged(VocabularyFilter.all);
             },
             isDark: isDark,
             primaryColor: primaryColor,
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: 'Learning',
-            isSelected: _selectedStatus == LearningStatus.learning,
+            label: 'Enriched',
+            icon: Icons.auto_awesome,
+            isSelected: _selectedFilter == VocabularyFilter.enriched,
             onTap: () {
-              setState(() => _selectedStatus = LearningStatus.learning);
-              widget.onFilterChanged(LearningStatus.learning);
+              setState(() => _selectedFilter = VocabularyFilter.enriched);
+              widget.onFilterChanged(VocabularyFilter.enriched);
             },
             isDark: isDark,
             primaryColor: primaryColor,
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: 'Known',
-            isSelected: _selectedStatus == LearningStatus.known,
+            label: 'Not Enriched',
+            isSelected: _selectedFilter == VocabularyFilter.notEnriched,
             onTap: () {
-              setState(() => _selectedStatus = LearningStatus.known);
-              widget.onFilterChanged(LearningStatus.known);
-            },
-            isDark: isDark,
-            primaryColor: primaryColor,
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'New',
-            isSelected: _selectedStatus == LearningStatus.unknown,
-            onTap: () {
-              setState(() => _selectedStatus = LearningStatus.unknown);
-              widget.onFilterChanged(LearningStatus.unknown);
+              setState(() => _selectedFilter = VocabularyFilter.notEnriched);
+              widget.onFilterChanged(VocabularyFilter.notEnriched);
             },
             isDark: isDark,
             primaryColor: primaryColor,
@@ -80,6 +76,7 @@ class _FilterChip extends StatelessWidget {
     required this.onTap,
     required this.isDark,
     required this.primaryColor,
+    this.icon,
   });
 
   final String label;
@@ -87,6 +84,7 @@ class _FilterChip extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDark;
   final Color primaryColor;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -102,14 +100,29 @@ class _FilterChip extends StatelessWidget {
                     : Colors.grey[200]),
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Text(
-          label,
-          style: MasteryTextStyles.bodySmall.copyWith(
-            color: isSelected
-                ? Colors.white
-                : (isDark ? Colors.white : Colors.black),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white : Colors.black),
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white : Colors.black),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

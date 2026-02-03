@@ -1,32 +1,34 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../data/database/database.dart';
-import '../../../domain/models/learning_enums.dart';
+import '../../../domain/models/cue.dart';
 import '../../../domain/models/cue_type.dart';
+import '../../../domain/models/encounter.dart';
+import '../../../domain/models/learning_enums.dart';
+import '../../../domain/models/learning_session.dart';
+import '../../../domain/models/meaning.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
-import '../../../domain/services/distractor_service.dart';
+import '../../../domain/models/vocabulary.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/database_provider.dart';
 import '../../../providers/learning_providers.dart';
+import '../../../providers/supabase_provider.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
+import '../widgets/cloze_cue_card.dart';
 import '../widgets/definition_cue_card.dart';
+import '../widgets/disambiguation_card.dart';
 import '../widgets/recall_card.dart';
 import '../widgets/recognition_card.dart';
-import '../widgets/cloze_cue_card.dart';
-import '../widgets/disambiguation_card.dart';
-import '../widgets/synonym_cue_card.dart';
 import '../widgets/session_progress_bar.dart';
 import '../widgets/session_timer.dart';
+import '../widgets/synonym_cue_card.dart';
 import 'session_complete_screen.dart';
 
 /// Main session screen for learning
@@ -40,17 +42,18 @@ class SessionScreen extends ConsumerStatefulWidget {
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
   SessionPlan? _sessionPlan;
-  LearningSession? _session;
+  LearningSessionModel? _session;
   int _currentItemIndex = 0;
   int _elapsedSeconds = 0;
   bool _isPaused = false;
   bool _isLoading = true;
   bool _isSessionComplete = false;
   DateTime? _itemStartTime;
-  DistractorService? _distractorService;
   List<String>? _currentDistractors;
   int _newWordsPresented = 0;
   int _reviewsPresented = 0;
+
+  final _uuid = const Uuid();
 
   @override
   void initState() {
@@ -68,100 +71,44 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       return;
     }
 
-    final sessionRepo = ref.read(sessionRepositoryProvider);
+    final dataService = ref.read(supabaseDataServiceProvider);
     final planner = ref.read(sessionPlannerProvider);
-    final vocabRepo = ref.read(vocabularyRepositoryProvider);
-    final userPrefsRepo = ref.read(userPreferencesRepositoryProvider);
-
-    // Initialize distractor service
-    _distractorService = DistractorService(vocabRepo);
 
     // Check for existing active session
-    var activeSession = await sessionRepo.getActiveSession(userId);
+    final activeSessionData = await dataService.getActiveSession(userId);
+    LearningSessionModel? activeSession;
     final now = DateTime.now().toUtc();
 
-    if (activeSession != null) {
+    if (activeSessionData != null) {
+      activeSession = LearningSessionModel.fromJson(activeSessionData);
       // Check if session is expired
       if (activeSession.expiresAt.isBefore(now)) {
         // Expire the old session
-        await sessionRepo.expireStaleSessions(userId);
+        await dataService.endSession(
+          sessionId: activeSession.id,
+          outcome: SessionOutcomeEnum.expired.value,
+        );
         activeSession = null;
       }
     }
 
     // Get user preferences for building the plan
-    final prefs = await userPrefsRepo.getOrCreateWithDefaults(userId);
+    final prefs = await dataService.getOrCreatePreferences(userId);
+    final dailyTimeTargetMinutes =
+        prefs['daily_time_target_minutes'] as int? ?? 10;
+    final intensity = prefs['intensity'] as int? ?? 1;
+    final targetRetention =
+        (prefs['target_retention'] as num?)?.toDouble() ?? 0.90;
 
     // Build session plan
-    var plan = await planner.buildSessionPlan(
+    final plan = await planner.buildSessionPlan(
       userId: userId,
-      timeTargetMinutes: prefs.dailyTimeTargetMinutes,
-      intensity: prefs.intensity,
-      targetRetention: prefs.targetRetention,
+      timeTargetMinutes: dailyTimeTargetMinutes,
+      intensity: intensity,
+      targetRetention: targetRetention,
     );
 
     debugPrint('[Session] Initial plan items: ${plan.items.length}');
-
-    // If no items locally, fetch learning cards directly from Supabase
-    if (plan.items.isEmpty) {
-      debugPrint('[Session] No items locally, fetching from server...');
-
-      try {
-        // Direct query to Supabase for learning cards
-        final cardsResponse = await Supabase.instance.client
-            .from('learning_cards')
-            .select()
-            .eq('user_id', userId);
-
-        final cards = cardsResponse as List<dynamic>;
-        debugPrint('[Session] Fetched ${cards.length} cards from server');
-
-        // Save to local database
-        final db = ref.read(databaseProvider);
-        for (final item in cards) {
-          final c = item as Map<String, dynamic>;
-          final entry = LearningCardsCompanion(
-            id: Value(c['id'] as String),
-            userId: Value(c['user_id'] as String),
-            vocabularyId: Value(c['vocabulary_id'] as String),
-            state: Value(c['state'] as int),
-            due: Value(DateTime.parse(c['due'] as String)),
-            stability: Value((c['stability'] as num).toDouble()),
-            difficulty: Value((c['difficulty'] as num).toDouble()),
-            reps: Value(c['reps'] as int),
-            lapses: Value(c['lapses'] as int),
-            lastReview: Value(
-              c['last_review'] != null
-                  ? DateTime.parse(c['last_review'] as String)
-                  : null,
-            ),
-            isLeech: Value(c['is_leech'] as bool),
-            createdAt: Value(DateTime.parse(c['created_at'] as String)),
-            updatedAt: Value(DateTime.parse(c['updated_at'] as String)),
-            deletedAt: Value(
-              c['deleted_at'] != null
-                  ? DateTime.parse(c['deleted_at'] as String)
-                  : null,
-            ),
-            version: Value(c['version'] as int? ?? 1),
-            lastSyncedAt: Value(DateTime.now()),
-            isPendingSync: const Value(false),
-          );
-          await db.into(db.learningCards).insertOnConflictUpdate(entry);
-        }
-
-        // Retry building the plan after fetching cards
-        plan = await planner.buildSessionPlan(
-          userId: userId,
-          timeTargetMinutes: prefs.dailyTimeTargetMinutes,
-          intensity: prefs.intensity,
-          targetRetention: prefs.targetRetention,
-        );
-        debugPrint('[Session] Plan after fetch: ${plan.items.length} items');
-      } catch (e) {
-        debugPrint('[Session] Error fetching cards: $e');
-      }
-    }
 
     if (plan.items.isEmpty) {
       if (mounted) {
@@ -175,7 +122,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     // Create new session if needed
     if (activeSession == null) {
-      final plannedMinutes = prefs.dailyTimeTargetMinutes;
+      final plannedMinutes = dailyTimeTargetMinutes;
       final expiresAt = DateTime(
         now.year,
         now.month,
@@ -185,11 +132,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         59,
       ).toUtc();
 
-      activeSession = await sessionRepo.create(
+      final sessionId = _uuid.v4();
+      final sessionData = await dataService.createSession(
+        id: sessionId,
         userId: userId,
         plannedMinutes: plannedMinutes,
         expiresAt: expiresAt,
       );
+      activeSession = LearningSessionModel.fromJson(sessionData);
     }
 
     // Load distractors for first item if it's recognition mode
@@ -212,21 +162,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _loadDistractorsForItem(PlannedItem item, String userId) async {
-    if (_distractorService == null) return;
+    final distractorService = ref.read(distractorServiceProvider);
 
-    // Get vocabulary for the learning card
-    final vocabRepo = ref.read(vocabularyRepositoryProvider);
-    final vocab = await vocabRepo.getById(item.vocabularyId);
-
-    if (vocab == null) {
-      setState(() {
-        _currentDistractors = ['Option A', 'Option B', 'Option C'];
-      });
-      return;
-    }
-
-    final distractors = await _distractorService!.selectDistractors(
-      targetItemId: vocab.id,
+    final distractors = await distractorService.selectDistractors(
+      targetItemId: item.vocabularyId,
       userId: userId,
       count: 3,
     );
@@ -279,9 +218,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (userId == null) return;
 
     final srsScheduler = ref.read(srsSchedulerProvider());
-    final learningCardRepo = ref.read(learningCardRepositoryProvider);
-    final reviewLogRepo = ref.read(reviewLogRepositoryProvider);
-    final sessionRepo = ref.read(sessionRepositoryProvider);
+    final dataService = ref.read(supabaseDataServiceProvider);
 
     // Track new words vs reviews
     if (currentItem.isNewWord) {
@@ -297,8 +234,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       interactionMode: currentItem.interactionMode,
     );
 
-    // Save updated card
-    await learningCardRepo.updateAfterReview(
+    // Save updated card to Supabase
+    await dataService.updateLearningCard(
       cardId: currentItem.learningCard.id,
       state: result.updatedCard.state,
       due: result.updatedCard.due,
@@ -309,8 +246,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       isLeech: result.updatedCard.isLeech,
     );
 
-    // Save review log
-    await reviewLogRepo.insert(
+    // Save review log to Supabase
+    final reviewLogId = _uuid.v4();
+    await dataService.insertReviewLog(
+      id: reviewLogId,
       userId: userId,
       learningCardId: currentItem.learningCard.id,
       rating: rating,
@@ -324,10 +263,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       responseTimeMs: responseTimeMs,
       retrievabilityAtReview: result.reviewLog.retrievabilityAtReview,
       sessionId: _session!.id,
+      cueType: currentItem.cueType?.name,
     );
 
     // Update session progress
-    await sessionRepo.updateProgress(
+    await dataService.updateSessionProgress(
       sessionId: _session!.id,
       elapsedSeconds: _elapsedSeconds,
       itemsPresented: _currentItemIndex + 1,
@@ -362,8 +302,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Future<void> _completeSession() async {
     if (_session == null || _isSessionComplete) return;
 
-    final sessionRepo = ref.read(sessionRepositoryProvider);
-    final syncService = ref.read(syncServiceProvider);
+    final dataService = ref.read(supabaseDataServiceProvider);
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
@@ -373,7 +312,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ? SessionOutcomeEnum.complete
         : SessionOutcomeEnum.partial;
 
-    await sessionRepo.endSession(
+    await dataService.endSession(
       sessionId: _session!.id,
       outcome: outcome.value,
     );
@@ -382,10 +321,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (outcome == SessionOutcomeEnum.complete) {
       await ref.read(streakNotifierProvider.notifier).incrementStreak();
     }
-
-    // Trigger sync to push learning data to server
-    // Fire-and-forget sync to avoid blocking UI
-    unawaited(syncService.pushChanges());
 
     // Invalidate providers to refresh home screen
     ref.invalidate(hasCompletedTodayProvider);
@@ -419,8 +354,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Future<void> _saveProgress() async {
     if (_session == null) return;
 
-    final sessionRepo = ref.read(sessionRepositoryProvider);
-    await sessionRepo.updateProgress(
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updateSessionProgress(
       sessionId: _session!.id,
       elapsedSeconds: _elapsedSeconds,
       itemsPresented: _currentItemIndex,
@@ -490,9 +425,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.cardDark
-                    : MasteryColors.cardLight,
+                color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
                 border: Border(
                   bottom: BorderSide(
                     color: isDark
@@ -614,12 +547,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
 
         final data = snapshot.data!;
-        final contextText = data.encounterContext ?? data.vocab.word;
+        // Use translation as primary answer, fall back to context or word
+        final translationAnswer =
+            data.translation ?? data.encounterContext ?? data.vocab.word;
 
         if (item.isRecognition) {
           return RecognitionCard(
             word: data.vocab.word,
-            correctAnswer: contextText,
+            correctAnswer: translationAnswer,
             distractors:
                 _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
             context: data.encounterContext,
@@ -631,20 +566,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         switch (item.cueType) {
           case CueType.definition:
             return DefinitionCueCard(
-              definition: data.promptText ?? contextText,
+              definition:
+                  data.promptText ?? data.definition ?? translationAnswer,
               targetWord: data.answerText ?? data.vocab.word,
               hintText: data.hintText,
               onGrade: _handleRecallGrade,
             );
           case CueType.synonym:
             return SynonymCueCard(
-              synonymPhrase: data.promptText ?? contextText,
+              synonymPhrase: data.promptText ?? translationAnswer,
               targetWord: data.answerText ?? data.vocab.word,
               onGrade: _handleRecallGrade,
             );
           case CueType.disambiguation:
             return DisambiguationCard(
-              clozeSentence: data.promptText ?? contextText,
+              clozeSentence: data.promptText ?? translationAnswer,
               options: data.disambiguationOptions ?? [data.vocab.word],
               correctIndex: data.disambiguationCorrectIndex ?? 0,
               explanation: data.hintText ?? '',
@@ -652,7 +588,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             );
           case CueType.contextCloze:
             return ClozeCueCard(
-              sentenceWithBlank: data.promptText ?? contextText,
+              sentenceWithBlank: data.promptText ?? translationAnswer,
               targetWord: data.answerText ?? data.vocab.word,
               hintText: data.hintText,
               onGrade: _handleRecallGrade,
@@ -661,7 +597,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           case null:
             return RecallCard(
               word: data.vocab.word,
-              answer: contextText,
+              answer: translationAnswer,
+              context: data.encounterContext,
               onGrade: _handleRecallGrade,
             );
         }
@@ -673,13 +610,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     String vocabularyId,
     CueType? cueType,
   ) async {
-    final vocabRepo = ref.read(vocabularyRepositoryProvider);
-    final encounterRepo = ref.read(encounterRepositoryProvider);
+    final dataService = ref.read(supabaseDataServiceProvider);
 
-    final vocab = await vocabRepo.getById(vocabularyId);
-    if (vocab == null) {
+    // Fetch vocabulary from Supabase
+    final vocabData = await dataService.getVocabularyById(vocabularyId);
+    if (vocabData == null) {
+      debugPrint('[Session] Vocabulary not found: $vocabularyId');
       return _VocabWithContext(
-        vocab: Vocabulary(
+        vocab: VocabularyModel(
           id: vocabularyId,
           userId: '',
           word: '???',
@@ -688,16 +626,27 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
           deletedAt: null,
-          lastSyncedAt: null,
-          isPendingSync: false,
-          version: 1,
         ),
         encounterContext: null,
       );
     }
 
-    final encounter = await encounterRepo.getMostRecentForVocabulary(
-      vocabularyId,
+    final vocab = VocabularyModel.fromJson(vocabData);
+
+    // Fetch most recent encounter
+    final encounterData = await dataService.getMostRecentEncounter(vocabularyId);
+    EncounterModel? encounter;
+    if (encounterData != null) {
+      encounter = EncounterModel.fromJson(encounterData);
+    }
+
+    // Load meanings for translation
+    final meaningsData = await dataService.getMeanings(vocabularyId);
+    final meanings = meaningsData.map(MeaningModel.fromJson).toList();
+    final meaning = meanings.isNotEmpty ? meanings.first : null;
+    debugPrint(
+      '[Session] Vocab: ${vocab.word}, meanings: ${meanings.length}, '
+      'translation: ${meaning?.primaryTranslation}',
     );
 
     // Load cue data for non-translation cue types
@@ -708,11 +657,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     int? disambiguationCorrectIndex;
 
     if (cueType != null && cueType != CueType.translation) {
-      final cueRepo = ref.read(cueRepositoryProvider);
-      final cues = await cueRepo.getForVocabulary(vocabularyId);
+      final cuesData = await dataService.getCuesForVocabulary(vocabularyId);
+      final cues = cuesData.map(CueModel.fromJson).toList();
       final cueTypeStr = cueType.toDbString();
 
-      final matchingCue = cues.cast<Cue?>().firstWhere(
+      final matchingCue = cues.cast<CueModel?>().firstWhere(
             (c) => c!.cueType == cueTypeStr,
             orElse: () => null,
           );
@@ -725,19 +674,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // Parse disambiguation metadata
         if (cueType == CueType.disambiguation) {
           final metadata = matchingCue.metadata;
-          if (metadata.isNotEmpty && metadata != '{}') {
-            try {
-              final parsed = Uri.splitQueryString(metadata);
-              final optionsStr = parsed['options'];
-              if (optionsStr != null) {
-                disambiguationOptions = optionsStr.split(',');
-              }
-              final correctStr = parsed['correct_index'];
-              if (correctStr != null) {
-                disambiguationCorrectIndex = int.tryParse(correctStr);
-              }
-            } catch (_) {
-              // Fall back to answer text as single option
+          if (metadata.isNotEmpty) {
+            final optionsList = metadata['options'];
+            if (optionsList is List) {
+              disambiguationOptions = optionsList.cast<String>();
+            }
+            final correctIdx = metadata['correct_index'];
+            if (correctIdx is int) {
+              disambiguationCorrectIndex = correctIdx;
             }
           }
           // Default: use answerText as correct option
@@ -750,6 +694,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     return _VocabWithContext(
       vocab: vocab,
       encounterContext: encounter?.context,
+      translation: meaning?.primaryTranslation,
+      definition: meaning?.englishDefinition,
       promptText: promptText,
       answerText: answerText,
       hintText: hintText,
@@ -763,6 +709,8 @@ class _VocabWithContext {
   _VocabWithContext({
     required this.vocab,
     this.encounterContext,
+    this.translation,
+    this.definition,
     this.promptText,
     this.answerText,
     this.hintText,
@@ -770,8 +718,10 @@ class _VocabWithContext {
     this.disambiguationCorrectIndex,
   });
 
-  final Vocabulary vocab;
+  final VocabularyModel vocab;
   final String? encounterContext;
+  final String? translation;
+  final String? definition;
   final String? promptText;
   final String? answerText;
   final String? hintText;

@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../domain/models/streak.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/learning_providers.dart';
+import '../../../providers/supabase_provider.dart';
 
 part 'streak_providers.g.dart';
 
@@ -13,13 +14,37 @@ Future<int> currentStreak(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return 0;
 
-  final streakRepo = ref.watch(streakRepositoryProvider);
+  final dataService = ref.watch(supabaseDataServiceProvider);
 
   // First, check if streak needs to be reset (missed a day)
-  await streakRepo.checkAndResetIfNeeded(userId);
+  final streakData = await dataService.getOrCreateStreak(userId);
+  final streak = StreakModel.fromJson(streakData);
 
-  // Then get the current streak
-  final streak = await streakRepo.get(userId);
+  // Check if we need to reset - if last completed was not today or yesterday
+  if (streak.lastCompletedDate != null) {
+    final today = DateTime.now().toUtc();
+    final yesterday = today.subtract(const Duration(days: 1));
+    final lastCompleted = streak.lastCompletedDate!;
+
+    final isToday = lastCompleted.year == today.year &&
+        lastCompleted.month == today.month &&
+        lastCompleted.day == today.day;
+    final isYesterday = lastCompleted.year == yesterday.year &&
+        lastCompleted.month == yesterday.month &&
+        lastCompleted.day == yesterday.day;
+
+    if (!isToday && !isYesterday) {
+      // Reset streak
+      await dataService.updateStreak(
+        id: streak.id,
+        currentCount: 0,
+        longestCount: streak.longestCount,
+        lastCompletedDate: null,
+      );
+      return 0;
+    }
+  }
+
   return streak.currentCount;
 }
 
@@ -30,8 +55,9 @@ Future<int> longestStreak(Ref ref) async {
   final userId = currentUser.valueOrNull?.id;
   if (userId == null) return 0;
 
-  final streakRepo = ref.watch(streakRepositoryProvider);
-  final streak = await streakRepo.get(userId);
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final streakData = await dataService.getOrCreateStreak(userId);
+  final streak = StreakModel.fromJson(streakData);
   return streak.longestCount;
 }
 
@@ -44,8 +70,9 @@ class StreakNotifier extends _$StreakNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return 0;
 
-    final streakRepo = ref.watch(streakRepositoryProvider);
-    final streak = await streakRepo.get(userId);
+    final dataService = ref.watch(supabaseDataServiceProvider);
+    final streakData = await dataService.getOrCreateStreak(userId);
+    final streak = StreakModel.fromJson(streakData);
     return streak.currentCount;
   }
 
@@ -55,10 +82,35 @@ class StreakNotifier extends _$StreakNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
-    final streakRepo = ref.watch(streakRepositoryProvider);
-    final updatedStreak = await streakRepo.increment(userId);
+    final dataService = ref.watch(supabaseDataServiceProvider);
+    final streakData = await dataService.getOrCreateStreak(userId);
+    final streak = StreakModel.fromJson(streakData);
 
-    state = AsyncValue.data(updatedStreak.currentCount);
+    final today = DateTime.now().toUtc();
+    final lastCompleted = streak.lastCompletedDate;
+
+    // Check if already completed today
+    if (lastCompleted != null &&
+        lastCompleted.year == today.year &&
+        lastCompleted.month == today.month &&
+        lastCompleted.day == today.day) {
+      // Already counted today, don't increment again
+      return;
+    }
+
+    // Increment streak
+    final newCount = streak.currentCount + 1;
+    final newLongest =
+        newCount > streak.longestCount ? newCount : streak.longestCount;
+
+    await dataService.updateStreak(
+      id: streak.id,
+      currentCount: newCount,
+      longestCount: newLongest,
+      lastCompletedDate: today,
+    );
+
+    state = AsyncValue.data(newCount);
 
     // Invalidate related providers to refresh UI
     ref.invalidate(currentStreakProvider);
@@ -71,8 +123,16 @@ class StreakNotifier extends _$StreakNotifier {
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
-    final streakRepo = ref.watch(streakRepositoryProvider);
-    await streakRepo.reset(userId);
+    final dataService = ref.watch(supabaseDataServiceProvider);
+    final streakData = await dataService.getOrCreateStreak(userId);
+    final streak = StreakModel.fromJson(streakData);
+
+    await dataService.updateStreak(
+      id: streak.id,
+      currentCount: 0,
+      longestCount: streak.longestCount,
+      lastCompletedDate: null,
+    );
 
     state = const AsyncValue.data(0);
 
