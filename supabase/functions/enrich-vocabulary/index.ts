@@ -244,7 +244,23 @@ async function getDeepLTranslation(
   if (!response.ok) throw new Error(`DeepL API error: ${response.status}`);
 
   const data = await response.json();
-  return data.translations?.[0]?.text || null;
+  const translation = data.translations?.[0]?.text || null;
+
+  // Validate translation quality - reject if:
+  // 1. Too short (< 2 chars, e.g. just punctuation)
+  // 2. Same as input word (no translation happened)
+  // 3. Only punctuation/whitespace
+  if (translation) {
+    const cleaned = translation.trim();
+    if (cleaned.length < 2 ||
+        cleaned.toLowerCase() === word.toLowerCase() ||
+        /^[\s\p{P}]+$/u.test(cleaned)) {
+      console.warn(`[enrich-vocabulary] Rejecting low-quality DeepL translation for "${word}": "${translation}"`);
+      return null;
+    }
+  }
+
+  return translation;
 }
 
 async function getGoogleTranslation(
@@ -269,7 +285,20 @@ async function getGoogleTranslation(
   if (!response.ok) throw new Error(`Google Translate API error: ${response.status}`);
 
   const data = await response.json();
-  return data.data?.translations?.[0]?.translatedText || null;
+  const translation = data.data?.translations?.[0]?.translatedText || null;
+
+  // Validate translation quality (same as DeepL)
+  if (translation) {
+    const cleaned = translation.trim();
+    if (cleaned.length < 2 ||
+        cleaned.toLowerCase() === word.toLowerCase() ||
+        /^[\s\p{P}]+$/u.test(cleaned)) {
+      console.warn(`[enrich-vocabulary] Rejecting low-quality Google translation for "${word}": "${translation}"`);
+      return null;
+    }
+  }
+
+  return translation;
 }
 
 // =============================================================================
