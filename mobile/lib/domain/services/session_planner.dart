@@ -1,12 +1,11 @@
 import 'dart:developer' as developer;
 
 import '../../data/services/supabase_data_service.dart';
-import '../models/learning_card.dart';
 import '../models/learning_enums.dart';
 import '../models/planned_item.dart';
+import '../models/session_card.dart';
 import '../models/session_plan.dart';
 import 'cue_selector.dart';
-import 'srs_scheduler.dart';
 import 'telemetry_service.dart';
 
 /// Interaction mode enum values
@@ -23,16 +22,13 @@ class SessionPlanner {
   SessionPlanner({
     required SupabaseDataService dataService,
     required TelemetryService telemetryService,
-    required SrsScheduler srsScheduler,
     CueSelector? cueSelector,
   }) : _dataService = dataService,
        _telemetryService = telemetryService,
-       _srsScheduler = srsScheduler,
        _cueSelector = cueSelector ?? CueSelector();
 
   final SupabaseDataService _dataService;
   final TelemetryService _telemetryService;
-  final SrsScheduler _srsScheduler;
   final CueSelector _cueSelector;
 
   /// Build a session plan for the current user
@@ -79,18 +75,32 @@ class SessionPlanner {
         ? 0
         : Intensity.getNewWordCap(intensity, timeTargetMinutes);
 
-    // Get cards in priority order
-    final dueCardsData = await _dataService.getDueCards(userId);
-    final dueCards = dueCardsData.map(LearningCardModel.fromJson).toList();
-
-    final leechCardsData = await _dataService.getLeechCards(userId);
-    final leeches = leechCardsData.map(LearningCardModel.fromJson).toList();
-
-    final newCardsData = await _dataService.getNewCards(
+    // Fetch session cards with all data in ONE query
+    final cardsData = await _dataService.getSessionCards(
       userId,
-      limit: newWordCap,
+      limit: maxItems * 2, // Fetch extra to filter
     );
-    final newCards = newCardsData.map(LearningCardModel.fromJson).toList();
+    final allCards = cardsData.map(SessionCard.fromJson).toList();
+
+    developer.log(
+      'getSessionCards returned ${allCards.length} cards',
+      name: 'SessionPlanner',
+    );
+
+    // Separate cards by type
+    final dueCards = <SessionCard>[];
+    final leechCards = <SessionCard>[];
+    final newCards = <SessionCard>[];
+
+    for (final card in allCards) {
+      if (card.state == 0) {
+        newCards.add(card);
+      } else if (card.isLeech) {
+        leechCards.add(card);
+      } else {
+        dueCards.add(card);
+      }
+    }
 
     // Build plan: due reviews first -> leeches -> new words
     final items = <PlannedItem>[];
@@ -98,35 +108,45 @@ class SessionPlanner {
     var leechCount = 0;
     var newWordCount = 0;
 
-    // Add due reviews (already sorted by priority)
+    // Add due reviews (already sorted by priority from RPC)
     for (final card in dueCards) {
       if (items.length >= maxItems) break;
 
-      // Skip leeches here (they'll be added separately)
-      if (card.isLeech) continue;
+      final cueType = _cueSelector.selectCueType(
+        card: card,
+        hasMeaning: card.hasMeaning,
+        hasEncounterContext: card.hasEncounterContext,
+        hasConfusables: card.hasConfusables,
+      );
 
       items.add(
         PlannedItem(
-          learningCard: card,
+          sessionCard: card,
           interactionMode: selectInteractionMode(card),
           priority: _computePriorityScore(card),
+          cueType: cueType,
         ),
       );
       reviewCount++;
     }
 
     // Add leeches
-    for (final card in leeches) {
+    for (final card in leechCards) {
       if (items.length >= maxItems) break;
 
-      // Avoid duplicates (leech might already be in due cards)
-      if (items.any((i) => i.learningCard.id == card.id)) continue;
+      final cueType = _cueSelector.selectCueType(
+        card: card,
+        hasMeaning: card.hasMeaning,
+        hasEncounterContext: card.hasEncounterContext,
+        hasConfusables: card.hasConfusables,
+      );
 
       items.add(
         PlannedItem(
-          learningCard: card,
+          sessionCard: card,
           interactionMode: selectInteractionMode(card),
           priority: _computePriorityScore(card) * 1.5, // Boost leech priority
+          cueType: cueType,
         ),
       );
       leechCount++;
@@ -137,39 +157,44 @@ class SessionPlanner {
       if (items.length >= maxItems) break;
       if (newWordCount >= newWordCap) break;
 
+      final cueType = _cueSelector.selectCueType(
+        card: card,
+        hasMeaning: card.hasMeaning,
+        hasEncounterContext: card.hasEncounterContext,
+        hasConfusables: card.hasConfusables,
+      );
+
       items.add(
         PlannedItem(
-          learningCard: card,
+          sessionCard: card,
           interactionMode: selectInteractionMode(card),
           priority: 0.0, // Lowest priority
+          cueType: cueType,
         ),
       );
       newWordCount++;
     }
 
-    // Assign cue types to items with meaning data
-    final itemsWithCues = await _assignCueTypes(items);
-
     // Log session composition
     final cueTypeCounts = <String, int>{};
-    for (final item in itemsWithCues) {
+    for (final item in items) {
       final key = item.cueType?.name ?? 'translation';
       cueTypeCounts[key] = (cueTypeCounts[key] ?? 0) + 1;
     }
     developer.log(
-      'Session plan: ${itemsWithCues.length} items, '
+      'Session plan: ${items.length} items, '
       'cueTypes=$cueTypeCounts, '
       'reviews=$reviewCount, leeches=$leechCount, new=$newWordCount',
       name: 'SessionPlanner',
     );
 
     // Compute estimated duration
-    final estimatedDurationSeconds = (itemsWithCues.length *
+    final estimatedDurationSeconds = (items.length *
             estimatedSecondsPerItem)
         .round();
 
     return SessionPlan(
-      items: itemsWithCues,
+      items: items,
       estimatedDurationSeconds: estimatedDurationSeconds,
       newWordCount: newWordCount,
       reviewCount: reviewCount,
@@ -179,60 +204,36 @@ class SessionPlanner {
 
   /// Select interaction mode for a card
   /// Currently using recall (self-grade) for all cards
-  int selectInteractionMode(LearningCardModel card) {
+  int selectInteractionMode(SessionCard card) {
     // Use recall mode for all cards - show word, reveal answer, self-grade
     return InteractionMode.recall;
   }
 
   /// Compute priority score for a card (higher = more urgent)
-  double _computePriorityScore(LearningCardModel card) {
+  double _computePriorityScore(SessionCard card) {
     final now = DateTime.now().toUtc();
     final overdueDays = now.difference(card.due).inDays.clamp(0, 365);
-    final retrievability = _srsScheduler.getRetrievability(card, now: now);
+
+    // For cards with low stability, treat retrievability as low
+    double retrievability;
+    if (card.state == 0 || card.stability <= 0) {
+      retrievability = 1.0;
+    } else {
+      // Use a simple exponential decay approximation
+      final daysSinceReview = card.lastReview != null
+          ? now.difference(card.lastReview!).inDays.toDouble()
+          : 0.0;
+      if (card.stability > 0) {
+        retrievability = (0.9 * (card.stability / (card.stability + daysSinceReview)))
+            .clamp(0.0, 1.0);
+      } else {
+        retrievability = 1.0;
+      }
+    }
+
     final lapseWeight = 1 + (card.lapses / 20);
 
     return overdueDays * (1 - retrievability) * lapseWeight;
-  }
-
-  /// Compute priority score for external use
-  double computePriorityScore(LearningCardModel card) {
-    return _computePriorityScore(card);
-  }
-
-  /// Assign cue types to planned items using CueSelector.
-  /// Falls back to translation cue when meaning data is unavailable.
-  Future<List<PlannedItem>> _assignCueTypes(List<PlannedItem> items) async {
-    final result = <PlannedItem>[];
-    for (final item in items) {
-      final vocabId = item.vocabularyId;
-      final meanings = await _dataService.getMeanings(vocabId);
-      final hasMeaning = meanings.isNotEmpty;
-
-      final encounters = await _dataService.getEncounters(vocabId);
-      final hasEncounterContext = encounters.any(
-        (e) => e['context'] != null && (e['context'] as String).isNotEmpty,
-      );
-
-      final confusables = await _dataService.getConfusableSetsForVocabulary(
-        vocabId,
-      );
-      final hasConfusables = confusables.isNotEmpty;
-
-      final cueType = _cueSelector.selectCueType(
-        card: item.learningCard,
-        hasMeaning: hasMeaning,
-        hasEncounterContext: hasEncounterContext,
-        hasConfusables: hasConfusables,
-      );
-
-      result.add(PlannedItem(
-        learningCard: item.learningCard,
-        interactionMode: item.interactionMode,
-        priority: item.priority,
-        cueType: cueType,
-      ));
-    }
-    return result;
   }
 
   /// Determine if new-word introduction should be suppressed (hysteresis logic)

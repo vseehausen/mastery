@@ -30,12 +30,10 @@ TelemetryService telemetryService(Ref ref) {
 SessionPlanner sessionPlanner(Ref ref) {
   final dataService = ref.watch(supabaseDataServiceProvider);
   final telemetryService = ref.watch(telemetryServiceProvider);
-  final srsScheduler = ref.watch(srsSchedulerProvider());
 
   return SessionPlanner(
     dataService: dataService,
     telemetryService: telemetryService,
-    srsScheduler: srsScheduler,
   );
 }
 

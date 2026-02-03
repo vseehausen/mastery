@@ -169,7 +169,7 @@ final telemetryServiceProvider = Provider<TelemetryService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TelemetryServiceRef = ProviderRef<TelemetryService>;
-String _$sessionPlannerHash() => r'9573828542098d7d5c5a1207a4e58bda17f94292';
+String _$sessionPlannerHash() => r'fedfc24525478a1aab28b83909f4cd5b42be5022';
 
 /// See also [sessionPlanner].
 @ProviderFor(sessionPlanner)

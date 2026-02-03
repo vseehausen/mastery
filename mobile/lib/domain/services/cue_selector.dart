@@ -2,7 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:math';
 
 import '../models/cue_type.dart';
-import '../models/learning_card.dart';
+import '../models/session_card.dart';
 
 /// Service for selecting cue types based on card maturity and available data.
 /// Implements the weighted random selection algorithm from research.md R4.
@@ -15,7 +15,7 @@ class CueSelector {
   /// - New: state == 0 (new) or state == 1 (learning) with stability < 1.0
   /// - Growing: state == 1 with stability >= 1.0, or state == 2 (review) with stability < 21.0
   /// - Mature: state == 2 (review) with stability >= 21.0
-  MaturityStage getMaturityStage(LearningCardModel card) {
+  MaturityStage getMaturityStage(SessionCard card) {
     if (card.state == 0) return MaturityStage.newCard;
     if (card.state == 1) {
       return card.stability < 1.0 ? MaturityStage.newCard : MaturityStage.growing;
@@ -29,7 +29,7 @@ class CueSelector {
 
   /// Select a cue type for a given card based on maturity stage and available data.
   CueType selectCueType({
-    required LearningCardModel card,
+    required SessionCard card,
     required bool hasMeaning,
     bool hasEncounterContext = false,
     bool hasConfusables = false,

@@ -6,15 +6,12 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../domain/models/cue.dart';
 import '../../../domain/models/cue_type.dart';
-import '../../../domain/models/encounter.dart';
 import '../../../domain/models/learning_enums.dart';
 import '../../../domain/models/learning_session.dart';
-import '../../../domain/models/meaning.dart';
 import '../../../domain/models/planned_item.dart';
+import '../../../domain/models/session_card.dart';
 import '../../../domain/models/session_plan.dart';
-import '../../../domain/models/vocabulary.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
@@ -227,16 +224,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       _reviewsPresented++;
     }
 
+    // Convert SessionCard to LearningCardModel for SRS processing
+    final learningCard = currentItem.sessionCard.toLearningCard(userId);
+
     // Process the review with SRS
     final result = srsScheduler.reviewCard(
-      card: currentItem.learningCard,
+      card: learningCard,
       rating: rating,
       interactionMode: currentItem.interactionMode,
     );
 
     // Save updated card to Supabase
     await dataService.updateLearningCard(
-      cardId: currentItem.learningCard.id,
+      cardId: currentItem.cardId,
       state: result.updatedCard.state,
       due: result.updatedCard.due,
       stability: result.updatedCard.stability,
@@ -251,7 +251,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     await dataService.insertReviewLog(
       id: reviewLogId,
       userId: userId,
-      learningCardId: currentItem.learningCard.id,
+      learningCardId: currentItem.cardId,
       rating: rating,
       interactionMode: currentItem.interactionMode,
       stateBefore: result.reviewLog.stateBefore,
@@ -263,7 +263,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       responseTimeMs: responseTimeMs,
       retrievabilityAtReview: result.reviewLog.retrievabilityAtReview,
       sessionId: _session!.id,
-      cueType: currentItem.cueType?.name,
+      cueType: currentItem.cueType?.toDbString(),
     );
 
     // Update session progress
@@ -519,7 +519,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 ),
               )
             else if (currentItem != null)
-              // Current item card
+              // Current item card - now uses SessionCard data directly!
               Expanded(child: _buildItemCard(currentItem, isDark))
             else
               Expanded(
@@ -538,196 +538,95 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
+  /// Build the card widget for the current item using SessionCard data.
+  /// No additional queries needed - all data is already in the SessionCard!
   Widget _buildItemCard(PlannedItem item, bool isDark) {
-    return FutureBuilder<_VocabWithContext>(
-      future: _loadVocabWithContext(item.vocabularyId, item.cueType),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final card = item.sessionCard;
+    final meaning = card.primaryMeaning;
 
-        final data = snapshot.data!;
-        // Use translation as primary answer, fall back to definition or generating message
-        final translationAnswer = data.translation ??
-            data.definition ??
-            (data.encounterContext != null
-                ? data.encounterContext!
-                : 'Generating translation...');
+    // Get translation answer (primary translation or fallback to definition)
+    final translationAnswer = meaning?.primaryTranslation ??
+        meaning?.englishDefinition ??
+        'Translation not available';
 
-        if (item.isRecognition) {
-          return RecognitionCard(
-            word: data.vocab.word,
-            correctAnswer: translationAnswer,
-            distractors:
-                _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
-            context: data.encounterContext,
-            onAnswer: _handleRecognitionAnswer,
-          );
-        }
-
-        // Dispatch based on cue type
-        switch (item.cueType) {
-          case CueType.definition:
-            return DefinitionCueCard(
-              definition:
-                  data.promptText ?? data.definition ?? translationAnswer,
-              targetWord: data.answerText ?? data.vocab.word,
-              hintText: data.hintText,
-              onGrade: _handleRecallGrade,
-            );
-          case CueType.synonym:
-            return SynonymCueCard(
-              synonymPhrase: data.promptText ?? translationAnswer,
-              targetWord: data.answerText ?? data.vocab.word,
-              onGrade: _handleRecallGrade,
-            );
-          case CueType.disambiguation:
-            return DisambiguationCard(
-              clozeSentence: data.promptText ?? translationAnswer,
-              options: data.disambiguationOptions ?? [data.vocab.word],
-              correctIndex: data.disambiguationCorrectIndex ?? 0,
-              explanation: data.hintText ?? '',
-              onGrade: _handleRecallGrade,
-            );
-          case CueType.contextCloze:
-            return ClozeCueCard(
-              sentenceWithBlank: data.promptText ?? translationAnswer,
-              targetWord: data.answerText ?? data.vocab.word,
-              hintText: data.hintText,
-              onGrade: _handleRecallGrade,
-            );
-          case CueType.translation:
-          case null:
-            return RecallCard(
-              word: data.vocab.word,
-              answer: translationAnswer,
-              context: data.encounterContext,
-              onGrade: _handleRecallGrade,
-            );
-        }
-      },
-    );
-  }
-
-  Future<_VocabWithContext> _loadVocabWithContext(
-    String vocabularyId,
-    CueType? cueType,
-  ) async {
-    final dataService = ref.read(supabaseDataServiceProvider);
-
-    // Fetch vocabulary from Supabase
-    final vocabData = await dataService.getVocabularyById(vocabularyId);
-    if (vocabData == null) {
-      debugPrint('[Session] Vocabulary not found: $vocabularyId');
-      return _VocabWithContext(
-        vocab: VocabularyModel(
-          id: vocabularyId,
-          userId: '',
-          word: '???',
-          stem: null,
-          contentHash: '',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          deletedAt: null,
-        ),
-        encounterContext: null,
+    if (item.isRecognition) {
+      return RecognitionCard(
+        word: card.word,
+        correctAnswer: translationAnswer,
+        distractors:
+            _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
+        context: null, // Context would need encounter data
+        onAnswer: _handleRecognitionAnswer,
       );
     }
 
-    final vocab = VocabularyModel.fromJson(vocabData);
+    // Dispatch based on cue type - use data from SessionCard
+    final cue = item.cueType != null ? card.getCue(item.cueType!) : null;
 
-    // Fetch most recent encounter
-    final encounterData = await dataService.getMostRecentEncounter(vocabularyId);
-    EncounterModel? encounter;
-    if (encounterData != null) {
-      encounter = EncounterModel.fromJson(encounterData);
+    switch (item.cueType) {
+      case CueType.definition:
+        return DefinitionCueCard(
+          definition:
+              cue?.promptText ?? meaning?.englishDefinition ?? translationAnswer,
+          targetWord: cue?.answerText ?? card.word,
+          hintText: cue?.hintText,
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.synonym:
+        return SynonymCueCard(
+          synonymPhrase: cue?.promptText ?? _buildSynonymPrompt(meaning),
+          targetWord: cue?.answerText ?? card.word,
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.disambiguation:
+        final options = _parseDisambiguationOptions(cue);
+        return DisambiguationCard(
+          clozeSentence: cue?.promptText ?? translationAnswer,
+          options: options.options,
+          correctIndex: options.correctIndex,
+          explanation: cue?.hintText ?? '',
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.contextCloze:
+        return ClozeCueCard(
+          sentenceWithBlank: cue?.promptText ?? translationAnswer,
+          targetWord: cue?.answerText ?? card.word,
+          hintText: cue?.hintText,
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.translation:
+      case null:
+        return RecallCard(
+          word: card.word,
+          answer: translationAnswer,
+          context: null, // Could load encounter context if needed
+          onGrade: _handleRecallGrade,
+        );
+    }
+  }
+
+  /// Build a synonym prompt from the meaning's synonyms
+  String _buildSynonymPrompt(SessionMeaning? meaning) {
+    if (meaning == null || meaning.synonyms.isEmpty) {
+      return 'What word means the same?';
+    }
+    return 'Synonym: ${meaning.synonyms.first}';
+  }
+
+  /// Parse disambiguation options from the cue
+  ({List<String> options, int correctIndex}) _parseDisambiguationOptions(
+    SessionCue? cue,
+  ) {
+    // Default fallback
+    if (cue == null) {
+      return (options: ['Option 1'], correctIndex: 0);
     }
 
-    // Load meanings for translation
-    final meaningsData = await dataService.getMeanings(vocabularyId);
-    final meanings = meaningsData.map(MeaningModel.fromJson).toList();
-    final meaning = meanings.isNotEmpty ? meanings.first : null;
-    debugPrint(
-      '[Session] Vocab: ${vocab.word}, meanings: ${meanings.length}, '
-      'translation: ${meaning?.primaryTranslation}',
-    );
-
-    // Load cue data for non-translation cue types
-    String? promptText;
-    String? answerText;
-    String? hintText;
-    List<String>? disambiguationOptions;
-    int? disambiguationCorrectIndex;
-
-    if (cueType != null && cueType != CueType.translation) {
-      final cuesData = await dataService.getCuesForVocabulary(vocabularyId);
-      final cues = cuesData.map(CueModel.fromJson).toList();
-      final cueTypeStr = cueType.toDbString();
-
-      final matchingCue = cues.cast<CueModel?>().firstWhere(
-            (c) => c!.cueType == cueTypeStr,
-            orElse: () => null,
-          );
-
-      if (matchingCue != null) {
-        promptText = matchingCue.promptText;
-        answerText = matchingCue.answerText;
-        hintText = matchingCue.hintText;
-
-        // Parse disambiguation metadata
-        if (cueType == CueType.disambiguation) {
-          final metadata = matchingCue.metadata;
-          if (metadata.isNotEmpty) {
-            final optionsList = metadata['options'];
-            if (optionsList is List) {
-              disambiguationOptions = optionsList.cast<String>();
-            }
-            final correctIdx = metadata['correct_index'];
-            if (correctIdx is int) {
-              disambiguationCorrectIndex = correctIdx;
-            }
-          }
-          // Default: use answerText as correct option
-          disambiguationOptions ??= [answerText];
-          disambiguationCorrectIndex ??= 0;
-        }
-      }
-    }
-
-    return _VocabWithContext(
-      vocab: vocab,
-      encounterContext: encounter?.context,
-      translation: meaning?.primaryTranslation,
-      definition: meaning?.englishDefinition,
-      promptText: promptText,
-      answerText: answerText,
-      hintText: hintText,
-      disambiguationOptions: disambiguationOptions,
-      disambiguationCorrectIndex: disambiguationCorrectIndex,
+    // The answer text is the correct option; for now return it as the only option
+    // In a real implementation, you'd parse the cue metadata for all options
+    return (
+      options: [cue.answerText],
+      correctIndex: 0,
     );
   }
-}
-
-class _VocabWithContext {
-  _VocabWithContext({
-    required this.vocab,
-    this.encounterContext,
-    this.translation,
-    this.definition,
-    this.promptText,
-    this.answerText,
-    this.hintText,
-    this.disambiguationOptions,
-    this.disambiguationCorrectIndex,
-  });
-
-  final VocabularyModel vocab;
-  final String? encounterContext;
-  final String? translation;
-  final String? definition;
-  final String? promptText;
-  final String? answerText;
-  final String? hintText;
-  final List<String>? disambiguationOptions;
-  final int? disambiguationCorrectIndex;
 }

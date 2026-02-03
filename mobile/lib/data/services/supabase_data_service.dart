@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 /// Service that wraps Supabase queries for direct data access.
 /// Replaces Drift/SQLite repositories with cloud-first approach.
@@ -118,6 +119,22 @@ class SupabaseDataService {
   // ===========================================================================
   // Learning Cards
   // ===========================================================================
+
+  /// Get session cards with all data needed for learning sessions.
+  /// Uses RPC to fetch cards with embedded vocabulary, meanings, cues in one query.
+  Future<List<Map<String, dynamic>>> getSessionCards(
+    String userId, {
+    int limit = 50,
+  }) async {
+    final response = await _client.rpc<List<dynamic>>(
+      'get_session_cards',
+      params: {
+        'p_user_id': userId,
+        'p_limit': limit,
+      },
+    );
+    return List<Map<String, dynamic>>.from(response);
+  }
 
   /// Get all learning cards for a user
   Future<List<Map<String, dynamic>>> getLearningCards(String userId) async {
@@ -432,7 +449,7 @@ class SupabaseDataService {
     if (response == null) {
       // Create default preferences
       final now = DateTime.now().toUtc().toIso8601String();
-      final id = '${userId}_prefs';
+      final id = const Uuid().v4();
       final data = {
         'id': id,
         'user_id': userId,

@@ -6,7 +6,7 @@ part of 'streak_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentStreakHash() => r'edd041b18426e0767359f74fdac29df699f0829e';
+String _$currentStreakHash() => r'e4fef4dedec14c6252f985a8f3ba24bdeda85c84';
 
 /// Provides the current streak count for the logged-in user
 ///
@@ -25,7 +25,7 @@ final currentStreakProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentStreakRef = AutoDisposeFutureProviderRef<int>;
-String _$longestStreakHash() => r'8f78edc5bf42c0cf6215e11dc56c7bf5ccceba2f';
+String _$longestStreakHash() => r'6def647c494ca0f191db078be2f5b521d9d0d1a5';
 
 /// Provides the longest streak count for the logged-in user
 ///
@@ -44,7 +44,7 @@ final longestStreakProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LongestStreakRef = AutoDisposeFutureProviderRef<int>;
-String _$streakNotifierHash() => r'f89ee600a65eb453a49308bf6e02576a886a6493';
+String _$streakNotifierHash() => r'a0ecdc6e868e9b381610b5c2ffa915ace4ce8b36';
 
 /// Notifier for updating streak
 ///
