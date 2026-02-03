@@ -4,15 +4,13 @@ Auto-generated from all feature plans. Last updated: 2026-01-30
 
 ## Active Technologies
 - Rust 1.75+ (Tauri), Dart 3.x (Flutter), TypeScript (Deno Edge Functions) + Tauri 2.x, Flutter 3.x, Supabase, sql.js (SQLite in WASM for Deno) (002-vocabulary-import-display)
-- PostgreSQL (Supabase), SQLite (mobile via Drift, desktop local cache) (002-vocabulary-import-display)
+- PostgreSQL (Supabase), SQLite (desktop local cache) (002-vocabulary-import-display)
 - Dart 3.x (Flutter), Rust 1.75+ (Tauri), TypeScript (Deno Edge Functions), Svelte 5 (desktop UI) + supabase_flutter 2.8.3, supabase-js (desktop), Tauri 2.x, sign_in_with_apple, google_sign_in (003-user-auth)
 - Supabase Auth (session tokens stored locally per platform) (003-user-auth)
-- Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync) (004-calm-srs-learning)
-- SQLite via Drift (local, offline-first), PostgreSQL via Supabase (cloud sync) (004-calm-srs-learning)
-- Dart 3.x (Flutter 3.x), TypeScript (Deno Edge Functions), Rust 1.75+ (Tauri) + `fsrs: ^2.0.1`, `drift` (SQLite ORM), `flutter_riverpod`, `supabase_flutter`, `shadcn_ui` (005-meaning-graph)
-- SQLite via Drift (mobile local cache), PostgreSQL via Supabase (cloud) (005-meaning-graph)
+- Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `flutter_riverpod` (state management), `supabase_flutter` (backend) (004-calm-srs-learning, 005-meaning-graph)
+- PostgreSQL via Supabase (cloud), Riverpod providers (caching) - NO local SQLite on mobile
 
-- **Mobile**: Flutter 3.x (Dart 3.x), Drift, Supabase Flutter SDK
+- **Mobile**: Flutter 3.x (Dart 3.x), Riverpod, Supabase Flutter SDK (no local DB)
 - **Desktop**: Tauri 2.x (Rust), nusb, mountpoints
 - **Backend**: Supabase (PostgreSQL, Edge Functions, Auth)
 - **Testing**: flutter_test, cargo test, Deno test
@@ -178,13 +176,13 @@ supabase stop
 3. **Flutter Analyze Gate**: `flutter analyze` MUST pass with zero issues (no errors, warnings, or info) before any commit.
 4. **Observability**: Structured logging, error tracking, metrics
 5. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
-6. **Online-Required**: App requires an active internet connection. Local SQLite caches data for performance but is not designed for offline use. Backend services (sync, meaning generation) assume connectivity.
+6. **Online-Required**: App requires an active internet connection. Mobile app uses direct Supabase queries with Riverpod caching (no local SQLite). Backend services (sync, meaning generation) assume connectivity.
 7. **Continuous Learning**: After longer sessions, add only general, systematic learnings to this file (patterns, principles, architectural decisions). Avoid specific implementation details that are already documented in code. Keep entries concise and actionable.
 
 ## Recent Changes
-- 005-meaning-graph: Added Dart 3.x (Flutter 3.x), TypeScript (Deno Edge Functions), Rust 1.75+ (Tauri) + `fsrs: ^2.0.1`, `drift` (SQLite ORM), `flutter_riverpod`, `supabase_flutter`, `shadcn_ui`
+- 005-meaning-graph (2026-02-03): Removed Drift/SQLite, now using direct Supabase queries with Riverpod `FutureProvider.autoDispose` for caching. ~25k lines of code removed.
+- 005-meaning-graph: Added meaning graph feature with rich translations, multi-cue learning (definition, synonym, disambiguation, cloze), enrichment edge function
 - Schema refactor: Replaced `books`/`highlights` with `sources`/`encounters` model. Vocabulary is now pure word identity; context lives in encounters.
-- 004-calm-srs-learning: Added Dart 3.x (Flutter 3.x) + `fsrs: ^2.0.1` (official FSRS Dart package), `drift` (SQLite ORM), `flutter_riverpod` (state management), `supabase_flutter` (backend sync)
 
 
 ## Key Entities
@@ -195,12 +193,12 @@ supabase stop
 - **ImportSession**: Record of import operation
 - **LearningCard**: FSRS spaced repetition card linked to vocabulary
 
-## Sync Strategy
+## Data Strategy (Mobile)
 
-- Local SQLite stores data for offline access
-- SyncOutbox queues changes for cloud sync (vocabulary, sources, encounters, learning_cards)
-- Last-write-wins conflict resolution (updatedAt timestamp)
-- Supabase Edge Functions handle sync/push and sync/pull
+- Direct Supabase queries via `SupabaseDataService`
+- Riverpod `FutureProvider.autoDispose` for caching and reactivity
+- No local database - app is online-required
+- Writes go directly to Supabase, providers invalidated to refresh UI
 
 <!-- MANUAL ADDITIONS START -->
 

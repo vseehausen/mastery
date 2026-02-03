@@ -21,10 +21,10 @@
 
 - [x] T001 Create PostgreSQL migration for meaning graph tables (meanings, cues, confusable_sets, confusable_set_members, meaning_edits, enrichment_queue) with RLS policies and indexes in `supabase/migrations/20260131000001_add_meaning_graph.sql`
 - [x] T002 Add `native_language_code` (VARCHAR(5), default 'de') and `meaning_display_mode` (VARCHAR(10), default 'both') columns to `user_learning_preferences` table in the same migration file
-- [x] T003 Add Drift table definitions for Meanings, Cues, ConfusableSets, ConfusableSetMembers, and MeaningEdits in `mobile/lib/data/database/tables.dart`
-- [x] T004 Register new tables in `@DriftDatabase` annotation, bump schema version to 6, and add migration logic (create new tables) in `mobile/lib/data/database/database.dart`
-- [x] T005 Add `nativeLanguageCode` and `meaningDisplayMode` columns to `UserLearningPreferences` Drift table in `mobile/lib/data/database/tables.dart`
-- [x] T006 Run `dart run build_runner build --delete-conflicting-outputs` to regenerate Drift code, then run `flutter analyze` to verify zero issues
+- [x] T003 ~~Add Drift table definitions...~~ **SUPERSEDED**: Drift removed; data accessed via SupabaseDataService
+- [x] T004 ~~Register new tables in @DriftDatabase...~~ **SUPERSEDED**: Drift removed
+- [x] T005 ~~Add nativeLanguageCode to Drift table...~~ **SUPERSEDED**: Drift removed
+- [x] T006 ~~Run build_runner...~~ **SUPERSEDED**: No Drift code generation needed
 
 **Checkpoint**: Database schema ready on both PostgreSQL and SQLite. No runtime changes yet.
 
@@ -37,18 +37,18 @@
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [x] T007 Create `CueType` enum (translation, definition, synonym, contextCloze, disambiguation) and `MaturityStage` enum (newCard, growing, mature) in `mobile/lib/domain/models/cue_type.dart`
-- [x] T008 [P] Create `MeaningRepository` with methods: `getForVocabulary(vocabId)`, `getPrimary(vocabId)`, `create()`, `update()`, `pinAsPrimary(meaningId)`, `softDelete()` in `mobile/lib/data/repositories/meaning_repository.dart`
-- [x] T009 [P] Create `CueRepository` with methods: `getForMeaning(meaningId, cueType?)`, `getForVocabulary(vocabId)`, `create()`, `bulkInsert()` in `mobile/lib/data/repositories/cue_repository.dart`
-- [x] T010 [P] Create `ConfusableSetRepository` with methods: `getForVocabulary(vocabId)`, `create()` in `mobile/lib/data/repositories/confusable_set_repository.dart`
-- [x] T011 [P] Create `MeaningEditRepository` with methods: `create()`, `getForMeaning(meaningId)` in `mobile/lib/data/repositories/meaning_edit_repository.dart`
+- [x] T008 ~~[P] Create MeaningRepository...~~ **SUPERSEDED**: Methods moved to SupabaseDataService (`getMeanings`, `updateMeaning`, etc.)
+- [x] T009 ~~[P] Create CueRepository...~~ **SUPERSEDED**: Methods moved to SupabaseDataService (`getCuesForVocabulary`, etc.)
+- [x] T010 ~~[P] Create ConfusableSetRepository...~~ **SUPERSEDED**: Methods moved to SupabaseDataService
+- [x] T011 ~~[P] Create MeaningEditRepository...~~ **SUPERSEDED**: Methods moved to SupabaseDataService (`createMeaningEdit`)
 - [x] T012 Create `EnrichmentService` on mobile that calls the `enrich-vocabulary/request` edge function, parses the response, and stores meanings/cues/confusable sets via repositories in `mobile/lib/domain/services/enrichment_service.dart`
 - [x] T013 Scaffold `enrich-vocabulary` edge function with CORS handling, auth, and route dispatching (request + status endpoints) in `supabase/functions/enrich-vocabulary/index.ts`
 - [x] T014 Implement the AI enrichment fallback chain in the edge function: (1) OpenAI GPT-4o-mini with structured JSON prompt → (2) DeepL API translation → (3) Google Cloud Translation → (4) encounter context extraction. Use `Deno.env.get()` for API keys. Write results to meanings, cues, confusable_sets, enrichment_queue tables in `supabase/functions/enrich-vocabulary/index.ts`
 - [x] T015 Implement the enrichment buffer logic in the edge function: check user's enriched count, pick next un-enriched words (oldest first, batch of 5), process via fallback chain, return results with buffer_status in `supabase/functions/enrich-vocabulary/index.ts`
 - [x] T016 Add new tables (meanings, cues, confusable_sets, confusable_set_members, meaning_edits) to sync/pull response in `supabase/functions/sync/index.ts`
 - [x] T017 Add new tables to sync/push handling (insert/upsert/update/delete with last-write-wins) in `supabase/functions/sync/index.ts`
-- [x] T018 Register Riverpod providers for MeaningRepository, CueRepository, ConfusableSetRepository, MeaningEditRepository, and EnrichmentService in `mobile/lib/providers/database_provider.dart` (or appropriate provider file)
-- [x] T019 Write unit tests for MeaningRepository (CRUD, pin, soft delete) and CueRepository (getForVocabulary, filtering by type) in `mobile/test/data/repositories/meaning_repository_test.dart` and `mobile/test/data/repositories/cue_repository_test.dart`
+- [x] T018 Register Riverpod providers for data access (`meaningsProvider`, `enrichmentServiceProvider`, etc.) in `mobile/lib/providers/supabase_provider.dart` and `mobile/lib/providers/learning_providers.dart`
+- [x] T019 ~~Write unit tests for MeaningRepository...~~ **SUPERSEDED**: Repository tests removed with Drift; data access tested via integration tests
 - [x] T020 Run `flutter analyze` and `flutter test` to verify all foundational code passes
 
 **Checkpoint**: Foundation ready — repositories, edge function, sync, and providers are operational. User story implementation can now begin.
@@ -100,7 +100,7 @@
 - [x] T036 [P] [US2] Create `SynonymCueCard` widget: shows synonym phrase as prompt, "Recall the word." microcopy, reveal target word, FSRS grade buttons in `mobile/lib/features/learn/widgets/synonym_cue_card.dart`
 - [x] T037 [US2] Update `SessionScreen._buildItemCard()` to dispatch to the correct card widget based on `PlannedItem.cueType`: translation → existing `RecallCard`, definition → `DefinitionCueCard`, synonym → `SynonymCueCard` in `mobile/lib/features/learn/screens/session_screen.dart`
 - [x] T038 [US2] Update `SessionScreen._loadVocabWithContext()` to also load meaning and cue data for the current item, passing prompt_text/answer_text to the cue card widgets in `mobile/lib/features/learn/screens/session_screen.dart`
-- [x] T039 [US2] Add `cue_type` field to `ReviewLogs` Drift table and PostgreSQL review_logs table to track which cue type was used for each review in `mobile/lib/data/database/tables.dart` and migration file
+- [x] T039 [US2] Add `cue_type` field to PostgreSQL `review_logs` table to track which cue type was used for each review (Drift removed)
 - [x] T040 [US2] Run `flutter analyze` and `flutter test` to verify US2 is complete
 
 **Checkpoint**: User Story 2 is functional — learning sessions now present definition and synonym cues for growing/mature words. Translation cues still work for new words.
@@ -176,7 +176,7 @@
 
 - [x] T056 [P] Create native language picker setting: dropdown of supported languages, saves to `UserLearningPreferences.nativeLanguageCode`, passes language code to enrichment requests in `mobile/lib/features/settings/language_setting.dart`
 - [x] T057 [P] Create meaning display mode toggle (native / English / both) in settings, saves to `UserLearningPreferences.meaningDisplayMode`, `MeaningCard` reads this preference to show/hide translations or definitions in `mobile/lib/features/settings/language_setting.dart`
-- [x] T058 Update `UserPreferencesRepository` with `getNativeLanguageCode()` and `getMeaningDisplayMode()` methods, plus setters that mark as pending sync in `mobile/lib/data/repositories/user_preferences_repository.dart`
+- [x] T058 ~~Update UserPreferencesRepository...~~ **SUPERSEDED**: Preferences accessed via `userPreferencesProvider` and `SupabaseDataService.updatePreferences()`
 - [x] T059 Add structured logging for observability: (1) enrichment service — log enrichment requests (word count, language), fallback chain usage (which tier was used), buffer status changes, and errors in `mobile/lib/domain/services/enrichment_service.dart` and `supabase/functions/enrich-vocabulary/index.ts`; (2) cue selector — log selected cue type, maturity stage, and available/unavailable cue types per card in `mobile/lib/domain/services/cue_selector.dart`; (3) session planner — log session composition (count of each cue type, number of un-enriched cards filtered out) in `mobile/lib/domain/services/session_planner.dart`
 - [x] T060 Add edge case handling: "Not available — add your own" when no translation available, low-confidence indicator (confidence < 0.6), "Show more" for > 3 alternatives in `mobile/lib/features/vocabulary/presentation/widgets/meaning_card.dart`
 - [x] T061 Run full test suite: `flutter analyze`, `flutter test`, verify enrichment edge function works end-to-end with test vocabulary

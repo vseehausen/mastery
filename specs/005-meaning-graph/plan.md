@@ -10,8 +10,8 @@ Add a "Meaning Graph" to the Mastery vocabulary learning app: each vocabulary wo
 ## Technical Context
 
 **Language/Version**: Dart 3.x (Flutter 3.x), TypeScript (Deno Edge Functions), Rust 1.75+ (Tauri)
-**Primary Dependencies**: `fsrs: ^2.0.1`, `drift` (SQLite ORM), `flutter_riverpod`, `supabase_flutter`, `shadcn_ui`
-**Storage**: SQLite via Drift (mobile local cache), PostgreSQL via Supabase (cloud)
+**Primary Dependencies**: `fsrs: ^2.0.1`, `flutter_riverpod`, `supabase_flutter`, `shadcn_ui`
+**Storage**: PostgreSQL via Supabase (cloud), cached in Riverpod providers (no local SQLite)
 **Testing**: `flutter_test`, Deno test
 **Target Platform**: iOS, Android (Flutter), Supabase Edge Functions (backend)
 **Project Type**: Mobile + API
@@ -53,18 +53,19 @@ specs/005-meaning-graph/
 ```text
 mobile/lib/
 ├── data/
-│   ├── database/
-│   │   ├── tables.dart              # + Meanings, Cues, ConfusableSets, MeaningEdits, EnrichmentQueue
-│   │   └── database.dart            # Schema version 5 → 6
-│   └── repositories/
-│       ├── meaning_repository.dart  # NEW: CRUD for meanings + cues
-│       └── enrichment_repository.dart # NEW: buffer queue management
+│   └── services/
+│       └── supabase_data_service.dart  # All Supabase table operations (meanings, cues, vocabulary, etc.)
+├── providers/
+│   └── supabase_provider.dart          # Riverpod providers for data access (meaningsProvider, etc.)
 ├── domain/
 │   ├── services/
 │   │   ├── cue_selector.dart        # NEW: select cue type by card maturity
+│   │   ├── enrichment_service.dart  # NEW: calls enrich-vocabulary edge function
 │   │   └── session_planner.dart     # MODIFIED: filter un-enriched cards, add cue type
 │   └── models/
 │       ├── cue_type.dart            # NEW: enum + metadata
+│       ├── meaning.dart             # NEW: plain Dart model
+│       ├── cue.dart                 # NEW: plain Dart model
 │       └── planned_item.dart        # MODIFIED: add cueType field
 └── features/
     ├── learn/
@@ -94,8 +95,18 @@ supabase/
     └── 20260131000001_add_meaning_graph.sql  # NEW: meanings, cues, confusable_sets, meaning_edits, enrichment_queue
 ```
 
-**Structure Decision**: Extends existing mobile + API structure. New tables added to existing Drift database. New edge function `enrich-vocabulary` handles the AI/translation fallback chain. Sync function extended to include new tables. No new projects or fundamental architecture changes.
+**Structure Decision**: Extends existing mobile + API structure. New tables added to PostgreSQL (Supabase). New edge function `enrich-vocabulary` handles the AI/translation fallback chain. Sync function extended to include new tables. No new projects or fundamental architecture changes.
+
+## Architecture Update (2026-02-03)
+
+The original plan specified Drift (SQLite) for local caching with sync to Supabase. This was refactored to:
+
+- **Direct Supabase queries** via `SupabaseDataService`
+- **Riverpod `FutureProvider.autoDispose`** for caching and reactivity
+- **No local SQLite database** — app is online-required per constitution
+
+This simplification removed ~25k lines of Drift code, repositories, and sync infrastructure while maintaining all functionality.
 
 ## Complexity Tracking
 
-No constitution violations to justify. The feature adds new tables and a new edge function but follows existing patterns (Drift tables, Riverpod providers, Supabase edge functions, sync outbox).
+No constitution violations to justify. The feature adds new tables and a new edge function but follows existing patterns (Riverpod providers, Supabase edge functions, direct queries).
