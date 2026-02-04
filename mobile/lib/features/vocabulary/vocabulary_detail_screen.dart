@@ -8,6 +8,7 @@ import '../../domain/models/encounter.dart';
 import '../../domain/models/meaning.dart';
 import '../../domain/models/vocabulary.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/learning_providers.dart';
 import '../../providers/supabase_provider.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
@@ -262,11 +263,33 @@ class _VocabularyDetailScreenState
     meaningsAsync.whenData((meanings) {
       if (meanings.isEmpty) {
         _enrichmentTriggered = true;
-        // TODO: Trigger enrichment via Supabase edge function
-        // For now, just log that enrichment would be triggered
-        debugPrint('[VocabularyDetail] Would trigger enrichment for $vocabularyId');
+        debugPrint('[VocabularyDetail] Triggering enrichment for $vocabularyId');
+        _requestEnrichment(vocabularyId);
       }
     });
+  }
+
+  Future<void> _requestEnrichment(String vocabularyId) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    try {
+      final enrichmentService = ref.read(enrichmentServiceProvider);
+      final result = await enrichmentService.requestEnrichment(
+        userId: userId,
+        vocabularyIds: [vocabularyId],
+        batchSize: 1,
+        languageCode: 'de',
+      );
+      debugPrint('[VocabularyDetail] Enrichment result: ${result.enrichedCount} enriched, ${result.failedCount} failed');
+
+      // Refresh the meanings after enrichment
+      if (result.enrichedCount > 0) {
+        ref.invalidate(meaningsProvider(vocabularyId));
+      }
+    } catch (e) {
+      debugPrint('[VocabularyDetail] Enrichment error: $e');
+    }
   }
 
   Future<void> _handleMeaningSave(

@@ -201,12 +201,12 @@ async function enrichWord(
     console.log(`[enrich-vocabulary] No translation service available for "${word.word}"`);
   }
 
-  // Phase 2: Get AI enhancement (definition, synonyms, confusables) from OpenAI
+  // Phase 2: Get AI enhancement (definition, synonyms, confusables, native alternatives) from OpenAI
   let aiEnhancement: AIEnhancement | null = null;
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   if (openaiKey) {
     try {
-      aiEnhancement = await getOpenAIEnhancement(word, context, openaiKey);
+      aiEnhancement = await getOpenAIEnhancement(word, context, openaiKey, translation, nativeLanguageCode);
       console.log(`[enrich-vocabulary] Phase 2 (OpenAI) enhancement for "${word.word}"`);
     } catch (err) {
       console.warn(`[enrich-vocabulary] OpenAI enhancement failed for "${word.word}":`, err);
@@ -315,14 +315,25 @@ interface AIEnhancement {
     example_sentence?: string;
   }>;
   confidence: number;
+  // Native language alternatives (2-4, no duplicates, no trivial variants)
+  native_alternatives: string[];
 }
 
 async function getOpenAIEnhancement(
   word: VocabWord,
   context: string | null,
   apiKey: string,
+  primaryTranslation: string,
+  nativeLanguageCode: string,
 ): Promise<AIEnhancement | null> {
-  // Note: We do NOT ask for translation - that comes from DeepL/Google
+  // Map language codes to full names
+  const langNames: Record<string, string> = {
+    de: 'German', es: 'Spanish', fr: 'French', it: 'Italian',
+    pt: 'Portuguese', nl: 'Dutch', pl: 'Polish', ru: 'Russian',
+    ja: 'Japanese', zh: 'Chinese', ko: 'Korean',
+  };
+  const langName = langNames[nativeLanguageCode] || nativeLanguageCode.toUpperCase();
+
   const prompt = `You are a vocabulary enhancement assistant for language learners.
 
 Given an English word and optional context sentence, return a JSON object with:
@@ -334,12 +345,12 @@ Given an English word and optional context sentence, return a JSON object with:
   - explanation: one-sentence distinction in English
   - example_sentence: English sentence demonstrating correct usage
 - confidence: 0.0-1.0 indicating overall confidence
-
-IMPORTANT: Do NOT provide translations. Only provide English definitions and synonyms.
+- native_alternatives: 2-4 alternative ${langName} translations (synonyms/near-synonyms in ${langName}, NOT "${primaryTranslation}", no trivial inflections like plural forms, no duplicates). If no good alternatives exist, return empty array [].
 
 Word: ${word.word}
 Stem: ${word.stem || word.word}
-Context: ${context || 'none'}`;
+Context: ${context || 'none'}
+Primary ${langName} translation: ${primaryTranslation}`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -371,6 +382,9 @@ Context: ${context || 'none'}`;
     part_of_speech: parsed.part_of_speech || null,
     confusables: parsed.confusables || [],
     confidence: parsed.confidence || 0.9,
+    native_alternatives: Array.isArray(parsed.native_alternatives)
+      ? parsed.native_alternatives.filter((a: string) => a && typeof a === 'string')
+      : [],
   };
 }
 
@@ -474,7 +488,7 @@ function buildEnrichedWord(
     meaning: {
       id: meaningId,
       primary_translation: translation,
-      alternative_translations: [],
+      alternative_translations: aiEnhancement?.native_alternatives || [],
       english_definition: aiEnhancement?.english_definition || `${word.word} (${translationSource} translation)`,
       extended_definition: null,
       part_of_speech: aiEnhancement?.part_of_speech || null,
@@ -517,6 +531,18 @@ async function storeEnrichmentResult(
   if (existingMeaning) {
     // Update existing meaning
     actualMeaningId = existingMeaning.id;
+
+    // Check if user has edited this meaning - preserve user customizations
+    const { count: editCount } = await client
+      .from('meaning_edits')
+      .select('id', { count: 'exact', head: true })
+      .eq('meaning_id', actualMeaningId);
+
+    if (editCount && editCount > 0) {
+      console.log(`[enrich-vocabulary] Skipping update for meaning ${actualMeaningId} - user has edits`);
+      return;
+    }
+
     const { error: updateError } = await client
       .from('meanings')
       .update({
