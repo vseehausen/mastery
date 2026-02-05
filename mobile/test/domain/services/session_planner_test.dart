@@ -36,16 +36,22 @@ void main() {
         'card_id': cardId,
         'vocabulary_id': vocabularyId,
         'state': state,
-        'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+        'due': DateTime.now()
+            .subtract(const Duration(hours: 1))
+            .toIso8601String(),
         'stability': stability,
         'difficulty': 0.3,
         'reps': state == 0 ? 0 : 5,
         'lapses': 0,
         'last_review': state == 0
             ? null
-            : DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            : DateTime.now()
+                  .subtract(const Duration(days: 1))
+                  .toIso8601String(),
         'is_leech': isLeech,
-        'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+        'created_at': DateTime.now()
+            .subtract(const Duration(days: 30))
+            .toIso8601String(),
         'word': word,
         'stem': word.substring(0, word.length - 1),
         'meanings': [
@@ -56,7 +62,7 @@ void main() {
             'synonyms': ['synonym1'],
             'is_primary': true,
             'sort_order': 0,
-          }
+          },
         ],
         'cues': [
           {
@@ -65,7 +71,7 @@ void main() {
             'cue_type': 'translation',
             'prompt_text': 'What is $word?',
             'answer_text': '${word}Translation',
-          }
+          },
         ],
         'has_encounter_context': hasEncounterContext,
         'has_confusables': hasConfusables,
@@ -84,25 +90,29 @@ void main() {
       );
 
       // Default stubs
-      when(mockTelemetryService.getEstimatedSecondsPerItem(userId))
-          .thenAnswer((_) async => 15.0);
-      when(mockDataService.getOverdueCount(userId))
-          .thenAnswer((_) async => 0);
-      when(mockDataService.getOrCreatePreferences(userId))
-          .thenAnswer((_) async => {
-                'new_word_suppression_active': false,
-                'daily_time_target_minutes': 10,
-              });
-      when(mockDataService.updatePreferences(
-        userId: anyNamed('userId'),
-        newWordSuppressionActive: anyNamed('newWordSuppressionActive'),
-      )).thenAnswer((_) async {});
+      when(
+        mockTelemetryService.getEstimatedSecondsPerItem(userId),
+      ).thenAnswer((_) async => 15.0);
+      when(mockDataService.getOverdueCount(userId)).thenAnswer((_) async => 0);
+      when(mockDataService.getOrCreatePreferences(userId)).thenAnswer(
+        (_) async => {
+          'new_word_suppression_active': false,
+          'daily_time_target_minutes': 10,
+        },
+      );
+      when(
+        mockDataService.updatePreferences(
+          userId: anyNamed('userId'),
+          newWordSuppressionActive: anyNamed('newWordSuppressionActive'),
+        ),
+      ).thenAnswer((_) async {});
     });
 
     group('buildSessionPlan', () {
       test('returns empty plan when maxItems is 0', () async {
-        when(mockTelemetryService.getEstimatedSecondsPerItem(userId))
-            .thenAnswer((_) async => 1000.0); // Very slow = 0 items fit
+        when(
+          mockTelemetryService.getEstimatedSecondsPerItem(userId),
+        ).thenAnswer((_) async => 1000.0); // Very slow = 0 items fit
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -116,21 +126,24 @@ void main() {
       });
 
       test('fetches session cards and builds plan', () async {
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  createCardJson(
-                    cardId: 'card-1',
-                    vocabularyId: 'vocab-1',
-                    word: 'house',
-                    state: 2,
-                  ),
-                  createCardJson(
-                    cardId: 'card-2',
-                    vocabularyId: 'vocab-2',
-                    word: 'tree',
-                    state: 2,
-                  ),
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-1',
+              vocabularyId: 'vocab-1',
+              word: 'house',
+              state: 2,
+            ),
+            createCardJson(
+              cardId: 'card-2',
+              vocabularyId: 'vocab-2',
+              word: 'tree',
+              state: 2,
+            ),
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -147,28 +160,31 @@ void main() {
       });
 
       test('separates due cards, leeches, and new cards', () async {
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  createCardJson(
-                    cardId: 'card-due',
-                    vocabularyId: 'vocab-due',
-                    word: 'due',
-                    state: 2,
-                  ),
-                  createCardJson(
-                    cardId: 'card-leech',
-                    vocabularyId: 'vocab-leech',
-                    word: 'leech',
-                    state: 2,
-                    isLeech: true,
-                  ),
-                  createCardJson(
-                    cardId: 'card-new',
-                    vocabularyId: 'vocab-new',
-                    word: 'new',
-                    state: 0,
-                  ),
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-due',
+              vocabularyId: 'vocab-due',
+              word: 'due',
+              state: 2,
+            ),
+            createCardJson(
+              cardId: 'card-leech',
+              vocabularyId: 'vocab-leech',
+              word: 'leech',
+              state: 2,
+              isLeech: true,
+            ),
+            createCardJson(
+              cardId: 'card-new',
+              vocabularyId: 'vocab-new',
+              word: 'new',
+              state: 0,
+            ),
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -204,8 +220,9 @@ void main() {
           ),
         );
 
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => cards);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => cards);
 
         // 10 minute session, 15 seconds per item = 40 items max
         // But we only have 20 cards
@@ -242,8 +259,9 @@ void main() {
           ),
         ];
 
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => cards);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => cards);
 
         // Low intensity = fewer new words
         final plan = await planner.buildSessionPlan(
@@ -258,16 +276,19 @@ void main() {
       });
 
       test('assigns cue types to all items', () async {
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  createCardJson(
-                    cardId: 'card-1',
-                    vocabularyId: 'vocab-1',
-                    word: 'house',
-                    state: 2,
-                    stability: 25.0, // Mature
-                  ),
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-1',
+              vocabularyId: 'vocab-1',
+              word: 'house',
+              state: 2,
+              stability: 25.0, // Mature
+            ),
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -281,21 +302,24 @@ void main() {
       });
 
       test('computes estimated duration', () async {
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  createCardJson(
-                    cardId: 'card-1',
-                    vocabularyId: 'vocab-1',
-                    word: 'house',
-                    state: 2,
-                  ),
-                  createCardJson(
-                    cardId: 'card-2',
-                    vocabularyId: 'vocab-2',
-                    word: 'tree',
-                    state: 2,
-                  ),
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-1',
+              vocabularyId: 'vocab-1',
+              word: 'house',
+              state: 2,
+            ),
+            createCardJson(
+              cardId: 'card-2',
+              vocabularyId: 'vocab-2',
+              word: 'tree',
+              state: 2,
+            ),
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -383,15 +407,18 @@ void main() {
 
     group('new word suppression updates preferences', () {
       test('updates preferences when suppression state changes', () async {
-        when(mockDataService.getOverdueCount(userId))
-            .thenAnswer((_) async => 100); // High overdue
-        when(mockDataService.getOrCreatePreferences(userId))
-            .thenAnswer((_) async => {
-                  'new_word_suppression_active': false, // Currently not suppressed
-                  'daily_time_target_minutes': 10,
-                });
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => []);
+        when(
+          mockDataService.getOverdueCount(userId),
+        ).thenAnswer((_) async => 100); // High overdue
+        when(mockDataService.getOrCreatePreferences(userId)).thenAnswer(
+          (_) async => {
+            'new_word_suppression_active': false, // Currently not suppressed
+            'daily_time_target_minutes': 10,
+          },
+        );
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => []);
 
         await planner.buildSessionPlan(
           userId: userId,
@@ -401,103 +428,124 @@ void main() {
         );
 
         // Should update to suppress
-        verify(mockDataService.updatePreferences(
-          userId: userId,
-          newWordSuppressionActive: true,
-        )).called(1);
+        verify(
+          mockDataService.updatePreferences(
+            userId: userId,
+            newWordSuppressionActive: true,
+          ),
+        ).called(1);
       });
 
-      test('does not update preferences when suppression state unchanged', () async {
-        when(mockDataService.getOverdueCount(userId))
-            .thenAnswer((_) async => 5); // Low overdue
-        when(mockDataService.getOrCreatePreferences(userId))
-            .thenAnswer((_) async => {
-                  'new_word_suppression_active': false, // Currently not suppressed
-                  'daily_time_target_minutes': 10,
-                });
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => []);
+      test(
+        'does not update preferences when suppression state unchanged',
+        () async {
+          when(
+            mockDataService.getOverdueCount(userId),
+          ).thenAnswer((_) async => 5); // Low overdue
+          when(mockDataService.getOrCreatePreferences(userId)).thenAnswer(
+            (_) async => {
+              'new_word_suppression_active': false, // Currently not suppressed
+              'daily_time_target_minutes': 10,
+            },
+          );
+          when(
+            mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          ).thenAnswer((_) async => []);
 
-        await planner.buildSessionPlan(
-          userId: userId,
-          timeTargetMinutes: 10,
-          intensity: 1,
-          targetRetention: 0.90,
-        );
+          await planner.buildSessionPlan(
+            userId: userId,
+            timeTargetMinutes: 10,
+            intensity: 1,
+            targetRetention: 0.90,
+          );
 
-        // Should not call updatePreferences since state didn't change
-        verifyNever(mockDataService.updatePreferences(
-          userId: anyNamed('userId'),
-          newWordSuppressionActive: anyNamed('newWordSuppressionActive'),
-        ));
-      });
+          // Should not call updatePreferences since state didn't change
+          verifyNever(
+            mockDataService.updatePreferences(
+              userId: anyNamed('userId'),
+              newWordSuppressionActive: anyNamed('newWordSuppressionActive'),
+            ),
+          );
+        },
+      );
     });
 
     group('priority scoring', () {
       test('leeches have boosted priority', () async {
         // Create cards that are overdue (due date in the past)
-        final overdueDate = DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
-        final lastReviewDate = DateTime.now().subtract(const Duration(days: 14)).toIso8601String();
+        final overdueDate = DateTime.now()
+            .subtract(const Duration(days: 7))
+            .toIso8601String();
+        final lastReviewDate = DateTime.now()
+            .subtract(const Duration(days: 14))
+            .toIso8601String();
 
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  {
-                    'card_id': 'card-normal',
-                    'vocabulary_id': 'vocab-normal',
-                    'state': 2,
-                    'due': overdueDate,
-                    'stability': 10.0,
-                    'difficulty': 0.3,
-                    'reps': 5,
-                    'lapses': 0,
-                    'last_review': lastReviewDate,
-                    'is_leech': false,
-                    'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-                    'word': 'normal',
-                    'stem': 'norma',
-                    'meanings': [
-                      {
-                        'id': 'meaning-normal',
-                        'primary_translation': 'normalTranslation',
-                        'english_definition': 'Definition of normal',
-                        'synonyms': [],
-                        'is_primary': true,
-                        'sort_order': 0,
-                      }
-                    ],
-                    'cues': [],
-                    'has_encounter_context': false,
-                    'has_confusables': false,
-                  },
-                  {
-                    'card_id': 'card-leech',
-                    'vocabulary_id': 'vocab-leech',
-                    'state': 2,
-                    'due': overdueDate,
-                    'stability': 10.0,
-                    'difficulty': 0.3,
-                    'reps': 5,
-                    'lapses': 8, // Many lapses for leech
-                    'last_review': lastReviewDate,
-                    'is_leech': true,
-                    'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-                    'word': 'leech',
-                    'stem': 'leec',
-                    'meanings': [
-                      {
-                        'id': 'meaning-leech',
-                        'primary_translation': 'leechTranslation',
-                        'english_definition': 'Definition of leech',
-                        'synonyms': [],
-                        'is_primary': true,
-                        'sort_order': 0,
-                      }
-                    ],
-                    'cues': [],
-                    'has_encounter_context': false,
-                    'has_confusables': false,
-                  },
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            {
+              'card_id': 'card-normal',
+              'vocabulary_id': 'vocab-normal',
+              'state': 2,
+              'due': overdueDate,
+              'stability': 10.0,
+              'difficulty': 0.3,
+              'reps': 5,
+              'lapses': 0,
+              'last_review': lastReviewDate,
+              'is_leech': false,
+              'created_at': DateTime.now()
+                  .subtract(const Duration(days: 30))
+                  .toIso8601String(),
+              'word': 'normal',
+              'stem': 'norma',
+              'meanings': [
+                {
+                  'id': 'meaning-normal',
+                  'primary_translation': 'normalTranslation',
+                  'english_definition': 'Definition of normal',
+                  'synonyms': [],
+                  'is_primary': true,
+                  'sort_order': 0,
+                },
+              ],
+              'cues': [],
+              'has_encounter_context': false,
+              'has_confusables': false,
+            },
+            {
+              'card_id': 'card-leech',
+              'vocabulary_id': 'vocab-leech',
+              'state': 2,
+              'due': overdueDate,
+              'stability': 10.0,
+              'difficulty': 0.3,
+              'reps': 5,
+              'lapses': 8, // Many lapses for leech
+              'last_review': lastReviewDate,
+              'is_leech': true,
+              'created_at': DateTime.now()
+                  .subtract(const Duration(days: 30))
+                  .toIso8601String(),
+              'word': 'leech',
+              'stem': 'leec',
+              'meanings': [
+                {
+                  'id': 'meaning-leech',
+                  'primary_translation': 'leechTranslation',
+                  'english_definition': 'Definition of leech',
+                  'synonyms': [],
+                  'is_primary': true,
+                  'sort_order': 0,
+                },
+              ],
+              'cues': [],
+              'has_encounter_context': false,
+              'has_confusables': false,
+            },
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -518,21 +566,24 @@ void main() {
       });
 
       test('new words have lowest priority', () async {
-        when(mockDataService.getSessionCards(userId, limit: anyNamed('limit')))
-            .thenAnswer((_) async => [
-                  createCardJson(
-                    cardId: 'card-due',
-                    vocabularyId: 'vocab-due',
-                    word: 'due',
-                    state: 2,
-                  ),
-                  createCardJson(
-                    cardId: 'card-new',
-                    vocabularyId: 'vocab-new',
-                    word: 'new',
-                    state: 0,
-                  ),
-                ]);
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-due',
+              vocabularyId: 'vocab-due',
+              word: 'due',
+              state: 2,
+            ),
+            createCardJson(
+              cardId: 'card-new',
+              vocabularyId: 'vocab-new',
+              word: 'new',
+              state: 0,
+            ),
+          ],
+        );
 
         final plan = await planner.buildSessionPlan(
           userId: userId,
@@ -544,6 +595,190 @@ void main() {
         final newItem = plan.items.firstWhere((i) => i.word == 'new');
 
         expect(newItem.priority, 0.0);
+      });
+    });
+
+    group('computeSessionParams', () {
+      test('returns zero maxItems for very slow users', () async {
+        when(
+          mockTelemetryService.getEstimatedSecondsPerItem(userId),
+        ).thenAnswer((_) async => 1000.0); // Very slow
+
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 1,
+          intensity: 1,
+        );
+
+        expect(params.maxItems, 0);
+        expect(params.newWordCap, 0);
+        expect(params.estimatedSecondsPerItem, 0);
+      });
+
+      test('computes correct capacity and new word cap', () async {
+        // 10 min * 60 / 15 sec = 40 items
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 10,
+          intensity: 1, // Normal: 5 new words per 10 min
+        );
+
+        expect(params.maxItems, 40);
+        expect(params.newWordCap, 5);
+        expect(params.estimatedSecondsPerItem, 15.0);
+      });
+
+      test('suppresses new words when overdue count is high', () async {
+        when(
+          mockDataService.getOverdueCount(userId),
+        ).thenAnswer((_) async => 100); // High overdue
+
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 10,
+          intensity: 2, // Intense
+        );
+
+        expect(params.maxItems, 40);
+        expect(params.newWordCap, 0); // Suppressed
+      });
+    });
+
+    group('fetchBatch', () {
+      test('returns empty list when no cards available', () async {
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => []);
+
+        final items = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordCap: 5,
+        );
+
+        expect(items, isEmpty);
+      });
+
+      test('excludes already-fetched card IDs', () async {
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-1',
+              vocabularyId: 'vocab-1',
+              word: 'house',
+            ),
+            createCardJson(
+              cardId: 'card-2',
+              vocabularyId: 'vocab-2',
+              word: 'tree',
+            ),
+            createCardJson(
+              cardId: 'card-3',
+              vocabularyId: 'vocab-3',
+              word: 'river',
+            ),
+          ],
+        );
+
+        final items = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          excludeCardIds: {'card-1', 'card-2'},
+          newWordCap: 5,
+        );
+
+        expect(items, hasLength(1));
+        expect(items[0].word, 'river');
+      });
+
+      test('respects new word cap across batches', () async {
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-new-1',
+              vocabularyId: 'vocab-new-1',
+              word: 'alpha',
+              state: 0,
+            ),
+            createCardJson(
+              cardId: 'card-new-2',
+              vocabularyId: 'vocab-new-2',
+              word: 'beta',
+              state: 0,
+            ),
+            createCardJson(
+              cardId: 'card-due',
+              vocabularyId: 'vocab-due',
+              word: 'gamma',
+              state: 2,
+            ),
+          ],
+        );
+
+        // Cap is 3 but 2 already queued => only 1 new word allowed
+        final items = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordsAlreadyQueued: 2,
+          newWordCap: 3,
+        );
+
+        final newWordItems = items.where((i) => i.isNewWord).toList();
+        expect(newWordItems, hasLength(1));
+        // The due card should also be included
+        expect(items.any((i) => i.word == 'gamma'), true);
+      });
+
+      test('respects batchSize limit', () async {
+        final cards = List.generate(
+          10,
+          (i) => createCardJson(
+            cardId: 'card-$i',
+            vocabularyId: 'vocab-$i',
+            word: 'word$i',
+          ),
+        );
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => cards);
+
+        final items = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 3,
+          newWordCap: 10,
+        );
+
+        expect(items, hasLength(3));
+      });
+
+      test('assigns cue types to items', () async {
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer(
+          (_) async => [
+            createCardJson(
+              cardId: 'card-1',
+              vocabularyId: 'vocab-1',
+              word: 'house',
+              state: 2,
+              stability: 25.0,
+            ),
+          ],
+        );
+
+        final items = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordCap: 5,
+        );
+
+        expect(items, hasLength(1));
+        expect(items[0].cueType, isNotNull);
       });
     });
   });

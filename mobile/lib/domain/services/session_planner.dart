@@ -17,6 +17,24 @@ class InteractionMode {
   static const double stabilityThresholdDays = 7.0;
 }
 
+/// Lightweight session parameters computed before any card data is fetched.
+class SessionParams {
+  const SessionParams({
+    required this.maxItems,
+    required this.newWordCap,
+    required this.estimatedSecondsPerItem,
+  });
+
+  /// Total session capacity (number of items that fit in the time budget)
+  final int maxItems;
+
+  /// Maximum new words allowed in this session
+  final int newWordCap;
+
+  /// Estimated seconds per item from telemetry
+  final double estimatedSecondsPerItem;
+}
+
 /// Service for building time-boxed session plans
 class SessionPlanner {
   SessionPlanner({
@@ -30,6 +48,121 @@ class SessionPlanner {
   final SupabaseDataService _dataService;
   final TelemetryService _telemetryService;
   final CueSelector _cueSelector;
+
+  /// Compute lightweight session parameters (no card data fetched).
+  /// Used by incremental batch loading to know capacity before first fetch.
+  Future<SessionParams> computeSessionParams({
+    required String userId,
+    required int timeTargetMinutes,
+    required int intensity,
+  }) async {
+    final estimatedSecondsPerItem = await _telemetryService
+        .getEstimatedSecondsPerItem(userId);
+
+    final maxItems = (timeTargetMinutes * 60 / estimatedSecondsPerItem).floor();
+
+    if (maxItems <= 0) {
+      return const SessionParams(
+        maxItems: 0,
+        newWordCap: 0,
+        estimatedSecondsPerItem: 0,
+      );
+    }
+
+    final overdueCount = await _dataService.getOverdueCount(userId);
+
+    final prefs = await _dataService.getOrCreatePreferences(userId);
+    final previouslySuppressed =
+        prefs['new_word_suppression_active'] as bool? ?? false;
+    final shouldSuppress = shouldSuppressNewWords(
+      overdueCount: overdueCount,
+      sessionCapacity: maxItems,
+      previouslySuppressed: previouslySuppressed,
+    );
+
+    if (shouldSuppress != previouslySuppressed) {
+      await _dataService.updatePreferences(
+        userId: userId,
+        newWordSuppressionActive: shouldSuppress,
+      );
+    }
+
+    final newWordCap = shouldSuppress
+        ? 0
+        : Intensity.getNewWordCap(intensity, timeTargetMinutes);
+
+    return SessionParams(
+      maxItems: maxItems,
+      newWordCap: newWordCap,
+      estimatedSecondsPerItem: estimatedSecondsPerItem,
+    );
+  }
+
+  /// Fetch a batch of cards for incremental session loading.
+  ///
+  /// [batchSize] — how many new items to return.
+  /// [excludeCardIds] — card IDs already queued locally (for dedup).
+  /// [newWordsAlreadyQueued] — how many new words are already in the queue.
+  /// [newWordCap] — max new words allowed across the whole session.
+  Future<List<PlannedItem>> fetchBatch({
+    required String userId,
+    required int batchSize,
+    Set<String> excludeCardIds = const {},
+    int newWordsAlreadyQueued = 0,
+    int newWordCap = 0,
+  }) async {
+    // Fetch extra cards to account for dedup filtering
+    final fetchLimit = batchSize + excludeCardIds.length;
+    final cardsData = await _dataService.getSessionCards(
+      userId,
+      limit: fetchLimit,
+    );
+    final allCards = cardsData.map(SessionCard.fromJson).toList();
+
+    // Filter out already-fetched cards
+    final freshCards = excludeCardIds.isEmpty
+        ? allCards
+        : allCards.where((c) => !excludeCardIds.contains(c.cardId)).toList();
+
+    // Separate by type and build items (same order as buildSessionPlan)
+    final items = <PlannedItem>[];
+    var newWordCount = newWordsAlreadyQueued;
+
+    for (final card in freshCards) {
+      if (items.length >= batchSize) break;
+
+      // Enforce new word cap
+      if (card.state == 0) {
+        if (newWordCount >= newWordCap) continue;
+        newWordCount++;
+      }
+
+      final cueType = _cueSelector.selectCueType(
+        card: card,
+        hasMeaning: card.hasMeaning,
+        hasEncounterContext: card.hasEncounterContext,
+        hasConfusables: card.hasConfusables,
+      );
+
+      items.add(
+        PlannedItem(
+          sessionCard: card,
+          interactionMode: selectInteractionMode(card),
+          priority: card.state == 0 ? 0.0 : _computePriorityScore(card),
+          cueType: cueType,
+        ),
+      );
+    }
+
+    developer.log(
+      'fetchBatch returned ${items.length} items '
+      '(fetched ${allCards.length}, excluded ${excludeCardIds.length}, '
+      'newWords=$newWordCount/$newWordCap)',
+      name: 'SessionPlanner',
+    );
+
+    return items;
+  }
 
   /// Build a session plan for the current user
   Future<SessionPlan> buildSessionPlan({
@@ -189,8 +322,7 @@ class SessionPlanner {
     );
 
     // Compute estimated duration
-    final estimatedDurationSeconds = (items.length *
-            estimatedSecondsPerItem)
+    final estimatedDurationSeconds = (items.length * estimatedSecondsPerItem)
         .round();
 
     return SessionPlan(
@@ -224,8 +356,11 @@ class SessionPlanner {
           ? now.difference(card.lastReview!).inDays.toDouble()
           : 0.0;
       if (card.stability > 0) {
-        retrievability = (0.9 * (card.stability / (card.stability + daysSinceReview)))
-            .clamp(0.0, 1.0);
+        retrievability =
+            (0.9 * (card.stability / (card.stability + daysSinceReview))).clamp(
+              0.0,
+              1.0,
+            );
       } else {
         retrievability = 1.0;
       }

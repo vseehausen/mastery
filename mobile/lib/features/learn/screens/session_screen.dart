@@ -11,7 +11,6 @@ import '../../../domain/models/learning_enums.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_card.dart';
-import '../../../domain/models/session_plan.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
@@ -29,7 +28,9 @@ import '../widgets/synonym_cue_card.dart';
 import 'session_complete_screen.dart';
 
 /// Main session screen for learning
-/// Presents items one by one with timer, saves progress after each item
+/// Presents items one by one with timer, saves progress after each item.
+/// Uses incremental batch loading: fetches 5 cards initially, prefetches
+/// more in the background as the user progresses.
 class SessionScreen extends ConsumerStatefulWidget {
   const SessionScreen({super.key});
 
@@ -38,7 +39,18 @@ class SessionScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
-  SessionPlan? _sessionPlan;
+  static const _initialBatchSize = 5;
+  static const _prefetchThreshold = 3;
+  static const _batchSize = 5;
+
+  // Incremental batch state
+  List<PlannedItem> _items = [];
+  final Set<String> _fetchedCardIds = {};
+  int _estimatedTotalItems = 0;
+  bool _isFetchingMore = false;
+  int _newWordsQueued = 0;
+  int _newWordCap = 0;
+
   LearningSessionModel? _session;
   int _currentItemIndex = 0;
   int _elapsedSeconds = 0;
@@ -91,25 +103,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
       }
 
-      // Get user preferences for building the plan
+      // Get user preferences
       final prefs = await dataService.getOrCreatePreferences(userId);
       final dailyTimeTargetMinutes =
           prefs['daily_time_target_minutes'] as int? ?? 10;
       final intensity = prefs['intensity'] as int? ?? 1;
-      final targetRetention =
-          (prefs['target_retention'] as num?)?.toDouble() ?? 0.90;
 
-      // Build session plan
-      final plan = await planner.buildSessionPlan(
+      // Step 1: Compute lightweight session params (no card data)
+      final params = await planner.computeSessionParams(
         userId: userId,
         timeTargetMinutes: dailyTimeTargetMinutes,
         intensity: intensity,
-        targetRetention: targetRetention,
       );
 
-      debugPrint('[Session] Initial plan items: ${plan.items.length}');
-
-      if (plan.items.isEmpty) {
+      if (params.maxItems <= 0) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No items available to practice')),
@@ -117,6 +124,33 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           Navigator.of(context).pop();
         }
         return;
+      }
+
+      // Step 2: Fetch initial batch of cards only
+      final initialItems = await planner.fetchBatch(
+        userId: userId,
+        batchSize: _initialBatchSize,
+        newWordCap: params.newWordCap,
+      );
+
+      debugPrint('[Session] Initial batch: ${initialItems.length} items');
+
+      if (initialItems.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No items available to practice')),
+          );
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
+      // Track fetched card IDs and new word count
+      final fetchedIds = <String>{};
+      var newWords = 0;
+      for (final item in initialItems) {
+        fetchedIds.add(item.cardId);
+        if (item.isNewWord) newWords++;
       }
 
       // Create new session if needed
@@ -142,13 +176,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       }
 
       // Load distractors for first item if it's recognition mode
-      if (plan.items.isNotEmpty && plan.items[0].isRecognition) {
-        await _loadDistractorsForItem(plan.items[0], userId);
+      if (initialItems.isNotEmpty && initialItems[0].isRecognition) {
+        await _loadDistractorsForItem(initialItems[0], userId);
       }
 
       if (mounted) {
         setState(() {
-          _sessionPlan = plan;
+          _items = initialItems;
+          _fetchedCardIds.addAll(fetchedIds);
+          _estimatedTotalItems = params.maxItems;
+          _newWordsQueued = newWords;
+          _newWordCap = params.newWordCap;
           _session = activeSession;
           _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
           _currentItemIndex = activeSession?.itemsCompleted ?? 0;
@@ -167,6 +205,46 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _errorMessage = 'Failed to load session: $e';
         });
       }
+    }
+  }
+
+  /// Prefetch more cards if the user is running low on queued items.
+  Future<void> _maybePrefetchMore() async {
+    final remaining = _items.length - _currentItemIndex - 1;
+    if (remaining >= _prefetchThreshold || _isFetchingMore) return;
+
+    final userId = ref.read(currentUserProvider).valueOrNull?.id;
+    if (userId == null) return;
+
+    _isFetchingMore = true;
+
+    try {
+      final planner = ref.read(sessionPlannerProvider);
+      final newItems = await planner.fetchBatch(
+        userId: userId,
+        batchSize: _batchSize,
+        excludeCardIds: _fetchedCardIds,
+        newWordsAlreadyQueued: _newWordsQueued,
+        newWordCap: _newWordCap,
+      );
+
+      if (newItems.isNotEmpty && mounted) {
+        setState(() {
+          for (final item in newItems) {
+            _fetchedCardIds.add(item.cardId);
+            if (item.isNewWord) _newWordsQueued++;
+          }
+          _items = [..._items, ...newItems];
+        });
+        debugPrint(
+          '[Session] Prefetched ${newItems.length} more items, '
+          'total queued: ${_items.length}',
+        );
+      }
+    } catch (e) {
+      debugPrint('[Session] Prefetch failed: $e');
+    } finally {
+      _isFetchingMore = false;
     }
   }
 
@@ -219,10 +297,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _processReview(int rating, int responseTimeMs) async {
-    if (_sessionPlan == null || _session == null) return;
-    if (_currentItemIndex >= _sessionPlan!.items.length) return;
+    if (_session == null) return;
+    if (_currentItemIndex >= _items.length) return;
 
-    final currentItem = _sessionPlan!.items[_currentItemIndex];
+    final currentItem = _items[_currentItemIndex];
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
@@ -288,6 +366,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       reviewsPresented: _reviewsPresented,
     );
 
+    // Trigger background prefetch after review
+    unawaited(_maybePrefetchMore());
+
     // Move to next item or complete
     final nextIndex = _currentItemIndex + 1;
 
@@ -295,11 +376,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final totalSeconds = _session!.plannedMinutes * 60 + _session!.bonusSeconds;
     final timeUp = _elapsedSeconds >= totalSeconds;
 
-    if (timeUp || nextIndex >= _sessionPlan!.items.length) {
+    if (timeUp || nextIndex >= _items.length) {
       await _completeSession();
     } else {
       // Load distractors for next item if needed
-      final nextItem = _sessionPlan!.items[nextIndex];
+      final nextItem = _items[nextIndex];
       if (nextItem.isRecognition) {
         await _loadDistractorsForItem(nextItem, userId);
       }
@@ -344,8 +425,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     });
 
     // Check if all items are exhausted
-    final allItemsExhausted =
-        _currentItemIndex + 1 >= (_sessionPlan?.items.length ?? 0);
+    final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
 
     if (!mounted) return;
     await Navigator.of(context).pushReplacement(
@@ -353,7 +433,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         builder: (context) => SessionCompleteScreen(
           sessionId: _session!.id,
           itemsCompleted: _currentItemIndex + 1,
-          totalItems: _sessionPlan?.items.length ?? 0,
+          totalItems: _estimatedTotalItems,
           elapsedSeconds: _elapsedSeconds,
           plannedSeconds: totalSeconds,
           isFullCompletion: outcome == SessionOutcomeEnum.complete,
@@ -409,7 +489,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
 
-    if (_errorMessage != null || _sessionPlan == null || _session == null) {
+    if (_errorMessage != null || _items.isEmpty || _session == null) {
       return Scaffold(
         body: Center(
           child: Padding(
@@ -447,8 +527,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
 
     final totalSeconds = _session!.plannedMinutes * 60 + _session!.bonusSeconds;
-    final currentItem = _currentItemIndex < _sessionPlan!.items.length
-        ? _sessionPlan!.items[_currentItemIndex]
+    final currentItem = _currentItemIndex < _items.length
+        ? _items[_currentItemIndex]
         : null;
 
     return Scaffold(
@@ -514,7 +594,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   // Progress bar
                   SessionProgressBar(
                     completedItems: _currentItemIndex,
-                    totalItems: _sessionPlan!.items.length,
+                    totalItems: _estimatedTotalItems,
                   ),
                 ],
               ),
