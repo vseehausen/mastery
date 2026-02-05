@@ -45,6 +45,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   bool _isPaused = false;
   bool _isLoading = true;
   bool _isSessionComplete = false;
+  String? _errorMessage;
   DateTime? _itemStartTime;
   List<String>? _currentDistractors;
   int _newWordsPresented = 0;
@@ -68,93 +69,104 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       return;
     }
 
-    final dataService = ref.read(supabaseDataServiceProvider);
-    final planner = ref.read(sessionPlannerProvider);
+    try {
+      final dataService = ref.read(supabaseDataServiceProvider);
+      final planner = ref.read(sessionPlannerProvider);
 
-    // Check for existing active session
-    final activeSessionData = await dataService.getActiveSession(userId);
-    LearningSessionModel? activeSession;
-    final now = DateTime.now().toUtc();
+      // Check for existing active session
+      final activeSessionData = await dataService.getActiveSession(userId);
+      LearningSessionModel? activeSession;
+      final now = DateTime.now().toUtc();
 
-    if (activeSessionData != null) {
-      activeSession = LearningSessionModel.fromJson(activeSessionData);
-      // Check if session is expired
-      if (activeSession.expiresAt.isBefore(now)) {
-        // Expire the old session
-        await dataService.endSession(
-          sessionId: activeSession.id,
-          outcome: SessionOutcomeEnum.expired.value,
-        );
-        activeSession = null;
+      if (activeSessionData != null) {
+        activeSession = LearningSessionModel.fromJson(activeSessionData);
+        // Check if session is expired
+        if (activeSession.expiresAt.isBefore(now)) {
+          // Expire the old session
+          await dataService.endSession(
+            sessionId: activeSession.id,
+            outcome: SessionOutcomeEnum.expired.value,
+          );
+          activeSession = null;
+        }
       }
-    }
 
-    // Get user preferences for building the plan
-    final prefs = await dataService.getOrCreatePreferences(userId);
-    final dailyTimeTargetMinutes =
-        prefs['daily_time_target_minutes'] as int? ?? 10;
-    final intensity = prefs['intensity'] as int? ?? 1;
-    final targetRetention =
-        (prefs['target_retention'] as num?)?.toDouble() ?? 0.90;
+      // Get user preferences for building the plan
+      final prefs = await dataService.getOrCreatePreferences(userId);
+      final dailyTimeTargetMinutes =
+          prefs['daily_time_target_minutes'] as int? ?? 10;
+      final intensity = prefs['intensity'] as int? ?? 1;
+      final targetRetention =
+          (prefs['target_retention'] as num?)?.toDouble() ?? 0.90;
 
-    // Build session plan
-    final plan = await planner.buildSessionPlan(
-      userId: userId,
-      timeTargetMinutes: dailyTimeTargetMinutes,
-      intensity: intensity,
-      targetRetention: targetRetention,
-    );
-
-    debugPrint('[Session] Initial plan items: ${plan.items.length}');
-
-    if (plan.items.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No items available to practice')),
-        );
-        Navigator.of(context).pop();
-      }
-      return;
-    }
-
-    // Create new session if needed
-    if (activeSession == null) {
-      final plannedMinutes = dailyTimeTargetMinutes;
-      final expiresAt = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        23,
-        59,
-        59,
-      ).toUtc();
-
-      final sessionId = _uuid.v4();
-      final sessionData = await dataService.createSession(
-        id: sessionId,
+      // Build session plan
+      final plan = await planner.buildSessionPlan(
         userId: userId,
-        plannedMinutes: plannedMinutes,
-        expiresAt: expiresAt,
+        timeTargetMinutes: dailyTimeTargetMinutes,
+        intensity: intensity,
+        targetRetention: targetRetention,
       );
-      activeSession = LearningSessionModel.fromJson(sessionData);
-    }
 
-    // Load distractors for first item if it's recognition mode
-    if (plan.items.isNotEmpty && plan.items[0].isRecognition) {
-      await _loadDistractorsForItem(plan.items[0], userId);
-    }
+      debugPrint('[Session] Initial plan items: ${plan.items.length}');
 
-    if (mounted) {
-      setState(() {
-        _sessionPlan = plan;
-        _session = activeSession;
-        _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
-        _currentItemIndex = activeSession?.itemsCompleted ?? 0;
-        _newWordsPresented = activeSession?.newWordsPresented ?? 0;
-        _reviewsPresented = activeSession?.reviewsPresented ?? 0;
-        _isLoading = false;
-        _itemStartTime = DateTime.now();
-      });
+      if (plan.items.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No items available to practice')),
+          );
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
+      // Create new session if needed
+      if (activeSession == null) {
+        final plannedMinutes = dailyTimeTargetMinutes;
+        final expiresAt = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          23,
+          59,
+          59,
+        ).toUtc();
+
+        final sessionId = _uuid.v4();
+        final sessionData = await dataService.createSession(
+          id: sessionId,
+          userId: userId,
+          plannedMinutes: plannedMinutes,
+          expiresAt: expiresAt,
+        );
+        activeSession = LearningSessionModel.fromJson(sessionData);
+      }
+
+      // Load distractors for first item if it's recognition mode
+      if (plan.items.isNotEmpty && plan.items[0].isRecognition) {
+        await _loadDistractorsForItem(plan.items[0], userId);
+      }
+
+      if (mounted) {
+        setState(() {
+          _sessionPlan = plan;
+          _session = activeSession;
+          _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
+          _currentItemIndex = activeSession?.itemsCompleted ?? 0;
+          _newWordsPresented = activeSession?.newWordsPresented ?? 0;
+          _reviewsPresented = activeSession?.reviewsPresented ?? 0;
+          _isLoading = false;
+          _itemStartTime = DateTime.now();
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('[Session] Failed to initialize session: $e');
+      debugPrint('[Session] $stackTrace');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Failed to load session: $e';
+        });
+      }
     }
   }
 
@@ -397,15 +409,37 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
 
-    if (_sessionPlan == null || _session == null) {
+    if (_errorMessage != null || _sessionPlan == null || _session == null) {
       return Scaffold(
         body: Center(
-          child: Text(
-            'Unable to start session',
-            style: MasteryTextStyles.body.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: isDark
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage ?? 'Unable to start session',
+                  textAlign: TextAlign.center,
+                  style: MasteryTextStyles.body.copyWith(
+                    color: isDark
+                        ? MasteryColors.mutedForegroundDark
+                        : MasteryColors.mutedForegroundLight,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Go back'),
+                ),
+              ],
             ),
           ),
         ),
@@ -425,7 +459,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+                color: isDark
+                    ? MasteryColors.cardDark
+                    : MasteryColors.cardLight,
                 border: Border(
                   bottom: BorderSide(
                     color: isDark
@@ -545,7 +581,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final meaning = card.primaryMeaning;
 
     // Get translation answer (primary translation or fallback to definition)
-    final translationAnswer = meaning?.primaryTranslation ??
+    final translationAnswer =
+        meaning?.primaryTranslation ??
         meaning?.englishDefinition ??
         'Translation not available';
 
@@ -567,7 +604,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case CueType.definition:
         return DefinitionCueCard(
           definition:
-              cue?.promptText ?? meaning?.englishDefinition ?? translationAnswer,
+              cue?.promptText ??
+              meaning?.englishDefinition ??
+              translationAnswer,
           targetWord: cue?.answerText ?? card.word,
           hintText: cue?.hintText,
           onGrade: _handleRecallGrade,
@@ -624,9 +663,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     // The answer text is the correct option; for now return it as the only option
     // In a real implementation, you'd parse the cue metadata for all options
-    return (
-      options: [cue.answerText],
-      correctIndex: 0,
-    );
+    return (options: [cue.answerText], correctIndex: 0);
   }
 }
