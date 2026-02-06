@@ -154,10 +154,11 @@ class SessionPlanner {
       );
     }
 
+    final words = items.map((i) => i.word).join(', ');
     developer.log(
       'fetchBatch returned ${items.length} items '
       '(fetched ${allCards.length}, excluded ${excludeCardIds.length}, '
-      'newWords=$newWordCount/$newWordCap)',
+      'newWords=$newWordCount/$newWordCap) - words: $words',
       name: 'SessionPlanner',
     );
 

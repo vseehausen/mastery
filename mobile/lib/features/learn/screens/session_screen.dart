@@ -45,8 +45,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // Incremental batch state
   List<PlannedItem> _items = [];
+  final Set<String> _fetchedCardIds = {};
   int _estimatedTotalItems = 0;
   bool _isFetchingMore = false;
+  bool _initStarted = false;
   Completer<void>? _fetchCompleter;
   int _newWordsQueued = 0;
   int _newWordCap = 0;
@@ -72,6 +74,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _initializeSession() async {
+    if (_initStarted) return;
+    _initStarted = true;
+
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) {
@@ -134,6 +139,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
 
       debugPrint('[Session] Initial batch: ${initialItems.length} items');
+      for (final item in initialItems) {
+        debugPrint(
+          '[Session] Card: word=${item.word}, state=${item.isNewWord ? 0 : "review"}, '
+          'cueType=${item.cueType}',
+        );
+      }
 
       if (initialItems.isEmpty) {
         if (mounted) {
@@ -145,9 +156,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
-      // Count new words in initial batch
+      // Track fetched card IDs and count new words
       var newWords = 0;
       for (final item in initialItems) {
+        _fetchedCardIds.add(item.cardId);
         if (item.isNewWord) newWords++;
       }
 
@@ -178,6 +190,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         await _loadDistractorsForItem(initialItems[0], userId);
       }
 
+      // Proactively replenish enrichment buffer (fire-and-forget)
+      unawaited(ref.read(enrichmentServiceProvider).replenishIfNeeded(userId));
+
       if (mounted) {
         setState(() {
           _items = initialItems;
@@ -205,13 +220,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  /// IDs of cards currently in [_items] that haven't been reviewed yet.
-  /// Used as the exclude set for prefetch queries. Reviewed cards are excluded
-  /// naturally by the DB (their due date is pushed to the future), but
-  /// unreviewed cards in the local queue would still be returned.
-  Set<String> get _unreviewedCardIds =>
-      _items.skip(_currentItemIndex).map((i) => i.cardId).toSet();
-
   /// Prefetch more cards when the user is running low on queued items.
   /// When [force] is true, waits for any in-flight fetch and always attempts
   /// to load more (used when the user has exhausted the current batch).
@@ -234,11 +242,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     try {
       final planner = ref.read(sessionPlannerProvider);
-      final excludeIds = _unreviewedCardIds;
       final newItems = await planner.fetchBatch(
         userId: userId,
         batchSize: _batchSize,
-        excludeCardIds: excludeIds,
+        excludeCardIds: _fetchedCardIds,
         newWordsAlreadyQueued: _newWordsQueued,
         newWordCap: _newWordCap,
       );
@@ -246,13 +253,22 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (newItems.isNotEmpty && mounted) {
         setState(() {
           for (final item in newItems) {
+            _fetchedCardIds.add(item.cardId);
             if (item.isNewWord) _newWordsQueued++;
           }
           _items = [..._items, ...newItems];
         });
         debugPrint(
           '[Session] Prefetched ${newItems.length} more items, '
-          'total queued: ${_items.length}',
+          'total queued: ${_items.length}, exclude set size: ${_fetchedCardIds.length}',
+        );
+        for (final item in newItems) {
+          debugPrint('[Session] New item: word=${item.word}');
+        }
+
+        // Proactively replenish enrichment buffer after prefetch (fire-and-forget)
+        unawaited(
+          ref.read(enrichmentServiceProvider).replenishIfNeeded(userId),
         );
       }
     } catch (e) {
@@ -433,6 +449,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ? SessionOutcomeEnum.complete
         : SessionOutcomeEnum.partial;
 
+    final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
+    final reason = _elapsedSeconds >= totalSeconds ? 'time up' : 'items exhausted';
+    debugPrint(
+      '[Session] Complete: reason=$reason, total reviewed=${_currentItemIndex + 1}, '
+      'allItemsExhausted=$allItemsExhausted',
+    );
+
     await dataService.endSession(
       sessionId: _session!.id,
       outcome: outcome.value,
@@ -451,9 +474,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     setState(() {
       _isSessionComplete = true;
     });
-
-    // Check if all items are exhausted
-    final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
 
     if (!mounted) return;
     await Navigator.of(context).pushReplacement(

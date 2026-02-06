@@ -258,6 +258,23 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
+  /// Count enriched new words available (state=0 + has meanings)
+  /// This is the "server buffer" — words ready for introduction.
+  Future<int> countEnrichedNewWords(String userId) async {
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return 0;
+
+    final response = await _client
+        .from('learning_cards')
+        .select()
+        .eq('user_id', userId)
+        .eq('state', 0)
+        .isFilter('deleted_at', null)
+        .inFilter('vocabulary_id', enrichedIds)
+        .count(CountOption.exact);
+    return response.count;
+  }
+
   /// Update a learning card after review
   Future<void> updateLearningCard({
     required String cardId,
@@ -520,7 +537,7 @@ class SupabaseDataService {
 
     if (response == null) {
       final now = DateTime.now().toUtc().toIso8601String();
-      final id = '${userId}_streak';
+      final id = const Uuid().v4();
       final data = {
         'id': id,
         'user_id': userId,
@@ -693,7 +710,7 @@ class SupabaseDataService {
         .select('response_time_ms')
         .eq('user_id', userId)
         .not('response_time_ms', 'is', null)
-        .order('created_at', ascending: false)
+        .order('reviewed_at', ascending: false)
         .limit(windowSize);
     final list = List<Map<String, dynamic>>.from(response as List);
     if (list.isEmpty) return 15000.0; // Default 15 seconds
@@ -735,7 +752,7 @@ class SupabaseDataService {
       'new_difficulty': newDifficulty,
       'old_due': oldDue?.toUtc().toIso8601String(),
       'new_due': newDue?.toUtc().toIso8601String(),
-      'created_at': now,
+      'reviewed_at': now,
     });
   }
 

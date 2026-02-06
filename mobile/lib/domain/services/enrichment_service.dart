@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/services/supabase_data_service.dart';
@@ -20,16 +21,21 @@ class EnrichmentService {
 
   /// Check if the enrichment buffer needs replenishment and trigger if so.
   Future<void> replenishIfNeeded(String userId) async {
-    final enrichedIds = await dataService.getEnrichedVocabularyIds(userId);
-    if (enrichedIds.length >= _replenishThreshold) return;
+    final availableNewWords = await dataService.countEnrichedNewWords(userId);
+    if (availableNewWords >= _replenishThreshold) {
+      debugPrint(
+        '[EnrichmentService] Buffer OK: $availableNewWords enriched new words (>= $_replenishThreshold)',
+      );
+      return;
+    }
 
-    developer.log(
-      'Enrichment buffer low (${enrichedIds.length} < $_replenishThreshold), '
+    debugPrint(
+      '[EnrichmentService] Enrichment buffer low ($availableNewWords enriched new words < $_replenishThreshold), '
       'triggering replenishment',
-      name: 'EnrichmentService',
     );
 
-    await requestEnrichment(userId: userId);
+    final needed = (_bufferTarget - availableNewWords).clamp(1, 10);
+    await requestEnrichment(userId: userId, batchSize: needed);
   }
 
   /// Request enrichment for specific vocabulary IDs or let server pick.
@@ -39,11 +45,10 @@ class EnrichmentService {
     int batchSize = 5,
     String languageCode = 'de',
   }) async {
-    developer.log(
-      'Requesting enrichment: language=$languageCode, '
+    debugPrint(
+      '[EnrichmentService] Requesting enrichment: language=$languageCode, '
       'batchSize=$batchSize, '
       'specificIds=${vocabularyIds?.length ?? 0}',
-      name: 'EnrichmentService',
     );
 
     try {
@@ -61,10 +66,8 @@ class EnrichmentService {
       );
 
       if (response.status != 200) {
-        developer.log(
-          'Enrichment request failed: status=${response.status}',
-          name: 'EnrichmentService',
-          level: 900,
+        debugPrint(
+          '[EnrichmentService] Enrichment request failed: status=${response.status}',
         );
         return const EnrichmentResult(enrichedCount: 0, failedCount: 0);
       }
@@ -73,24 +76,17 @@ class EnrichmentService {
       final enriched = data['enriched'] as List<dynamic>? ?? [];
       final failed = data['failed'] as List<dynamic>? ?? [];
 
-      developer.log(
-        'Enrichment complete: ${enriched.length} enriched, '
+      debugPrint(
+        '[EnrichmentService] Enrichment complete: ${enriched.length} enriched, '
         '${failed.length} failed',
-        name: 'EnrichmentService',
       );
 
       return EnrichmentResult(
         enrichedCount: enriched.length,
         failedCount: failed.length,
       );
-    } catch (e, st) {
-      developer.log(
-        'Enrichment request error: $e',
-        name: 'EnrichmentService',
-        level: 1000,
-        error: e,
-        stackTrace: st,
-      );
+    } catch (e) {
+      debugPrint('[EnrichmentService] Enrichment request error: $e');
       return const EnrichmentResult(enrichedCount: 0, failedCount: 0);
     }
   }
