@@ -21,20 +21,14 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    return _client.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<AuthResponse> signUpWithEmail({
     required String email,
     required String password,
   }) async {
-    return _client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    return _client.auth.signUp(email: email, password: password);
   }
 
   Future<void> signOut() async {
@@ -75,13 +69,17 @@ class AuthService {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   Future<AuthResponse> signInWithGoogle() async {
-    const webClientId = '485055239401-ekmcq02mnuaivhsrui7f1h6hg47ocqme.apps.googleusercontent.com';
-    const iosClientId = '485055239401-6shii35u4fcfqvg1kvqb9aavijqhulsp.apps.googleusercontent.com';
+    const webClientId =
+        '485055239401-ekmcq02mnuaivhsrui7f1h6hg47ocqme.apps.googleusercontent.com';
+    const iosClientId =
+        '485055239401-6shii35u4fcfqvg1kvqb9aavijqhulsp.apps.googleusercontent.com';
 
     final googleSignIn = GoogleSignIn(
       clientId: iosClientId,
@@ -101,11 +99,17 @@ class AuthService {
       throw Exception('No access token or ID token found');
     }
 
-    return _client.auth.signInWithIdToken(
+    final response = await _client.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
       accessToken: accessToken,
     );
+    
+    if (response.session == null) {
+      throw Exception('Google sign-in succeeded but no session was created. Check webClientId configuration.');
+    }
+    
+    return response;
   }
 }
 

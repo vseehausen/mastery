@@ -38,6 +38,15 @@ class AuthGuard extends ConsumerWidget {
         ref.read(oauthInProgressProvider.notifier).state = false;
       }
     });
+    
+    // Safety timeout: clear OAuth flag after 30 seconds if still in progress
+    if (oauthInProgress && !isAuthenticated) {
+      Future.delayed(const Duration(seconds: 30), () {
+        if (ref.read(oauthInProgressProvider) && !ref.read(isAuthenticatedProvider)) {
+          ref.read(oauthInProgressProvider.notifier).state = false;
+        }
+      });
+    }
 
     // Auto-clear session on refresh token errors
     ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {

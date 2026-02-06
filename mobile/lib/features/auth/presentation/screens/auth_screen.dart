@@ -186,14 +186,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.signInWithGoogle();
+      final response = await authRepo.signInWithGoogle();
+      
+      // Check if sign-in actually succeeded
+      if (response.session == null) {
+        throw Exception('Sign in succeeded but no session was created');
+      }
+      
       // Don't navigate here - AuthGuard handles it
+      // OAuth flag will be cleared by AuthGuard when isAuthenticated becomes true
     } catch (e) {
       // Clear OAuth flag on error
       ref.read(oauthInProgressProvider.notifier).state = false;
       setState(() {
         _errorMessage = _getOAuthErrorMessage(e, 'Google');
       });
+      // Log error for debugging
+      debugPrint('Google sign-in error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
