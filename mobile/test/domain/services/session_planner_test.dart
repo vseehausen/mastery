@@ -781,5 +781,314 @@ void main() {
         expect(items[0].cueType, isNotNull);
       });
     });
+
+    group('fetchBatch - multi-batch simulation', () {
+      /// Simulates the session screen's batch loading: fetches an initial
+      /// batch, then subsequent batches using the unreviewed tail as the
+      /// exclude set (mirroring _unreviewedCardIds).
+      ///
+      /// The DB returns all 15 cards sorted by due (same order every call),
+      /// and after "reviewing" a card we assume its due is pushed forward
+      /// so it sorts to the end. We simulate this by moving reviewed cards
+      /// to the end of the return list on each call.
+
+      test('multiple batches yield no duplicate cards', () async {
+        // 15 cards total in DB
+        final allCards = List.generate(
+          15,
+          (i) => createCardJson(
+            cardId: 'card-$i',
+            vocabularyId: 'vocab-$i',
+            word: 'word$i',
+          ),
+        );
+
+        // Track which cards have been "reviewed" (due pushed forward)
+        final reviewedIds = <String>{};
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async {
+          // Simulate DB sorting: unreviewed first (by original order),
+          // then reviewed cards (due pushed to future)
+          final unreviewed =
+              allCards.where((c) => !reviewedIds.contains(c['card_id']));
+          final reviewed =
+              allCards.where((c) => reviewedIds.contains(c['card_id']));
+          return [...unreviewed, ...reviewed];
+        });
+
+        const batchSize = 5;
+        final items = <String>[]; // All items seen across batches
+        var currentIndex = 0;
+
+        // --- Batch 1: initial fetch ---
+        final batch1 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: batchSize,
+          newWordCap: 20,
+        );
+        expect(batch1, hasLength(batchSize));
+        items.addAll(batch1.map((i) => i.cardId));
+
+        // "Review" first 3 cards (simulating user progress)
+        for (var i = 0; i < 3; i++) {
+          reviewedIds.add(items[currentIndex + i]);
+        }
+        currentIndex = 3; // User is on item index 3
+
+        // --- Batch 2: prefetch with unreviewed tail as exclude ---
+        // Unreviewed tail = items from currentIndex onwards
+        final excludeIds1 =
+            items.skip(currentIndex).toSet();
+        final batch2 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: batchSize,
+          excludeCardIds: excludeIds1,
+          newWordCap: 20,
+        );
+        expect(batch2, hasLength(batchSize));
+        items.addAll(batch2.map((i) => i.cardId));
+
+        // Verify no duplicates so far
+        expect(items.toSet().length, items.length,
+            reason: 'Batch 2 introduced duplicates');
+
+        // "Review" remaining items in batch 1 + first 3 of batch 2
+        for (var i = currentIndex; i < currentIndex + 5; i++) {
+          reviewedIds.add(items[i]);
+        }
+        currentIndex = 8; // Now at item index 8
+
+        // --- Batch 3: another prefetch ---
+        final excludeIds2 =
+            items.skip(currentIndex).toSet();
+        final batch3 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: batchSize,
+          excludeCardIds: excludeIds2,
+          newWordCap: 20,
+        );
+        expect(batch3, hasLength(batchSize));
+        items.addAll(batch3.map((i) => i.cardId));
+
+        // Verify no duplicates across all 3 batches
+        expect(items.toSet().length, items.length,
+            reason: 'Batch 3 introduced duplicates');
+
+        // Verify we fetched all 15 unique cards
+        expect(items.toSet().length, 15);
+      });
+
+      test('exclude set only needs unreviewed items, not all history', () async {
+        // 12 cards total
+        final allCards = List.generate(
+          12,
+          (i) => createCardJson(
+            cardId: 'card-$i',
+            vocabularyId: 'vocab-$i',
+            word: 'word$i',
+          ),
+        );
+
+        final reviewedIds = <String>{};
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async {
+          final unreviewed =
+              allCards.where((c) => !reviewedIds.contains(c['card_id']));
+          final reviewed =
+              allCards.where((c) => reviewedIds.contains(c['card_id']));
+          return [...unreviewed, ...reviewed];
+        });
+
+        // Batch 1: fetch 5
+        final batch1 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordCap: 20,
+        );
+        expect(batch1.map((i) => i.cardId).toList(),
+            ['card-0', 'card-1', 'card-2', 'card-3', 'card-4']);
+
+        // Review all 5
+        for (final item in batch1) {
+          reviewedIds.add(item.cardId);
+        }
+
+        // Batch 2: exclude set is empty (all reviewed, none unreviewed)
+        // Reviewed cards have due pushed to future, so DB sorts them last.
+        // Fetch should return the next 5 unreviewed cards.
+        final batch2 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          excludeCardIds: <String>{}, // No unreviewed items to exclude
+          newWordCap: 20,
+        );
+
+        // Should get cards 5-9 (the next unreviewed cards)
+        expect(batch2.map((i) => i.cardId).toList(),
+            ['card-5', 'card-6', 'card-7', 'card-8', 'card-9']);
+      });
+
+      test('race condition: prefetch during review excludes current batch', () async {
+        // Simulates the race condition where a prefetch runs while the user
+        // is reviewing cards in the current batch. Cards 3 and 4 are still
+        // unreviewed and in the local queue, so the prefetch must exclude them.
+        final allCards = List.generate(
+          10,
+          (i) => createCardJson(
+            cardId: 'card-$i',
+            vocabularyId: 'vocab-$i',
+            word: 'word$i',
+          ),
+        );
+
+        // Only cards 0,1,2 have been reviewed so far
+        final reviewedIds = {'card-0', 'card-1', 'card-2'};
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async {
+          // DB returns: unreviewed first, reviewed last
+          final unreviewed =
+              allCards.where((c) => !reviewedIds.contains(c['card_id']));
+          final reviewed =
+              allCards.where((c) => reviewedIds.contains(c['card_id']));
+          return [...unreviewed, ...reviewed];
+        });
+
+        // Prefetch triggered at currentIndex=2 (just reviewed card-2).
+        // Unreviewed tail in local _items = [card-3, card-4]
+        final excludeIds = {'card-3', 'card-4'};
+
+        final batch = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          excludeCardIds: excludeIds,
+          newWordCap: 20,
+        );
+
+        // Should get cards 5-9 (skipping 3,4 which are excluded)
+        final fetchedIds = batch.map((i) => i.cardId).toSet();
+        expect(fetchedIds, isNot(contains('card-3')),
+            reason: 'card-3 is in local queue, should be excluded');
+        expect(fetchedIds, isNot(contains('card-4')),
+            reason: 'card-4 is in local queue, should be excluded');
+        expect(fetchedIds, isNot(contains('card-0')),
+            reason: 'card-0 was reviewed, should sort after unreviewed');
+        expect(batch, hasLength(5));
+        expect(
+          batch.map((i) => i.cardId).toList(),
+          ['card-5', 'card-6', 'card-7', 'card-8', 'card-9'],
+        );
+      });
+
+      test('small deck: reviewed cards reappear without exclude set', () async {
+        // With only 6 cards total, after reviewing 3 and fetching with a
+        // limit of 5+0=5, the DB returns cards 3,4,5,0,1 (reviewed sort last
+        // but still within limit). Without an exclude set, cards 3,4 would
+        // be duplicates if they're still in the local queue.
+        final allCards = List.generate(
+          6,
+          (i) => createCardJson(
+            cardId: 'card-$i',
+            vocabularyId: 'vocab-$i',
+            word: 'word$i',
+          ),
+        );
+
+        final reviewedIds = {'card-0', 'card-1', 'card-2'};
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async {
+          final unreviewed =
+              allCards.where((c) => !reviewedIds.contains(c['card_id']));
+          final reviewed =
+              allCards.where((c) => reviewedIds.contains(c['card_id']));
+          return [...unreviewed, ...reviewed];
+        });
+
+        // Without exclude: fetch returns card-3,4,5,0,1 (5 cards, limit=5)
+        final batchNoExclude = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordCap: 20,
+        );
+        // card-0,1,2 reviewed (sort last), card-3,4,5 unreviewed (sort first)
+        // With limit 5: returns card-3,4,5,card-0,card-1
+        expect(batchNoExclude, hasLength(5));
+        expect(batchNoExclude.map((i) => i.cardId),
+            containsAll(<String>['card-3', 'card-4', 'card-5']));
+        // card-0 and card-1 also returned — would be duplicates!
+
+        // With exclude set {card-3, card-4} (unreviewed tail in local queue):
+        final batchWithExclude = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          excludeCardIds: {'card-3', 'card-4'},
+          newWordCap: 20,
+        );
+        // Should get card-5 plus reviewed cards that sort later
+        expect(batchWithExclude.map((i) => i.cardId).toList(),
+            isNot(contains('card-3')));
+        expect(batchWithExclude.map((i) => i.cardId).toList(),
+            isNot(contains('card-4')));
+      });
+
+      test('new word cap tracked across multiple batches', () async {
+        // 10 cards: 5 new (state=0), 5 due (state=2)
+        final allCards = <Map<String, dynamic>>[
+          // Due cards come first in DB ordering (state != 0 → priority 0)
+          ...List.generate(
+            5,
+            (i) => createCardJson(
+              cardId: 'due-$i',
+              vocabularyId: 'vocab-due-$i',
+              word: 'due$i',
+              state: 2,
+            ),
+          ),
+          // New cards after (state=0 → priority 1)
+          ...List.generate(
+            5,
+            (i) => createCardJson(
+              cardId: 'new-$i',
+              vocabularyId: 'vocab-new-$i',
+              word: 'new$i',
+              state: 0,
+            ),
+          ),
+        ];
+
+        when(
+          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+        ).thenAnswer((_) async => allCards);
+
+        // Batch 1: cap=3, already queued=0
+        final batch1 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          newWordCap: 3,
+          newWordsAlreadyQueued: 0,
+        );
+        final newInBatch1 = batch1.where((i) => i.isNewWord).length;
+
+        // Batch 2: cap=3, already queued = newInBatch1
+        final batch2 = await planner.fetchBatch(
+          userId: userId,
+          batchSize: 5,
+          excludeCardIds: batch1.map((i) => i.cardId).toSet(),
+          newWordCap: 3,
+          newWordsAlreadyQueued: newInBatch1,
+        );
+        final newInBatch2 = batch2.where((i) => i.isNewWord).length;
+
+        // Total new words across both batches should not exceed cap
+        expect(newInBatch1 + newInBatch2, lessThanOrEqualTo(3));
+      });
+    });
   });
 }

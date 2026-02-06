@@ -45,9 +45,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // Incremental batch state
   List<PlannedItem> _items = [];
-  final Set<String> _fetchedCardIds = {};
   int _estimatedTotalItems = 0;
   bool _isFetchingMore = false;
+  Completer<void>? _fetchCompleter;
   int _newWordsQueued = 0;
   int _newWordCap = 0;
 
@@ -145,11 +145,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
-      // Track fetched card IDs and new word count
-      final fetchedIds = <String>{};
+      // Count new words in initial batch
       var newWords = 0;
       for (final item in initialItems) {
-        fetchedIds.add(item.cardId);
         if (item.isNewWord) newWords++;
       }
 
@@ -183,13 +181,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (mounted) {
         setState(() {
           _items = initialItems;
-          _fetchedCardIds.addAll(fetchedIds);
           _estimatedTotalItems = params.maxItems;
           _newWordsQueued = newWords;
           _newWordCap = params.newWordCap;
           _session = activeSession;
           _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
-          _currentItemIndex = activeSession?.itemsCompleted ?? 0;
+          _currentItemIndex = 0;
           _newWordsPresented = activeSession?.newWordsPresented ?? 0;
           _reviewsPresented = activeSession?.reviewsPresented ?? 0;
           _isLoading = false;
@@ -208,22 +205,40 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  /// Prefetch more cards if the user is running low on queued items.
-  Future<void> _maybePrefetchMore() async {
-    final remaining = _items.length - _currentItemIndex - 1;
-    if (remaining >= _prefetchThreshold || _isFetchingMore) return;
+  /// IDs of cards currently in [_items] that haven't been reviewed yet.
+  /// Used as the exclude set for prefetch queries. Reviewed cards are excluded
+  /// naturally by the DB (their due date is pushed to the future), but
+  /// unreviewed cards in the local queue would still be returned.
+  Set<String> get _unreviewedCardIds =>
+      _items.skip(_currentItemIndex).map((i) => i.cardId).toSet();
+
+  /// Prefetch more cards when the user is running low on queued items.
+  /// When [force] is true, waits for any in-flight fetch and always attempts
+  /// to load more (used when the user has exhausted the current batch).
+  Future<void> _maybePrefetchMore({bool force = false}) async {
+    if (!force) {
+      final remaining = _items.length - _currentItemIndex - 1;
+      if (remaining >= _prefetchThreshold || _isFetchingMore) return;
+    } else if (_isFetchingMore) {
+      // Wait for the in-flight fetch to complete
+      await _fetchCompleter?.future;
+      // Check if that fetch already gave us items
+      if (_currentItemIndex < _items.length) return;
+    }
 
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
     _isFetchingMore = true;
+    _fetchCompleter = Completer<void>();
 
     try {
       final planner = ref.read(sessionPlannerProvider);
+      final excludeIds = _unreviewedCardIds;
       final newItems = await planner.fetchBatch(
         userId: userId,
         batchSize: _batchSize,
-        excludeCardIds: _fetchedCardIds,
+        excludeCardIds: excludeIds,
         newWordsAlreadyQueued: _newWordsQueued,
         newWordCap: _newWordCap,
       );
@@ -231,7 +246,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (newItems.isNotEmpty && mounted) {
         setState(() {
           for (final item in newItems) {
-            _fetchedCardIds.add(item.cardId);
             if (item.isNewWord) _newWordsQueued++;
           }
           _items = [..._items, ...newItems];
@@ -245,6 +259,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       debugPrint('[Session] Prefetch failed: $e');
     } finally {
       _isFetchingMore = false;
+      _fetchCompleter?.complete();
+      _fetchCompleter = null;
     }
   }
 
@@ -366,30 +382,42 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       reviewsPresented: _reviewsPresented,
     );
 
-    // Trigger background prefetch after review
-    unawaited(_maybePrefetchMore());
-
     // Move to next item or complete
     final nextIndex = _currentItemIndex + 1;
 
-    // Check if time is up or no more items
+    // Check if time is up
     final totalSeconds = _session!.plannedMinutes * 60 + _session!.bonusSeconds;
     final timeUp = _elapsedSeconds >= totalSeconds;
 
-    if (timeUp || nextIndex >= _items.length) {
+    if (timeUp) {
       await _completeSession();
-    } else {
-      // Load distractors for next item if needed
-      final nextItem = _items[nextIndex];
-      if (nextItem.isRecognition) {
-        await _loadDistractorsForItem(nextItem, userId);
-      }
-
-      setState(() {
-        _currentItemIndex = nextIndex;
-        _itemStartTime = DateTime.now();
-      });
+      return;
     }
+
+    // If we've exhausted the current batch, fetch more before proceeding
+    if (nextIndex >= _items.length) {
+      await _maybePrefetchMore(force: true);
+      // After awaiting, check if new items arrived
+      if (nextIndex >= _items.length) {
+        // No more items available — session is done
+        await _completeSession();
+        return;
+      }
+    } else {
+      // Trigger background prefetch for upcoming items
+      unawaited(_maybePrefetchMore());
+    }
+
+    // Load distractors for next item if needed
+    final nextItem = _items[nextIndex];
+    if (nextItem.isRecognition) {
+      await _loadDistractorsForItem(nextItem, userId);
+    }
+
+    setState(() {
+      _currentItemIndex = nextIndex;
+      _itemStartTime = DateTime.now();
+    });
   }
 
   Future<void> _completeSession() async {

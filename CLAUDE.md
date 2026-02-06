@@ -200,6 +200,9 @@ supabase stop
 - No local database - app is online-required
 - Writes go directly to Supabase, providers invalidated to refresh UI
 
+## Simulator Debugging
+- **Always use `flutter run -d <UDID>` for debugging on simulator** — never `flutter build ios --simulator` + manual install. `flutter run` builds, installs, launches, and provides hot reload in one step.
+
 <!-- MANUAL ADDITIONS START -->
 
 ## Desktop UI Stack
