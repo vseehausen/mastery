@@ -16,6 +16,9 @@ Widget createTestableWidget({
       themeMode: themeMode,
       theme: MasteryTheme.light,
       darkTheme: MasteryTheme.dark,
+      builder: (context, child) {
+        return ScaffoldMessenger(child: child ?? const SizedBox.shrink());
+      },
       home: Scaffold(body: child),
     ),
   );

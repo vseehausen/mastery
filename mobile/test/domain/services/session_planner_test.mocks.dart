@@ -102,12 +102,18 @@ class MockSupabaseDataService extends _i1.Mock
     required String? id,
     String? primaryTranslation,
     String? englishDefinition,
+    String? partOfSpeech,
+    List<String>? synonyms,
+    List<String>? alternativeTranslations,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updateMeaning, [], {
               #id: id,
               #primaryTranslation: primaryTranslation,
               #englishDefinition: englishDefinition,
+              #partOfSpeech: partOfSpeech,
+              #synonyms: synonyms,
+              #alternativeTranslations: alternativeTranslations,
             }),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
@@ -202,6 +208,14 @@ class MockSupabaseDataService extends _i1.Mock
             ),
           )
           as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<int> countEnrichedNewWords(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#countEnrichedNewWords, [userId]),
+            returnValue: _i3.Future<int>.value(0),
+          )
+          as _i3.Future<int>);
 
   @override
   _i3.Future<void> updateLearningCard({
@@ -461,6 +475,38 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
+  _i3.Future<List<Map<String, dynamic>>> getCuesForMeaning(String? meaningId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCuesForMeaning, [meaningId]),
+            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<void> updateCue(
+    String? cueId, {
+    String? promptText,
+    String? answerText,
+    String? hintText,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #updateCue,
+              [cueId],
+              {
+                #promptText: promptText,
+                #answerText: answerText,
+                #hintText: hintText,
+              },
+            ),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
+
+  @override
   _i3.Future<List<Map<String, dynamic>>> getConfusableSetsForVocabulary(
     String? vocabularyId,
   ) =>
@@ -494,6 +540,55 @@ class MockSupabaseDataService extends _i1.Mock
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
           as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> createEnrichmentFeedback({
+    required String? userId,
+    required String? meaningId,
+    required String? fieldName,
+    required String? rating,
+    String? flagCategory,
+    String? comment,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#createEnrichmentFeedback, [], {
+              #userId: userId,
+              #meaningId: meaningId,
+              #fieldName: fieldName,
+              #rating: rating,
+              #flagCategory: flagCategory,
+              #comment: comment,
+            }),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getEnrichmentFeedback(
+    String? meaningId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getEnrichmentFeedback, [meaningId]),
+            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<Map<String, dynamic>?> getEnrichmentQueueStatus(
+    String? userId,
+    String? vocabularyId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getEnrichmentQueueStatus, [
+              userId,
+              vocabularyId,
+            ]),
+            returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+          )
+          as _i3.Future<Map<String, dynamic>?>);
 
   @override
   _i3.Future<int> getReviewCount(String? userId) =>

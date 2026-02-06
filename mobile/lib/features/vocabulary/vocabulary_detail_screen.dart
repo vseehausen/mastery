@@ -8,10 +8,14 @@ import '../../domain/models/encounter.dart';
 import '../../domain/models/meaning.dart';
 import '../../domain/models/vocabulary.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/dev_mode_provider.dart';
 import '../../providers/learning_providers.dart';
 import '../../providers/supabase_provider.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
+import 'presentation/widgets/cue_preview_card.dart';
+import 'presentation/widgets/dev_info_panel.dart';
+import 'presentation/widgets/field_feedback.dart';
 import 'presentation/widgets/learning_stats.dart';
 import 'presentation/widgets/meaning_card.dart';
 import 'presentation/widgets/meaning_editor.dart';
@@ -97,6 +101,62 @@ class _VocabularyDetailScreenState
               ),
             ),
 
+            // Quiz Preview section
+            meaningsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, s) => const SizedBox.shrink(),
+              data: (meanings) {
+                if (meanings.isEmpty) return const SizedBox.shrink();
+                return _buildQuizPreviewSection(
+                  meanings.first.id,
+                  isDark,
+                );
+              },
+            ),
+
+            // Re-enrich button
+            meaningsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, s) => const SizedBox.shrink(),
+              data: (meanings) {
+                if (meanings.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showReEnrichDialog(vocab.id),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Re-generate AI Enrichment'),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                );
+              },
+            ),
+
+            // Dev Info Panel
+            meaningsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, s) => const SizedBox.shrink(),
+              data: (meanings) {
+                if (meanings.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      _buildDevInfoSection(meanings.first, vocab.id, ref),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                );
+              },
+            ),
+
             // Main content
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -178,6 +238,8 @@ class _VocabularyDetailScreenState
     // Show only the first (primary) meaning directly
     final meaning = meanings.first;
 
+    final userId = ref.watch(currentUserIdProvider);
+
     if (_editingMeaningId == meaning.id) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,13 +247,19 @@ class _VocabularyDetailScreenState
           MeaningEditor(
             meaning: meaning,
             onSave: ({
-              String? primaryTranslation,
-              String? englishDefinition,
+              required String translation,
+              required String definition,
+              required String partOfSpeech,
+              required List<String> synonyms,
+              required List<String> alternativeTranslations,
             }) {
               _handleMeaningSave(
                 meaning,
-                primaryTranslation: primaryTranslation,
-                englishDefinition: englishDefinition,
+                translation: translation,
+                definition: definition,
+                partOfSpeech: partOfSpeech,
+                synonyms: synonyms,
+                alternativeTranslations: alternativeTranslations,
               );
             },
             onCancel: () => setState(() => _editingMeaningId = null),
@@ -208,6 +276,19 @@ class _VocabularyDetailScreenState
           meaning: meaning,
           onEdit: () => setState(() => _editingMeaningId = meaning.id),
         ),
+        if (userId != null) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              FieldFeedback(
+                meaningId: meaning.id,
+                fieldName: 'translation',
+                userId: userId,
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
       ],
     );
@@ -294,46 +375,122 @@ class _VocabularyDetailScreenState
 
   Future<void> _handleMeaningSave(
     MeaningModel meaning, {
-    String? primaryTranslation,
-    String? englishDefinition,
+    required String translation,
+    required String definition,
+    required String partOfSpeech,
+    required List<String> synonyms,
+    required List<String> alternativeTranslations,
   }) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     final service = ref.read(supabaseDataServiceProvider);
 
-    // Record edits
-    if (primaryTranslation != null) {
+    // Record edits for changed fields
+    if (translation != meaning.primaryTranslation) {
       await service.createMeaningEdit(
         id: const Uuid().v4(),
         userId: userId,
         meaningId: meaning.id,
         fieldName: 'primary_translation',
         originalValue: meaning.primaryTranslation,
-        userValue: primaryTranslation,
+        userValue: translation,
       );
     }
-    if (englishDefinition != null) {
+    if (definition != meaning.englishDefinition) {
       await service.createMeaningEdit(
         id: const Uuid().v4(),
         userId: userId,
         meaningId: meaning.id,
         fieldName: 'english_definition',
         originalValue: meaning.englishDefinition,
-        userValue: englishDefinition,
+        userValue: definition,
+      );
+    }
+    if (partOfSpeech != (meaning.partOfSpeech ?? 'other')) {
+      await service.createMeaningEdit(
+        id: const Uuid().v4(),
+        userId: userId,
+        meaningId: meaning.id,
+        fieldName: 'part_of_speech',
+        originalValue: meaning.partOfSpeech ?? 'other',
+        userValue: partOfSpeech,
+      );
+    }
+    if (synonyms.join(',') != meaning.synonyms.join(',')) {
+      await service.createMeaningEdit(
+        id: const Uuid().v4(),
+        userId: userId,
+        meaningId: meaning.id,
+        fieldName: 'synonyms',
+        originalValue: meaning.synonyms.join(','),
+        userValue: synonyms.join(','),
+      );
+    }
+    if (alternativeTranslations.join(',') !=
+        meaning.alternativeTranslations.join(',')) {
+      await service.createMeaningEdit(
+        id: const Uuid().v4(),
+        userId: userId,
+        meaningId: meaning.id,
+        fieldName: 'alternative_translations',
+        originalValue: meaning.alternativeTranslations.join(','),
+        userValue: alternativeTranslations.join(','),
       );
     }
 
     // Apply the update
     await service.updateMeaning(
       id: meaning.id,
-      primaryTranslation: primaryTranslation,
-      englishDefinition: englishDefinition,
+      primaryTranslation: translation,
+      englishDefinition: definition,
+      partOfSpeech: partOfSpeech,
+      synonyms: synonyms,
+      alternativeTranslations: alternativeTranslations,
     );
 
-    // Refresh meanings and exit edit mode
+    // Auto-update related cues
+    await _autoUpdateCues(
+      meaningId: meaning.id,
+      translationChanged: translation != meaning.primaryTranslation,
+      newTranslation: translation,
+      definitionChanged: definition != meaning.englishDefinition,
+      newDefinition: definition,
+      synonymsChanged: synonyms.join(',') != meaning.synonyms.join(','),
+      newSynonyms: synonyms,
+    );
+
+    // Refresh meanings, cues, and exit edit mode
     ref.invalidate(meaningsProvider(widget.vocabularyId));
+    ref.invalidate(cuesForVocabularyProvider(widget.vocabularyId));
     setState(() => _editingMeaningId = null);
+  }
+
+  Future<void> _autoUpdateCues({
+    required String meaningId,
+    required bool translationChanged,
+    required String newTranslation,
+    required bool definitionChanged,
+    required String newDefinition,
+    required bool synonymsChanged,
+    required List<String> newSynonyms,
+  }) async {
+    final service = ref.read(supabaseDataServiceProvider);
+    final cues = await service.getCuesForMeaning(meaningId);
+
+    for (final cue in cues) {
+      final cueType = cue['cue_type'] as String?;
+      final cueId = cue['id'] as String;
+
+      if (translationChanged && cueType == 'translation') {
+        await service.updateCue(cueId, answerText: newTranslation);
+      } else if (definitionChanged && cueType == 'definition') {
+        await service.updateCue(cueId, promptText: newDefinition);
+      } else if (synonymsChanged && cueType == 'synonym') {
+        final synonymsText = newSynonyms.join(', ');
+        await service.updateCue(cueId, promptText: synonymsText);
+      }
+    }
   }
 
   Widget _buildEncounterContext(EncounterModel encounter) {
@@ -353,5 +510,132 @@ class _VocabularyDetailScreenState
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  Widget _buildQuizPreviewSection(String meaningId, bool isDark) {
+    final cuesAsync = ref.watch(cuesForMeaningProvider(meaningId));
+
+    return cuesAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (e, s) => const SizedBox.shrink(),
+      data: (cues) {
+        if (cues.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quiz Preview',
+                style: MasteryTextStyles.bodyBold.copyWith(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...cues.map((cue) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: CuePreviewCard(cue: cue),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDevInfoSection(
+    MeaningModel meaning,
+    String vocabularyId,
+    WidgetRef ref,
+  ) {
+    final userId = ref.watch(currentUserIdProvider);
+    final devMode = ref.watch(devModeProvider);
+
+    if (!devMode || userId == null) {
+      return const SizedBox.shrink();
+    }
+
+    final queueStatusAsync = ref.watch(
+      FutureProvider.autoDispose((ref) async {
+        final service = ref.watch(supabaseDataServiceProvider);
+        return service.getEnrichmentQueueStatus(userId, vocabularyId);
+      }).future,
+    );
+
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: queueStatusAsync,
+      builder: (context, snapshot) {
+        return DevInfoPanel(
+          meaning: {
+            'confidence': meaning.confidence,
+            'source': meaning.source,
+            'created_at': meaning.createdAt.toIso8601String(),
+            'updated_at': meaning.updatedAt.toIso8601String(),
+          },
+          queueStatus: snapshot.data,
+        );
+      },
+    );
+  }
+
+  Future<void> _showReEnrichDialog(String vocabularyId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Re-generate Enrichment'),
+        content: const Text(
+          'This will generate new AI translations, definitions, and quiz cues. '
+          'Current data will be replaced. Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Re-generate',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    try {
+      final enrichmentService = ref.read(enrichmentServiceProvider);
+      await enrichmentService.reEnrich(
+        userId: userId,
+        vocabularyId: vocabularyId,
+      );
+
+      // Refresh meanings and cues
+      ref.invalidate(meaningsProvider(vocabularyId));
+      ref.invalidate(cuesForVocabularyProvider(vocabularyId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Re-enrichment started'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Re-enrichment failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

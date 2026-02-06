@@ -259,3 +259,13 @@ final cuesForVocabularyProvider =
   final data = await service.getCuesForVocabulary(vocabularyId);
   return data.map(CueModel.fromJson).toList();
 });
+
+/// Provider for cues for a specific meaning
+final cuesForMeaningProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
+  ref,
+  meaningId,
+) async {
+  final service = ref.watch(supabaseDataServiceProvider);
+  return service.getCuesForMeaning(meaningId);
+});

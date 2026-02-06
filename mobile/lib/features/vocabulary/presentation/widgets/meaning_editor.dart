@@ -3,7 +3,7 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../domain/models/meaning.dart';
 
 /// Inline editor for meaning translations and definitions.
-/// Allows editing primary translation, English definition, and pinning alternatives.
+/// Allows editing all meaning fields including part of speech, synonyms, and alternative translations.
 class MeaningEditor extends StatefulWidget {
   const MeaningEditor({
     super.key,
@@ -14,8 +14,11 @@ class MeaningEditor extends StatefulWidget {
 
   final MeaningModel meaning;
   final void Function({
-    String? primaryTranslation,
-    String? englishDefinition,
+    required String translation,
+    required String definition,
+    required String partOfSpeech,
+    required List<String> synonyms,
+    required List<String> alternativeTranslations,
   }) onSave;
   final VoidCallback onCancel;
 
@@ -26,15 +29,36 @@ class MeaningEditor extends StatefulWidget {
 class _MeaningEditorState extends State<MeaningEditor> {
   late TextEditingController _translationController;
   late TextEditingController _definitionController;
+  late String _selectedPartOfSpeech;
+  late List<String> _synonyms;
+  late List<String> _alternativeTranslations;
 
   String get _currentTranslation => widget.meaning.primaryTranslation;
   String get _currentDefinition => widget.meaning.englishDefinition;
+  String get _currentPartOfSpeech => widget.meaning.partOfSpeech ?? 'other';
+  List<String> get _currentSynonyms => widget.meaning.synonyms;
+  List<String> get _currentAlternativeTranslations =>
+      widget.meaning.alternativeTranslations;
+
+  static const List<String> _partsOfSpeech = [
+    'noun',
+    'verb',
+    'adjective',
+    'adverb',
+    'preposition',
+    'conjunction',
+    'interjection',
+    'other',
+  ];
 
   @override
   void initState() {
     super.initState();
     _translationController = TextEditingController(text: _currentTranslation);
     _definitionController = TextEditingController(text: _currentDefinition);
+    _selectedPartOfSpeech = _currentPartOfSpeech;
+    _synonyms = List.from(_currentSynonyms);
+    _alternativeTranslations = List.from(_currentAlternativeTranslations);
   }
 
   @override
@@ -46,7 +70,18 @@ class _MeaningEditorState extends State<MeaningEditor> {
 
   bool get _hasChanges {
     return _translationController.text != _currentTranslation ||
-        _definitionController.text != _currentDefinition;
+        _definitionController.text != _currentDefinition ||
+        _selectedPartOfSpeech != _currentPartOfSpeech ||
+        !_listEquals(_synonyms, _currentSynonyms) ||
+        !_listEquals(_alternativeTranslations, _currentAlternativeTranslations);
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -121,6 +156,83 @@ class _MeaningEditorState extends State<MeaningEditor> {
             ),
             style: MasteryTextStyles.body,
           ),
+          const SizedBox(height: 12),
+
+          // Part of Speech dropdown
+          Text(
+            'Part of Speech',
+            style: MasteryTextStyles.formLabel.copyWith(
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedPartOfSpeech,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedPartOfSpeech = value;
+                });
+              }
+            },
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            style: MasteryTextStyles.body.copyWith(
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+            dropdownColor: isDark ? Colors.grey[850] : Colors.white,
+            items: _partsOfSpeech.map((pos) {
+              return DropdownMenuItem<String>(
+                value: pos,
+                child: Text(
+                  pos[0].toUpperCase() + pos.substring(1),
+                  style: MasteryTextStyles.body,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+
+          // Synonyms tag editor
+          _TagEditor(
+            label: 'Synonyms',
+            items: _synonyms,
+            onAdd: (value) {
+              setState(() {
+                _synonyms.add(value);
+              });
+            },
+            onRemove: (index) {
+              setState(() {
+                _synonyms.removeAt(index);
+              });
+            },
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+
+          // Alternative Translations tag editor
+          _TagEditor(
+            label: 'Alternative Translations',
+            items: _alternativeTranslations,
+            onAdd: (value) {
+              setState(() {
+                _alternativeTranslations.add(value);
+              });
+            },
+            onRemove: (index) {
+              setState(() {
+                _alternativeTranslations.removeAt(index);
+              });
+            },
+            isDark: isDark,
+          ),
           const SizedBox(height: 16),
 
           // Action buttons
@@ -148,10 +260,115 @@ class _MeaningEditorState extends State<MeaningEditor> {
     final newDefinition = _definitionController.text.trim();
 
     widget.onSave(
-      primaryTranslation:
-          newTranslation != _currentTranslation ? newTranslation : null,
-      englishDefinition:
-          newDefinition != _currentDefinition ? newDefinition : null,
+      translation: newTranslation,
+      definition: newDefinition,
+      partOfSpeech: _selectedPartOfSpeech,
+      synonyms: _synonyms,
+      alternativeTranslations: _alternativeTranslations,
+    );
+  }
+}
+
+/// Reusable tag editor widget for managing lists of strings with chips.
+class _TagEditor extends StatefulWidget {
+  const _TagEditor({
+    required this.label,
+    required this.items,
+    required this.onAdd,
+    required this.onRemove,
+    required this.isDark,
+  });
+
+  final String label;
+  final List<String> items;
+  final void Function(String value) onAdd;
+  final void Function(int index) onRemove;
+  final bool isDark;
+
+  @override
+  State<_TagEditor> createState() => _TagEditorState();
+}
+
+class _TagEditorState extends State<_TagEditor> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _addItem() {
+    final value = _controller.text.trim();
+    if (value.isNotEmpty && !widget.items.contains(value)) {
+      widget.onAdd(value);
+      _controller.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: MasteryTextStyles.formLabel.copyWith(
+            color: widget.isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: _controller,
+          onSubmitted: (_) => _addItem(),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            hintText: 'Type and press Enter to add',
+            hintStyle: MasteryTextStyles.body.copyWith(
+              color: widget.isDark
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.3),
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.add, size: 20),
+              onPressed: _addItem,
+            ),
+          ),
+          style: MasteryTextStyles.body,
+        ),
+        if (widget.items.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return Chip(
+                label: Text(
+                  item,
+                  style: MasteryTextStyles.body.copyWith(fontSize: 13),
+                ),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => widget.onRemove(index),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 }

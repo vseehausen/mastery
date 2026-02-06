@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/auth_provider.dart';
+import '../../../../providers/dev_mode_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_list_item.dart';
@@ -129,9 +130,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     SettingsSection(
                       title: 'ABOUT',
                       children: [
-                        const SettingsListItem(
-                          label: 'Version',
-                          value: '1.0.0',
+                        GestureDetector(
+                          onLongPress: () {
+                            final currentDevMode = ref.read(devModeProvider);
+                            ref.read(devModeProvider.notifier).state = !currentDevMode;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  currentDevMode
+                                      ? 'Dev mode disabled'
+                                      : 'Dev mode enabled',
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: const SettingsListItem(
+                            label: 'Version',
+                            value: '1.0.0',
+                          ),
                         ),
                         SettingsListItem(
                           label: 'Help & Feedback',

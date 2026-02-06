@@ -103,6 +103,9 @@ class SupabaseDataService {
     required String id,
     String? primaryTranslation,
     String? englishDefinition,
+    String? partOfSpeech,
+    List<String>? synonyms,
+    List<String>? alternativeTranslations,
   }) async {
     final updates = <String, dynamic>{
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -112,6 +115,15 @@ class SupabaseDataService {
     }
     if (englishDefinition != null) {
       updates['english_definition'] = englishDefinition;
+    }
+    if (partOfSpeech != null) {
+      updates['part_of_speech'] = partOfSpeech;
+    }
+    if (synonyms != null) {
+      updates['synonyms'] = synonyms;
+    }
+    if (alternativeTranslations != null) {
+      updates['alternative_translations'] = alternativeTranslations;
     }
     await _client.from('meanings').update(updates).eq('id', id);
   }
@@ -635,6 +647,40 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
+  /// Get cues for a specific meaning
+  Future<List<Map<String, dynamic>>> getCuesForMeaning(
+    String meaningId,
+  ) async {
+    final response = await _client
+        .from('cues')
+        .select()
+        .eq('meaning_id', meaningId)
+        .isFilter('deleted_at', null);
+    return List<Map<String, dynamic>>.from(response as List);
+  }
+
+  /// Update a cue
+  Future<void> updateCue(
+    String cueId, {
+    String? promptText,
+    String? answerText,
+    String? hintText,
+  }) async {
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+    if (promptText != null) {
+      updates['prompt_text'] = promptText;
+    }
+    if (answerText != null) {
+      updates['answer_text'] = answerText;
+    }
+    if (hintText != null) {
+      updates['hint_text'] = hintText;
+    }
+    await _client.from('cues').update(updates).eq('id', cueId);
+  }
+
   // ===========================================================================
   // Confusable Sets
   // ===========================================================================
@@ -684,6 +730,58 @@ class SupabaseDataService {
       'user_value': userValue,
       'created_at': now,
     });
+  }
+
+  // ===========================================================================
+  // Enrichment Feedback
+  // ===========================================================================
+
+  /// Create enrichment feedback
+  Future<void> createEnrichmentFeedback({
+    required String userId,
+    required String meaningId,
+    required String fieldName,
+    required String rating,
+    String? flagCategory,
+    String? comment,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await _client.from('enrichment_feedback').insert({
+      'id': const Uuid().v4(),
+      'user_id': userId,
+      'meaning_id': meaningId,
+      'field_name': fieldName,
+      'rating': rating,
+      'flag_category': flagCategory,
+      'comment': comment,
+      'created_at': now,
+    });
+  }
+
+  /// Get enrichment feedback for a meaning
+  Future<List<Map<String, dynamic>>> getEnrichmentFeedback(
+    String meaningId,
+  ) async {
+    final response = await _client
+        .from('enrichment_feedback')
+        .select()
+        .eq('meaning_id', meaningId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(response as List);
+  }
+
+  /// Get enrichment queue status for a vocabulary word (dev mode)
+  Future<Map<String, dynamic>?> getEnrichmentQueueStatus(
+    String userId,
+    String vocabularyId,
+  ) async {
+    final response = await _client
+        .from('enrichment_queue')
+        .select()
+        .eq('user_id', userId)
+        .eq('vocabulary_id', vocabularyId)
+        .maybeSingle();
+    return response;
   }
 
   // ===========================================================================
