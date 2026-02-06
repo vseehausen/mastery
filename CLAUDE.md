@@ -198,7 +198,12 @@ supabase stop
 ## Simulator Testing & Debugging
 
 **Building and Running:**
-- **Always use `flutter run -d <UDID>` for debugging on simulator** — never `flutter build ios --simulator` + manual install. `flutter run` builds, installs, launches, and provides hot reload in one step.
+- **For debugging**: Use `flutter run -d <UDID>` — builds, installs, launches, and provides hot reload in one step
+- **For installation only** (no debugging/hot reload):
+  ```bash
+  cd mobile && flutter build ios --simulator
+  xcrun simctl install <UDID> /Users/valentin/Development/projects/mastery/mastery/mobile/build/ios/iphonesimulator/Runner.app
+  ```
 
 **Manual Testing with MCP Tools:**
 After implementing and testing features, perform manual verification on iPhone simulator using the **ios-simulator MCP** (all commands prefixed with `mcp__ios-simulator__`). The MCP provides tools for UI interaction (tap, swipe, type), screen capture (screenshots, video recording), accessibility inspection (describe elements), and app management.
