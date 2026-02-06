@@ -20,6 +20,13 @@ import 'presentation/widgets/learning_stats.dart';
 import 'presentation/widgets/meaning_card.dart';
 import 'presentation/widgets/meaning_editor.dart';
 
+/// Provider for enrichment queue status
+final enrichmentQueueStatusProvider = FutureProvider.autoDispose.family<Map<String, dynamic>?, (String, String)>((ref, params) async {
+  final (userId, vocabularyId) = params;
+  final service = ref.watch(supabaseDataServiceProvider);
+  return service.getEnrichmentQueueStatus(userId, vocabularyId);
+});
+
 /// Detail screen for a single vocabulary entry
 class VocabularyDetailScreen extends ConsumerStatefulWidget {
   const VocabularyDetailScreen({super.key, required this.vocabularyId});
@@ -444,7 +451,7 @@ class _VocabularyDetailScreenState
       id: meaning.id,
       primaryTranslation: translation,
       englishDefinition: definition,
-      partOfSpeech: partOfSpeech,
+      partOfSpeech: partOfSpeech != (meaning.partOfSpeech ?? 'other') ? partOfSpeech : meaning.partOfSpeech,
       synonyms: synonyms,
       alternativeTranslations: alternativeTranslations,
     );
@@ -483,7 +490,7 @@ class _VocabularyDetailScreenState
       final cueId = cue['id'] as String;
 
       if (translationChanged && cueType == 'translation') {
-        await service.updateCue(cueId, answerText: newTranslation);
+        await service.updateCue(cueId, promptText: newTranslation);
       } else if (definitionChanged && cueType == 'definition') {
         await service.updateCue(cueId, promptText: newDefinition);
       } else if (synonymsChanged && cueType == 'synonym') {
@@ -556,25 +563,21 @@ class _VocabularyDetailScreenState
     }
 
     final queueStatusAsync = ref.watch(
-      FutureProvider.autoDispose((ref) async {
-        final service = ref.watch(supabaseDataServiceProvider);
-        return service.getEnrichmentQueueStatus(userId, vocabularyId);
-      }).future,
+      enrichmentQueueStatusProvider((userId, vocabularyId)),
     );
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: queueStatusAsync,
-      builder: (context, snapshot) {
-        return DevInfoPanel(
-          meaning: {
-            'confidence': meaning.confidence,
-            'source': meaning.source,
-            'created_at': meaning.createdAt.toIso8601String(),
-            'updated_at': meaning.updatedAt.toIso8601String(),
-          },
-          queueStatus: snapshot.data,
-        );
-      },
+    return queueStatusAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (queueStatus) => DevInfoPanel(
+        meaning: {
+          'confidence': meaning.confidence,
+          'source': meaning.source,
+          'created_at': meaning.createdAt.toIso8601String(),
+          'updated_at': meaning.updatedAt.toIso8601String(),
+        },
+        queueStatus: queueStatus,
+      ),
     );
   }
 
