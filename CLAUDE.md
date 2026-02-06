@@ -39,9 +39,9 @@ cd mobile && flutter test
 cd mobile && flutter run
 
 # Desktop
-cd desktop && npm install
+cd desktop && pnpm install
 cd desktop && cargo build
-cd desktop && npm run tauri dev
+cd desktop && pnpm tauri dev
 
 # Backend
 cd supabase && supabase db push
@@ -257,8 +257,8 @@ flutter pub get                              # Verify dependencies
 cd desktop
 cargo clippy --all-targets                  # Rust linting (pedantic mode)
 cargo test                                   # Rust unit tests
-npm run lint                                 # TypeScript/Svelte linting
-npm run type-check                          # TypeScript type checking
+pnpm check                                  # Svelte/TypeScript type checking
+pnpm test                                   # Vitest unit tests
 ```
 
 **Exit criteria before commit:**

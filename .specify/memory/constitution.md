@@ -34,7 +34,7 @@ All features MUST have tests written before implementation. Tests are required f
 **Enforcement**:
 - Tests MUST be written alongside implementation (not after)
 - Pull requests without adequate test coverage for new functionality will be rejected
-- Test coverage is verified in CI pipeline
+- Developers must run tests locally before committing
 
 **Rationale**: Tests document expected behavior and prevent regressions. Writing tests first clarifies requirements before implementation begins.
 
@@ -47,26 +47,24 @@ All code MUST meet project quality standards before merge:
 - **No Warnings**: Code MUST compile/analyze without warnings
 
 **Enforcement**:
-- Pre-commit hooks run linting and formatting checks
-- CI pipeline fails on quality violations
+- Developers must run linting and formatting checks locally before committing
 - Code review verifies adherence
 
 **Rationale**: Consistent code quality reduces cognitive load, catches bugs early, and makes the codebase maintainable across multiple platforms.
 
 ### III. Observability
 
-All production code MUST be observable:
-- **Structured Logging**: Use structured log formats (JSON) with consistent fields
-- **Error Tracking**: Errors are captured with context and stack traces
-- **Key Metrics**: Track performance metrics for critical operations
+Code SHOULD be observable for debugging and incident response:
+- **Development Logging**: Use debugPrint or console logging during development
+- **Error Tracking**: Errors are captured with context where practical
+- **Future Goal**: Structured logging (JSON) and performance metrics for production
 
-**Requirements by Platform**:
-- Mobile (Flutter): Crashlytics or equivalent, performance monitoring
-- Extension: Console logging with structured format, error boundaries
+**Current Approach**:
+- Mobile (Flutter): debugPrint for development logging
 - Backend (Supabase): Edge function logging, database query monitoring
-- Desktop (Tauri): File-based logging, crash reports
+- Desktop (Tauri): Console logging during development
 
-**Rationale**: Without observability, debugging production issues is guesswork. Structured logs and metrics enable rapid incident response.
+**Rationale**: Observability aids debugging, though structured production logging is deferred until product maturity warrants the investment.
 
 ### IV. Simplicity (YAGNI)
 
@@ -92,7 +90,6 @@ All client applications require an active internet connection:
 
 **Platform Requirements**:
 - Mobile (Flutter): Direct Supabase queries, Riverpod `FutureProvider.autoDispose` for caching
-- Extension: chrome.storage for local cache
 - Desktop (Tauri): Local file system for Kindle import staging, online sync to Supabase
 
 **Rationale**: Core features (meaning generation, AI enrichment, learning sessions) depend on backend services. Local-first architecture was removed to reduce complexity (~25k lines). The app is designed for connected use.
@@ -100,7 +97,6 @@ All client applications require an active internet connection:
 ## Technology Stack
 
 **Mobile App**: Flutter (Dart) - iOS and Android from single codebase
-**Browser Extension**: TypeScript - Chrome/Firefox extension for web highlights
 **Backend**: Supabase - PostgreSQL database, Authentication, Storage, Edge Functions (TypeScript)
 **Desktop Agent**: Tauri (Rust + TypeScript) - Kindle highlight auto-import tool
 
@@ -119,10 +115,11 @@ All client applications require an active internet connection:
 
 ### Pull Request Requirements
 
-1. All CI checks pass (tests, linting, formatting)
-2. Code review approval required
-3. Constitution compliance verified
-4. Documentation updated if applicable
+1. All tests pass (run locally)
+2. Linting and formatting verified (run locally)
+3. Code review approval required
+4. Constitution compliance verified
+5. Documentation updated if applicable
 
 ### Commit Standards
 

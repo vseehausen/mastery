@@ -36,8 +36,8 @@ Practice with intelligent spaced repetition (FSRS algorithm) that adapts to your
 | Vocabulary library with search | ✅ Complete |
 | Learning progress & streaks | ✅ Complete |
 | German translations | ✅ Complete |
-| Multi-language support | 🔜 Planned |
-| Browser extension capture | 🔜 Planned |
+| Multi-language support | ✅ Complete (10 languages) |
+| Browser extension capture | 📋 Roadmap |
 | Social features | 🔜 Planned |
 
 ## How It Works
@@ -86,10 +86,11 @@ User
 
 The app is feature-complete for the core learning loop:
 
-- **265+ test vocabulary words** imported and enriched
+- **Vocabulary imported and enriched** from Kindle highlights
 - **5 cue types** working: translation, definition, synonym, disambiguation, context cloze
 - **Session optimization**: Single RPC call loads all session data
 - **Production deployed** on Supabase with Apple/Google OAuth
+- **Dashboard stats** currently use placeholder data (TODO: real analytics)
 
 ### Recent Updates
 - Optimized session loading from ~36 queries to 1 RPC call
