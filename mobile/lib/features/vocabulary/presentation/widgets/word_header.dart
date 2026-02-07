@@ -31,7 +31,9 @@ class WordHeader extends StatelessWidget {
               Text(
                 word,
                 style: MasteryTextStyles.displayLarge.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: isDark
+                      ? MasteryColors.foregroundDark
+                      : MasteryColors.foregroundLight,
                 ),
               ),
               if (pronunciation != null && pronunciation!.isNotEmpty) ...[
@@ -39,7 +41,9 @@ class WordHeader extends StatelessWidget {
                 Text(
                   pronunciation!,
                   style: MasteryTextStyles.bodySmall.copyWith(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark
+                        ? MasteryColors.mutedForegroundDark
+                        : MasteryColors.mutedForegroundLight,
                     fontStyle: FontStyle.italic,
                   ),
                 ),

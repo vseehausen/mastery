@@ -54,7 +54,7 @@ void main() {
         'id': 'meaning-123',
         'primary_translation': 'Haus',
         'english_definition': 'A building',
-        'synonyms': [],
+        'synonyms': <String>[],
       };
 
       final meaning = SessionMeaning.fromJson(json);
@@ -155,7 +155,7 @@ void main() {
             'id': 'meaning-2',
             'primary_translation': 'Zuhause',
             'english_definition': 'A place of residence',
-            'synonyms': [],
+            'synonyms': <String>[],
             'is_primary': false,
             'sort_order': 1,
           },
@@ -223,8 +223,8 @@ void main() {
     test('fromJson handles empty meanings and cues', () {
       final json = {
         ...validJson,
-        'meanings': [],
-        'cues': [],
+        'meanings': <Map<String, dynamic>>[],
+        'cues': <Map<String, dynamic>>[],
       };
 
       final card = SessionCard.fromJson(json);
@@ -235,11 +235,7 @@ void main() {
     });
 
     test('fromJson handles null meanings and cues', () {
-      final json = {
-        ...validJson,
-        'meanings': null,
-        'cues': null,
-      };
+      final json = {...validJson, 'meanings': null, 'cues': null};
 
       final card = SessionCard.fromJson(json);
 
@@ -270,7 +266,7 @@ void main() {
             'id': 'meaning-1',
             'primary_translation': 'Haus',
             'english_definition': 'A building',
-            'synonyms': [],
+            'synonyms': <String>[],
             'is_primary': false,
             'sort_order': 0,
           },
@@ -278,7 +274,7 @@ void main() {
             'id': 'meaning-2',
             'primary_translation': 'Zuhause',
             'english_definition': 'Home',
-            'synonyms': [],
+            'synonyms': <String>[],
             'is_primary': false,
             'sort_order': 1,
           },
@@ -292,10 +288,7 @@ void main() {
     });
 
     test('primaryMeaning returns null when no meanings', () {
-      final json = {
-        ...validJson,
-        'meanings': [],
-      };
+      final json = {...validJson, 'meanings': <Map<String, dynamic>>[]};
 
       final card = SessionCard.fromJson(json);
 

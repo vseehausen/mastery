@@ -63,6 +63,35 @@ class MasteryColors {
   static const Color warningDark = Color(0xFFFBBF24);
   static const Color warningMutedDark = Color(0xFF422006);
 
+  // ============ CUE PREVIEW COLORS ============
+  static const Color cueTranslationLight = Color(0xFF3B82F6);
+  static const Color cueTranslationDark = Color(0xFF60A5FA);
+  static const Color cueDefinitionLight = Color(0xFF10B981);
+  static const Color cueDefinitionDark = Color(0xFF34D399);
+  static const Color cueSynonymLight = Color(0xFF8B5CF6);
+  static const Color cueSynonymDark = Color(0xFFA78BFA);
+  static const Color cueClozeLight = Color(0xFFF59E0B);
+  static const Color cueClozeDark = Color(0xFFFBBF24);
+  static const Color cueMultipleChoiceLight = Color(0xFFEC4899);
+  static const Color cueMultipleChoiceDark = Color(0xFFF472B6);
+
+  static Color getCueColor(String cueType, {bool isDark = false}) {
+    switch (cueType) {
+      case 'translation':
+        return isDark ? cueTranslationDark : cueTranslationLight;
+      case 'definition':
+        return isDark ? cueDefinitionDark : cueDefinitionLight;
+      case 'synonym':
+        return isDark ? cueSynonymDark : cueSynonymLight;
+      case 'cloze':
+        return isDark ? cueClozeDark : cueClozeLight;
+      case 'multiple_choice':
+        return isDark ? cueMultipleChoiceDark : cueMultipleChoiceLight;
+      default:
+        return isDark ? mutedForegroundDark : mutedForegroundLight;
+    }
+  }
+
   // Status colors - convenience getters
   static Color getStatusColor(LearningStatus status, {bool isDark = false}) {
     switch (status) {

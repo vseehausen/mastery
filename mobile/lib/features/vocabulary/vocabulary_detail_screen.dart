@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/theme/color_tokens.dart';
@@ -11,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/dev_mode_provider.dart';
 import '../../providers/learning_providers.dart';
 import '../../providers/supabase_provider.dart';
+import '../learn/screens/session_screen.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
 import 'presentation/widgets/cue_preview_card.dart';
@@ -21,11 +23,12 @@ import 'presentation/widgets/meaning_card.dart';
 import 'presentation/widgets/meaning_editor.dart';
 
 /// Provider for enrichment queue status
-final enrichmentQueueStatusProvider = FutureProvider.autoDispose.family<Map<String, dynamic>?, (String, String)>((ref, params) async {
-  final (userId, vocabularyId) = params;
-  final service = ref.watch(supabaseDataServiceProvider);
-  return service.getEnrichmentQueueStatus(userId, vocabularyId);
-});
+final enrichmentQueueStatusProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>?, (String, String)>((ref, params) async {
+      final (userId, vocabularyId) = params;
+      final service = ref.watch(supabaseDataServiceProvider);
+      return service.getEnrichmentQueueStatus(userId, vocabularyId);
+    });
 
 /// Detail screen for a single vocabulary entry
 class VocabularyDetailScreen extends ConsumerStatefulWidget {
@@ -48,19 +51,7 @@ class _VocabularyDetailScreenState
     final vocabAsync = ref.watch(vocabularyByIdProvider(widget.vocabularyId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Word Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmark_outline),
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Bookmarked')));
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Word Details')),
       body: vocabAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
@@ -78,6 +69,10 @@ class _VocabularyDetailScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final encounterAsync = ref.watch(mostRecentEncounterProvider(vocab.id));
     final meaningsAsync = ref.watch(meaningsProvider(vocab.id));
+    final learningCardAsync = ref.watch(
+      learningCardByVocabularyIdProvider(vocab.id),
+    );
+    final learningCard = learningCardAsync.valueOrNull;
 
     // Trigger enrichment check for un-enriched words
     _triggerEnrichmentIfNeeded(meaningsAsync, vocab.id);
@@ -85,155 +80,462 @@ class _VocabularyDetailScreenState
     return SafeArea(
       child: SingleChildScrollView(
         primary: false,
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Word header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: WordHeader(
-                word: vocab.word,
-                pronunciation: vocab.stem,
-                status: LearningStatus.unknown,
-              ),
+            // Hero
+            WordHeader(
+              word: vocab.word,
+              pronunciation: vocab.stem,
+              status: LearningStatus.unknown,
             ),
+            const SizedBox(height: 16),
 
-            // Meanings section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+            _buildPrimaryActionCard(context, isDark),
+            const SizedBox(height: 24),
+
+            // Meaning
+            _buildMeaningHeader(meaningsAsync, isDark),
+            const SizedBox(height: 12),
+            meaningsAsync.when(
+              loading: () => _buildLoadingCard(
+                message: 'Loading meaning...',
+                isDark: isDark,
+              ),
+              error: (_, _) => _buildStateCard(
+                title: 'Couldn\'t load meaning',
+                message: 'Please try again.',
+                isDark: isDark,
+                actionLabel: 'Retry',
+                onAction: () => ref.invalidate(meaningsProvider(vocab.id)),
+              ),
+              data: (meanings) => _buildMeaningsSection(meanings, isDark),
+            ),
+            const SizedBox(height: 24),
+
+            // Context
+            _buildSectionTitle('Context', isDark),
+            const SizedBox(height: 12),
+            encounterAsync.when(
+              loading: () => _buildLoadingCard(
+                message: 'Loading context...',
+                isDark: isDark,
+              ),
+              error: (_, _) => _buildStateCard(
+                title: 'Couldn\'t load context',
+                message: 'Context details are temporarily unavailable.',
+                isDark: isDark,
+              ),
+              data: (encounter) {
+                if (encounter == null ||
+                    encounter.context == null ||
+                    encounter.context!.isEmpty) {
+                  return _buildStateCard(
+                    title: 'No context available',
+                    message: 'This word has no source excerpt yet.',
+                    isDark: isDark,
+                  );
+                }
+                return _buildEncounterContext(encounter);
+              },
+            ),
+            const SizedBox(height: 24),
+
+            _buildExpandableSection(
+              title: 'Practice details',
+              isDark: isDark,
               child: meaningsAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (e, s) => const SizedBox.shrink(),
-                data: (meanings) => _buildMeaningsSection(meanings, isDark),
+                loading: () => _buildLoadingCard(
+                  message: 'Loading quiz preview...',
+                  isDark: isDark,
+                ),
+                error: (_, _) => _buildStateCard(
+                  title: 'Couldn\'t load quiz preview',
+                  message: 'Try refreshing meaning data.',
+                  isDark: isDark,
+                ),
+                data: (meanings) {
+                  if (meanings.isEmpty) {
+                    return _buildStateCard(
+                      title: 'Quiz preview unavailable',
+                      message: 'Generate enrichment to create practice cues.',
+                      isDark: isDark,
+                    );
+                  }
+                  return _buildQuizPreviewSection(meanings.first.id, isDark);
+                },
               ),
             ),
-
-            // Quiz Preview section
-            meaningsAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, s) => const SizedBox.shrink(),
-              data: (meanings) {
-                if (meanings.isEmpty) return const SizedBox.shrink();
-                return _buildQuizPreviewSection(
-                  meanings.first.id,
-                  isDark,
-                );
-              },
-            ),
-
-            // Re-enrich button
-            meaningsAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, s) => const SizedBox.shrink(),
-              data: (meanings) {
-                if (meanings.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showReEnrichDialog(vocab.id),
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: const Text('Re-generate AI Enrichment'),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            // Dev Info Panel
-            meaningsAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, s) => const SizedBox.shrink(),
-              data: (meanings) {
-                if (meanings.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      _buildDevInfoSection(meanings.first, vocab.id, ref),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            // Main content
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+            const SizedBox(height: 12),
+            _buildExpandableSection(
+              title: 'Learning details',
+              isDark: isDark,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Context from encounter
-                  encounterAsync.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (e, s) => const SizedBox.shrink(),
-                    data: (encounter) {
-                      if (encounter == null ||
-                          encounter.context == null ||
-                          encounter.context!.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-                      return _buildEncounterContext(encounter);
-                    },
-                  ),
-
-                  // Learning stats
                   LearningStats(
-                    timesReviewed: 0,
-                    confidence: 3,
-                    nextReview: DateTime.now().add(const Duration(days: 2)),
+                    timesReviewed: learningCard?.reps,
+                    confidence: null,
+                    nextReview: learningCard?.due,
                   ),
-                  const SizedBox(height: 24),
-
-                  // Why now section (info box)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.amber.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.amber.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline,
-                          size: 20,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'This word was shown because it\'s time to review based on your learning schedule.',
-                            style: MasteryTextStyles.bodySmall.copyWith(
-                              color: isDark ? Colors.white : Colors.black87,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 12),
+                  _buildWhyNowCard(isDark),
                 ],
               ),
+            ),
+            const SizedBox(height: 12),
+            _buildExpandableSection(
+              title: 'Advanced actions',
+              isDark: isDark,
+              child: _buildActionsSection(meaningsAsync, vocab.id, isDark),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPrimaryActionCard(BuildContext context, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Next best action',
+            style: MasteryTextStyles.bodyBold.copyWith(
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Practice this word now to reinforce memory.',
+            style: MasteryTextStyles.bodySmall.copyWith(
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ShadButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const SessionScreen(),
+                  ),
+                );
+              },
+              child: const Text('Practice now'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandableSection({
+    required String title,
+    required bool isDark,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          title,
+          style: MasteryTextStyles.bodyBold.copyWith(
+            color: isDark
+                ? MasteryColors.foregroundDark
+                : MasteryColors.foregroundLight,
+          ),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        collapsedIconColor: isDark
+            ? MasteryColors.mutedForegroundDark
+            : MasteryColors.mutedForegroundLight,
+        iconColor: isDark
+            ? MasteryColors.mutedForegroundDark
+            : MasteryColors.mutedForegroundLight,
+        children: [child],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, bool isDark) {
+    return Text(
+      title,
+      style: MasteryTextStyles.bodyBold.copyWith(
+        color: isDark
+            ? MasteryColors.foregroundDark
+            : MasteryColors.foregroundLight,
+      ),
+    );
+  }
+
+  Widget _buildMeaningHeader(
+    AsyncValue<List<MeaningModel>> meaningsAsync,
+    bool isDark,
+  ) {
+    return Row(
+      children: [
+        _buildSectionTitle('Meaning', isDark),
+        const Spacer(),
+        meaningsAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (meanings) {
+            if (meanings.isEmpty) return const SizedBox.shrink();
+            final meaning = meanings.first;
+            final isEditing = _editingMeaningId == meaning.id;
+            return TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _editingMeaningId = isEditing ? null : meaning.id;
+                });
+              },
+              icon: Icon(
+                isEditing ? Icons.close : Icons.edit_outlined,
+                size: 16,
+              ),
+              label: Text(isEditing ? 'Close' : 'Edit'),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingCard({required String message, required bool isDark}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            message,
+            style: MasteryTextStyles.bodySmall.copyWith(
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStateCard({
+    required String title,
+    required String message,
+    required bool isDark,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: MasteryTextStyles.bodyBold.copyWith(
+              color: isDark
+                  ? MasteryColors.foregroundDark
+                  : MasteryColors.foregroundLight,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: MasteryTextStyles.bodySmall.copyWith(
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 12),
+            ShadButton.outline(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWhyNowCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? MasteryColors.cardDark
+            : MasteryColors.warningMutedLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? MasteryColors.borderDark
+              : MasteryColors.warningLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            size: 20,
+            color: isDark
+                ? MasteryColors.warningDark
+                : MasteryColors.warningLight,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'This word was shown because it\'s time to review based on your learning schedule.',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.foregroundDark
+                    : MasteryColors.foregroundLight,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsSection(
+    AsyncValue<List<MeaningModel>> meaningsAsync,
+    String vocabularyId,
+    bool isDark,
+  ) {
+    final userId = ref.watch(currentUserIdProvider);
+
+    return meaningsAsync.when(
+      loading: () =>
+          _buildLoadingCard(message: 'Preparing actions...', isDark: isDark),
+      error: (_, _) => _buildStateCard(
+        title: 'Actions unavailable',
+        message: 'Try reloading meaning data first.',
+        isDark: isDark,
+      ),
+      data: (meanings) {
+        final hasMeaning = meanings.isNotEmpty;
+        final primaryMeaning = hasMeaning ? meanings.first : null;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ShadButton.outline(
+                onPressed: hasMeaning
+                    ? () => _showReEnrichDialog(vocabularyId)
+                    : null,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.refresh, size: 18),
+                    SizedBox(width: 8),
+                    Text('Re-generate AI Enrichment'),
+                  ],
+                ),
+              ),
+            ),
+            if (hasMeaning && userId != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? MasteryColors.cardDark
+                      : MasteryColors.secondaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark
+                        ? MasteryColors.borderDark
+                        : MasteryColors.borderLight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Meaning quality',
+                        style: MasteryTextStyles.bodySmall.copyWith(
+                          color: isDark
+                              ? MasteryColors.mutedForegroundDark
+                              : MasteryColors.mutedForegroundLight,
+                        ),
+                      ),
+                    ),
+                    FieldFeedback(
+                      meaningId: primaryMeaning!.id,
+                      fieldName: 'translation',
+                      userId: userId,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (hasMeaning) ...[
+              const SizedBox(height: 16),
+              _buildDevInfoSection(primaryMeaning!, vocabularyId, ref),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -245,30 +547,29 @@ class _VocabularyDetailScreenState
     // Show only the first (primary) meaning directly
     final meaning = meanings.first;
 
-    final userId = ref.watch(currentUserIdProvider);
-
     if (_editingMeaningId == meaning.id) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MeaningEditor(
             meaning: meaning,
-            onSave: ({
-              required String translation,
-              required String definition,
-              required String partOfSpeech,
-              required List<String> synonyms,
-              required List<String> alternativeTranslations,
-            }) {
-              _handleMeaningSave(
-                meaning,
-                translation: translation,
-                definition: definition,
-                partOfSpeech: partOfSpeech,
-                synonyms: synonyms,
-                alternativeTranslations: alternativeTranslations,
-              );
-            },
+            onSave:
+                ({
+                  required String translation,
+                  required String definition,
+                  required String partOfSpeech,
+                  required List<String> synonyms,
+                  required List<String> alternativeTranslations,
+                }) {
+                  _handleMeaningSave(
+                    meaning,
+                    translation: translation,
+                    definition: definition,
+                    partOfSpeech: partOfSpeech,
+                    synonyms: synonyms,
+                    alternativeTranslations: alternativeTranslations,
+                  );
+                },
             onCancel: () => setState(() => _editingMeaningId = null),
           ),
           const SizedBox(height: 24),
@@ -278,26 +579,7 @@ class _VocabularyDetailScreenState
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        MeaningCard(
-          meaning: meaning,
-          onEdit: () => setState(() => _editingMeaningId = meaning.id),
-        ),
-        if (userId != null) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              FieldFeedback(
-                meaningId: meaning.id,
-                fieldName: 'translation',
-                userId: userId,
-              ),
-            ],
-          ),
-        ],
-        const SizedBox(height: 24),
-      ],
+      children: [MeaningCard(meaning: meaning)],
     );
   }
 
@@ -308,13 +590,13 @@ class _VocabularyDetailScreenState
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.03)
-              : Colors.grey.withValues(alpha: 0.05),
+              ? MasteryColors.secondaryDark
+              : MasteryColors.secondaryLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.grey.withValues(alpha: 0.15),
+                ? MasteryColors.borderDark
+                : MasteryColors.borderLight,
           ),
         ),
         child: Row(
@@ -324,7 +606,9 @@ class _VocabularyDetailScreenState
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: isDark ? Colors.white38 : Colors.black26,
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
               ),
             ),
             const SizedBox(width: 12),
@@ -332,7 +616,9 @@ class _VocabularyDetailScreenState
               child: Text(
                 'Generating meanings...',
                 style: MasteryTextStyles.bodySmall.copyWith(
-                  color: isDark ? Colors.white38 : Colors.black38,
+                  color: isDark
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight,
                 ),
               ),
             ),
@@ -351,7 +637,9 @@ class _VocabularyDetailScreenState
     meaningsAsync.whenData((meanings) {
       if (meanings.isEmpty) {
         _enrichmentTriggered = true;
-        debugPrint('[VocabularyDetail] Triggering enrichment for $vocabularyId');
+        debugPrint(
+          '[VocabularyDetail] Triggering enrichment for $vocabularyId',
+        );
         _requestEnrichment(vocabularyId);
       }
     });
@@ -369,7 +657,9 @@ class _VocabularyDetailScreenState
         batchSize: 1,
         languageCode: 'de',
       );
-      debugPrint('[VocabularyDetail] Enrichment result: ${result.enrichedCount} enriched, ${result.failedCount} failed');
+      debugPrint(
+        '[VocabularyDetail] Enrichment result: ${result.enrichedCount} enriched, ${result.failedCount} failed',
+      );
 
       // Refresh the meanings after enrichment
       if (result.enrichedCount > 0) {
@@ -451,7 +741,9 @@ class _VocabularyDetailScreenState
       id: meaning.id,
       primaryTranslation: translation,
       englishDefinition: definition,
-      partOfSpeech: partOfSpeech != (meaning.partOfSpeech ?? 'other') ? partOfSpeech : meaning.partOfSpeech,
+      partOfSpeech: partOfSpeech != (meaning.partOfSpeech ?? 'other')
+          ? partOfSpeech
+          : meaning.partOfSpeech,
       synonyms: synonyms,
       alternativeTranslations: alternativeTranslations,
     );
@@ -503,19 +795,14 @@ class _VocabularyDetailScreenState
   Widget _buildEncounterContext(EncounterModel encounter) {
     final sourceAsync = ref.watch(sourceByIdProvider(encounter.sourceId));
 
-    return Column(
-      children: [
-        sourceAsync.when(
-          loading: () => ContextCard(context: encounter.context),
-          error: (e, s) => ContextCard(context: encounter.context),
-          data: (source) => ContextCard(
-            context: encounter.context,
-            bookTitle: source?.title,
-            author: source?.author,
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
+    return sourceAsync.when(
+      loading: () => ContextCard(context: encounter.context),
+      error: (_, _) => ContextCard(context: encounter.context),
+      data: (source) => ContextCard(
+        context: encounter.context,
+        bookTitle: source?.title,
+        author: source?.author,
+      ),
     );
   }
 
@@ -523,28 +810,31 @@ class _VocabularyDetailScreenState
     final cuesAsync = ref.watch(cuesForMeaningProvider(meaningId));
 
     return cuesAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (e, s) => const SizedBox.shrink(),
+      loading: () =>
+          _buildLoadingCard(message: 'Loading cue cards...', isDark: isDark),
+      error: (_, _) => _buildStateCard(
+        title: 'Couldn\'t load cue cards',
+        message: 'Try refreshing meaning data.',
+        isDark: isDark,
+      ),
       data: (cues) {
-        if (cues.isEmpty) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Quiz Preview',
-                style: MasteryTextStyles.bodyBold.copyWith(
-                  color: isDark ? Colors.white : Colors.black87,
+        if (cues.isEmpty) {
+          return _buildStateCard(
+            title: 'No cue cards yet',
+            message: 'Generate enrichment to create practice prompts.',
+            isDark: isDark,
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: cues
+              .map(
+                (cue) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: CuePreviewCard(cue: cue),
                 ),
-              ),
-              const SizedBox(height: 12),
-              ...cues.map((cue) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: CuePreviewCard(cue: cue),
-                  )),
-            ],
-          ),
+              )
+              .toList(),
         );
       },
     );
@@ -568,7 +858,7 @@ class _VocabularyDetailScreenState
 
     return queueStatusAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (queueStatus) => DevInfoPanel(
         meaning: {
           'confidence': meaning.confidence,
@@ -597,9 +887,13 @@ class _VocabularyDetailScreenState
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
+            child: Text(
               'Re-generate',
-              style: TextStyle(color: Colors.orange),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? MasteryColors.warningDark
+                    : MasteryColors.warningLight,
+              ),
             ),
           ),
         ],
@@ -635,7 +929,7 @@ class _VocabularyDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Re-enrichment failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }

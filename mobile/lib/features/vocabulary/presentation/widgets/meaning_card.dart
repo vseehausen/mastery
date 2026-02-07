@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../domain/models/meaning.dart';
 
@@ -31,7 +32,9 @@ class MeaningCard extends StatelessWidget {
           Text(
             meaning.partOfSpeech!,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark ? Colors.white38 : Colors.black38,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -44,7 +47,9 @@ class MeaningCard extends StatelessWidget {
             meaning.primaryTranslation,
             style: MasteryTextStyles.bodyLarge.copyWith(
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
+              color: isDark
+                  ? MasteryColors.foregroundDark
+                  : MasteryColors.foregroundLight,
             ),
           ),
 
@@ -55,7 +60,9 @@ class MeaningCard extends StatelessWidget {
           Text(
             meaning.englishDefinition,
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white70 : Colors.black54,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
               height: 1.4,
             ),
           ),
@@ -66,7 +73,9 @@ class MeaningCard extends StatelessWidget {
           Text(
             synonyms.join(' · '),
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? Colors.white38 : Colors.black38,
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
           ),
         ],

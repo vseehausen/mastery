@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Card showing context where word was found
@@ -20,8 +21,8 @@ class ContextCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.grey.withValues(alpha: 0.1);
+        ? MasteryColors.cardDark
+        : MasteryColors.secondaryLight;
 
     if (this.context == null || this.context!.isEmpty) {
       return const SizedBox.shrink();
@@ -32,6 +33,9 @@ class ContextCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +43,9 @@ class ContextCard extends StatelessWidget {
           Text(
             '"${this.context}"',
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: isDark
+                  ? MasteryColors.foregroundDark
+                  : MasteryColors.foregroundLight,
               fontStyle: FontStyle.italic,
               height: 1.6,
             ),
@@ -51,14 +57,18 @@ class ContextCard extends StatelessWidget {
                 Icon(
                   Icons.book_outlined,
                   size: 16,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: isDark
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     bookTitle!,
                     style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: isDark
+                          ? MasteryColors.mutedForegroundDark
+                          : MasteryColors.mutedForegroundLight,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -72,7 +82,9 @@ class ContextCard extends StatelessWidget {
             Text(
               'by $author',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark ? Colors.grey[500] : Colors.grey[700],
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

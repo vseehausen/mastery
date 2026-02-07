@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Learning statistics for a word
@@ -35,7 +36,9 @@ class LearningStats extends StatelessWidget {
         Text(
           'Learning Status',
           style: MasteryTextStyles.bodyBold.copyWith(
-            color: isDark ? Colors.white : Colors.black,
+            color: isDark
+                ? MasteryColors.foregroundDark
+                : MasteryColors.foregroundLight,
           ),
         ),
         const SizedBox(height: 12),
@@ -59,10 +62,13 @@ class LearningStats extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        _StatItem(
-          label: 'Next Review',
-          value: _formatDate(nextReview),
-          isDark: isDark,
+        SizedBox(
+          width: double.infinity,
+          child: _StatItem(
+            label: 'Next Review',
+            value: _formatDate(nextReview),
+            isDark: isDark,
+          ),
         ),
       ],
     );
@@ -85,10 +91,11 @@ class _StatItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.grey.withValues(alpha: 0.1),
+        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,14 +103,18 @@ class _StatItem extends StatelessWidget {
           Text(
             label,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: isDark
+                  ? MasteryColors.mutedForegroundDark
+                  : MasteryColors.mutedForegroundLight,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: isDark
+                  ? MasteryColors.foregroundDark
+                  : MasteryColors.foregroundLight,
             ),
           ),
         ],

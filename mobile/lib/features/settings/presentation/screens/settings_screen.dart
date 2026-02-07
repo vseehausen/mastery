@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/dev_mode_provider.dart';
+import '../../../../providers/ui_preferences_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_list_item.dart';
@@ -24,6 +25,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = ref.watch(currentUserProvider);
+    final showEnrichmentProgressOnHome = ref.watch(
+      showEnrichmentProgressOnHomeProvider,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -99,6 +103,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             },
                           ),
                         ),
+                        SettingsListItem(
+                          label: 'Show enrichment progress on Home',
+                          trailing: ShadSwitch(
+                            value: showEnrichmentProgressOnHome,
+                            onChanged: (value) {
+                              ref
+                                      .read(
+                                        showEnrichmentProgressOnHomeProvider
+                                            .notifier,
+                                      )
+                                      .state =
+                                  value;
+                            },
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -133,7 +152,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         GestureDetector(
                           onLongPress: () {
                             final currentDevMode = ref.read(devModeProvider);
-                            ref.read(devModeProvider.notifier).state = !currentDevMode;
+                            ref.read(devModeProvider.notifier).state =
+                                !currentDevMode;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(

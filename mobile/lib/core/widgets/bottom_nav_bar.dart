@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/text_styles.dart';
+import '../theme/color_tokens.dart';
 
-/// Custom bottom navigation bar with 4 tabs
+/// Custom bottom navigation bar with 3 tabs
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({
     super.key,
@@ -16,13 +17,17 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
-    final bgColor = isDark ? const Color(0xFF18181B) : Colors.white;
+    final activeColor = isDark
+        ? MasteryColors.foregroundDark
+        : MasteryColors.activeLight;
+    final inactiveColor = isDark
+        ? MasteryColors.mutedForegroundDark
+        : MasteryColors.mutedForegroundLight;
+    final bgColor = isDark ? MasteryColors.cardDark : MasteryColors.cardLight;
     const tabs = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.lightbulb_outline, 'label': 'Learn'},
+      {'icon': Icons.today_outlined, 'label': 'Today'},
       {'icon': Icons.book_outlined, 'label': 'Words'},
-      {'icon': Icons.settings_outlined, 'label': 'Settings'},
+      {'icon': Icons.insights_outlined, 'label': 'Progress'},
     ];
 
     return Container(
@@ -31,8 +36,8 @@ class BottomNavBar extends StatelessWidget {
         border: Border(
           top: BorderSide(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.grey[300]!,
+                ? MasteryColors.borderDark
+                : MasteryColors.borderLight,
           ),
         ),
       ),
@@ -46,8 +51,8 @@ class BottomNavBar extends StatelessWidget {
               label: tabs[index]['label'] as String,
               isActive: selectedIndex == index,
               onTap: () => onTabSelected(index),
-              primaryColor: primaryColor,
-              isDark: isDark,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
             ),
           ),
         ),
@@ -62,16 +67,16 @@ class _NavTab extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
-    required this.primaryColor,
-    required this.isDark,
+    required this.activeColor,
+    required this.inactiveColor,
   });
 
   final IconData icon;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  final Color primaryColor;
-  final bool isDark;
+  final Color activeColor;
+  final Color inactiveColor;
 
   @override
   Widget build(BuildContext context) {
@@ -88,20 +93,12 @@ class _NavTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isActive
-                  ? primaryColor
-                  : (isDark ? Colors.grey[600] : Colors.grey[400]),
-            ),
+            Icon(icon, size: 24, color: isActive ? activeColor : inactiveColor),
             const SizedBox(height: 4),
             Text(
               label,
               style: MasteryTextStyles.caption.copyWith(
-                color: isActive
-                    ? primaryColor
-                    : (isDark ? Colors.grey[600] : Colors.grey[500]),
+                color: isActive ? activeColor : inactiveColor,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

@@ -14,6 +14,7 @@ class RecallCard extends StatefulWidget {
     required this.answer,
     required this.onGrade,
     this.context,
+    this.isSubmitting = false,
   });
 
   /// The word being tested
@@ -28,6 +29,7 @@ class RecallCard extends StatefulWidget {
   /// Callback when user grades themselves
   /// Returns the rating (1=Again, 2=Hard, 3=Good, 4=Easy)
   final void Function(int rating) onGrade;
+  final bool isSubmitting;
 
   @override
   State<RecallCard> createState() => _RecallCardState();
@@ -35,6 +37,7 @@ class RecallCard extends StatefulWidget {
 
 class _RecallCardState extends State<RecallCard> {
   bool _isRevealed = false;
+  bool _hasGraded = false;
 
   @override
   void didUpdateWidget(RecallCard oldWidget) {
@@ -42,6 +45,7 @@ class _RecallCardState extends State<RecallCard> {
     if (oldWidget.word != widget.word) {
       setState(() {
         _isRevealed = false;
+        _hasGraded = false;
       });
     }
   }
@@ -53,6 +57,10 @@ class _RecallCardState extends State<RecallCard> {
   }
 
   void _handleGrade(int rating) {
+    if (_hasGraded || widget.isSubmitting) return;
+    setState(() {
+      _hasGraded = true;
+    });
     widget.onGrade(rating);
   }
 
@@ -105,6 +113,24 @@ class _RecallCardState extends State<RecallCard> {
 
           // Answer section
           if (_isRevealed) ...[
+            Text(
+              'Step 2 of 2: Grade your recall',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'How well did you remember?',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+            const SizedBox(height: 8),
             // Show the answer
             Container(
               width: double.infinity,
@@ -131,16 +157,6 @@ class _RecallCardState extends State<RecallCard> {
 
             const SizedBox(height: 24),
 
-            // Grade prompt
-            Text(
-              'How well did you remember?',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
-              ),
-            ),
-
             const SizedBox(height: 16),
 
             // Grade buttons
@@ -152,6 +168,7 @@ class _RecallCardState extends State<RecallCard> {
                     description: 'Forgot',
                     color: const Color(0xFFEF4444),
                     onPressed: () => _handleGrade(ReviewRating.again),
+                    isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -161,6 +178,7 @@ class _RecallCardState extends State<RecallCard> {
                     description: 'Difficult',
                     color: const Color(0xFFF59E0B),
                     onPressed: () => _handleGrade(ReviewRating.hard),
+                    isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -170,6 +188,7 @@ class _RecallCardState extends State<RecallCard> {
                     description: 'Correct',
                     color: const Color(0xFF10B981),
                     onPressed: () => _handleGrade(ReviewRating.good),
+                    isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -179,16 +198,37 @@ class _RecallCardState extends State<RecallCard> {
                     description: 'Perfect',
                     color: const Color(0xFF3B82F6),
                     onPressed: () => _handleGrade(ReviewRating.easy),
+                    isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
                 ),
               ],
             ),
+            if (widget.isSubmitting || _hasGraded) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Saving response…',
+                style: MasteryTextStyles.caption.copyWith(
+                  color: isDark
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight,
+                ),
+              ),
+            ],
           ] else ...[
+            Text(
+              'Step 1 of 2: Try to recall first',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+            const SizedBox(height: 10),
             // Show reveal button
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: _reveal,
+                onPressed: widget.isSubmitting ? null : _reveal,
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),
@@ -209,19 +249,21 @@ class _GradeButton extends StatelessWidget {
     required this.description,
     required this.color,
     required this.onPressed,
+    required this.isEnabled,
   });
 
   final String label;
   final String description;
   final Color color;
   final VoidCallback onPressed;
+  final bool isEnabled;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
-      onTap: onPressed,
+      onTap: isEnabled ? onPressed : null,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),

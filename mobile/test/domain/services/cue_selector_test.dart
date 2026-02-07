@@ -38,10 +38,10 @@ void main() {
                   'synonyms': ['home'],
                   'is_primary': true,
                   'sort_order': 0,
-                }
+                },
               ]
-            : [],
-        'cues': [],
+            : <Map<String, dynamic>>[],
+        'cues': <Map<String, dynamic>>[],
         'has_encounter_context': false,
         'has_confusables': false,
       });
@@ -88,10 +88,7 @@ void main() {
       test('returns translation when no meaning data', () {
         final card = createCard(state: 2, stability: 50.0);
 
-        final result = selector.selectCueType(
-          card: card,
-          hasMeaning: false,
-        );
+        final result = selector.selectCueType(card: card, hasMeaning: false);
 
         expect(result, CueType.translation);
       });
@@ -99,10 +96,7 @@ void main() {
       test('returns translation for new cards', () {
         final card = createCard(state: 0, stability: 0.0);
 
-        final result = selector.selectCueType(
-          card: card,
-          hasMeaning: true,
-        );
+        final result = selector.selectCueType(card: card, hasMeaning: true);
 
         expect(result, CueType.translation);
       });
@@ -110,10 +104,7 @@ void main() {
       test('returns translation for learning cards with low stability', () {
         final card = createCard(state: 1, stability: 0.5);
 
-        final result = selector.selectCueType(
-          card: card,
-          hasMeaning: true,
-        );
+        final result = selector.selectCueType(card: card, hasMeaning: true);
 
         expect(result, CueType.translation);
       });
@@ -160,12 +151,12 @@ void main() {
                 'id': 'm1',
                 'primary_translation': 'Haus',
                 'english_definition': 'building',
-                'synonyms': [],
+                'synonyms': <String>[],
                 'is_primary': true,
                 'sort_order': 0,
-              }
+              },
             ],
-            'cues': [],
+            'cues': <Map<String, dynamic>>[],
             'has_encounter_context': true,
             'has_confusables': false,
           });
@@ -229,12 +220,12 @@ void main() {
                 'id': 'm1',
                 'primary_translation': 'Haus',
                 'english_definition': 'building',
-                'synonyms': [],
+                'synonyms': <String>[],
                 'is_primary': true,
                 'sort_order': 0,
-              }
+              },
             ],
-            'cues': [],
+            'cues': <Map<String, dynamic>>[],
             'has_encounter_context': false,
             'has_confusables': true,
           });
@@ -273,12 +264,12 @@ void main() {
                 'id': 'm1',
                 'primary_translation': 'Haus',
                 'english_definition': 'building',
-                'synonyms': [],
+                'synonyms': <String>[],
                 'is_primary': true,
                 'sort_order': 0,
-              }
+              },
             ],
-            'cues': [],
+            'cues': <Map<String, dynamic>>[],
             'has_encounter_context': true,
             'has_confusables': false,
           });
@@ -320,8 +311,7 @@ void main() {
         // Total = 65 (without context/confusables)
         // Expected percentages: translation ~31%, definition ~38%, synonym ~31%
 
-        final translationPct =
-            (counts[CueType.translation] ?? 0) / 1000 * 100;
+        final translationPct = (counts[CueType.translation] ?? 0) / 1000 * 100;
         final definitionPct = (counts[CueType.definition] ?? 0) / 1000 * 100;
         final synonymPct = (counts[CueType.synonym] ?? 0) / 1000 * 100;
 

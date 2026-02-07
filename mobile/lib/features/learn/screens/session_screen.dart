@@ -59,11 +59,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   bool _isPaused = false;
   bool _isLoading = true;
   bool _isSessionComplete = false;
+  bool _isSubmittingReview = false;
   String? _errorMessage;
+  String? _inlineRecoveryMessage;
+  int? _failedRating;
+  int? _failedResponseTimeMs;
   DateTime? _itemStartTime;
   List<String>? _currentDistractors;
   int _newWordsPresented = 0;
   int _reviewsPresented = 0;
+  String? _loadingDistractorsForCardId;
 
   final _uuid = const Uuid();
 
@@ -187,6 +192,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
       // Load distractors for first item if it's recognition mode
       if (initialItems.isNotEmpty && initialItems[0].isRecognition) {
+        _currentDistractors = null;
         await _loadDistractorsForItem(initialItems[0], userId);
       }
 
@@ -281,17 +287,25 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _loadDistractorsForItem(PlannedItem item, String userId) async {
+    if (_loadingDistractorsForCardId == item.cardId) return;
+
+    _loadingDistractorsForCardId = item.cardId;
     final distractorService = ref.read(distractorServiceProvider);
 
-    final distractors = await distractorService.selectDistractors(
-      targetItemId: item.vocabularyId,
-      userId: userId,
-      count: 3,
-    );
+    try {
+      final distractors = await distractorService.selectDistractors(
+        targetItemId: item.vocabularyId,
+        userId: userId,
+        count: 3,
+      );
 
-    setState(() {
-      _currentDistractors = distractors.map((d) => d.gloss).toList();
-    });
+      if (!mounted) return;
+      setState(() {
+        _currentDistractors = distractors.map((d) => d.gloss).toList();
+      });
+    } finally {
+      _loadingDistractorsForCardId = null;
+    }
   }
 
   void _handleTimerTick(int seconds) {
@@ -329,6 +343,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _processReview(int rating, int responseTimeMs) async {
+    if (_isSubmittingReview) return;
     if (_session == null) return;
     if (_currentItemIndex >= _items.length) return;
 
@@ -336,104 +351,131 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
+    setState(() {
+      _isSubmittingReview = true;
+      _inlineRecoveryMessage = null;
+    });
+
     final srsScheduler = ref.read(srsSchedulerProvider());
     final dataService = ref.read(supabaseDataServiceProvider);
 
-    // Track new words vs reviews
-    if (currentItem.isNewWord) {
-      _newWordsPresented++;
-    } else {
-      _reviewsPresented++;
-    }
+    try {
+      // Track new words vs reviews
+      if (currentItem.isNewWord) {
+        _newWordsPresented++;
+      } else {
+        _reviewsPresented++;
+      }
 
-    // Convert SessionCard to LearningCardModel for SRS processing
-    final learningCard = currentItem.sessionCard.toLearningCard(userId);
+      // Convert SessionCard to LearningCardModel for SRS processing
+      final learningCard = currentItem.sessionCard.toLearningCard(userId);
 
-    // Process the review with SRS
-    final result = srsScheduler.reviewCard(
-      card: learningCard,
-      rating: rating,
-      interactionMode: currentItem.interactionMode,
-    );
+      // Process the review with SRS
+      final result = srsScheduler.reviewCard(
+        card: learningCard,
+        rating: rating,
+        interactionMode: currentItem.interactionMode,
+      );
 
-    // Save updated card to Supabase
-    await dataService.updateLearningCard(
-      cardId: currentItem.cardId,
-      state: result.updatedCard.state,
-      due: result.updatedCard.due,
-      stability: result.updatedCard.stability,
-      difficulty: result.updatedCard.difficulty,
-      reps: result.updatedCard.reps,
-      lapses: result.updatedCard.lapses,
-      isLeech: result.updatedCard.isLeech,
-    );
+      // Save updated card to Supabase
+      await dataService.updateLearningCard(
+        cardId: currentItem.cardId,
+        state: result.updatedCard.state,
+        due: result.updatedCard.due,
+        stability: result.updatedCard.stability,
+        difficulty: result.updatedCard.difficulty,
+        reps: result.updatedCard.reps,
+        lapses: result.updatedCard.lapses,
+        isLeech: result.updatedCard.isLeech,
+      );
 
-    // Save review log to Supabase
-    final reviewLogId = _uuid.v4();
-    await dataService.insertReviewLog(
-      id: reviewLogId,
-      userId: userId,
-      learningCardId: currentItem.cardId,
-      rating: rating,
-      interactionMode: currentItem.interactionMode,
-      stateBefore: result.reviewLog.stateBefore,
-      stateAfter: result.reviewLog.stateAfter,
-      stabilityBefore: result.reviewLog.stabilityBefore,
-      stabilityAfter: result.reviewLog.stabilityAfter,
-      difficultyBefore: result.reviewLog.difficultyBefore,
-      difficultyAfter: result.reviewLog.difficultyAfter,
-      responseTimeMs: responseTimeMs,
-      retrievabilityAtReview: result.reviewLog.retrievabilityAtReview,
-      sessionId: _session!.id,
-      cueType: currentItem.cueType?.toDbString(),
-    );
+      // Save review log to Supabase
+      final reviewLogId = _uuid.v4();
+      await dataService.insertReviewLog(
+        id: reviewLogId,
+        userId: userId,
+        learningCardId: currentItem.cardId,
+        rating: rating,
+        interactionMode: currentItem.interactionMode,
+        stateBefore: result.reviewLog.stateBefore,
+        stateAfter: result.reviewLog.stateAfter,
+        stabilityBefore: result.reviewLog.stabilityBefore,
+        stabilityAfter: result.reviewLog.stabilityAfter,
+        difficultyBefore: result.reviewLog.difficultyBefore,
+        difficultyAfter: result.reviewLog.difficultyAfter,
+        responseTimeMs: responseTimeMs,
+        retrievabilityAtReview: result.reviewLog.retrievabilityAtReview,
+        sessionId: _session!.id,
+        cueType: currentItem.cueType?.toDbString(),
+      );
 
-    // Update session progress
-    await dataService.updateSessionProgress(
-      sessionId: _session!.id,
-      elapsedSeconds: _elapsedSeconds,
-      itemsPresented: _currentItemIndex + 1,
-      itemsCompleted: _currentItemIndex + 1,
-      newWordsPresented: _newWordsPresented,
-      reviewsPresented: _reviewsPresented,
-    );
+      // Update session progress
+      await dataService.updateSessionProgress(
+        sessionId: _session!.id,
+        elapsedSeconds: _elapsedSeconds,
+        itemsPresented: _currentItemIndex + 1,
+        itemsCompleted: _currentItemIndex + 1,
+        newWordsPresented: _newWordsPresented,
+        reviewsPresented: _reviewsPresented,
+      );
 
-    // Move to next item or complete
-    final nextIndex = _currentItemIndex + 1;
+      // Clear failed state
+      _failedRating = null;
+      _failedResponseTimeMs = null;
 
-    // Check if time is up
-    final totalSeconds = _session!.plannedMinutes * 60 + _session!.bonusSeconds;
-    final timeUp = _elapsedSeconds >= totalSeconds;
+      // Move to next item or complete
+      final nextIndex = _currentItemIndex + 1;
 
-    if (timeUp) {
-      await _completeSession();
-      return;
-    }
+      // Check if time is up
+      final totalSeconds =
+          _session!.plannedMinutes * 60 + _session!.bonusSeconds;
+      final timeUp = _elapsedSeconds >= totalSeconds;
 
-    // If we've exhausted the current batch, fetch more before proceeding
-    if (nextIndex >= _items.length) {
-      await _maybePrefetchMore(force: true);
-      // After awaiting, check if new items arrived
-      if (nextIndex >= _items.length) {
-        // No more items available — session is done
+      if (timeUp) {
         await _completeSession();
         return;
       }
-    } else {
-      // Trigger background prefetch for upcoming items
-      unawaited(_maybePrefetchMore());
-    }
 
-    // Load distractors for next item if needed
-    final nextItem = _items[nextIndex];
-    if (nextItem.isRecognition) {
-      await _loadDistractorsForItem(nextItem, userId);
-    }
+      // If we've exhausted the current batch, fetch more before proceeding
+      if (nextIndex >= _items.length) {
+        await _maybePrefetchMore(force: true);
+        // After awaiting, check if new items arrived
+        if (nextIndex >= _items.length) {
+          // No more items available — session is done
+          await _completeSession();
+          return;
+        }
+      } else {
+        // Trigger background prefetch for upcoming items
+        unawaited(_maybePrefetchMore());
+      }
 
-    setState(() {
-      _currentItemIndex = nextIndex;
-      _itemStartTime = DateTime.now();
-    });
+      // Load distractors for next item if needed
+      final nextItem = _items[nextIndex];
+      if (nextItem.isRecognition) {
+        _currentDistractors = null;
+        await _loadDistractorsForItem(nextItem, userId);
+      }
+
+      setState(() {
+        _currentItemIndex = nextIndex;
+        _itemStartTime = DateTime.now();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _failedRating = rating;
+        _failedResponseTimeMs = responseTimeMs;
+        _inlineRecoveryMessage =
+            'Could not save your response. Check connection and retry.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingReview = false;
+        });
+      }
+    }
   }
 
   Future<void> _completeSession() async {
@@ -450,7 +492,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         : SessionOutcomeEnum.partial;
 
     final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
-    final reason = _elapsedSeconds >= totalSeconds ? 'time up' : 'items exhausted';
+    final reason = _elapsedSeconds >= totalSeconds
+        ? 'time up'
+        : 'items exhausted';
     debugPrint(
       '[Session] Complete: reason=$reason, total reviewed=${_currentItemIndex + 1}, '
       'allItemsExhausted=$allItemsExhausted',
@@ -509,6 +553,41 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     setState(() {
       _isPaused = !_isPaused;
     });
+  }
+
+  Future<void> _handleClosePressed() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('End session now?'),
+          content: const Text(
+            'Your progress will be saved and you can continue later.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Keep learning'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Save and exit'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldExit != true) return;
+
+    await _saveProgress();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _retryFailedSubmission() async {
+    if (_failedRating == null || _failedResponseTimeMs == null) return;
+    await _processReview(_failedRating!, _failedResponseTimeMs!);
   }
 
   @override
@@ -604,11 +683,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     children: [
                       // Close button
                       IconButton(
-                        onPressed: () async {
-                          await _saveProgress();
-                          if (!context.mounted) return;
-                          Navigator.of(context).pop();
-                        },
+                        onPressed: _handleClosePressed,
                         icon: Icon(
                           Icons.close,
                           color: isDark
@@ -696,6 +771,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ),
                 ),
               ),
+            _buildBottomActionZone(currentItem, isDark),
           ],
         ),
       ),
@@ -715,11 +791,29 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         'Translation not available';
 
     if (item.isRecognition) {
+      final distractors = _currentDistractors;
+
+      // Never inject fake answer options. If distractors are unavailable,
+      // degrade to recall mode for this card instead of showing placeholders.
+      if (distractors == null || distractors.length < 3) {
+        final userId = ref.read(currentUserProvider).valueOrNull?.id;
+        if (userId != null && _loadingDistractorsForCardId != item.cardId) {
+          unawaited(_loadDistractorsForItem(item, userId));
+        }
+
+        return RecallCard(
+          word: card.word,
+          answer: translationAnswer,
+          context: null,
+          isSubmitting: _isSubmittingReview,
+          onGrade: _handleRecallGrade,
+        );
+      }
+
       return RecognitionCard(
         word: card.word,
         correctAnswer: translationAnswer,
-        distractors:
-            _currentDistractors ?? ['Option A', 'Option B', 'Option C'],
+        distractors: distractors,
         context: null, // Context would need encounter data
         onAnswer: _handleRecognitionAnswer,
       );
@@ -737,16 +831,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               translationAnswer,
           targetWord: cue?.answerText ?? card.word,
           hintText: cue?.hintText,
+          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.synonym:
         return SynonymCueCard(
           synonymPhrase: cue?.promptText ?? _buildSynonymPrompt(meaning),
           targetWord: cue?.answerText ?? card.word,
+          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.disambiguation:
         final options = _parseDisambiguationOptions(cue);
+        if (options.options.isEmpty) {
+          return RecallCard(
+            word: card.word,
+            answer: translationAnswer,
+            context: null,
+            onGrade: _handleRecallGrade,
+          );
+        }
         return DisambiguationCard(
           clozeSentence: cue?.promptText ?? translationAnswer,
           options: options.options,
@@ -759,6 +863,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           sentenceWithBlank: cue?.promptText ?? translationAnswer,
           targetWord: cue?.answerText ?? card.word,
           hintText: cue?.hintText,
+          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.translation:
@@ -767,9 +872,102 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           word: card.word,
           answer: translationAnswer,
           context: null, // Could load encounter context if needed
+          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
     }
+  }
+
+  Widget _buildBottomActionZone(PlannedItem? currentItem, bool isDark) {
+    final helperText = currentItem == null
+        ? 'Wrapping up your session.'
+        : currentItem.isRecognition
+        ? 'Pick the best answer.'
+        : 'Step 1: reveal. Step 2: grade your recall.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: BoxDecoration(
+        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? MasteryColors.borderDark
+                : MasteryColors.borderLight,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_isSubmittingReview)
+            Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Saving your response…',
+                  style: MasteryTextStyles.caption.copyWith(
+                    color: isDark
+                        ? MasteryColors.mutedForegroundDark
+                        : MasteryColors.mutedForegroundLight,
+                  ),
+                ),
+              ],
+            ),
+          if (_inlineRecoveryMessage != null) ...[
+            if (_isSubmittingReview) const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF3F1B1B)
+                    : const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF7F1D1D)
+                      : const Color(0xFFFCA5A5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _inlineRecoveryMessage!,
+                      style: MasteryTextStyles.caption,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _isSubmittingReview
+                        ? null
+                        : _retryFailedSubmission,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (_inlineRecoveryMessage == null && !_isSubmittingReview)
+            Text(
+              helperText,
+              style: MasteryTextStyles.caption.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   /// Build a synonym prompt from the meaning's synonyms
@@ -784,13 +982,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   ({List<String> options, int correctIndex}) _parseDisambiguationOptions(
     SessionCue? cue,
   ) {
-    // Default fallback
-    if (cue == null) {
-      return (options: ['Option 1'], correctIndex: 0);
-    }
-
-    // The answer text is the correct option; for now return it as the only option
-    // In a real implementation, you'd parse the cue metadata for all options
-    return (options: [cue.answerText], correctIndex: 0);
+    // No synthetic options. Until multi-option disambiguation payloads are
+    // available in SessionCue, always fall back to recall mode.
+    if (cue == null) return (options: <String>[], correctIndex: 0);
+    return (options: <String>[], correctIndex: 0);
   }
 }

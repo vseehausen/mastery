@@ -1,31 +1,41 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Displays a preview of a learning cue (question/answer pair)
 /// Used to show how vocabulary will be tested in learning sessions
 class CuePreviewCard extends StatelessWidget {
-  const CuePreviewCard({
-    super.key,
-    required this.cue,
-  });
+  const CuePreviewCard({super.key, required this.cue});
 
   final Map<String, dynamic> cue;
 
   /// Returns the display name and color for each cue type
-  (String label, Color color) _getCueTypeInfo(String cueType) {
+  (String label, Color color) _getCueTypeInfo(String cueType, bool isDark) {
     switch (cueType) {
       case 'translation':
-        return ('Translation', const Color(0xFF3B82F6)); // Blue
+        return (
+          'Translation',
+          MasteryColors.getCueColor(cueType, isDark: isDark),
+        );
       case 'definition':
-        return ('Definition', const Color(0xFF10B981)); // Green
+        return (
+          'Definition',
+          MasteryColors.getCueColor(cueType, isDark: isDark),
+        );
       case 'synonym':
-        return ('Synonym', const Color(0xFF8B5CF6)); // Purple
+        return ('Synonym', MasteryColors.getCueColor(cueType, isDark: isDark));
       case 'cloze':
-        return ('Fill in the Blank', const Color(0xFFF59E0B)); // Amber
+        return (
+          'Fill in the Blank',
+          MasteryColors.getCueColor(cueType, isDark: isDark),
+        );
       case 'multiple_choice':
-        return ('Choose the Word', const Color(0xFFEC4899)); // Pink
+        return (
+          'Choose the Word',
+          MasteryColors.getCueColor(cueType, isDark: isDark),
+        );
       default:
-        return (cueType, const Color(0xFF6B7280)); // Gray
+        return (cueType, MasteryColors.getCueColor(cueType, isDark: isDark));
     }
   }
 
@@ -33,14 +43,14 @@ class CuePreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.grey.withValues(alpha: 0.1);
+        ? MasteryColors.cardDark
+        : MasteryColors.secondaryLight;
 
     final cueType = cue['cue_type'] as String? ?? 'unknown';
     final promptText = cue['prompt_text'] as String? ?? '';
     final answerText = cue['answer_text'] as String? ?? '';
 
-    final (typeLabel, typeColor) = _getCueTypeInfo(cueType);
+    final (typeLabel, typeColor) = _getCueTypeInfo(cueType, isDark);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -48,9 +58,7 @@ class CuePreviewCard extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.2),
+          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
           width: 1,
         ),
       ),
@@ -84,7 +92,9 @@ class CuePreviewCard extends StatelessWidget {
             Text(
               promptText,
               style: MasteryTextStyles.body.copyWith(
-                color: isDark ? Colors.white70 : Colors.black87,
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.foregroundLight,
                 height: 1.4,
               ),
             ),
@@ -97,7 +107,9 @@ class CuePreviewCard extends StatelessWidget {
               answerText,
               style: MasteryTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black,
+                color: isDark
+                    ? MasteryColors.foregroundDark
+                    : MasteryColors.foregroundLight,
               ),
             ),
         ],

@@ -14,6 +14,7 @@ class ClozeCueCard extends StatefulWidget {
     required this.targetWord,
     required this.onGrade,
     this.hintText,
+    this.isSubmitting = false,
   });
 
   /// The sentence with ___ blank
@@ -27,6 +28,7 @@ class ClozeCueCard extends StatefulWidget {
 
   /// Callback when user grades themselves
   final void Function(int rating) onGrade;
+  final bool isSubmitting;
 
   @override
   State<ClozeCueCard> createState() => _ClozeCueCardState();
@@ -35,6 +37,7 @@ class ClozeCueCard extends StatefulWidget {
 class _ClozeCueCardState extends State<ClozeCueCard> {
   bool _isRevealed = false;
   bool _showHint = false;
+  bool _hasGraded = false;
 
   @override
   void didUpdateWidget(ClozeCueCard oldWidget) {
@@ -44,6 +47,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
       setState(() {
         _isRevealed = false;
         _showHint = false;
+        _hasGraded = false;
       });
     }
   }
@@ -120,6 +124,24 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
 
           // Answer section
           if (_isRevealed) ...[
+            Text(
+              'Step 2 of 2: Grade your recall',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'How well did you remember?',
+              style: MasteryTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? MasteryColors.mutedForegroundDark
+                    : MasteryColors.mutedForegroundLight,
+              ),
+            ),
+            const SizedBox(height: 8),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -144,21 +166,35 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
               ),
             ),
             const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            _buildGradeButtons(isDark),
+            if (widget.isSubmitting || _hasGraded) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Saving response…',
+                style: MasteryTextStyles.caption.copyWith(
+                  color: isDark
+                      ? MasteryColors.mutedForegroundDark
+                      : MasteryColors.mutedForegroundLight,
+                ),
+              ),
+            ],
+          ] else ...[
             Text(
-              'How well did you remember?',
+              'Step 1 of 2: Recall the missing word',
               style: MasteryTextStyles.bodySmall.copyWith(
                 color: isDark
                     ? MasteryColors.mutedForegroundDark
                     : MasteryColors.mutedForegroundLight,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildGradeButtons(isDark),
-          ] else ...[
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: () => setState(() => _isRevealed = true),
+                onPressed: widget.isSubmitting
+                    ? null
+                    : () => setState(() => _isRevealed = true),
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),
@@ -173,17 +209,37 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
   Widget _buildGradeButtons(bool isDark) {
     return Row(
       children: [
-        _gradeButton('Again', 'Forgot', const Color(0xFFEF4444),
-            ReviewRating.again, isDark),
+        _gradeButton(
+          'Again',
+          'Forgot',
+          const Color(0xFFEF4444),
+          ReviewRating.again,
+          isDark,
+        ),
         const SizedBox(width: 8),
-        _gradeButton('Hard', 'Difficult', const Color(0xFFF59E0B),
-            ReviewRating.hard, isDark),
+        _gradeButton(
+          'Hard',
+          'Difficult',
+          const Color(0xFFF59E0B),
+          ReviewRating.hard,
+          isDark,
+        ),
         const SizedBox(width: 8),
-        _gradeButton('Good', 'Correct', const Color(0xFF10B981),
-            ReviewRating.good, isDark),
+        _gradeButton(
+          'Good',
+          'Correct',
+          const Color(0xFF10B981),
+          ReviewRating.good,
+          isDark,
+        ),
         const SizedBox(width: 8),
-        _gradeButton('Easy', 'Perfect', const Color(0xFF3B82F6),
-            ReviewRating.easy, isDark),
+        _gradeButton(
+          'Easy',
+          'Perfect',
+          const Color(0xFF3B82F6),
+          ReviewRating.easy,
+          isDark,
+        ),
       ],
     );
   }
@@ -197,7 +253,14 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
   ) {
     return Expanded(
       child: InkWell(
-        onTap: () => widget.onGrade(rating),
+        onTap: (!_hasGraded && !widget.isSubmitting)
+            ? () {
+                setState(() {
+                  _hasGraded = true;
+                });
+                widget.onGrade(rating);
+              }
+            : null,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -211,8 +274,10 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
             children: [
               Text(
                 label,
-                style: MasteryTextStyles.bodyBold
-                    .copyWith(fontSize: 14, color: color),
+                style: MasteryTextStyles.bodyBold.copyWith(
+                  fontSize: 14,
+                  color: color,
+                ),
               ),
               const SizedBox(height: 2),
               Text(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,16 +42,17 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityStatus> {
 
   Future<void> _checkConnectivity() async {
     try {
-      // Simple connectivity check using a DNS lookup
-      // In a production app, you'd use connectivity_plus package
-      // For now, we'll assume connected in debug mode
-      if (kDebugMode) {
+      // Lightweight reachability probe via DNS lookup.
+      final result = await InternetAddress.lookup('one.one.one.one');
+      if (result.isNotEmpty && result.first.rawAddress.isNotEmpty) {
         state = ConnectivityStatus.connected;
-      } else {
-        // In production, implement actual connectivity check
-        state = ConnectivityStatus.connected;
+        return;
       }
+      state = ConnectivityStatus.disconnected;
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Connectivity] check failed: $e');
+      }
       state = ConnectivityStatus.disconnected;
     }
   }
