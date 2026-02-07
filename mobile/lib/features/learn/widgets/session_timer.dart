@@ -91,7 +91,7 @@ class _SessionTimerState extends State<SessionTimer> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final remainingSeconds = (widget.totalSeconds - _elapsedSeconds).clamp(
       0,
       widget.totalSeconds,
@@ -110,11 +110,9 @@ class _SessionTimerState extends State<SessionTimer> {
             child: CircularProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               strokeWidth: 3,
-              backgroundColor: isDark
-                  ? MasteryColors.mutedDark
-                  : MasteryColors.mutedLight,
+              backgroundColor: colors.muted,
               valueColor: AlwaysStoppedAnimation<Color>(
-                _getProgressColor(progress, isDark),
+                _getProgressColor(progress, context),
               ),
             ),
           ),
@@ -125,7 +123,7 @@ class _SessionTimerState extends State<SessionTimer> {
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 18,
               fontFamily: 'monospace',
-              color: _getProgressColor(progress, isDark),
+              color: _getProgressColor(progress, context),
             ),
           ),
           // Pause indicator
@@ -134,9 +132,7 @@ class _SessionTimerState extends State<SessionTimer> {
             Icon(
               Icons.pause,
               size: 16,
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ],
         ],
@@ -144,16 +140,17 @@ class _SessionTimerState extends State<SessionTimer> {
     );
   }
 
-  Color _getProgressColor(double progress, bool isDark) {
+  Color _getProgressColor(double progress, BuildContext context) {
+    final colors = context.masteryColors;
     if (progress >= 0.9) {
       // Almost done - warning color
-      return isDark ? MasteryColors.warningDark : MasteryColors.warningLight;
+      return colors.warning;
     } else if (progress >= 0.75) {
       // Getting close
-      return isDark ? MasteryColors.accentDark : MasteryColors.accentLight;
+      return colors.accent;
     }
     // Normal
-    return isDark ? MasteryColors.primaryDark : MasteryColors.primaryLight;
+    return colors.primaryAction;
   }
 
   String _formatTime(int seconds) {

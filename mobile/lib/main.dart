@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'core/network/connectivity.dart';
 import 'core/supabase_client.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/color_tokens.dart';
 import 'core/widgets/bottom_nav_bar.dart';
 import 'core/widgets/global_status_banner.dart';
 import 'features/auth/auth_guard.dart';
@@ -44,7 +45,19 @@ class MasteryApp extends StatelessWidget {
       theme: MasteryTheme.light,
       darkTheme: MasteryTheme.dark,
       builder: (context, child) {
-        return ScaffoldMessenger(child: child ?? const SizedBox.shrink());
+        // Add ThemeExtension support by wrapping with Theme widget
+        final brightness = Theme.of(context).brightness;
+        final themeData = Theme.of(context).copyWith(
+          extensions: [
+            brightness == Brightness.dark
+                ? MasteryColorScheme.dark
+                : MasteryColorScheme.light,
+          ],
+        );
+        return Theme(
+          data: themeData,
+          child: ScaffoldMessenger(child: child ?? const SizedBox.shrink()),
+        );
       },
       home: const AuthGuard(child: HomeScreen()),
     );

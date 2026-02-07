@@ -77,7 +77,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final currentStreak = ref.watch(currentStreakProvider);
 
     return Scaffold(
@@ -94,12 +94,8 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   color: widget.isFullCompletion
-                      ? (isDark
-                            ? MasteryColors.successMutedDark
-                            : MasteryColors.successMutedLight)
-                      : (isDark
-                            ? MasteryColors.warningMutedDark
-                            : MasteryColors.warningMutedLight),
+                      ? (colors.successMuted)
+                      : (colors.warningMuted),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -108,12 +104,8 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                       : Icons.access_time,
                   size: 64,
                   color: widget.isFullCompletion
-                      ? (isDark
-                            ? MasteryColors.successDark
-                            : MasteryColors.successLight)
-                      : (isDark
-                            ? MasteryColors.warningDark
-                            : MasteryColors.warningLight),
+                      ? (colors.success)
+                      : (colors.warning),
                 ),
               ),
               const SizedBox(height: 32),
@@ -122,7 +114,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
               Text(
                 _getTitle(),
                 style: MasteryTextStyles.displayLarge.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colors.foreground,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -132,9 +124,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
               Text(
                 _getSubtitle(),
                 style: MasteryTextStyles.body.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -144,14 +134,10 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? MasteryColors.cardDark
-                      : MasteryColors.cardLight,
+                  color: colors.cardBackground,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark
-                        ? MasteryColors.borderDark
-                        : MasteryColors.borderLight,
+                    color: colors.border,
                   ),
                 ),
                 child: Column(
@@ -159,19 +145,17 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                     _StatRow(
                       label: 'Items reviewed',
                       value: '${widget.itemsCompleted}',
-                      isDark: isDark,
+                      
                     ),
                     const SizedBox(height: 12),
                     _StatRow(
                       label: 'Time practiced',
                       value: _formatTime(widget.elapsedSeconds),
-                      isDark: isDark,
+                      
                     ),
                     const SizedBox(height: 12),
                     Divider(
-                      color: isDark
-                          ? MasteryColors.borderDark
-                          : MasteryColors.borderLight,
+                      color: colors.border,
                     ),
                     const SizedBox(height: 12),
                     // Streak
@@ -181,9 +165,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                         Text(
                           'Current streak',
                           style: MasteryTextStyles.bodySmall.copyWith(
-                            color: isDark
-                                ? MasteryColors.mutedForegroundDark
-                                : MasteryColors.mutedForegroundLight,
+                            color: colors.mutedForeground,
                           ),
                         ),
                         currentStreak.when(
@@ -274,30 +256,27 @@ class _StatRow extends StatelessWidget {
   const _StatRow({
     required this.label,
     required this.value,
-    required this.isDark,
   });
 
   final String label;
   final String value;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: colors.mutedForeground,
           ),
         ),
         Text(
           value,
           style: MasteryTextStyles.bodyBold.copyWith(
-            color: isDark ? Colors.white : Colors.black,
+            color: colors.foreground,
           ),
         ),
       ],

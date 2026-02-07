@@ -79,7 +79,7 @@ class _RecognitionCardState extends State<RecognitionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -93,7 +93,7 @@ class _RecognitionCardState extends State<RecognitionCard> {
             widget.word,
             style: MasteryTextStyles.displayLarge.copyWith(
               fontSize: 32,
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
             textAlign: TextAlign.center,
           ),
@@ -104,17 +104,13 @@ class _RecognitionCardState extends State<RecognitionCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.mutedDark
-                    : MasteryColors.mutedLight,
+                color: colors.muted,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 widget.context!,
                 style: MasteryTextStyles.bodySmall.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                   fontStyle: FontStyle.italic,
                 ),
                 textAlign: TextAlign.center,
@@ -128,9 +124,7 @@ class _RecognitionCardState extends State<RecognitionCard> {
           Text(
             'What does this word mean?',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
 
@@ -141,7 +135,7 @@ class _RecognitionCardState extends State<RecognitionCard> {
             final option = _shuffledOptions[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _buildOptionButton(option, isDark),
+              child: _buildOptionButton(option, context),
             );
           }),
 
@@ -151,7 +145,8 @@ class _RecognitionCardState extends State<RecognitionCard> {
     );
   }
 
-  Widget _buildOptionButton(String option, bool isDark) {
+  Widget _buildOptionButton(String option, BuildContext context) {
+    final colors = context.masteryColors;
     final isSelected = _selectedAnswer == option;
     final isCorrectOption = option == widget.correctAnswer;
     final showResult = _selectedAnswer != null;
@@ -162,33 +157,21 @@ class _RecognitionCardState extends State<RecognitionCard> {
     if (showResult) {
       if (isCorrectOption) {
         // Highlight correct answer
-        backgroundColor = isDark
-            ? MasteryColors.successMutedDark
-            : MasteryColors.successMutedLight;
-        textColor = isDark
-            ? MasteryColors.successDark
-            : MasteryColors.successLight;
+        backgroundColor = colors.successMuted;
+        textColor = colors.success;
       } else if (isSelected) {
         // Highlight incorrect selection
-        backgroundColor = isDark
-            ? const Color(0xFF3F1B1B)
-            : const Color(0xFFFEE2E2);
-        textColor = isDark ? const Color(0xFFEF4444) : const Color(0xFFDC2626);
+        backgroundColor = colors.destructive.withValues(alpha: 0.1);
+        textColor = colors.destructive;
       } else {
         // Unselected option
-        backgroundColor = isDark
-            ? MasteryColors.cardDark
-            : MasteryColors.cardLight;
-        textColor = isDark
-            ? MasteryColors.mutedForegroundDark
-            : MasteryColors.mutedForegroundLight;
+        backgroundColor = colors.cardBackground;
+        textColor = colors.mutedForeground;
       }
     } else {
       // Not answered yet
-      backgroundColor = isDark
-          ? MasteryColors.cardDark
-          : MasteryColors.cardLight;
-      textColor = isDark ? Colors.white : Colors.black;
+      backgroundColor = colors.cardBackground;
+      textColor = colors.foreground;
     }
 
     return SizedBox(

@@ -12,17 +12,15 @@ class StreakIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final hasStreak = count > 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: hasStreak
-            ? (isDark
-                  ? MasteryColors.warningMutedDark
-                  : MasteryColors.warningMutedLight)
-            : (isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight),
+            ? (colors.warningMuted)
+            : (colors.muted),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -32,12 +30,8 @@ class StreakIndicator extends StatelessWidget {
             Icons.local_fire_department,
             size: 18,
             color: hasStreak
-                ? (isDark
-                      ? MasteryColors.warningDark
-                      : MasteryColors.warningLight)
-                : (isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight),
+                ? (colors.warning)
+                : (colors.mutedForeground),
           ),
           const SizedBox(width: 4),
           Text(
@@ -45,12 +39,8 @@ class StreakIndicator extends StatelessWidget {
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 14,
               color: hasStreak
-                  ? (isDark
-                        ? MasteryColors.warningDark
-                        : MasteryColors.warningLight)
-                  : (isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight),
+                  ? (colors.warning)
+                  : (colors.mutedForeground),
             ),
           ),
         ],

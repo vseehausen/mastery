@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../theme/text_styles.dart';
+import '../theme/color_tokens.dart';
 
 /// Section header with title and optional "See all" link
 class SectionHeader extends StatelessWidget {
@@ -11,8 +12,6 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -20,7 +19,7 @@ class SectionHeader extends StatelessWidget {
           title,
           style: MasteryTextStyles.bodyBold.copyWith(
             fontSize: 18,
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
         ),
         if (onSeeAll != null)

@@ -14,8 +14,6 @@ class ProgressScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final currentStreak = ref.watch(currentStreakProvider);
     final longestStreak = ref.watch(longestStreakProvider);
     final vocabularyCount = ref.watch(vocabularyCountProvider);
@@ -42,16 +40,14 @@ class ProgressScreen extends ConsumerWidget {
               Text(
                 'Progress',
                 style: MasteryTextStyles.displayLarge.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: context.masteryColors.foreground,
                 ),
               ),
               const SizedBox(height: MasterySpacing.sm),
               Text(
                 'Track your outcomes',
                 style: MasteryTextStyles.bodySmall.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: context.masteryColors.mutedForeground,
                 ),
               ),
               const SizedBox(height: MasterySpacing.lg),
@@ -87,14 +83,13 @@ class _ProgressHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(MasterySpacing.xl),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        color: context.masteryColors.secondaryAction,
         borderRadius: BorderRadius.circular(MasterySpacing.radiusLg),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: context.masteryColors.border,
         ),
       ),
       child: Column(
@@ -104,15 +99,13 @@ class _ProgressHero extends StatelessWidget {
             children: [
               Icon(
                 Icons.local_fire_department_outlined,
-                color: isDark
-                    ? MasteryColors.warningDark
-                    : MasteryColors.warningLight,
+                color: context.masteryColors.warning,
               ),
               const SizedBox(width: MasterySpacing.sm),
               Text(
                 'Streak performance',
                 style: MasteryTextStyles.bodyBold.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: context.masteryColors.foreground,
                 ),
               ),
             ],
@@ -141,9 +134,7 @@ class _ProgressHero extends StatelessWidget {
                 ? 'Today is completed. Nice consistency.'
                 : 'Complete one session today to keep your streak.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
         ],
@@ -160,11 +151,10 @@ class _StreakStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(MasterySpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.mutedDark : MasteryColors.cardLight,
+        color: context.masteryColors.muted,
         borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
       ),
       child: Column(
@@ -173,16 +163,14 @@ class _StreakStat extends StatelessWidget {
           Text(
             label,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
           const SizedBox(height: MasterySpacing.xs),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
           ),
         ],
@@ -204,14 +192,13 @@ class _DataCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(MasterySpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        color: context.masteryColors.cardBackground,
         borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: context.masteryColors.border,
         ),
       ),
       child: Column(
@@ -220,9 +207,7 @@ class _DataCard extends StatelessWidget {
           Text(
             label,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
           const SizedBox(height: MasterySpacing.sm / 2),
@@ -230,16 +215,14 @@ class _DataCard extends StatelessWidget {
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 22,
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
           ),
           const SizedBox(height: MasterySpacing.xs / 2),
           Text(
             hint,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
         ],

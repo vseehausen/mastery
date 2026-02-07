@@ -66,7 +66,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -79,9 +79,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
           Text(
             'Choose the correct word.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 16),
@@ -91,15 +89,13 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark
-                  ? MasteryColors.mutedDark
-                  : MasteryColors.mutedLight,
+              color: colors.muted,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               widget.clozeSentence,
               style: MasteryTextStyles.bodyLarge.copyWith(
-                color: isDark ? Colors.white : Colors.black,
+                color: colors.foreground,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -111,7 +107,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
           ...List<Widget>.generate(widget.options.length, (index) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _buildOption(index, isDark),
+              child: _buildOption(index, context),
             );
           }),
 
@@ -125,7 +121,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
                 color: (_isCorrect
                         ? const Color(0xFF10B981)
                         : const Color(0xFFEF4444))
-                    .withValues(alpha: isDark ? 0.2 : 0.1),
+                    .withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (_isCorrect
@@ -149,7 +145,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
                   Text(
                     widget.explanation,
                     style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: colors.foreground,
                     ),
                   ),
                 ],
@@ -163,7 +159,8 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
     );
   }
 
-  Widget _buildOption(int index, bool isDark) {
+  Widget _buildOption(int index, BuildContext context) {
+    final colors = context.masteryColors;
     final isSelected = _selectedIndex == index;
     final isCorrectOption = index == widget.correctIndex;
 
@@ -171,25 +168,17 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
     Color bgColor;
 
     if (!_hasAnswered) {
-      borderColor = isDark
-          ? MasteryColors.borderDark
-          : MasteryColors.borderLight;
-      bgColor = isDark
-          ? MasteryColors.cardDark
-          : MasteryColors.cardLight;
+      borderColor = colors.border;
+      bgColor = colors.cardBackground;
     } else if (isCorrectOption) {
       borderColor = const Color(0xFF10B981);
-      bgColor = const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1);
+      bgColor = const Color(0xFF10B981).withValues(alpha: 0.15);
     } else if (isSelected) {
       borderColor = const Color(0xFFEF4444);
-      bgColor = const Color(0xFFEF4444).withValues(alpha: isDark ? 0.2 : 0.1);
+      bgColor = const Color(0xFFEF4444).withValues(alpha: 0.15);
     } else {
-      borderColor = isDark
-          ? MasteryColors.borderDark
-          : MasteryColors.borderLight;
-      bgColor = isDark
-          ? MasteryColors.cardDark
-          : MasteryColors.cardLight;
+      borderColor = colors.border;
+      bgColor = colors.cardBackground;
     }
 
     return SizedBox(
@@ -207,7 +196,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
           child: Text(
             widget.options[index],
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
               fontWeight: (_hasAnswered && isCorrectOption)
                   ? FontWeight.bold
                   : FontWeight.normal,

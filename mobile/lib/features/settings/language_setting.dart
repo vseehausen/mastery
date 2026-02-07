@@ -48,7 +48,6 @@ class NativeLanguageSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = ref.watch(currentUserIdProvider);
     if (userId == null) return const SizedBox.shrink();
 
@@ -59,15 +58,13 @@ class NativeLanguageSetting extends ConsumerWidget {
         title: Text(
           'Native language',
           style: MasteryTextStyles.body.copyWith(
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
         ),
         subtitle: Text(
           'Loading...',
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
         ),
       ),
@@ -78,22 +75,18 @@ class NativeLanguageSetting extends ConsumerWidget {
           title: Text(
             'Native language',
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
           ),
           subtitle: Text(
             getLanguageEnglishName(currentCode),
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
           trailing: Icon(
             Icons.chevron_right,
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
           onTap: () => _showLanguagePicker(context, ref, userId, currentCode),
         );
@@ -143,7 +136,6 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = ref.watch(currentUserIdProvider);
     if (userId == null) return const SizedBox.shrink();
 
@@ -154,15 +146,13 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
         title: Text(
           'Meaning display',
           style: MasteryTextStyles.body.copyWith(
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
         ),
         subtitle: Text(
           'Loading...',
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
         ),
       ),
@@ -173,22 +163,18 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
           title: Text(
             'Meaning display',
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
           ),
           subtitle: Text(
             getDisplayModeLabel(currentMode),
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
           trailing: Icon(
             Icons.chevron_right,
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
           onTap: () => _showDisplayModePicker(context, ref, userId, currentMode),
         );

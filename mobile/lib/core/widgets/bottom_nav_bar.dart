@@ -16,14 +16,9 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = isDark
-        ? MasteryColors.foregroundDark
-        : MasteryColors.foregroundLight;
-    final inactiveColor = isDark
-        ? MasteryColors.mutedForegroundDark
-        : MasteryColors.mutedForegroundLight;
-    final bgColor = isDark ? MasteryColors.cardDark : MasteryColors.cardLight;
+    final activeColor = context.masteryColors.foreground;
+    final inactiveColor = context.masteryColors.mutedForeground;
+    final bgColor = context.masteryColors.cardBackground;
     const tabs = [
       {'icon': Icons.today_outlined, 'label': 'Today'},
       {'icon': Icons.book_outlined, 'label': 'Words'},
@@ -35,9 +30,7 @@ class BottomNavBar extends StatelessWidget {
         color: bgColor,
         border: Border(
           top: BorderSide(
-            color: isDark
-                ? MasteryColors.borderDark
-                : MasteryColors.borderLight,
+            color: context.masteryColors.border,
           ),
         ),
       ),

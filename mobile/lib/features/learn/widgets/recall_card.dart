@@ -66,7 +66,7 @@ class _RecallCardState extends State<RecallCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -80,7 +80,7 @@ class _RecallCardState extends State<RecallCard> {
             widget.word,
             style: MasteryTextStyles.displayLarge.copyWith(
               fontSize: 32,
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
             textAlign: TextAlign.center,
           ),
@@ -91,17 +91,13 @@ class _RecallCardState extends State<RecallCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.mutedDark
-                    : MasteryColors.mutedLight,
+                color: colors.muted,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 widget.context!,
                 style: MasteryTextStyles.bodySmall.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                   fontStyle: FontStyle.italic,
                 ),
                 textAlign: TextAlign.center,
@@ -116,18 +112,14 @@ class _RecallCardState extends State<RecallCard> {
             Text(
               'Step 2 of 2: Grade your recall',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               'How well did you remember?',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 8),
@@ -136,20 +128,16 @@ class _RecallCardState extends State<RecallCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.cardDark
-                    : MasteryColors.cardLight,
+                color: colors.cardBackground,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark
-                      ? MasteryColors.borderDark
-                      : MasteryColors.borderLight,
+                  color: colors.border,
                 ),
               ),
               child: Text(
                 widget.answer,
                 style: MasteryTextStyles.bodyLarge.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colors.foreground,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -208,9 +196,7 @@ class _RecallCardState extends State<RecallCard> {
               Text(
                 'Saving response…',
                 style: MasteryTextStyles.caption.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
               ),
             ],
@@ -218,9 +204,7 @@ class _RecallCardState extends State<RecallCard> {
             Text(
               'Step 1 of 2: Try to recall first',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 10),
@@ -260,7 +244,7 @@ class _GradeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return InkWell(
       onTap: isEnabled ? onPressed : null,
@@ -268,7 +252,7 @@ class _GradeButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
@@ -286,9 +270,7 @@ class _GradeButton extends StatelessWidget {
             Text(
               description,
               style: MasteryTextStyles.caption.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
           ],

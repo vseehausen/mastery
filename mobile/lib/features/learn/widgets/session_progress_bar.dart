@@ -24,7 +24,7 @@ class SessionProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final progress = totalItems > 0 ? completedItems / totalItems : 0.0;
 
     return Column(
@@ -37,11 +37,9 @@ class SessionProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress.clamp(0.0, 1.0),
             minHeight: 6,
-            backgroundColor: isDark
-                ? MasteryColors.mutedDark
-                : MasteryColors.mutedLight,
+            backgroundColor: colors.muted,
             valueColor: AlwaysStoppedAnimation<Color>(
-              isDark ? MasteryColors.successDark : MasteryColors.successLight,
+              colors.success,
             ),
           ),
         ),
@@ -50,9 +48,7 @@ class SessionProgressBar extends StatelessWidget {
           Text(
             '$completedItems of $totalItems items',
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
         ],

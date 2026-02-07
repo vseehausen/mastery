@@ -13,7 +13,7 @@ class NoItemsReadyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Scaffold(
       appBar: AppBar(
@@ -29,9 +29,7 @@ class NoItemsReadyScreen extends ConsumerWidget {
               Icon(
                 Icons.check_circle_outline,
                 size: 72,
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
               const SizedBox(height: 20),
               Text(
@@ -39,7 +37,7 @@ class NoItemsReadyScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 style: MasteryTextStyles.bodyBold.copyWith(
                   fontSize: 20,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colors.foreground,
                 ),
               ),
               const SizedBox(height: 8),
@@ -47,9 +45,7 @@ class NoItemsReadyScreen extends ConsumerWidget {
                 'New cards appear after import and enrichment, or when existing cards become due.',
                 textAlign: TextAlign.center,
                 style: MasteryTextStyles.bodySmall.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
               ),
               const SizedBox(height: 28),

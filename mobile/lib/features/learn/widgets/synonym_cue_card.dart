@@ -48,7 +48,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -61,9 +61,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
           Text(
             'Recall the word.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 16),
@@ -73,15 +71,13 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark
-                  ? MasteryColors.mutedDark
-                  : MasteryColors.mutedLight,
+              color: colors.muted,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               widget.synonymPhrase,
               style: MasteryTextStyles.bodyLarge.copyWith(
-                color: isDark ? Colors.white : Colors.black,
+                color: colors.foreground,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -95,18 +91,14 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
             Text(
               'Step 2 of 2: Grade your recall',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               'How well did you remember?',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 8),
@@ -114,36 +106,30 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.cardDark
-                    : MasteryColors.cardLight,
+                color: colors.cardBackground,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark
-                      ? MasteryColors.borderDark
-                      : MasteryColors.borderLight,
+                  color: colors.border,
                 ),
               ),
               child: Text(
                 widget.targetWord,
                 style: MasteryTextStyles.displayLarge.copyWith(
                   fontSize: 28,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colors.foreground,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 16),
-            _buildGradeButtons(isDark),
+            _buildGradeButtons(),
             if (widget.isSubmitting || _hasGraded) ...[
               const SizedBox(height: 10),
               Text(
                 'Saving response…',
                 style: MasteryTextStyles.caption.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
               ),
             ],
@@ -151,9 +137,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
             Text(
               'Step 1 of 2: Recall the word',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 10),
@@ -174,7 +158,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
     );
   }
 
-  Widget _buildGradeButtons(bool isDark) {
+  Widget _buildGradeButtons() {
     return Row(
       children: [
         _gradeButton(
@@ -182,7 +166,6 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
           'Forgot',
           const Color(0xFFEF4444),
           ReviewRating.again,
-          isDark,
         ),
         const SizedBox(width: 8),
         _gradeButton(
@@ -190,7 +173,6 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
           'Difficult',
           const Color(0xFFF59E0B),
           ReviewRating.hard,
-          isDark,
         ),
         const SizedBox(width: 8),
         _gradeButton(
@@ -198,7 +180,6 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
           'Correct',
           const Color(0xFF10B981),
           ReviewRating.good,
-          isDark,
         ),
         const SizedBox(width: 8),
         _gradeButton(
@@ -206,7 +187,6 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
           'Perfect',
           const Color(0xFF3B82F6),
           ReviewRating.easy,
-          isDark,
         ),
       ],
     );
@@ -217,8 +197,8 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
     String description,
     Color color,
     int rating,
-    bool isDark,
-  ) {
+    ) {
+    final colors = context.masteryColors;
     return Expanded(
       child: InkWell(
         onTap: (!_hasGraded && !widget.isSubmitting)
@@ -233,7 +213,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: color.withValues(alpha: 0.5)),
           ),
@@ -251,9 +231,7 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
               Text(
                 description,
                 style: MasteryTextStyles.caption.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
               ),
             ],

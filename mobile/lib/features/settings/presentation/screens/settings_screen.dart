@@ -20,7 +20,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final prefsAsync = ref.watch(learningPreferencesNotifierProvider);
     final currentUser = ref.watch(currentUserProvider);
 
@@ -29,7 +28,7 @@ class SettingsScreen extends ConsumerWidget {
         title: Text(
           'Settings',
           style: MasteryTextStyles.bodyBold.copyWith(
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -37,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -46,7 +45,6 @@ class SettingsScreen extends ConsumerWidget {
         data: (prefs) => _buildSettingsContent(
           context,
           ref,
-          isDark,
           prefs,
           currentUser,
         ),
@@ -55,9 +53,7 @@ class SettingsScreen extends ConsumerWidget {
           child: Text(
             'Error loading preferences',
             style: MasteryTextStyles.body.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
         ),
@@ -68,7 +64,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildSettingsContent(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel? prefs,
     AsyncValue<User?> currentUser,
   ) {
@@ -88,27 +83,27 @@ class SettingsScreen extends ConsumerWidget {
               SettingsListItem(
                 label: 'Session length',
                 value: _getSessionLengthLabel(prefs.dailyTimeTargetMinutes),
-                                onTap: () => _showSessionLengthSheet(context, ref, isDark, prefs),
+                onTap: () => _showSessionLengthSheet(context, ref, prefs),
               ),
               SettingsListItem(
                 label: 'Intensity',
                 value: _getIntensityLabel(prefs.intensity),
-                                onTap: () => _showIntensitySheet(context, ref, isDark, prefs),
+                onTap: () => _showIntensitySheet(context, ref, prefs),
               ),
               SettingsListItem(
                 label: 'Target retention',
                 value: _getRetentionLabel(prefs.targetRetention),
-                                onTap: () => _showRetentionSheet(context, ref, isDark, prefs),
+                onTap: () => _showRetentionSheet(context, ref, prefs),
               ),
               SettingsListItem(
                 label: 'Native language',
                 value: getLanguageEnglishName(prefs.nativeLanguageCode),
-                                onTap: () => _showNativeLanguageSheet(context, ref, isDark, prefs),
+                onTap: () => _showNativeLanguageSheet(context, ref, prefs),
               ),
               SettingsListItem(
                 label: 'Meaning display',
                 value: getDisplayModeLabel(prefs.meaningDisplayMode),
-                                onTap: () => _showMeaningDisplaySheet(context, ref, isDark, prefs),
+                onTap: () => _showMeaningDisplaySheet(context, ref, prefs),
               ),
             ],
           ),
@@ -121,7 +116,7 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               SettingsListItem(
                 label: 'Sync Status',
-                                onTap: () {
+                onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (context) => const SyncStatusScreen(),
@@ -141,7 +136,6 @@ class SettingsScreen extends ConsumerWidget {
               currentUser.when(
                 data: (User? user) => _buildProfileRow(
                   context,
-                  isDark,
                   (user?.userMetadata?['full_name'] as String?) ?? 'User',
                   user?.email ?? 'user@example.com',
                 ),
@@ -195,7 +189,6 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildProfileRow(
     BuildContext context,
-    bool isDark,
     String name,
     String email,
   ) {
@@ -209,15 +202,15 @@ class SettingsScreen extends ConsumerWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+              color: context.masteryColors.muted,
               border: Border.all(
-                color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                color: context.masteryColors.border,
                 width: 1,
               ),
             ),
             child: Icon(
               Icons.person,
-              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
               size: 20,
             ),
           ),
@@ -231,7 +224,7 @@ class SettingsScreen extends ConsumerWidget {
                   name,
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 14,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -239,7 +232,7 @@ class SettingsScreen extends ConsumerWidget {
                   email,
                   style: MasteryTextStyles.bodySmall.copyWith(
                     fontSize: 12,
-                    color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+                    color: context.masteryColors.mutedForeground,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -285,12 +278,11 @@ class SettingsScreen extends ConsumerWidget {
   void _showSessionLengthSheet(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel prefs,
   ) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      backgroundColor: context.masteryColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -306,7 +298,7 @@ class SettingsScreen extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: context.masteryColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -317,7 +309,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Session length',
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 18,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
               ),
@@ -326,7 +318,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Quick and easy',
                 subtitle: '3 minutes per session',
                 isSelected: prefs.dailyTimeTargetMinutes <= 3,
@@ -340,7 +331,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Regular',
                 subtitle: '5 minutes per session',
                 isSelected: prefs.dailyTimeTargetMinutes > 3 && prefs.dailyTimeTargetMinutes <= 5,
@@ -354,7 +344,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Serious',
                 subtitle: '8 minutes per session',
                 isSelected: prefs.dailyTimeTargetMinutes > 5,
@@ -375,12 +364,11 @@ class SettingsScreen extends ConsumerWidget {
   void _showIntensitySheet(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel prefs,
   ) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      backgroundColor: context.masteryColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -396,7 +384,7 @@ class SettingsScreen extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: context.masteryColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -407,7 +395,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Intensity',
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 18,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
               ),
@@ -416,7 +404,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Light',
                 subtitle: '3 new words per session',
                 isSelected: prefs.intensity == 0,
@@ -430,7 +417,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Normal',
                 subtitle: '5 new words per session',
                 isSelected: prefs.intensity == 1,
@@ -444,7 +430,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Intense',
                 subtitle: '8 new words per session',
                 isSelected: prefs.intensity == 2,
@@ -465,12 +450,11 @@ class SettingsScreen extends ConsumerWidget {
   void _showRetentionSheet(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel prefs,
   ) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      backgroundColor: context.masteryColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -486,7 +470,7 @@ class SettingsScreen extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: context.masteryColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -497,7 +481,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Target retention',
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 18,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
               ),
@@ -506,7 +490,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Moderate',
                 subtitle: '85% retention • Fewer reviews',
                 isSelected: prefs.targetRetention < 0.87,
@@ -520,7 +503,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Balanced',
                 subtitle: '90% retention • Recommended',
                 isSelected: prefs.targetRetention >= 0.87 && prefs.targetRetention < 0.92,
@@ -534,7 +516,6 @@ class SettingsScreen extends ConsumerWidget {
               _buildSheetOption(
                 context: context,
                 ref: ref,
-                isDark: isDark,
                 label: 'Perfectionist',
                 subtitle: '95% retention • Heavy workload',
                 isSelected: prefs.targetRetention >= 0.92,
@@ -555,7 +536,6 @@ class SettingsScreen extends ConsumerWidget {
   void _showNativeLanguageSheet(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel prefs,
   ) {
     final userId = ref.read(currentUserIdProvider);
@@ -563,7 +543,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      backgroundColor: context.masteryColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -580,7 +560,7 @@ class SettingsScreen extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: context.masteryColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -591,7 +571,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Native language',
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 18,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
               ),
@@ -608,7 +588,6 @@ class SettingsScreen extends ConsumerWidget {
                 return _buildSheetOption(
                   context: context,
                   ref: ref,
-                  isDark: isDark,
                   label: englishName,
                   subtitle: nativeName,
                   isSelected: prefs.nativeLanguageCode == code,
@@ -636,7 +615,6 @@ class SettingsScreen extends ConsumerWidget {
   void _showMeaningDisplaySheet(
     BuildContext context,
     WidgetRef ref,
-    bool isDark,
     UserPreferencesModel prefs,
   ) {
     final userId = ref.read(currentUserIdProvider);
@@ -644,7 +622,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      backgroundColor: context.masteryColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -660,7 +638,7 @@ class SettingsScreen extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  color: context.masteryColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -671,7 +649,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Meaning display',
                   style: MasteryTextStyles.bodyBold.copyWith(
                     fontSize: 18,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
               ),
@@ -684,7 +662,6 @@ class SettingsScreen extends ConsumerWidget {
                 return _buildSheetOption(
                   context: context,
                   ref: ref,
-                  isDark: isDark,
                   label: label,
                   subtitle: subtitle,
                   isSelected: prefs.meaningDisplayMode == mode,
@@ -709,7 +686,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildSheetOption({
     required BuildContext context,
     required WidgetRef ref,
-    required bool isDark,
     required String label,
     required String? subtitle,
     required bool isSelected,
@@ -722,7 +698,7 @@ class SettingsScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+              color: context.masteryColors.border,
               width: 1,
             ),
           ),
@@ -739,7 +715,7 @@ class SettingsScreen extends ConsumerWidget {
                       fontSize: 14,
                       color: isSelected
                           ? MasteryColors.accentLight
-                          : (isDark ? Colors.white : Colors.black),
+                          : context.masteryColors.foreground,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -748,9 +724,7 @@ class SettingsScreen extends ConsumerWidget {
                       subtitle,
                       style: MasteryTextStyles.bodySmall.copyWith(
                         fontSize: 12,
-                        color: isDark
-                            ? MasteryColors.mutedForegroundDark
-                            : MasteryColors.mutedForegroundLight,
+                        color: context.masteryColors.mutedForeground,
                       ),
                     ),
                   ],
@@ -770,7 +744,7 @@ class SettingsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                    color: context.masteryColors.border,
                     width: 2,
                   ),
                 ),

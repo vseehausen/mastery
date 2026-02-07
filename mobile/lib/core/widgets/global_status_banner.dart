@@ -74,10 +74,9 @@ class GlobalStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = _backgroundColor(isDark);
-    final borderColor = _borderColor(isDark);
-    final fgColor = _foregroundColor(isDark);
+    final bgColor = _backgroundColor(context);
+    final borderColor = _borderColor(context);
+    final fgColor = _foregroundColor(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -85,9 +84,7 @@ class GlobalStatusBanner extends StatelessWidget {
         color: bgColor,
         border: Border(
           top: BorderSide(
-            color: isDark
-                ? MasteryColors.borderDark
-                : MasteryColors.borderLight,
+            color: context.masteryColors.border,
           ),
           bottom: BorderSide(color: borderColor),
         ),
@@ -118,9 +115,7 @@ class GlobalStatusBanner extends StatelessWidget {
                   icon: Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight,
+                    color: context.masteryColors.mutedForeground,
                   ),
                 ),
               ],
@@ -134,11 +129,9 @@ class GlobalStatusBanner extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: data.progress,
                 minHeight: 6,
-                backgroundColor: isDark
-                    ? MasteryColors.mutedDark
-                    : MasteryColors.mutedLight,
+                backgroundColor: context.masteryColors.muted,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isDark ? MasteryColors.accentDark : MasteryColors.accentLight,
+                  context.masteryColors.accent,
                 ),
               ),
             ),
@@ -159,36 +152,37 @@ class GlobalStatusBanner extends StatelessWidget {
     }
   }
 
-  Color _backgroundColor(bool isDark) {
+  Color _backgroundColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
         return isDark ? const Color(0xFF3A2A05) : const Color(0xFFFFF7E6);
       case GlobalStatusType.enrichmentProgress:
-        return isDark ? MasteryColors.cardDark : MasteryColors.cardLight;
+        return context.masteryColors.cardBackground;
       case GlobalStatusType.syncError:
         return isDark ? const Color(0xFF3F1B1B) : const Color(0xFFFEE2E2);
     }
   }
 
-  Color _borderColor(bool isDark) {
+  Color _borderColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
         return isDark ? const Color(0xFF7C5A06) : const Color(0xFFFCD34D);
       case GlobalStatusType.enrichmentProgress:
-        return isDark ? MasteryColors.borderDark : MasteryColors.borderLight;
+        return context.masteryColors.border;
       case GlobalStatusType.syncError:
         return isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5);
     }
   }
 
-  Color _foregroundColor(bool isDark) {
+  Color _foregroundColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
         return isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
       case GlobalStatusType.enrichmentProgress:
-        return isDark
-            ? MasteryColors.foregroundDark
-            : MasteryColors.foregroundLight;
+        return context.masteryColors.foreground;
       case GlobalStatusType.syncError:
         return isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B);
     }

@@ -22,10 +22,8 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     // Get colors based on status
-    final (bgColor, textColor) = _getColors(isDark);
+    final (bgColor, textColor) = _getColors(context);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -45,18 +43,15 @@ class StatusBadge extends StatelessWidget {
     );
   }
 
-  (Color, Color) _getColors(bool isDark) {
+  (Color, Color) _getColors(BuildContext context) {
     switch (status) {
       case LearningStatus.known:
-        return isDark
-            ? (MasteryColors.successMutedDark, MasteryColors.successDark)
-            : (MasteryColors.successMutedLight, MasteryColors.successLight);
+        return (context.masteryColors.successMuted, context.masteryColors.success);
       case LearningStatus.learning:
-        return isDark
-            ? (MasteryColors.warningMutedDark, MasteryColors.warningDark)
-            : (MasteryColors.warningMutedLight, MasteryColors.warningLight);
+        return (context.masteryColors.warningMuted, context.masteryColors.warning);
       case LearningStatus.unknown:
         // Subtle gray for "New" - less prominent
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return isDark
             ? (const Color(0xFF27272A), const Color(0xFF71717A))
             : (const Color(0xFFF4F4F5), const Color(0xFF71717A));

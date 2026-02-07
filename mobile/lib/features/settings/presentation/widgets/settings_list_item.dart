@@ -21,10 +21,9 @@ class SettingsListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor = isDanger
         ? Colors.red
-        : (isDark ? Colors.white : Colors.black);
+        : context.masteryColors.foreground;
 
     return InkWell(
       onTap: onTap,
@@ -51,7 +50,7 @@ class SettingsListItem extends StatelessWidget {
                 value!,
                 style: MasteryTextStyles.body.copyWith(
                   fontSize: 14,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: context.masteryColors.mutedForeground,
                   fontWeight: FontWeight.w400,
                 ),
                 maxLines: 1,
@@ -65,7 +64,7 @@ class SettingsListItem extends StatelessWidget {
               const SizedBox(width: 8),
               Icon(
                 Icons.chevron_right,
-                color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                color: context.masteryColors.border,
                 size: 18,
               ),
             ],

@@ -17,7 +17,6 @@ class TodayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dailyTarget = ref.watch(dailyTimeTargetProvider);
     final todayProgress = ref.watch(todayProgressProvider);
     final hasItems = ref.watch(hasItemsToReviewProvider);
@@ -41,13 +40,13 @@ class TodayScreen extends ConsumerWidget {
                   Text(
                     'Today',
                     style: MasteryTextStyles.displayLarge.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: context.masteryColors.foreground,
                     ),
                   ),
                   IconButton(
                     icon: Icon(
                       Icons.settings_outlined,
-                      color: isDark ? Colors.white : Colors.black,
+                      color: context.masteryColors.foreground,
                     ),
                     onPressed: () {
                       Navigator.of(context).push(
@@ -121,7 +120,6 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final title = _title();
     final subtitle = _subtitle();
     final buttonLabel = _buttonLabel();
@@ -129,10 +127,10 @@ class _HeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(MasterySpacing.xxl),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        color: context.masteryColors.secondaryAction,
         borderRadius: BorderRadius.circular(MasterySpacing.radiusXl),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: context.masteryColors.border,
         ),
       ),
       child: Column(
@@ -142,7 +140,7 @@ class _HeroCard extends StatelessWidget {
             title,
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 20,
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
             textAlign: TextAlign.center,
           ),
@@ -150,9 +148,7 @@ class _HeroCard extends StatelessWidget {
           Text(
             subtitle,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
             textAlign: TextAlign.center,
           ),
@@ -163,11 +159,9 @@ class _HeroCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
-                backgroundColor: isDark
-                    ? MasteryColors.mutedDark
-                    : MasteryColors.mutedLight,
+                backgroundColor: context.masteryColors.muted,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isDark ? MasteryColors.accentDark : MasteryColors.accentLight,
+                  context.masteryColors.accent,
                 ),
               ),
             ),
@@ -175,9 +169,7 @@ class _HeroCard extends StatelessWidget {
             Text(
               _progressLabel(),
               style: MasteryTextStyles.caption.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: context.masteryColors.mutedForeground,
               ),
               textAlign: TextAlign.center,
             ),

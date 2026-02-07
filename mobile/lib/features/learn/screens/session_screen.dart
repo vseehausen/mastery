@@ -594,7 +594,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     if (_isLoading) {
       return Scaffold(
@@ -607,9 +607,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               Text(
                 'Preparing your session...',
                 style: MasteryTextStyles.body.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
               ),
             ],
@@ -629,18 +627,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 Icon(
                   Icons.error_outline,
                   size: 48,
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   _errorMessage ?? 'Unable to start session',
                   textAlign: TextAlign.center,
                   style: MasteryTextStyles.body.copyWith(
-                    color: isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight,
+                    color: colors.mutedForeground,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -668,14 +662,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? MasteryColors.cardDark
-                    : MasteryColors.cardLight,
+                color: colors.cardBackground,
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark
-                        ? MasteryColors.borderDark
-                        : MasteryColors.borderLight,
+                    color: colors.border,
                   ),
                 ),
               ),
@@ -688,9 +678,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         onPressed: _handleClosePressed,
                         icon: Icon(
                           Icons.close,
-                          color: isDark
-                              ? MasteryColors.mutedForegroundDark
-                              : MasteryColors.mutedForegroundLight,
+                          color: colors.mutedForeground,
                         ),
                       ),
                       // Timer
@@ -708,9 +696,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         onPressed: _togglePause,
                         icon: Icon(
                           _isPaused ? Icons.play_arrow : Icons.pause,
-                          color: isDark
-                              ? MasteryColors.mutedForegroundDark
-                              : MasteryColors.mutedForegroundLight,
+                          color: colors.mutedForeground,
                         ),
                       ),
                     ],
@@ -735,24 +721,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       Icon(
                         Icons.pause_circle_outline,
                         size: 64,
-                        color: isDark
-                            ? MasteryColors.mutedForegroundDark
-                            : MasteryColors.mutedForegroundLight,
+                        color: colors.mutedForeground,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Session Paused',
                         style: MasteryTextStyles.bodyBold.copyWith(
-                          color: isDark ? Colors.white : Colors.black,
+                          color: colors.foreground,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Tap the play button to continue',
                         style: MasteryTextStyles.bodySmall.copyWith(
-                          color: isDark
-                              ? MasteryColors.mutedForegroundDark
-                              : MasteryColors.mutedForegroundLight,
+                          color: colors.mutedForeground,
                         ),
                       ),
                     ],
@@ -761,19 +743,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               )
             else if (currentItem != null)
               // Current item card - now uses SessionCard data directly!
-              Expanded(child: _buildItemCard(currentItem, isDark))
+              Expanded(child: _buildItemCard(currentItem, context))
             else
               Expanded(
                 child: Center(
                   child: Text(
                     'Session complete!',
                     style: MasteryTextStyles.bodyBold.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: colors.foreground,
                     ),
                   ),
                 ),
               ),
-            _buildBottomActionZone(currentItem, isDark),
+            _buildBottomActionZone(currentItem, context),
           ],
         ),
       ),
@@ -782,7 +764,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   /// Build the card widget for the current item using SessionCard data.
   /// No additional queries needed - all data is already in the SessionCard!
-  Widget _buildItemCard(PlannedItem item, bool isDark) {
+  Widget _buildItemCard(PlannedItem item, BuildContext context) {
     final card = item.sessionCard;
     final meaning = card.primaryMeaning;
 
@@ -880,7 +862,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  Widget _buildBottomActionZone(PlannedItem? currentItem, bool isDark) {
+  Widget _buildBottomActionZone(PlannedItem? currentItem, BuildContext context) {
+    final colors = context.masteryColors;
     final helperText = currentItem == null
         ? 'Wrapping up your session.'
         : currentItem.isRecognition
@@ -891,12 +874,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        color: colors.cardBackground,
         border: Border(
           top: BorderSide(
-            color: isDark
-                ? MasteryColors.borderDark
-                : MasteryColors.borderLight,
+            color: colors.border,
           ),
         ),
       ),
@@ -915,9 +896,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 Text(
                   'Saving your response…',
                   style: MasteryTextStyles.caption.copyWith(
-                    color: isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight,
+                    color: colors.mutedForeground,
                   ),
                 ),
               ],
@@ -928,14 +907,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF3F1B1B)
-                    : const Color(0xFFFEE2E2),
+                color: colors.destructive.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF7F1D1D)
-                      : const Color(0xFFFCA5A5),
+                  color: colors.destructive.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -962,9 +937,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Text(
               helperText,
               style: MasteryTextStyles.caption.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
             ),
         ],
