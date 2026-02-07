@@ -216,6 +216,10 @@ After implementing and testing features, perform manual verification on iPhone s
 5. Test interactions (buttons, forms, navigation, edge cases)
 6. Document findings with saved screenshots or videos
 
+### UI Sync Parity Rule
+- For visual sync tasks, treat simulator runtime rendering as the final source of truth over token assumptions.
+- After any color/token change, verify resolved colors in both Light and Dark on simulator before finalizing.
+
 <!-- MANUAL ADDITIONS START -->
 
 ## Desktop UI Stack
@@ -294,5 +298,18 @@ supabase db push                                        # Deploy migrations (ide
 supabase functions deploy --no-verify-jwt              # Deploy Edge Functions
 ```
 **CRITICAL**: Always use `--no-verify-jwt` flag for Edge Functions to handle auth manually. Verify in Supabase dashboard, then manual test on simulator.
+
+## Pencil Mobile Sync Playbook
+
+- **One frame per screen state**: Do not duplicate frames for Light and Dark variants.
+- **Light/Dark validation**: Use the same frame and switch `theme.Mode` between `Light` and `Dark` for parity checks.
+- **Token-only theming**: Prefer semantic tokens (`$--background`, `$--foreground`, `$--muted`, `$--card`, `$--border`, etc.). Avoid hardcoded neutral colors when a token exists.
+- **Canonical-first fixes**: If mismatch appears, fix the canonical frame first.
+- **No mode-based extra frames**: Create extra frames only for genuinely different interaction states, not color mode variants, unless explicitly requested.
+- **State-first syncing**: Treat each explicit UI state as a separate sync target (default, loading, error, empty, validation, toggles, dialogs, etc.).
+- **Full-screen verification**: Compare simulator and Pencil with scroll captures (top, middle, bottom), not only first viewport.
+- **No device chrome in Pencil**: Exclude status bar, notch/dynamic island, and home indicator from synced compositions.
+- **Long screens**: Use one taller frame for a long state unless a split is explicitly requested.
+- **Traceability**: Track each synced state in a coverage matrix with Flutter source path, Pencil node id, verification method (`Simulator` or `Code-derived`), and date.
 
 <!-- MANUAL ADDITIONS END -->
