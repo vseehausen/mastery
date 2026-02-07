@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/theme/radius_tokens.dart';
 import '../../../../core/theme/spacing.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/supabase_provider.dart';
@@ -35,7 +36,12 @@ class ProgressScreen extends ConsumerWidget {
           },
           child: ListView(
             primary: false,
-            padding: MasterySpacing.screen,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s5,
+              AppSpacing.s5,
+              AppSpacing.s5,
+              AppSpacing.s6,
+            ),
             children: [
               Text(
                 'Progress',
@@ -43,20 +49,20 @@ class ProgressScreen extends ConsumerWidget {
                   color: context.masteryColors.foreground,
                 ),
               ),
-              const SizedBox(height: MasterySpacing.sm),
+              const SizedBox(height: AppSpacing.s2),
               Text(
                 'Track your outcomes',
                 style: MasteryTextStyles.bodySmall.copyWith(
                   color: context.masteryColors.mutedForeground,
                 ),
               ),
-              const SizedBox(height: MasterySpacing.lg),
+              const SizedBox(height: AppSpacing.s4),
               _ProgressHero(
                 currentStreak: streakValue,
                 longestStreak: longestValue,
                 completedToday: completed,
               ),
-              const SizedBox(height: MasterySpacing.md),
+              const SizedBox(height: AppSpacing.s3),
               _DataCard(
                 label: 'Vocabulary',
                 value: '$vocabularyValue',
@@ -84,13 +90,11 @@ class _ProgressHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(MasterySpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
         color: context.masteryColors.secondaryAction,
-        borderRadius: BorderRadius.circular(MasterySpacing.radiusLg),
-        border: Border.all(
-          color: context.masteryColors.border,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: context.masteryColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +105,7 @@ class _ProgressHero extends StatelessWidget {
                 Icons.local_fire_department_outlined,
                 color: context.masteryColors.warning,
               ),
-              const SizedBox(width: MasterySpacing.sm),
+              const SizedBox(width: AppSpacing.s2),
               Text(
                 'Streak performance',
                 style: MasteryTextStyles.bodyBold.copyWith(
@@ -110,7 +114,7 @@ class _ProgressHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: MasterySpacing.md),
+          const SizedBox(height: AppSpacing.s3),
           Row(
             children: [
               Expanded(
@@ -119,7 +123,7 @@ class _ProgressHero extends StatelessWidget {
                   value: '$currentStreak days',
                 ),
               ),
-              const SizedBox(width: MasterySpacing.md),
+              const SizedBox(width: AppSpacing.s3),
               Expanded(
                 child: _StreakStat(
                   label: 'Longest',
@@ -128,7 +132,7 @@ class _ProgressHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: MasterySpacing.sm),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             completedToday
                 ? 'Today is completed. Nice consistency.'
@@ -152,10 +156,10 @@ class _StreakStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(MasterySpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.s3),
       decoration: BoxDecoration(
         color: context.masteryColors.muted,
-        borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +170,7 @@ class _StreakStat extends StatelessWidget {
               color: context.masteryColors.mutedForeground,
             ),
           ),
-          const SizedBox(height: MasterySpacing.xs),
+          const SizedBox(height: AppSpacing.s1),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
@@ -193,13 +197,11 @@ class _DataCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(MasterySpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.s4),
       decoration: BoxDecoration(
         color: context.masteryColors.cardBackground,
-        borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
-        border: Border.all(
-          color: context.masteryColors.border,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: context.masteryColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +212,7 @@ class _DataCard extends StatelessWidget {
               color: context.masteryColors.mutedForeground,
             ),
           ),
-          const SizedBox(height: MasterySpacing.sm / 2),
+          const SizedBox(height: AppSpacing.s2 / 2),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
@@ -218,7 +220,7 @@ class _DataCard extends StatelessWidget {
               color: context.masteryColors.foreground,
             ),
           ),
-          const SizedBox(height: MasterySpacing.xs / 2),
+          const SizedBox(height: AppSpacing.s1 / 2),
           Text(
             hint,
             style: MasteryTextStyles.caption.copyWith(

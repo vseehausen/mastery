@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/app_defaults.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/theme/radius_tokens.dart';
 import '../../../../core/theme/spacing.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../learn/providers/session_providers.dart';
@@ -33,7 +34,12 @@ class TodayScreen extends ConsumerWidget {
         child: Column(
           children: [
             Padding(
-              padding: MasterySpacing.screen,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s5,
+                AppSpacing.s5,
+                AppSpacing.s5,
+                AppSpacing.s6,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -70,7 +76,12 @@ class TodayScreen extends ConsumerWidget {
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: MasterySpacing.screen,
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s5,
+                      AppSpacing.s5,
+                      AppSpacing.s5,
+                      AppSpacing.s6,
+                    ),
                     child: _HeroCard(
                       targetMinutes: timeTarget,
                       progress: progress,
@@ -125,13 +136,11 @@ class _HeroCard extends StatelessWidget {
     final buttonLabel = _buttonLabel();
 
     return Container(
-      padding: const EdgeInsets.all(MasterySpacing.xxl),
+      padding: const EdgeInsets.all(AppSpacing.s6),
       decoration: BoxDecoration(
         color: context.masteryColors.secondaryAction,
-        borderRadius: BorderRadius.circular(MasterySpacing.radiusXl),
-        border: Border.all(
-          color: context.masteryColors.border,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: context.masteryColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -144,7 +153,7 @@ class _HeroCard extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: MasterySpacing.sm),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             subtitle,
             style: MasteryTextStyles.bodySmall.copyWith(
@@ -152,10 +161,10 @@ class _HeroCard extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: MasterySpacing.lg),
+          const SizedBox(height: AppSpacing.s4),
           if (progress > 0 && progress < 1) ...[
             ClipRRect(
-              borderRadius: BorderRadius.circular(MasterySpacing.radiusSm / 2),
+              borderRadius: BorderRadius.circular(AppRadius.sm / 2),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
@@ -165,7 +174,7 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: MasterySpacing.sm),
+            const SizedBox(height: AppSpacing.s2),
             Text(
               _progressLabel(),
               style: MasteryTextStyles.caption.copyWith(
@@ -173,7 +182,7 @@ class _HeroCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: MasterySpacing.md),
+            const SizedBox(height: AppSpacing.s3),
           ],
           SizedBox(
             width: double.infinity,
