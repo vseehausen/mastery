@@ -1,4 +1,0 @@
-interface:
-  display_name: "Frontend UI/UX Workflow"
-  short_description: "Flutter-first UI workflow with Pencil-lite checks"
-  default_prompt: "Use $frontend-ui-ux-workflow to improve one Mastery mobile screen with objective QA gates."
