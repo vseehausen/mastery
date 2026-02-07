@@ -19,7 +19,7 @@ class BottomNavBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = isDark
         ? MasteryColors.foregroundDark
-        : MasteryColors.activeLight;
+        : MasteryColors.foregroundLight;
     final inactiveColor = isDark
         ? MasteryColors.mutedForegroundDark
         : MasteryColors.mutedForegroundLight;

@@ -4,6 +4,7 @@ import 'color_tokens.dart';
 import 'text_styles.dart';
 
 /// Mastery app theme configuration using shadcn_ui
+/// Stone palette + Amber accent design system v1.0.0
 class MasteryTheme {
   MasteryTheme._();
 
@@ -11,51 +12,51 @@ class MasteryTheme {
     return ShadThemeData(
       brightness: Brightness.light,
       colorScheme: const ShadColorScheme(
-        // Primary - Dark gray/black for buttons, toggles, etc
+        // Primary - Stone 900 for primary actions
         primary: MasteryColors.primaryLight,
         primaryForeground: MasteryColors.primaryForegroundLight,
 
-        // Secondary - Light gray
+        // Secondary - Stone 100
         secondary: MasteryColors.secondaryLight,
         secondaryForeground: MasteryColors.secondaryForegroundLight,
 
-        // Destructive
-        destructive: Color(0xFFE7000B),
-        destructiveForeground: Color(0xFFFFFFFF),
+        // Destructive - Red
+        destructive: MasteryColors.destructiveLight,
+        destructiveForeground: MasteryColors.destructiveForegroundLight,
 
-        // Muted
+        // Muted - Stone 100
         muted: MasteryColors.mutedLight,
         mutedForeground: MasteryColors.mutedForegroundLight,
 
-        // Accent - Now use learning color (amber) for accents only
-        accent: MasteryColors.learningLight,
+        // Accent - Amber 500 (brand color)
+        accent: MasteryColors.accentLight,
         accentForeground: MasteryColors.accentForegroundLight,
 
-        // Foreground
+        // Foreground - Stone 900
         foreground: MasteryColors.foregroundLight,
 
-        // Card
+        // Card - White
         card: MasteryColors.cardLight,
         cardForeground: MasteryColors.cardForegroundLight,
 
-        // Popover
-        popover: MasteryColors.cardLight,
-        popoverForeground: MasteryColors.cardForegroundLight,
+        // Popover - White
+        popover: MasteryColors.popoverLight,
+        popoverForeground: MasteryColors.popoverForegroundLight,
 
-        // Border
+        // Border - Stone 200
         border: MasteryColors.borderLight,
 
-        // Input
-        input: MasteryColors.borderLight,
+        // Input - Stone 200
+        input: MasteryColors.inputLight,
 
-        // Ring (focus states)
-        ring: MasteryColors.mutedForegroundLight,
+        // Ring - Amber 500 (focus indicator)
+        ring: MasteryColors.ringLight,
 
-        // Background
+        // Background - White
         background: MasteryColors.backgroundLight,
 
-        // Selection - Use learning color (amber) for selection
-        selection: MasteryColors.learningLight,
+        // Selection - Amber 100
+        selection: MasteryColors.selectionLight,
       ),
       textTheme: _buildTextTheme(),
     );
@@ -65,51 +66,51 @@ class MasteryTheme {
     return ShadThemeData(
       brightness: Brightness.dark,
       colorScheme: const ShadColorScheme(
-        // Primary - Light gray text for buttons, toggles, etc
+        // Primary - Stone 50 for primary actions
         primary: MasteryColors.primaryDark,
         primaryForeground: MasteryColors.primaryForegroundDark,
 
-        // Secondary - Dark gray
+        // Secondary - Stone 800
         secondary: MasteryColors.secondaryDark,
         secondaryForeground: MasteryColors.secondaryForegroundDark,
 
-        // Destructive
-        destructive: Color(0xFFFF6666),
-        destructiveForeground: Color(0xFF000000),
+        // Destructive - Red
+        destructive: MasteryColors.destructiveDark,
+        destructiveForeground: MasteryColors.destructiveForegroundDark,
 
-        // Muted
+        // Muted - Stone 800
         muted: MasteryColors.mutedDark,
         mutedForeground: MasteryColors.mutedForegroundDark,
 
-        // Accent - Now use learning color (amber) for accents only
-        accent: MasteryColors.learningDark,
+        // Accent - Amber 400 (brand color)
+        accent: MasteryColors.accentDark,
         accentForeground: MasteryColors.accentForegroundDark,
 
-        // Foreground
+        // Foreground - Stone 50
         foreground: MasteryColors.foregroundDark,
 
-        // Card
+        // Card - Stone 900
         card: MasteryColors.cardDark,
         cardForeground: MasteryColors.cardForegroundDark,
 
-        // Popover
-        popover: MasteryColors.cardDark,
-        popoverForeground: MasteryColors.cardForegroundDark,
+        // Popover - Stone 900
+        popover: MasteryColors.popoverDark,
+        popoverForeground: MasteryColors.popoverForegroundDark,
 
-        // Border
+        // Border - Stone 800
         border: MasteryColors.borderDark,
 
-        // Input
-        input: MasteryColors.borderDark,
+        // Input - Stone 800
+        input: MasteryColors.inputDark,
 
-        // Ring (focus states)
-        ring: MasteryColors.mutedForegroundDark,
+        // Ring - Amber 400 (focus indicator)
+        ring: MasteryColors.ringDark,
 
-        // Background
+        // Background - Stone 900
         background: MasteryColors.backgroundDark,
 
-        // Selection - Use learning color (amber) for selection
-        selection: MasteryColors.learningDark,
+        // Selection - Amber 900
+        selection: MasteryColors.selectionDark,
       ),
       textTheme: _buildTextTheme(),
     );
@@ -144,7 +145,7 @@ class MasteryTheme {
         fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: Color(0xFF737373),
+        color: Color(0xFF78716C), // Stone 500
       ),
     );
   }

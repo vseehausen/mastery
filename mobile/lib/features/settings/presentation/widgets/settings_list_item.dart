@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Individual settings list item
@@ -25,46 +26,49 @@ class SettingsListItem extends StatelessWidget {
         ? Colors.red
         : (isDark ? Colors.white : Colors.black);
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(minHeight: 48),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Label on the left
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: MasteryTextStyles.body.copyWith(
-                      color: labelColor,
-                      fontWeight: isDanger ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                  if (value != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      value!,
-                      style: MasteryTextStyles.bodySmall.copyWith(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+              child: Text(
+                label,
+                style: MasteryTextStyles.body.copyWith(
+                  fontSize: 14,
+                  color: labelColor,
+                  fontWeight: isDanger ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
-            if (trailing != null) ...[
+            // Value + chevron on the right
+            if (value != null) ...[
               const SizedBox(width: 12),
+              Text(
+                value!,
+                style: MasteryTextStyles.body.copyWith(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontWeight: FontWeight.w400,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (trailing != null) ...[
+              const SizedBox(width: 8),
               trailing!,
-            ] else if (!isDanger)
+            ] else if (!isDanger) ...[
+              const SizedBox(width: 8),
               Icon(
                 Icons.chevron_right,
-                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                size: 18,
               ),
+            ],
           ],
         ),
       ),

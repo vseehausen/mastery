@@ -10,32 +10,35 @@ class CuePreviewCard extends StatelessWidget {
   final Map<String, dynamic> cue;
 
   /// Returns the display name and color for each cue type
-  (String label, Color color) _getCueTypeInfo(String cueType, bool isDark) {
+  (String label, Color color) _getCueTypeInfo(
+    String cueType,
+    BuildContext context,
+  ) {
     switch (cueType) {
       case 'translation':
         return (
           'Translation',
-          MasteryColors.getCueColor(cueType, isDark: isDark),
+          MasteryColors.getCueColor(context, cueType),
         );
       case 'definition':
         return (
           'Definition',
-          MasteryColors.getCueColor(cueType, isDark: isDark),
+          MasteryColors.getCueColor(context, cueType),
         );
       case 'synonym':
-        return ('Synonym', MasteryColors.getCueColor(cueType, isDark: isDark));
+        return ('Synonym', MasteryColors.getCueColor(context, cueType));
       case 'cloze':
         return (
           'Fill in the Blank',
-          MasteryColors.getCueColor(cueType, isDark: isDark),
+          MasteryColors.getCueColor(context, cueType),
         );
       case 'multiple_choice':
         return (
           'Choose the Word',
-          MasteryColors.getCueColor(cueType, isDark: isDark),
+          MasteryColors.getCueColor(context, cueType),
         );
       default:
-        return (cueType, MasteryColors.getCueColor(cueType, isDark: isDark));
+        return (cueType, MasteryColors.getCueColor(context, cueType));
     }
   }
 
@@ -50,7 +53,7 @@ class CuePreviewCard extends StatelessWidget {
     final promptText = cue['prompt_text'] as String? ?? '';
     final answerText = cue['answer_text'] as String? ?? '';
 
-    final (typeLabel, typeColor) = _getCueTypeInfo(cueType, isDark);
+    final (typeLabel, typeColor) = _getCueTypeInfo(cueType, context);
 
     return Container(
       padding: const EdgeInsets.all(16),

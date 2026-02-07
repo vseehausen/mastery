@@ -11,10 +11,8 @@ import 'core/widgets/global_status_banner.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/home/presentation/screens/today_screen.dart';
 import 'features/progress/presentation/screens/progress_screen.dart';
-import 'features/sync/presentation/screens/sync_status_screen.dart';
 import 'features/vocabulary/presentation/screens/vocabulary_screen.dart';
 import 'providers/supabase_provider.dart';
-import 'providers/ui_preferences_provider.dart';
 
 void main() {
   runZonedGuarded(
@@ -62,26 +60,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-  bool _dismissedEnrichmentBannerForSession = false;
 
   @override
   Widget build(BuildContext context) {
     final connectivity = ref.watch(connectivityProvider);
     final vocabularyCount = ref.watch(vocabularyCountProvider);
     final enrichedVocabularyIds = ref.watch(enrichedVocabularyIdsProvider);
-    final showEnrichmentProgressOnHome = ref.watch(
-      showEnrichmentProgressOnHomeProvider,
-    );
     final statusBannerData = deriveGlobalStatusBannerData(
       connectivity: connectivity,
       vocabularyCount: vocabularyCount,
       enrichedVocabularyIds: enrichedVocabularyIds,
-      showEnrichmentProgress: showEnrichmentProgressOnHome,
+      showEnrichmentProgress: false, // Never show on Home - belongs in SyncStatusScreen
     );
-    final shouldHideBanner =
-        statusBannerData?.type == GlobalStatusType.enrichmentProgress &&
-        _dismissedEnrichmentBannerForSession;
-    final visibleBannerData = shouldHideBanner ? null : statusBannerData;
 
     return Scaffold(
       body: IndexedStack(
@@ -98,20 +88,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (visibleBannerData != null)
+          if (statusBannerData != null)
             GlobalStatusBanner(
-              data: visibleBannerData,
-              actionLabel: _statusActionLabel(visibleBannerData.type),
+              data: statusBannerData,
+              actionLabel: _statusActionLabel(statusBannerData.type),
               onActionPressed: () =>
-                  _handleStatusAction(visibleBannerData.type),
-              onDismissPressed:
-                  visibleBannerData.type == GlobalStatusType.enrichmentProgress
-                  ? () {
-                      setState(
-                        () => _dismissedEnrichmentBannerForSession = true,
-                      );
-                    }
-                  : null,
+                  _handleStatusAction(statusBannerData.type),
             ),
           BottomNavBar(
             selectedIndex: _selectedIndex,
@@ -142,16 +124,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.invalidate(vocabularyCountProvider);
         ref.invalidate(enrichedVocabularyIdsProvider);
         return;
-      case GlobalStatusType.enrichmentProgress:
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (context) => const SyncStatusScreen(),
-          ),
-        );
-        return;
       case GlobalStatusType.syncError:
         ref.invalidate(vocabularyCountProvider);
         ref.invalidate(enrichedVocabularyIdsProvider);
+        return;
+      case GlobalStatusType.enrichmentProgress:
+        // This case won't occur since showEnrichmentProgress is always false on Home
         return;
     }
   }

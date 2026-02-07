@@ -6,26 +6,41 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/supabase_provider.dart';
 
-/// Supported native languages for enrichment.
-const supportedLanguages = <String, String>{
-  'de': 'German',
-  'es': 'Spanish',
-  'fr': 'French',
-  'pt': 'Portuguese',
-  'it': 'Italian',
-  'nl': 'Dutch',
-  'pl': 'Polish',
-  'ja': 'Japanese',
-  'ko': 'Korean',
-  'zh': 'Chinese',
+/// Supported native languages with English and native names.
+const supportedLanguages = <String, Map<String, String>>{
+  'de': {'english': 'German', 'native': 'Deutsch'},
+  'es': {'english': 'Spanish', 'native': 'Español'},
+  'fr': {'english': 'French', 'native': 'Français'},
+  'pt': {'english': 'Portuguese', 'native': 'Português'},
+  'it': {'english': 'Italian', 'native': 'Italiano'},
+  'nl': {'english': 'Dutch', 'native': 'Nederlands'},
+  'pl': {'english': 'Polish', 'native': 'Polski'},
+  'ja': {'english': 'Japanese', 'native': '日本語'},
+  'ko': {'english': 'Korean', 'native': '한국어'},
+  'zh': {'english': 'Chinese', 'native': '中文'},
 };
 
-/// Meaning display mode options.
-const displayModes = <String, String>{
-  'both': 'Both (native + English)',
-  'native': 'Native translation only',
-  'english': 'English definition only',
+/// Get language English name for UI
+String getLanguageEnglishName(String code) {
+  return supportedLanguages[code]?['english'] ?? code;
+}
+
+/// Get language native name for UI
+String getLanguageNativeName(String code) {
+  return supportedLanguages[code]?['native'] ?? code;
+}
+
+/// Meaning display mode options with descriptions.
+const displayModes = <String, Map<String, String>>{
+  'both': {'label': 'Both', 'subtitle': 'Show definition and translation'},
+  'english': {'label': 'Definition only', 'subtitle': 'Immersive learning experience'},
+  'native': {'label': 'Translation only', 'subtitle': 'Quickest for memorization'},
 };
+
+/// Get display mode label for UI
+String getDisplayModeLabel(String mode) {
+  return displayModes[mode]?['label'] ?? mode;
+}
 
 /// Widget for selecting native language for enrichment.
 class NativeLanguageSetting extends ConsumerWidget {
@@ -67,7 +82,7 @@ class NativeLanguageSetting extends ConsumerWidget {
             ),
           ),
           subtitle: Text(
-            supportedLanguages[currentCode] ?? currentCode,
+            getLanguageEnglishName(currentCode),
             style: MasteryTextStyles.bodySmall.copyWith(
               color: isDark
                   ? MasteryColors.mutedForegroundDark
@@ -98,16 +113,18 @@ class NativeLanguageSetting extends ConsumerWidget {
         return ListView(
           shrinkWrap: true,
           children: supportedLanguages.entries.map((entry) {
+            final code = entry.key;
+            final englishName = entry.value['english']!;
             return ListTile(
-              title: Text(entry.value),
-              trailing: entry.key == currentCode
+              title: Text(englishName),
+              trailing: code == currentCode
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
               onTap: () async {
                 final dataService = ref.read(supabaseDataServiceProvider);
                 await dataService.updatePreferences(
                   userId: userId,
-                  nativeLanguageCode: entry.key,
+                  nativeLanguageCode: code,
                 );
                 ref.invalidate(userPreferencesProvider);
                 if (context.mounted) Navigator.pop(context);
@@ -160,7 +177,7 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
             ),
           ),
           subtitle: Text(
-            displayModes[currentMode] ?? currentMode,
+            getDisplayModeLabel(currentMode),
             style: MasteryTextStyles.bodySmall.copyWith(
               color: isDark
                   ? MasteryColors.mutedForegroundDark
@@ -191,16 +208,18 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
         return ListView(
           shrinkWrap: true,
           children: displayModes.entries.map((entry) {
+            final mode = entry.key;
+            final label = entry.value['label']!;
             return ListTile(
-              title: Text(entry.value),
-              trailing: entry.key == currentMode
+              title: Text(label),
+              trailing: mode == currentMode
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
               onTap: () async {
                 final dataService = ref.read(supabaseDataServiceProvider);
                 await dataService.updatePreferences(
                   userId: userId,
-                  meaningDisplayMode: entry.key,
+                  meaningDisplayMode: mode,
                 );
                 ref.invalidate(userPreferencesProvider);
                 if (context.mounted) Navigator.pop(context);

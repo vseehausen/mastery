@@ -49,12 +49,12 @@ class StatusBadge extends StatelessWidget {
     switch (status) {
       case LearningStatus.known:
         return isDark
-            ? (MasteryColors.knownMutedDark, MasteryColors.knownDark)
-            : (MasteryColors.knownMutedLight, MasteryColors.knownLight);
+            ? (MasteryColors.successMutedDark, MasteryColors.successDark)
+            : (MasteryColors.successMutedLight, MasteryColors.successLight);
       case LearningStatus.learning:
         return isDark
-            ? (MasteryColors.learningMutedDark, MasteryColors.learningDark)
-            : (MasteryColors.learningMutedLight, MasteryColors.learningLight);
+            ? (MasteryColors.warningMutedDark, MasteryColors.warningDark)
+            : (MasteryColors.warningMutedLight, MasteryColors.warningLight);
       case LearningStatus.unknown:
         // Subtle gray for "New" - less prominent
         return isDark

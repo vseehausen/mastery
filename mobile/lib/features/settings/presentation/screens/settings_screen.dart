@@ -1,93 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../domain/models/learning_enums.dart';
 import '../../../../domain/models/user_preferences.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/dev_mode_provider.dart';
-import '../../../../providers/ui_preferences_provider.dart';
+import '../../../../providers/supabase_provider.dart';
 import '../../../learn/providers/learning_preferences_providers.dart';
-import '../widgets/profile_card.dart';
+import '../../../sync/presentation/screens/sync_status_screen.dart';
+import '../../language_setting.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_list_item.dart';
 
-/// Unified settings screen combining learning preferences, app settings, and account management
-class SettingsScreen extends ConsumerStatefulWidget {
+/// Unified settings screen with iOS grouped-list pattern
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late int _selectedTimeTarget;
-  late int _selectedIntensity;
-  late double _selectedRetention;
-  bool _isCustomTime = false;
-  final TextEditingController _customTimeController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedTimeTarget = 10;
-    _selectedIntensity = Intensity.normal;
-    _selectedRetention = 0.90;
-  }
-
-  @override
-  void dispose() {
-    _customTimeController.dispose();
-    super.dispose();
-  }
-
-  void _loadPreferences(UserPreferencesModel prefs) {
-    _selectedTimeTarget = prefs.dailyTimeTargetMinutes;
-    _selectedIntensity = prefs.intensity;
-    _selectedRetention = prefs.targetRetention;
-    _isCustomTime = ![5, 10, 15, 20].contains(_selectedTimeTarget);
-    if (_isCustomTime) {
-      _customTimeController.text = _selectedTimeTarget.toString();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final prefsAsync = ref.watch(learningPreferencesNotifierProvider);
     final currentUser = ref.watch(currentUserProvider);
-    final showEnrichmentProgressOnHome = ref.watch(
-      showEnrichmentProgressOnHomeProvider,
-    );
-
-    // Load preferences when they change
-    ref.listen(learningPreferencesNotifierProvider, (_, next) {
-      if (next.hasValue && next.value != null) {
-        setState(() {
-          _loadPreferences(next.value!);
-        });
-      }
-    });
-
-    // Initial load
-    if (prefsAsync.hasValue && prefsAsync.value != null) {
-      // Only set initial values if they haven't been modified
-      final prefs = prefsAsync.value!;
-      if (_selectedTimeTarget == 10 &&
-          _selectedIntensity == Intensity.normal &&
-          _selectedRetention == 0.90) {
-        _selectedTimeTarget = prefs.dailyTimeTargetMinutes;
-        _selectedIntensity = prefs.intensity;
-        _selectedRetention = prefs.targetRetention;
-        _isCustomTime = ![5, 10, 15, 20].contains(_selectedTimeTarget);
-        if (_isCustomTime) {
-          _customTimeController.text = _selectedTimeTarget.toString();
-        }
-      }
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -110,10 +45,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: prefsAsync.when(
         data: (prefs) => _buildSettingsContent(
           context,
+          ref,
           isDark,
           prefs,
           currentUser,
-          showEnrichmentProgressOnHome,
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -132,67 +67,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildSettingsContent(
     BuildContext context,
+    WidgetRef ref,
     bool isDark,
     UserPreferencesModel? prefs,
     AsyncValue<User?> currentUser,
-    bool showEnrichmentProgressOnHome,
   ) {
+    if (prefs == null) {
+      return const Center(child: Text('No preferences available'));
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // LEARNING SECTION
-          _buildSectionHeader('Learning', isDark),
-          const SizedBox(height: 12),
-          _buildTimeTargetSelector(isDark),
-
-          const SizedBox(height: 32),
-
-          // Intensity
-          _buildSectionHeader('Learning Intensity', isDark),
-          const SizedBox(height: 8),
-          Text(
-            'Controls how many new words you learn per session',
-            style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildIntensitySelector(isDark),
-
-          const SizedBox(height: 32),
-
-          // Target Retention
-          _buildSectionHeader('Target Retention', isDark),
-          const SizedBox(height: 8),
-          Text(
-            'Higher retention = more frequent reviews, better memory',
-            style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildRetentionSlider(isDark),
-
-          const SizedBox(height: 32),
-
-          // APP SECTION
           SettingsSection(
-            title: 'APP',
+            title: 'LEARNING',
             children: [
               SettingsListItem(
-                label: 'Show enrichment progress on Home',
-                trailing: ShadSwitch(
-                  value: showEnrichmentProgressOnHome,
-                  onChanged: (value) {
-                    ref.read(showEnrichmentProgressOnHomeProvider.notifier).state = value;
-                  },
-                ),
+                label: 'Session length',
+                value: _getSessionLengthLabel(prefs.dailyTimeTargetMinutes),
+                                onTap: () => _showSessionLengthSheet(context, ref, isDark, prefs),
+              ),
+              SettingsListItem(
+                label: 'Intensity',
+                value: _getIntensityLabel(prefs.intensity),
+                                onTap: () => _showIntensitySheet(context, ref, isDark, prefs),
+              ),
+              SettingsListItem(
+                label: 'Target retention',
+                value: _getRetentionLabel(prefs.targetRetention),
+                                onTap: () => _showRetentionSheet(context, ref, isDark, prefs),
+              ),
+              SettingsListItem(
+                label: 'Native language',
+                value: getLanguageEnglishName(prefs.nativeLanguageCode),
+                                onTap: () => _showNativeLanguageSheet(context, ref, isDark, prefs),
+              ),
+              SettingsListItem(
+                label: 'Meaning display',
+                value: getDisplayModeLabel(prefs.meaningDisplayMode),
+                                onTap: () => _showMeaningDisplaySheet(context, ref, isDark, prefs),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // DATA SECTION
+          SettingsSection(
+            title: 'DATA',
+            children: [
+              SettingsListItem(
+                label: 'Sync Status',
+                                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const SyncStatusScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -200,27 +135,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ACCOUNT SECTION
-          Text(
-            'ACCOUNT',
-            style: MasteryTextStyles.bodyBold.copyWith(
-              fontSize: 14,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          currentUser.when(
-            data: (User? user) => ProfileCard(
-              name: (user?.userMetadata?['full_name'] as String?) ?? 'User',
-              email: user?.email ?? 'user@example.com',
-            ),
-            loading: () => const SizedBox.shrink(),
-            error: (error, stackTrace) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 12),
           SettingsSection(
-            title: '',
+            title: 'ACCOUNT',
             children: [
+              currentUser.when(
+                data: (User? user) => _buildProfileRow(
+                  context,
+                  isDark,
+                  (user?.userMetadata?['full_name'] as String?) ?? 'User',
+                  user?.email ?? 'user@example.com',
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (error, stackTrace) => const SizedBox.shrink(),
+              ),
               SettingsListItem(
                 label: 'Sign Out',
                 isDanger: true,
@@ -262,200 +189,542 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, bool isDark) {
-    return Text(
-      title,
-      style: MasteryTextStyles.bodyBold.copyWith(
-        color: isDark ? Colors.white : Colors.black,
+  // =============================================================================
+  // Profile Row
+  // =============================================================================
+
+  Widget _buildProfileRow(
+    BuildContext context,
+    bool isDark,
+    String name,
+    String email,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
+              border: Border.all(
+                color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              Icons.person,
+              color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // User info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 14,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  email,
+                  style: MasteryTextStyles.bodySmall.copyWith(
+                    fontSize: 12,
+                    color: isDark ? MasteryColors.mutedForegroundDark : MasteryColors.mutedForegroundLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTimeTargetSelector(bool isDark) {
-    const presets = [5, 10, 15, 20];
+  // =============================================================================
+  // Label Getters (Fibonacci: 3, 5, 8)
+  // =============================================================================
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Preset buttons
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ...presets.map((minutes) => _buildTimeButton(minutes, isDark)),
-            _buildCustomTimeButton(isDark),
-          ],
-        ),
+  String _getSessionLengthLabel(int minutes) {
+    if (minutes <= 3) return 'Quick and easy';
+    if (minutes <= 5) return 'Regular';
+    if (minutes <= 8) return 'Serious';
+    return 'Custom ($minutes min)';
+  }
 
-        // Custom time input
-        if (_isCustomTime) ...[
-          const SizedBox(height: 12),
-          Row(
+  String _getIntensityLabel(int intensity) {
+    switch (intensity) {
+      case 0: return 'Light';
+      case 1: return 'Normal';
+      case 2: return 'Intense';
+      default: return 'Normal';
+    }
+  }
+
+  String _getRetentionLabel(double retention) {
+    if (retention < 0.87) return 'Moderate';
+    if (retention < 0.90) return 'Balanced';
+    return 'Perfectionist';
+  }
+
+  // =============================================================================
+  // Bottom Sheets (Fibonacci: 3, 5, 8)
+  // =============================================================================
+
+  void _showSessionLengthSheet(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    UserPreferencesModel prefs,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 80,
-                child: TextField(
-                  controller: _customTimeController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: '1-60',
-                    filled: true,
-                    fillColor: isDark
-                        ? MasteryColors.cardDark
-                        : MasteryColors.cardLight,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? MasteryColors.borderDark
-                            : MasteryColors.borderLight,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
-                  style: MasteryTextStyles.body.copyWith(
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                  onChanged: (value) {
-                    final minutes = int.tryParse(value);
-                    if (minutes != null && minutes >= 1 && minutes <= 60) {
-                      setState(() {
-                        _selectedTimeTarget = minutes;
-                      });
-                      ref
-                          .read(learningPreferencesNotifierProvider.notifier)
-                          .updateDailyTimeTarget(minutes);
-                    }
-                  },
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'minutes',
-                style: MasteryTextStyles.body.copyWith(
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Session length',
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Options (Fibonacci: 3, 5, 8)
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Quick and easy',
+                subtitle: '3 minutes per session',
+                isSelected: prefs.dailyTimeTargetMinutes <= 3,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateDailyTimeTarget(3);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Regular',
+                subtitle: '5 minutes per session',
+                isSelected: prefs.dailyTimeTargetMinutes > 3 && prefs.dailyTimeTargetMinutes <= 5,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateDailyTimeTarget(5);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Serious',
+                subtitle: '8 minutes per session',
+                isSelected: prefs.dailyTimeTargetMinutes > 5,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateDailyTimeTarget(8);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showIntensitySheet(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    UserPreferencesModel prefs,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Intensity',
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Options (Fibonacci: 3, 5, 8)
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Light',
+                subtitle: '3 new words per session',
+                isSelected: prefs.intensity == 0,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateIntensity(0);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Normal',
+                subtitle: '5 new words per session',
+                isSelected: prefs.intensity == 1,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateIntensity(1);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Intense',
+                subtitle: '8 new words per session',
+                isSelected: prefs.intensity == 2,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateIntensity(2);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRetentionSheet(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    UserPreferencesModel prefs,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Target retention',
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Options (85%, 90%, 95%)
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Moderate',
+                subtitle: '85% retention • Fewer reviews',
+                isSelected: prefs.targetRetention < 0.87,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateTargetRetention(0.85);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Balanced',
+                subtitle: '90% retention • Recommended',
+                isSelected: prefs.targetRetention >= 0.87 && prefs.targetRetention < 0.92,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateTargetRetention(0.90);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildSheetOption(
+                context: context,
+                ref: ref,
+                isDark: isDark,
+                label: 'Perfectionist',
+                subtitle: '95% retention • Heavy workload',
+                isSelected: prefs.targetRetention >= 0.92,
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateTargetRetention(0.95);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNativeLanguageSheet(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    UserPreferencesModel prefs,
+  ) {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.only(top: 20),
+          constraints: const BoxConstraints(maxHeight: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Native language',
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Scrollable options
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Column(
+                    children: supportedLanguages.entries.map((entry) {
+                final code = entry.key;
+                final englishName = entry.value['english']!;
+                final nativeName = entry.value['native']!;
+                return _buildSheetOption(
+                  context: context,
+                  ref: ref,
+                  isDark: isDark,
+                  label: englishName,
+                  subtitle: nativeName,
+                  isSelected: prefs.nativeLanguageCode == code,
+                  onTap: () async {
+                    final dataService = ref.read(supabaseDataServiceProvider);
+                    await dataService.updatePreferences(
+                      userId: userId,
+                      nativeLanguageCode: code,
+                    );
+                    ref.invalidate(learningPreferencesNotifierProvider);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+                  ),
                 ),
               ),
             ],
           ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTimeButton(int minutes, bool isDark) {
-    final isSelected = !_isCustomTime && _selectedTimeTarget == minutes;
-
-    return ShadButton(
-      onPressed: () {
-        setState(() {
-          _selectedTimeTarget = minutes;
-          _isCustomTime = false;
-        });
-        ref
-            .read(learningPreferencesNotifierProvider.notifier)
-            .updateDailyTimeTarget(minutes);
+        );
       },
-      backgroundColor: isSelected
-          ? (isDark ? MasteryColors.accentDark : MasteryColors.accentLight)
-          : (isDark ? MasteryColors.cardDark : MasteryColors.cardLight),
-      child: Text(
-        '$minutes min',
-        style: MasteryTextStyles.bodySmall.copyWith(
-          color: isSelected
-              ? Colors.white
-              : (isDark ? Colors.white : Colors.black),
-        ),
-      ),
     );
   }
 
-  Widget _buildCustomTimeButton(bool isDark) {
-    return ShadButton.outline(
-      onPressed: () {
-        setState(() {
-          _isCustomTime = true;
-        });
+  void _showMeaningDisplaySheet(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    UserPreferencesModel prefs,
+  ) {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? MasteryColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Meaning display',
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Options
+              ...displayModes.entries.map((entry) {
+                final mode = entry.key;
+                final label = entry.value['label']!;
+                final subtitle = entry.value['subtitle']!;
+                return _buildSheetOption(
+                  context: context,
+                  ref: ref,
+                  isDark: isDark,
+                  label: label,
+                  subtitle: subtitle,
+                  isSelected: prefs.meaningDisplayMode == mode,
+                  onTap: () async {
+                    final dataService = ref.read(supabaseDataServiceProvider);
+                    await dataService.updatePreferences(
+                      userId: userId,
+                      meaningDisplayMode: mode,
+                    );
+                    ref.invalidate(learningPreferencesNotifierProvider);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
       },
-      backgroundColor: _isCustomTime
-          ? (isDark ? MasteryColors.accentDark : MasteryColors.accentLight)
-          : (isDark ? MasteryColors.cardDark : MasteryColors.cardLight),
-      child: Text(
-        'Custom',
-        style: MasteryTextStyles.bodySmall.copyWith(
-          color: _isCustomTime
-              ? Colors.white
-              : (isDark ? Colors.white : Colors.black),
-        ),
-      ),
     );
   }
 
-  Widget _buildIntensitySelector(bool isDark) {
-    return Column(
-      children: [
-        _buildIntensityOption(
-          intensity: IntensityEnum.light,
-          label: 'Light',
-          description: '2 new words per 10 min',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 8),
-        _buildIntensityOption(
-          intensity: IntensityEnum.normal,
-          label: 'Normal',
-          description: '5 new words per 10 min',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 8),
-        _buildIntensityOption(
-          intensity: IntensityEnum.intense,
-          label: 'Intense',
-          description: '8 new words per 10 min',
-          isDark: isDark,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIntensityOption({
-    required IntensityEnum intensity,
-    required String label,
-    required String description,
+  Widget _buildSheetOption({
+    required BuildContext context,
+    required WidgetRef ref,
     required bool isDark,
+    required String label,
+    required String? subtitle,
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    final isSelected = _selectedIntensity == intensity.value;
-
     return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedIntensity = intensity.value;
-        });
-        ref
-            .read(learningPreferencesNotifierProvider.notifier)
-            .updateIntensity(intensity.value);
-      },
-      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? (isDark
-                      ? MasteryColors.accentDark
-                      : MasteryColors.accentLight)
-                : (isDark
-                      ? MasteryColors.borderDark
-                      : MasteryColors.borderLight),
-            width: isSelected ? 2 : 1,
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+              width: 1,
+            ),
           ),
         ),
         child: Row(
@@ -467,134 +736,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Text(
                     label,
                     style: MasteryTextStyles.bodyBold.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 14,
+                      color: isSelected
+                          ? MasteryColors.accentLight
+                          : (isDark ? Colors.white : Colors.black),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark
-                          ? MasteryColors.mutedForegroundDark
-                          : MasteryColors.mutedForegroundLight,
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: MasteryTextStyles.bodySmall.copyWith(
+                        fontSize: 12,
+                        color: isDark
+                            ? MasteryColors.mutedForegroundDark
+                            : MasteryColors.mutedForegroundLight,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: isDark
-                    ? MasteryColors.accentDark
-                    : MasteryColors.accentLight,
+              const Icon(
+                Icons.check,
+                color: MasteryColors.accentLight,
+                size: 24,
+              )
+            else
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+                    width: 2,
+                  ),
+                ),
               ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRetentionSlider(bool isDark) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '85%',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
-              ),
-            ),
-            Text(
-              '${(_selectedRetention * 100).toInt()}%',
-              style: MasteryTextStyles.bodyBold.copyWith(
-                color: isDark
-                    ? MasteryColors.accentDark
-                    : MasteryColors.accentLight,
-              ),
-            ),
-            Text(
-              '95%',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderThemeData(
-            activeTrackColor: isDark
-                ? MasteryColors.accentDark
-                : MasteryColors.accentLight,
-            inactiveTrackColor: isDark
-                ? MasteryColors.mutedDark
-                : MasteryColors.mutedLight,
-            thumbColor: isDark
-                ? MasteryColors.accentDark
-                : MasteryColors.accentLight,
-            overlayColor:
-                (isDark ? MasteryColors.accentDark : MasteryColors.accentLight)
-                    .withValues(alpha: 0.2),
-          ),
-          child: Slider(
-            value: _selectedRetention,
-            min: 0.85,
-            max: 0.95,
-            divisions: 10,
-            onChanged: (value) {
-              setState(() {
-                _selectedRetention = value;
-              });
-            },
-            onChangeEnd: (value) {
-              ref
-                  .read(learningPreferencesNotifierProvider.notifier)
-                  .updateTargetRetention(value);
-            },
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? MasteryColors.mutedDark : MasteryColors.mutedLight,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _selectedRetention >= 0.92
-                      ? 'High retention: Reviews are more frequent'
-                      : _selectedRetention <= 0.87
-                      ? 'Lower retention: Fewer reviews, risk of forgetting'
-                      : 'Balanced: Good retention with moderate reviews',
-                  style: MasteryTextStyles.bodySmall.copyWith(
-                    color: isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
