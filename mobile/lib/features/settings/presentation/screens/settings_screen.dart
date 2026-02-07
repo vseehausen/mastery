@@ -552,7 +552,7 @@ class SettingsScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(top: 20),
           constraints: const BoxConstraints(maxHeight: 500),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
               // Drag handle
               Container(
