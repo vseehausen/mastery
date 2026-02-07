@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/app_defaults.dart';
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../domain/models/cue_type.dart';
@@ -116,8 +117,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Get user preferences
       final prefs = await dataService.getOrCreatePreferences(userId);
       final dailyTimeTargetMinutes =
-          prefs['daily_time_target_minutes'] as int? ?? 10;
-      final intensity = prefs['intensity'] as int? ?? 1;
+          prefs['daily_time_target_minutes'] as int? ??
+              AppDefaults.dailyTimeTargetMinutes;
+      final intensity = prefs['intensity'] as int? ?? AppDefaults.intensity;
 
       // Step 1: Compute lightweight session params (no card data)
       final params = await planner.computeSessionParams(

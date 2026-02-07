@@ -167,7 +167,7 @@ supabase stop
 
 1. **Test-First**: Tests written alongside implementation. Every new widget, component, or feature MUST have comprehensive test coverage before completion.
 2. **Code Quality**: Linting, formatting, strict typing, no warnings
-3. **Flutter Analyze Gate**: `flutter analyze` MUST pass with zero issues (no errors, warnings, or info) before any commit. Run `dart fix --apply` first to auto-fix issues, then `flutter analyze` to verify.
+3. **Flutter Analyze Gate**: `flutter analyze` MUST pass with zero issues (no errors, warnings, or info) before any commit. **Critical workflow:** Run `dart fix --apply` FIRST to auto-fix issues, then `flutter analyze` to verify. ALWAYS re-run both after ANY file modifications (formatters, linters, manual edits).
 4. **Observability**: Structured logging, error tracking, metrics
 5. **Simplicity (YAGNI)**: No premature abstractions, minimal dependencies
 6. **Online-Required**: App requires an active internet connection. Mobile app uses direct Supabase queries with Riverpod caching (no local SQLite). Backend services (sync, meaning generation) assume connectivity.
@@ -219,6 +219,25 @@ After implementing and testing features, perform manual verification on iPhone s
 ### UI Sync Parity Rule
 - For visual sync tasks, treat simulator runtime rendering as the final source of truth over token assumptions.
 - After any color/token change, verify resolved colors in both Light and Dark on simulator before finalizing.
+
+## Flutter Process Management
+
+**CRITICAL: Keep `flutter run` alive — use hot reload/restart instead of killing.**
+
+```bash
+# Start once with pid tracking
+flutter run -d <UDID> --pid-file /tmp/flutter.pid
+
+# Use signals for control
+kill -SIGUSR1 $(cat /tmp/flutter.pid)  # Hot reload (~1s, preserves state)
+kill -SIGUSR2 $(cat /tmp/flutter.pid)  # Hot restart (~5s, resets state)
+
+# Or send to stdin: r (reload), R (restart), q (quit), d (detach), v (DevTools)
+```
+
+**Decision tree:** Hot reload → Hot restart → Full restart (only for native code/pubspec changes)
+
+**Limitations:** Hot reload can't handle enums/generics/static initializers. Hot restart can't handle native code.
 
 <!-- MANUAL ADDITIONS START -->
 
@@ -298,6 +317,35 @@ supabase db push                                        # Deploy migrations (ide
 supabase functions deploy --no-verify-jwt              # Deploy Edge Functions
 ```
 **CRITICAL**: Always use `--no-verify-jwt` flag for Edge Functions to handle auth manually. Verify in Supabase dashboard, then manual test on simulator.
+
+## UX Audit & Element Justification Protocol
+
+**When reviewing screens for UX improvements, follow this systematic process:**
+
+1. **Complete Element Justification**: Apply to EVERY visible element, not just obvious issues
+   - For each element ask: "What is its unique purpose? Is it redundant? Is it contextually relevant in ALL states?"
+   - Don't stop at removing pressure indicators—question navigation, actions, labels, spacing
+
+2. **Cross-Screen Navigation Audit**: Map all navigation/access points across screens
+   - Identify duplicate access points (e.g., Settings in multiple places)
+   - Keep only where semantically correct (e.g., Settings belongs behind a gear icon on Today, the primary screen, not buried in content areas)
+
+3. **State-Based Element Review**: List all possible screen states (combinations of hasItems/isCompleted/progress values)
+   - For EACH state, verify every visible element justifies its presence
+   - Remove or conditionally render elements irrelevant in certain states
+   - Check for redundancy: does this action duplicate another action visible in the same state?
+
+4. **Final "Fresh Eyes" Review**: After implementation, view each screen as a new user
+   - Ask: "Can I justify the presence of EVERY element I see right now?"
+   - If no clear justification → remove or make conditional
+
+**Example of redundancy**: A "No-cards guidance" button in a "Quick actions" section is redundant when the hero card already shows "Open no-items guidance" in the no-items state, and irrelevant when user HAS items.
+
+**UX Rules:**
+- Every pushed screen must have AppBar with back button — no dead ends
+- One concept = one screen — never split settings across multiple screens
+- Don't ship stub UI ("not yet implemented" snackbars) — remove until functional
+- Never use `--no-sound-null-safety` or similar suppression flags — resolve the underlying issue
 
 ## Pencil Mobile Sync Playbook
 

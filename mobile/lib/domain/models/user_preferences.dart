@@ -1,14 +1,16 @@
+import '../../core/app_defaults.dart';
+
 /// User learning preferences entity
 class UserPreferencesModel {
   const UserPreferencesModel({
     required this.id,
     required this.userId,
-    this.dailyTimeTargetMinutes = 10,
-    this.targetRetention = 0.90,
-    this.intensity = 1,
+    this.dailyTimeTargetMinutes = AppDefaults.dailyTimeTargetMinutes,
+    this.targetRetention = AppDefaults.targetRetention,
+    this.intensity = AppDefaults.intensity,
     this.newWordSuppressionActive = false,
-    this.nativeLanguageCode = 'de',
-    this.meaningDisplayMode = 'both',
+    this.nativeLanguageCode = AppDefaults.nativeLanguageCode,
+    this.meaningDisplayMode = AppDefaults.meaningDisplayMode,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -17,14 +19,17 @@ class UserPreferencesModel {
     return UserPreferencesModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      dailyTimeTargetMinutes: json['daily_time_target_minutes'] as int? ?? 10,
-      targetRetention:
-          (json['target_retention'] as num?)?.toDouble() ?? 0.90,
-      intensity: json['intensity'] as int? ?? 1,
+      dailyTimeTargetMinutes: json['daily_time_target_minutes'] as int? ??
+          AppDefaults.dailyTimeTargetMinutes,
+      targetRetention: (json['target_retention'] as num?)?.toDouble() ??
+          AppDefaults.targetRetention,
+      intensity: json['intensity'] as int? ?? AppDefaults.intensity,
       newWordSuppressionActive:
           json['new_word_suppression_active'] as bool? ?? false,
-      nativeLanguageCode: json['native_language_code'] as String? ?? 'de',
-      meaningDisplayMode: json['meaning_display_mode'] as String? ?? 'both',
+      nativeLanguageCode: json['native_language_code'] as String? ??
+          AppDefaults.nativeLanguageCode,
+      meaningDisplayMode: json['meaning_display_mode'] as String? ??
+          AppDefaults.meaningDisplayMode,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/app_defaults.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
@@ -19,11 +20,12 @@ part 'session_providers.g.dart';
 Future<int> dailyTimeTarget(Ref ref) async {
   final currentUser = ref.watch(currentUserProvider);
   final userId = currentUser.valueOrNull?.id;
-  if (userId == null) return 10;
+  if (userId == null) return AppDefaults.dailyTimeTargetMinutes;
 
   final dataService = ref.watch(supabaseDataServiceProvider);
   final prefs = await dataService.getOrCreatePreferences(userId);
-  return prefs['daily_time_target_minutes'] as int? ?? 10;
+  return prefs['daily_time_target_minutes'] as int? ??
+      AppDefaults.dailyTimeTargetMinutes;
 }
 
 /// Provides whether user has completed their session today
@@ -58,7 +60,8 @@ Future<double> todayProgress(Ref ref) async {
   if (activeSessionData == null) return 0.0;
 
   final elapsed = activeSessionData['elapsed_seconds'] as int? ?? 0;
-  final plannedMinutes = activeSessionData['planned_minutes'] as int? ?? 10;
+  final plannedMinutes = activeSessionData['planned_minutes'] as int? ??
+      AppDefaults.dailyTimeTargetMinutes;
   final planned = plannedMinutes * 60;
 
   if (planned <= 0) return 0.0;
@@ -123,9 +126,11 @@ Future<SessionPlan?> sessionPlan(Ref ref) async {
 
   return planner.buildSessionPlan(
     userId: userId,
-    timeTargetMinutes: prefs['daily_time_target_minutes'] as int? ?? 10,
-    intensity: prefs['intensity'] as int? ?? 1,
-    targetRetention: (prefs['target_retention'] as num?)?.toDouble() ?? 0.90,
+    timeTargetMinutes: prefs['daily_time_target_minutes'] as int? ??
+        AppDefaults.dailyTimeTargetMinutes,
+    intensity: prefs['intensity'] as int? ?? AppDefaults.intensity,
+    targetRetention: (prefs['target_retention'] as num?)?.toDouble() ??
+        AppDefaults.targetRetention,
   );
 }
 

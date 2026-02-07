@@ -13,6 +13,15 @@ Replace taste-based design, pixel-first workflows, and ad-hoc navigation decisio
 
 Treat visual quality as the result of correct flows, interactions, and state modeling.
 
+## Core Belief: Subtraction First
+
+Every screen starts with too much. The default design action is removal, not addition.
+
+- Begin each screen by listing what could be removed, not what should be added.
+- A screen is done when nothing left can be removed without breaking the user's task.
+- If a choice is between adding an element and removing one, remove.
+- Never polish what should be deleted.
+
 ## Rule Precedence
 
 Apply rules in this order:
@@ -55,6 +64,25 @@ Do not use lower layers to compensate for failures in higher layers.
 - Reject flows without a terminal goal.
 - Never use visual polish to hide flow or interaction failures.
 - Treat unclear interaction as defect, not acceptable ambiguity.
+- Cross-check screen content against feature specs before design work. Flag and reject elements that violate explicit spec prohibitions.
+- Treat a spec-prohibited element on screen as a P0 defect.
+
+## Element Justification Protocol
+
+Run this audit for every screen before applying default heuristics.
+
+1. State the screen purpose in one sentence. The sentence names one user task.
+2. List every visible element (text, icon, metric, button, decoration).
+3. Classify each element:
+   - Essential: directly enables the screen's single task.
+   - Supportive: helps orientation or trust without enabling the task.
+   - Noise: does not serve the task and does not aid orientation.
+4. Remove Noise. No exceptions. If removal feels risky, the screen purpose is wrong.
+5. Demote Supportive elements visually (smaller, muted, peripheral). They must not compete with Essential elements for attention.
+6. Check redundancy: same data point must not appear more than once per screen.
+7. Check cross-screen duplication: if data is the primary content of another tab or screen, do not duplicate it here unless it directly serves this screen's task.
+8. Apply the actionability test to every remaining metric or number: "What should the user DO with this information on THIS screen?" If the answer is "nothing" or "feel good," move it to a progress or stats surface.
+9. 3-second test: a new user looking at the screen must identify what to do within 3 seconds. If not, remove or demote elements until they can.
 
 ## Default Heuristics
 
@@ -95,7 +123,17 @@ what can I do next
 - Confirm only irreversible actions.
 - Keep affordances honest and consistent.
 
-### 3. Visual Design and Aesthetics (Default)
+### 3. Content Worth (Default)
+
+- Every metric on screen must answer: what should the user do next?
+- Metrics that inform action belong on action screens. Metrics that reflect on outcomes belong on progress screens. Never mix.
+- Vanity metrics (totals, counts, streaks-as-decoration) are noise on action screens.
+- If removing a number does not change the user's next action, the number does not belong on this screen.
+- Prefer qualitative status ("You're done," "Ready to learn") over quantitative status ("47 cards due," "350 words saved") on action screens.
+- Card counts, backlog sizes, and due-item numbers are pressure indicators. Show them only on screens explicitly designed for progress review, never on primary action surfaces.
+- When in doubt, remove the metric. It can always be added to a dedicated stats surface later.
+
+### 4. Visual Design and Aesthetics (Default)
 
 - Keep one dominant focal point per screen.
 - Encode importance with size, contrast, and position.
@@ -112,8 +150,13 @@ what can I do next
 - Default to comfortable density.
 - Use dense layouts only for expert views.
 - Prefer clarity over cleverness.
+- Prioritize visual calm: screen should feel restful, not busy.
+- Provide breathing room: generous whitespace around the focal point and primary action.
+- Practice purposeful restraint: fewer elements done well always beats more elements done adequately.
+- Follow the order: Remove, then Simplify, then Polish. Never polish what should be removed.
+- Test with the removal rule: if removing an element does not hurt task completion, keep it removed.
 
-### 4. System, Trust, and Reality (Default)
+### 5. System, Trust, and Reality (Default)
 
 - Model each screen as explicit state.
 - Design loading, ready, empty, error, and degraded-network states.
@@ -154,7 +197,7 @@ Record exceptions in the output contract.
 Classify issues by user harm, frequency, and implementation effort.
 
 - `P0`: blocks core job completion, causes data loss, breaks trust, or creates severe accessibility barrier
-- `P1`: causes significant friction, confusion, repeated errors, or major performance pain
+- `P1`: causes significant friction, confusion, repeated errors, major performance pain, or places unnecessary or spec-prohibited elements on screen
 - `P2`: clarity or polish issue with low user harm
 
 Fix order:
@@ -247,6 +290,12 @@ undo or confirm
 - Define analytics events.
 - Cover edge cases.
 - Record any exceptions with rationale and mitigation.
+- Run Element Justification Protocol. Record classification for each element.
+- Verify no redundant data (same information in multiple places on screen).
+- Verify no unjustified cross-screen duplication.
+- Pass the 3-second test: user can identify what to do within 3 seconds.
+- Cross-check screen content against relevant feature specs for explicit prohibitions.
+- Verify screen feels visually calm: restful whitespace, clear focal point, no competing elements.
 
 ### D. UI Element Checklist
 
@@ -261,6 +310,8 @@ undo or confirm
 - Keep color meaningful and restrained.
 - Verify target size and contrast thresholds.
 - Verify screen-reader labels for interactive controls.
+- Verify every metric passes the actionability test.
+- Verify no vanity metrics on action screens.
 
 ## Output Contract
 
@@ -277,3 +328,5 @@ When applying this skill, return:
 - measurable gate report (target, observed, pass/fail, calibration status)
 - accessibility gate report (each WCAG check pass/fail)
 - exception log (rule, rationale, mitigation, validation status)
+- element justification log (per screen: element, classification, disposition)
+- spec compliance cross-check (spec ID, prohibition, screen element, pass/fail)

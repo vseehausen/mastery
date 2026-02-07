@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/app_defaults.dart';
+
 /// Service that wraps Supabase queries for direct data access.
 /// Replaces Drift/SQLite repositories with cloud-first approach.
 class SupabaseDataService {
@@ -482,12 +484,12 @@ class SupabaseDataService {
       final data = {
         'id': id,
         'user_id': userId,
-        'daily_time_target_minutes': 10,
-        'target_retention': 0.90,
-        'intensity': 1,
+        'daily_time_target_minutes': AppDefaults.dailyTimeTargetMinutes,
+        'target_retention': AppDefaults.targetRetention,
+        'intensity': AppDefaults.intensity,
         'new_word_suppression_active': false,
-        'native_language_code': 'de',
-        'meaning_display_mode': 'both',
+        'native_language_code': AppDefaults.nativeLanguageCode,
+        'meaning_display_mode': AppDefaults.meaningDisplayMode,
         'created_at': now,
         'updated_at': now,
       };

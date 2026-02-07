@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/theme/spacing.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../learn/providers/session_providers.dart';
 import '../../../learn/providers/streak_providers.dart';
-import '../../../learn/screens/learning_settings_screen.dart';
-import '../../../settings/presentation/screens/settings_screen.dart';
 
 /// Progress hub for outcomes and settings entry points.
 class ProgressScreen extends ConsumerWidget {
@@ -20,13 +19,11 @@ class ProgressScreen extends ConsumerWidget {
     final currentStreak = ref.watch(currentStreakProvider);
     final longestStreak = ref.watch(longestStreakProvider);
     final vocabularyCount = ref.watch(vocabularyCountProvider);
-    final dueCards = ref.watch(dueCardsProvider);
     final completedToday = ref.watch(hasCompletedTodayProvider);
 
     final streakValue = currentStreak.valueOrNull ?? 0;
     final longestValue = longestStreak.valueOrNull ?? 0;
     final vocabularyValue = vocabularyCount.valueOrNull ?? 0;
-    final dueCount = dueCards.valueOrNull?.length ?? 0;
     final completed = completedToday.valueOrNull ?? false;
 
     return Scaffold(
@@ -36,12 +33,11 @@ class ProgressScreen extends ConsumerWidget {
             ref.invalidate(currentStreakProvider);
             ref.invalidate(longestStreakProvider);
             ref.invalidate(vocabularyCountProvider);
-            ref.invalidate(dueCardsProvider);
             ref.invalidate(hasCompletedTodayProvider);
           },
           child: ListView(
             primary: false,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            padding: MasterySpacing.screen,
             children: [
               Text(
                 'Progress',
@@ -49,73 +45,26 @@ class ProgressScreen extends ConsumerWidget {
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: MasterySpacing.sm),
               Text(
-                'Track outcomes and tune your plan',
+                'Track your outcomes',
                 style: MasteryTextStyles.bodySmall.copyWith(
                   color: isDark
                       ? MasteryColors.mutedForegroundDark
                       : MasteryColors.mutedForegroundLight,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: MasterySpacing.lg),
               _ProgressHero(
                 currentStreak: streakValue,
                 longestStreak: longestValue,
                 completedToday: completed,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _DataCard(
-                      label: 'Words',
-                      value: '$vocabularyValue',
-                      hint: 'in your library',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _DataCard(
-                      label: 'Due now',
-                      value: '$dueCount',
-                      hint: 'cards to review',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Settings',
-                style: MasteryTextStyles.bodyBold.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _ActionTile(
-                icon: Icons.tune,
-                title: 'Learning preferences',
-                subtitle: 'Daily minutes, intensity, retention target',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const LearningSettingsScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              _ActionTile(
-                icon: Icons.settings_outlined,
-                title: 'Account and app settings',
-                subtitle: 'Profile, notifications, sign out',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
+              const SizedBox(height: MasterySpacing.md),
+              _DataCard(
+                label: 'Vocabulary',
+                value: '$vocabularyValue',
+                hint: 'words in your library',
               ),
             ],
           ),
@@ -140,10 +89,10 @@ class _ProgressHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(MasterySpacing.xl),
       decoration: BoxDecoration(
         color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(MasterySpacing.radiusLg),
         border: Border.all(
           color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
         ),
@@ -159,7 +108,7 @@ class _ProgressHero extends StatelessWidget {
                     ? MasteryColors.warningDark
                     : MasteryColors.warningLight,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: MasterySpacing.sm),
               Text(
                 'Streak performance',
                 style: MasteryTextStyles.bodyBold.copyWith(
@@ -168,7 +117,7 @@ class _ProgressHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: MasterySpacing.md),
           Row(
             children: [
               Expanded(
@@ -177,7 +126,7 @@ class _ProgressHero extends StatelessWidget {
                   value: '$currentStreak days',
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: MasterySpacing.md),
               Expanded(
                 child: _StreakStat(
                   label: 'Longest',
@@ -186,7 +135,7 @@ class _ProgressHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: MasterySpacing.sm),
           Text(
             completedToday
                 ? 'Today is completed. Nice consistency.'
@@ -213,10 +162,10 @@ class _StreakStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(MasterySpacing.md),
       decoration: BoxDecoration(
         color: isDark ? MasteryColors.mutedDark : MasteryColors.cardLight,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +178,7 @@ class _StreakStat extends StatelessWidget {
                   : MasteryColors.mutedForegroundLight,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: MasterySpacing.xs),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
@@ -257,10 +206,10 @@ class _DataCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(MasterySpacing.lg),
       decoration: BoxDecoration(
         color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(MasterySpacing.radiusMd),
         border: Border.all(
           color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
         ),
@@ -276,7 +225,7 @@ class _DataCard extends StatelessWidget {
                   : MasteryColors.mutedForegroundLight,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: MasterySpacing.sm / 2),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
@@ -284,7 +233,7 @@ class _DataCard extends StatelessWidget {
               color: isDark ? Colors.white : Colors.black,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: MasterySpacing.xs / 2),
           Text(
             hint,
             style: MasteryTextStyles.caption.copyWith(
@@ -294,80 +243,6 @@ class _DataCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? MasteryColors.borderDark
-                : MasteryColors.borderLight,
-          ),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isDark
-                  ? MasteryColors.accentDark
-                  : MasteryColors.accentLight,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: MasteryTextStyles.bodyBold.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark
-                          ? MasteryColors.mutedForegroundDark
-                          : MasteryColors.mutedForegroundLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
-            ),
-          ],
-        ),
       ),
     );
   }
