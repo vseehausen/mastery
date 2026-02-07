@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Mastery color tokens - Stone palette + Amber accent
-/// Generated from design system v1.0.0
+/// Mastery color tokens - Zinc palette + Indigo accent
+/// Generated from design system v2.1.0
 ///
 /// Usage with ThemeExtension (recommended):
 /// ```dart
@@ -21,97 +21,97 @@ class MasteryColors {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color backgroundDark = Color(0xFF1C1917);
+  static const Color backgroundDark = Color(0xFF09090B); // zinc-950
 
-  static const Color foregroundLight = Color(0xFF1C1917);
-  static const Color foregroundDark = Color(0xFFFAFAF9);
+  static const Color foregroundLight = Color(0xFF09090B); // zinc-950
+  static const Color foregroundDark = Color(0xFFFAFAFA); // zinc-50
 
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color cardDark = Color(0xFF1C1917);
+  static const Color cardDark = Color(0xFF18181B); // zinc-900
 
-  static const Color cardForegroundLight = Color(0xFF1C1917);
-  static const Color cardForegroundDark = Color(0xFFFAFAF9);
+  static const Color cardForegroundLight = Color(0xFF09090B); // zinc-950
+  static const Color cardForegroundDark = Color(0xFFFAFAFA); // zinc-50
 
   static const Color popoverLight = Color(0xFFFFFFFF);
-  static const Color popoverDark = Color(0xFF1C1917);
+  static const Color popoverDark = Color(0xFF18181B); // zinc-900
 
-  static const Color popoverForegroundLight = Color(0xFF1C1917);
-  static const Color popoverForegroundDark = Color(0xFFFAFAF9);
+  static const Color popoverForegroundLight = Color(0xFF09090B); // zinc-950
+  static const Color popoverForegroundDark = Color(0xFFFAFAFA); // zinc-50
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACTIONS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const Color primaryLight = Color(0xFF1C1917);
-  static const Color primaryDark = Color(0xFFFAFAF9);
+  static const Color primaryLight = Color(0xFF09090B); // zinc-950
+  static const Color primaryDark = Color(0xFFFAFAFA); // zinc-50
 
-  static const Color primaryForegroundLight = Color(0xFFFAFAF9);
-  static const Color primaryForegroundDark = Color(0xFF1C1917);
+  static const Color primaryForegroundLight = Color(0xFFFFFFFF);
+  static const Color primaryForegroundDark = Color(0xFF09090B); // zinc-950
 
-  static const Color secondaryLight = Color(0xFFF5F5F4);
-  static const Color secondaryDark = Color(0xFF292524);
+  static const Color secondaryLight = Color(0xFFF4F4F5); // zinc-100
+  static const Color secondaryDark = Color(0xFF27272A); // zinc-800
 
-  static const Color secondaryForegroundLight = Color(0xFF1C1917);
-  static const Color secondaryForegroundDark = Color(0xFFFAFAF9);
+  static const Color secondaryForegroundLight = Color(0xFF09090B); // zinc-950
+  static const Color secondaryForegroundDark = Color(0xFFFAFAFA); // zinc-50
 
-  static const Color accentLight = Color(0xFFF59E0B); // amber-500
-  static const Color accentDark = Color(0xFFFBBF24); // amber-400
+  static const Color accentLight = Color(0xFF4F46E5); // indigo-600
+  static const Color accentDark = Color(0xFF6366F1); // indigo-500
 
   static const Color accentForegroundLight = Color(0xFFFFFFFF);
-  static const Color accentForegroundDark = Color(0xFF451A03);
+  static const Color accentForegroundDark = Color(0xFFFFFFFF);
 
-  static const Color destructiveLight = Color(0xFFEF4444);
-  static const Color destructiveDark = Color(0xFFF87171);
+  static const Color destructiveLight = Color(0xFFDC2626); // red-600
+  static const Color destructiveDark = Color(0xFFF87171); // red-400
 
-  static const Color destructiveForegroundLight = Color(0xFFFAFAF9);
-  static const Color destructiveForegroundDark = Color(0xFFFAFAF9);
+  static const Color destructiveForegroundLight = Color(0xFFFFFFFF);
+  static const Color destructiveForegroundDark = Color(0xFFFEF2F2); // red-50
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NEUTRAL
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const Color mutedLight = Color(0xFFF5F5F4);
-  static const Color mutedDark = Color(0xFF292524);
+  static const Color mutedLight = Color(0xFFF4F4F5); // zinc-100
+  static const Color mutedDark = Color(0xFF27272A); // zinc-800
 
-  static const Color mutedForegroundLight = Color(0xFF78716C);
-  static const Color mutedForegroundDark = Color(0xFFA8A29E);
+  static const Color mutedForegroundLight = Color(0xFF71717A); // zinc-500
+  static const Color mutedForegroundDark = Color(0xFFA1A1AA); // zinc-400
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FORM / INTERACTIVE
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const Color borderLight = Color(0xFFE7E5E4);
-  static const Color borderDark = Color(0xFF292524);
+  static const Color borderLight = Color(0xFFE4E4E7); // zinc-200
+  static const Color borderDark = Color(0xFF27272A); // zinc-800
 
-  static const Color inputLight = Color(0xFFE7E5E4);
-  static const Color inputDark = Color(0xFF292524);
+  static const Color inputLight = Color(0xFFFFFFFF);
+  static const Color inputDark = Color(0xFF27272A); // zinc-800
 
-  static const Color ringLight = Color(0xFFF59E0B);
-  static const Color ringDark = Color(0xFFFBBF24);
+  static const Color ringLight = Color(0xFF09090B); // zinc-950
+  static const Color ringDark = Color(0xFFA1A1AA); // zinc-400
 
-  static const Color selectionLight = Color(0xFFFEF3C7);
-  static const Color selectionDark = Color(0xFF78350F);
+  static const Color selectionLight = Color(0xFFC7D2FE); // indigo-200
+  static const Color selectionDark = Color(0xFF3730A3); // indigo-800
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SEMANTIC STATE EXTENSIONS
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Success (Emerald) - "known" status, correct answers, positive states
-  static const Color successLight = Color(0xFF10B981);
-  static const Color successDark = Color(0xFF34D399);
+  static const Color successLight = Color(0xFF10B981); // emerald-500
+  static const Color successDark = Color(0xFF059669); // emerald-600
 
   static const Color successForegroundLight = Color(0xFFFFFFFF);
-  static const Color successForegroundDark = Color(0xFF022C22);
+  static const Color successForegroundDark = Color(0xFFFFFFFF);
 
   static const Color successMutedLight = Color(0xFFECFDF5);
   static const Color successMutedDark = Color(0xFF064E3B);
 
   // Warning (Amber) - "learning" status, timer warnings, caution states
-  static const Color warningLight = Color(0xFFF59E0B);
-  static const Color warningDark = Color(0xFFFBBF24);
+  static const Color warningLight = Color(0xFFF59E0B); // amber-500
+  static const Color warningDark = Color(0xFFD97706); // amber-600
 
-  static const Color warningForegroundLight = Color(0xFFFFFFFF);
-  static const Color warningForegroundDark = Color(0xFF451A03);
+  static const Color warningForegroundLight = Color(0xFF000000);
+  static const Color warningForegroundDark = Color(0xFFFFFFFF);
 
   static const Color warningMutedLight = Color(0xFFFFFBEB);
   static const Color warningMutedDark = Color(0xFF451A03);
@@ -127,11 +127,11 @@ class MasteryColors {
   // DOMAIN CUE COLORS (unique hues only)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const Color cueSynonymLight = Color(0xFF8B5CF6); // violet-500
-  static const Color cueSynonymDark = Color(0xFFA78BFA); // violet-400
+  static const Color cueSynonymLight = Color(0xFFEEF2FF); // indigo-50
+  static const Color cueSynonymDark = Color(0xFF4338CA); // indigo-700
 
-  static const Color cueMultipleChoiceLight = Color(0xFFEC4899); // pink-500
-  static const Color cueMultipleChoiceDark = Color(0xFFF472B6); // pink-400
+  static const Color cueMultipleChoiceLight = Color(0xFFF0F9FF); // sky-50
+  static const Color cueMultipleChoiceDark = Color(0xFF0369A1); // sky-700
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS (domain mapping)
