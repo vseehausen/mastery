@@ -1,0 +1,4 @@
+interface:
+  display_name: "Systematic App Design"
+  short_description: "Objective UX-to-UI design quality gates"
+  default_prompt: "Use $systematic-app-design to design and self-critique this app feature from flow to implementation."
