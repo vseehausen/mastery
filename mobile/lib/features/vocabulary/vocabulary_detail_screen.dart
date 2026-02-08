@@ -5,6 +5,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/theme/color_tokens.dart';
 import '../../core/theme/text_styles.dart';
+import '../../core/widgets/progress_stage_badge.dart';
+import '../../core/widgets/status_badge.dart';
+import '../../data/services/progress_stage_service.dart';
 import '../../domain/models/encounter.dart';
 import '../../domain/models/learning_card.dart';
 import '../../domain/models/meaning.dart';
@@ -169,6 +172,13 @@ class _VocabularyDetailScreenState
   ) {
     final colors = context.masteryColors;
 
+    // Calculate progress stage if learning card exists
+    final stageService = ProgressStageService();
+    final stage = stageService.calculateStage(
+      card: learningCard,
+      nonTranslationSuccessCount: 0, // Conservative estimate
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,23 +214,10 @@ class _VocabularyDetailScreenState
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Status badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: colors.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.accent.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                'New',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: colors.accent,
-                  letterSpacing: 0.5,
-                ),
-              ),
+            // Status/Stage badge
+            ProgressStageBadge(
+              stage: stage,
+              compact: false,
             ),
             const SizedBox(height: 6),
             // Stats
