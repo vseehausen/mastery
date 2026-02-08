@@ -22,7 +22,7 @@ abstract final class AppTypography {
   // FONT FAMILY
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const String fontFamilySans = 'Inter';
+  static const String fontFamilySans = 'Plus Jakarta Sans';
   static const String fontFamilyMono = 'JetBrains Mono';
 
   // ═══════════════════════════════════════════════════════════════════════════

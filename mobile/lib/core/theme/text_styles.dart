@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'typography_tokens.dart';
 
 /// Typography scale for Mastery app
-/// Based on Inter font family with specific weights and sizes
+/// Based on Plus Jakarta Sans font family with specific weights and sizes
 ///
 /// This class now uses the token-based system from [AppTypography].
 /// All existing TextStyles are preserved for backward compatibility.
@@ -17,6 +17,29 @@ class MasteryTextStyles {
   static const TextStyle displayLarge = TextStyle(
     fontFamily: AppTypography.fontFamilySans,
     fontSize: AppTypography.fontSize2xl,
+    fontWeight: AppTypography.fontWeightBold,
+    height: AppTypography.lineHeightTight,
+  );
+
+  static const TextStyle h1 = displayLarge;
+
+  static const TextStyle h2 = TextStyle(
+    fontFamily: AppTypography.fontFamilySans,
+    fontSize: AppTypography.fontSizeXl,
+    fontWeight: AppTypography.fontWeightBold,
+    height: AppTypography.lineHeightTight,
+  );
+
+  static const TextStyle h3 = TextStyle(
+    fontFamily: AppTypography.fontFamilySans,
+    fontSize: AppTypography.fontSizeLg,
+    fontWeight: AppTypography.fontWeightBold,
+    height: AppTypography.lineHeightTight,
+  );
+
+  static const TextStyle h4 = TextStyle(
+    fontFamily: AppTypography.fontFamilySans,
+    fontSize: AppTypography.fontSizeLg,
     fontWeight: AppTypography.fontWeightBold,
     height: AppTypography.lineHeightTight,
   );
@@ -74,6 +97,14 @@ class MasteryTextStyles {
     fontFamily: AppTypography.fontFamilySans,
     fontSize: AppTypography.fontSizeSm,
     fontWeight: AppTypography.fontWeightMedium,
+    height: AppTypography.lineHeightNormal,
+  );
+
+  // Muted text
+  static const TextStyle muted = TextStyle(
+    fontFamily: AppTypography.fontFamilySans,
+    fontSize: AppTypography.fontSizeSm,
+    fontWeight: AppTypography.fontWeightNormal,
     height: AppTypography.lineHeightNormal,
   );
 }

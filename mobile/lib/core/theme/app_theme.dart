@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'color_tokens.dart';
 import 'text_styles.dart';
+import 'typography_tokens.dart';
 
 /// Mastery app theme configuration using shadcn_ui
 /// Stone palette + Amber accent design system v1.0.0
@@ -118,22 +119,10 @@ class MasteryTheme {
 
   static ShadTextTheme _buildTextTheme() {
     return ShadTextTheme(
-      h1: MasteryTextStyles.displayLarge,
-      h2: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-      ),
-      h3: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-      ),
-      h4: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-      ),
+      h1: MasteryTextStyles.h1,
+      h2: MasteryTextStyles.h2,
+      h3: MasteryTextStyles.h3,
+      h4: MasteryTextStyles.h4,
       p: MasteryTextStyles.body,
       blockquote: MasteryTextStyles.bodySmall,
       table: MasteryTextStyles.body,
@@ -141,12 +130,32 @@ class MasteryTheme {
       lead: MasteryTextStyles.bodyLarge,
       large: MasteryTextStyles.bodyLarge,
       small: MasteryTextStyles.bodySmall,
-      muted: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: Color(0xFF78716C), // Stone 500
-      ),
+      muted: MasteryTextStyles.muted,
+    );
+  }
+}
+
+/// Standard Flutter ThemeData for widget previews
+class AppTheme {
+  AppTheme._();
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: MasteryColors.backgroundLight,
+      fontFamily: AppTypography.fontFamilySans,
+      extensions: const [MasteryColorScheme.light],
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: MasteryColors.backgroundDark,
+      fontFamily: AppTypography.fontFamilySans,
+      extensions: const [MasteryColorScheme.dark],
     );
   }
 }
