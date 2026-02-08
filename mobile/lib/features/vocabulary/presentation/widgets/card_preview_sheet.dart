@@ -45,7 +45,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     final meaningsAsync = ref.watch(meaningsProvider(widget.vocabularyId));
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -214,7 +214,11 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                                   ),
 
                                   // Card widget
-                                  Expanded(child: cardData.widget),
+                                  Expanded(
+                                    child: ClipRect(
+                                      child: cardData.widget,
+                                    ),
+                                  ),
                                 ],
                               );
                             },
