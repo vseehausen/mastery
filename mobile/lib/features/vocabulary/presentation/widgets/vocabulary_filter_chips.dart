@@ -75,13 +75,11 @@ class _FilterChip extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
-    this.icon,
   });
 
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -96,29 +94,14 @@ class _FilterChip extends StatelessWidget {
           color: isSelected ? colors.primaryAction : colors.muted,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected
-                    ? colors.primaryActionForeground
-                    : colors.foreground,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: isSelected
-                    ? colors.primaryActionForeground
-                    : colors.foreground,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: MasteryTextStyles.bodySmall.copyWith(
+            color: isSelected
+                ? colors.primaryActionForeground
+                : colors.foreground,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          ),
         ),
       ),
     );

@@ -15,14 +15,17 @@ void main() {
       );
 
       expect(find.text('All'), findsOneWidget);
-      expect(find.text('Enriched'), findsOneWidget);
-      expect(find.text('Not Enriched'), findsOneWidget);
+      expect(find.text('Captured'), findsOneWidget);
+      expect(find.text('Practicing'), findsOneWidget);
+      expect(find.text('Stabilizing'), findsOneWidget);
+      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('Mastered'), findsOneWidget);
     });
 
     testWidgets('calls onFilterChanged with all when All is tapped', (
       tester,
     ) async {
-      VocabularyFilter selectedFilter = VocabularyFilter.enriched;
+      VocabularyFilter selectedFilter = VocabularyFilter.captured;
 
       await tester.pumpTestWidget(
         VocabularyFilterChips(
@@ -36,25 +39,6 @@ void main() {
 
       expect(selectedFilter, VocabularyFilter.all);
     });
-
-    testWidgets(
-      'calls onFilterChanged with correct filter when chip is tapped',
-      (tester) async {
-        VocabularyFilter selectedFilter = VocabularyFilter.all;
-
-        await tester.pumpTestWidget(
-          VocabularyFilterChips(
-            selectedFilter: selectedFilter,
-            onFilterChanged: (filter) => selectedFilter = filter,
-          ),
-        );
-
-        await tester.tap(find.text('Enriched'));
-        await tester.pump();
-
-        expect(selectedFilter, VocabularyFilter.enriched);
-      },
-    );
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
@@ -78,48 +62,6 @@ void main() {
       );
 
       expect(find.text('All'), findsOneWidget);
-    });
-
-    testWidgets('shows sparkle icon on Enriched chip', (tester) async {
-      await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          selectedFilter: VocabularyFilter.all,
-          onFilterChanged: (_) {},
-        ),
-      );
-
-      expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
-    });
-
-    testWidgets('displays all progress stage filter options', (tester) async {
-      await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          selectedFilter: VocabularyFilter.all,
-          onFilterChanged: (_) {},
-        ),
-      );
-
-      expect(find.text('Captured'), findsOneWidget);
-      expect(find.text('Practicing'), findsOneWidget);
-      expect(find.text('Stabilizing'), findsOneWidget);
-      expect(find.text('Active'), findsOneWidget);
-      expect(find.text('Mastered'), findsOneWidget);
-    });
-
-    testWidgets('tapping Not Enriched chip calls onFilterChanged', (
-      tester,
-    ) async {
-      VocabularyFilter? selected;
-      await tester.pumpTestWidget(
-        VocabularyFilterChips(
-          selectedFilter: VocabularyFilter.all,
-          onFilterChanged: (filter) => selected = filter,
-        ),
-      );
-
-      await tester.tap(find.text('Not Enriched'));
-      await tester.pump();
-      expect(selected, VocabularyFilter.notEnriched);
     });
 
     testWidgets('tapping Captured chip calls onFilterChanged', (tester) async {
