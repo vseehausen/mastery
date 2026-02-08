@@ -44,6 +44,7 @@ class EnrichmentService {
     List<String>? vocabularyIds,
     int batchSize = 5,
     String languageCode = 'de',
+    bool forceReEnrich = false,
   }) async {
     debugPrint(
       '[EnrichmentService] Requesting enrichment: language=$languageCode, '
@@ -58,6 +59,9 @@ class EnrichmentService {
       };
       if (vocabularyIds != null && vocabularyIds.isNotEmpty) {
         body['vocabulary_ids'] = vocabularyIds;
+      }
+      if (forceReEnrich) {
+        body['force_re_enrich'] = true;
       }
 
       final response = await supabaseClient.functions.invoke(
@@ -75,15 +79,19 @@ class EnrichmentService {
       final data = response.data as Map<String, dynamic>;
       final enriched = data['enriched'] as List<dynamic>? ?? [];
       final failed = data['failed'] as List<dynamic>? ?? [];
+      final skipped = data['skipped'] as List<dynamic>? ?? [];
+
+      final enrichedCount = enriched.length;
+      final failedCount = failed.length;
 
       debugPrint(
-        '[EnrichmentService] Enrichment complete: ${enriched.length} enriched, '
-        '${failed.length} failed',
+        '[EnrichmentService] Enrichment complete: '
+        '$enrichedCount enriched, $failedCount failed, ${skipped.length} skipped',
       );
 
       return EnrichmentResult(
-        enrichedCount: enriched.length,
-        failedCount: failed.length,
+        enrichedCount: enrichedCount,
+        failedCount: failedCount,
       );
     } catch (e) {
       debugPrint('[EnrichmentService] Enrichment request error: $e');
@@ -109,6 +117,7 @@ class EnrichmentService {
       vocabularyIds: [vocabularyId],
       batchSize: 1,
       languageCode: languageCode,
+      forceReEnrich: true,
     );
   }
 

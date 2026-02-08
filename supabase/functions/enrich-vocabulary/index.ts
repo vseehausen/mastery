@@ -50,6 +50,7 @@ async function handleEnrichRequest(req: Request, userId: string): Promise<Respon
   const nativeLanguageCode: string = body.native_language_code;
   const batchSize = Math.min(body.batch_size || DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE);
   const vocabularyIds: string[] | undefined = body.vocabulary_ids;
+  const forceReEnrich: boolean = body.force_re_enrich ?? false;
 
   if (!nativeLanguageCode) {
     return errorResponse('native_language_code is required', 400);
@@ -95,14 +96,25 @@ async function handleEnrichRequest(req: Request, userId: string): Promise<Respon
   for (const word of wordsToEnrich) {
     try {
       // SAFEGUARD 1: Check if meaning already exists (race condition guard)
-      const existingMeaning = await checkExistingMeaning(client, userId, word.id);
-      if (existingMeaning) {
-        console.log(`[enrich-vocabulary] Skipping "${word.word}" - already has meaning`);
-        skipped.push(word.id);
-        continue;
+      // Skip this check if force_re_enrich is true
+      if (!forceReEnrich) {
+        const existingMeaning = await checkExistingMeaning(client, userId, word.id);
+        if (existingMeaning) {
+          console.log(`[enrich-vocabulary] Skipping "${word.word}" - already has meaning`);
+          skipped.push(word.id);
+          continue;
+        }
       }
 
       // SAFEGUARD 2: Try to atomically claim the word in queue
+      // If force_re_enrich is true, reset the queue status first
+      if (forceReEnrich) {
+        await client.from('enrichment_queue')
+          .delete()
+          .eq('user_id', userId)
+          .eq('vocabulary_id', word.id);
+      }
+
       const claimed = await tryClaimWord(client, userId, word.id);
       if (!claimed) {
         console.log(`[enrich-vocabulary] Skipping "${word.word}" - already being processed`);

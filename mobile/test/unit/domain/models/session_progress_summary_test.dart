@@ -144,7 +144,7 @@ void main() {
       });
 
       test('returns false when no transitions', () {
-        final summary = SessionProgressSummary.empty();
+        const summary = SessionProgressSummary.empty();
 
         expect(summary.hasTransitions, false);
       });
@@ -197,7 +197,7 @@ void main() {
       });
 
       test('returns false when no transitions', () {
-        final summary = SessionProgressSummary.empty();
+        const summary = SessionProgressSummary.empty();
 
         expect(summary.hasRareAchievements, false);
       });
@@ -301,7 +301,7 @@ void main() {
       });
 
       test('returns empty string when no transitions', () {
-        final summary = SessionProgressSummary.empty();
+        const summary = SessionProgressSummary.empty();
 
         expect(summary.toDisplayString(), '');
       });
@@ -330,7 +330,7 @@ void main() {
 
     group('empty constructor', () {
       test('creates summary with no transitions', () {
-        final summary = SessionProgressSummary.empty();
+        const summary = SessionProgressSummary.empty();
 
         expect(summary.transitions, isEmpty);
         expect(summary.hasTransitions, false);

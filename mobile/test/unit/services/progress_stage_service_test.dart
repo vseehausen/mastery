@@ -6,7 +6,6 @@ import 'package:mastery/domain/models/progress_stage.dart';
 void main() {
   group('ProgressStageService', () {
     late ProgressStageService service;
-    final now = DateTime.now();
 
     setUp(() {
       service = ProgressStageService();

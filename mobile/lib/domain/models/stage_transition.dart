@@ -5,21 +5,6 @@ import 'package:mastery/domain/models/progress_stage.dart';
 /// Stage transitions are triggered by user-driven learning events (reviews, recalls).
 /// They are collected during a session and aggregated for the session recap display.
 class StageTransition {
-  /// The vocabulary word ID that transitioned.
-  final String vocabularyId;
-
-  /// The word display text (for UI).
-  final String wordText;
-
-  /// The previous stage (null if this is the first transition for this word).
-  final ProgressStage? fromStage;
-
-  /// The new stage after the transition.
-  final ProgressStage toStage;
-
-  /// When the transition occurred.
-  final DateTime timestamp;
-
   const StageTransition({
     required this.vocabularyId,
     required this.wordText,
@@ -40,6 +25,21 @@ class StageTransition {
       timestamp: DateTime.parse(json['timestamp'] as String),
     );
   }
+
+  /// The vocabulary word ID that transitioned.
+  final String vocabularyId;
+
+  /// The word display text (for UI).
+  final String wordText;
+
+  /// The previous stage (null if this is the first transition for this word).
+  final ProgressStage? fromStage;
+
+  /// The new stage after the transition.
+  final ProgressStage toStage;
+
+  /// When the transition occurred.
+  final DateTime timestamp;
 
   /// Returns true if this transition represents a rare achievement.
   ///

@@ -6,13 +6,13 @@ import 'package:mastery/domain/models/stage_transition.dart';
 /// Aggregates transitions by type for compact display in the session recap.
 /// Provides counts for each stage and methods for formatting the summary.
 class SessionProgressSummary {
-  /// All stage transitions that occurred during the session.
-  final List<StageTransition> transitions;
-
   const SessionProgressSummary(this.transitions);
 
   /// Creates an empty summary with no transitions.
   const SessionProgressSummary.empty() : transitions = const [];
+
+  /// All stage transitions that occurred during the session.
+  final List<StageTransition> transitions;
 
   /// Count of words that reached Stabilizing stage.
   int get stabilizingCount => transitions
