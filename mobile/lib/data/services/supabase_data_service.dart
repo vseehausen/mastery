@@ -61,6 +61,14 @@ class SupabaseDataService {
     return response.count;
   }
 
+  /// Delete a vocabulary item (soft delete)
+  Future<void> deleteVocabulary(String id) async {
+    await _client
+        .from('vocabulary')
+        .update({'deleted_at': DateTime.now().toIso8601String()})
+        .eq('id', id);
+  }
+
   // ===========================================================================
   // Meanings
   // ===========================================================================

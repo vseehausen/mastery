@@ -89,13 +89,17 @@ class _VocabularyDetailScreenState
     // Trigger enrichment check for un-enriched words
     _triggerEnrichmentIfNeeded(meaningsAsync, vocab.id);
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        primary: false,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Stack(
+      children: [
+        // Scrollable content (fill entire space)
+        Positioned.fill(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              primary: false,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             // HERO AREA: Word + Stats (side by side)
             _buildHeroArea(vocab, learningCard),
             const SizedBox(height: 32),
@@ -134,14 +138,6 @@ class _VocabularyDetailScreenState
               },
             ),
 
-            // DIVIDER before actions
-            _buildDivider(),
-            const SizedBox(height: 32),
-
-            // ACTION BAR (all subtle)
-            _buildActionBar(meaningsAsync, vocab.id),
-            const SizedBox(height: 24),
-
             // Dev info
             meaningsAsync.when(
               loading: () => const SizedBox.shrink(),
@@ -151,9 +147,15 @@ class _VocabularyDetailScreenState
                 return _buildDevInfoSection(meanings.first, vocab.id, ref);
               },
             ),
-          ],
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+
+        // Sticky bottom bar
+        _buildBottomBar(meaningsAsync, vocab.id),
+      ],
     );
   }
 
@@ -324,6 +326,25 @@ class _VocabularyDetailScreenState
             height: 1.2,
           ),
         ),
+        const SizedBox(height: 6),
+
+        // Suggest edit link (inline feedback)
+        TextButton(
+          onPressed: () => _showInlineFeedback(meaning.id),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            'Suggest edit',
+            style: TextStyle(
+              fontSize: 13,
+              color: colors.mutedForeground,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
 
         // Definition
@@ -436,68 +457,92 @@ class _VocabularyDetailScreenState
   }
 
   /// Action bar (all subtle)
-  Widget _buildActionBar(
+  /// Sticky bottom bar with Preview button and overflow menu
+  Widget _buildBottomBar(
     AsyncValue<List<MeaningModel>> meaningsAsync,
     String vocabularyId,
   ) {
     final colors = context.masteryColors;
-    return meaningsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (meanings) {
-        final hasMeaning = meanings.isNotEmpty;
-        final meaning = hasMeaning ? meanings.first : null;
-        final userId = ref.watch(currentUserIdProvider);
 
-        return Row(
-          children: [
-            // Preview Cards - outline (not primary)
-            Expanded(
-              child: ShadButton.outline(
-                onPressed: hasMeaning
-                    ? () {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => CardPreviewSheet(
-                            vocabularyId: vocabularyId,
-                            word: ref
-                                    .read(vocabularyByIdProvider(vocabularyId))
-                                    .valueOrNull
-                                    ?.word ??
-                                '',
-                          ),
-                        );
-                      }
-                    : null,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.visibility_outlined, size: 18),
-                    SizedBox(width: 8),
-                    Text('Preview'),
-                  ],
-                ),
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.background.withValues(alpha: 0.95),
+            border: Border(
+              top: BorderSide(
+                color: colors.border.withValues(alpha: 0.2),
+                width: 1,
               ),
             ),
-            const SizedBox(width: 12),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: meaningsAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (meanings) {
+            final hasMeaning = meanings.isNotEmpty;
+            final meaning = hasMeaning ? meanings.first : null;
+            final userId = ref.watch(currentUserIdProvider);
 
-            // Actions menu (feedback + re-generate)
-            if (hasMeaning && userId != null)
-              IconButton(
-                onPressed: () => _showActionMenu(vocabularyId, meaning!.id, userId),
-                icon: const Icon(Icons.more_vert, size: 20),
-                style: IconButton.styleFrom(
-                  side: BorderSide(color: colors.border),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            return Row(
+              children: [
+                // Preview button - secondary style (TextButton with icon)
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: hasMeaning
+                        ? () {
+                            showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => CardPreviewSheet(
+                                vocabularyId: vocabularyId,
+                                word: ref
+                                        .read(
+                                          vocabularyByIdProvider(vocabularyId),
+                                        )
+                                        .valueOrNull
+                                        ?.word ??
+                                    '',
+                              ),
+                            );
+                          }
+                        : null,
+                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    label: const Text('Preview'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        );
-      },
+                const SizedBox(width: 12),
+
+                // Overflow menu
+                if (hasMeaning && userId != null)
+                  IconButton(
+                    onPressed: () =>
+                        _showActionMenu(vocabularyId, meaning!.id, userId),
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    style: IconButton.styleFrom(
+                      side: BorderSide(color: colors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+      ),
     );
   }
 
@@ -681,7 +726,11 @@ class _VocabularyDetailScreenState
   }
 
   /// Show actions menu (feedback + re-generate)
-  Future<void> _showActionMenu(String vocabularyId, String meaningId, String userId) async {
+  /// Show inline feedback options for AI-generated translation
+  Future<void> _showInlineFeedback(String meaningId) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => Container(
@@ -691,24 +740,18 @@ class _VocabularyDetailScreenState
           children: [
             ListTile(
               leading: const Icon(Icons.thumb_up_outlined),
-              title: const Text('This meaning is helpful'),
+              title: const Text('This translation is correct'),
               onTap: () => Navigator.pop(context, 'positive'),
             ),
             ListTile(
               leading: const Icon(Icons.thumb_down_outlined),
-              title: const Text('This meaning is not helpful'),
+              title: const Text('This translation is wrong'),
               onTap: () => Navigator.pop(context, 'negative'),
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined),
               title: const Text('Report an issue'),
               onTap: () => Navigator.pop(context, 'flag'),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: const Text('Re-generate AI Enrichment'),
-              onTap: () => Navigator.pop(context, 're-generate'),
             ),
           ],
         ),
@@ -723,8 +766,55 @@ class _VocabularyDetailScreenState
       if (mounted) {
         await _showFlagSheet(meaningId, userId);
       }
-    } else if (action == 're-generate') {
+    }
+  }
+
+  /// Show overflow menu with content actions
+  Future<void> _showActionMenu(String vocabularyId, String meaningId, String userId) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.refresh),
+              title: const Text('Re-generate AI Enrichment'),
+              onTap: () => Navigator.pop(context, 're-generate'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: const Text('Share'),
+              onTap: () => Navigator.pop(context, 'share'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null) return;
+
+    if (action == 're-generate') {
       await _showReEnrichDialog(vocabularyId);
+    } else if (action == 'share') {
+      // TODO: Implement share functionality
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Share functionality coming soon')),
+        );
+      }
+    } else if (action == 'delete') {
+      await _showDeleteConfirmation(vocabularyId);
     }
   }
 
@@ -982,6 +1072,63 @@ class _VocabularyDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Re-enrichment failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show delete confirmation dialog
+  Future<void> _showDeleteConfirmation(String vocabularyId) async {
+    final vocab = ref.read(vocabularyByIdProvider(vocabularyId)).valueOrNull;
+    if (vocab == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Vocabulary'),
+        content: Text(
+          'Are you sure you want to delete "${vocab.word}"? '
+          'This will also delete all associated meanings, cues, and learning progress.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    try {
+      final service = ref.read(supabaseDataServiceProvider);
+      await service.deleteVocabulary(vocabularyId);
+
+      // Navigate back
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${vocab.word}" deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Delete failed: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
