@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../core/theme/color_tokens.dart';
 import '../../core/theme/text_styles.dart';
@@ -12,7 +11,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/dev_mode_provider.dart';
 import '../../providers/learning_providers.dart';
 import '../../providers/supabase_provider.dart';
-import '../learn/screens/session_screen.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
 import 'presentation/widgets/card_preview_sheet.dart';
@@ -43,15 +41,32 @@ class VocabularyDetailScreen extends ConsumerStatefulWidget {
 
 class _VocabularyDetailScreenState
     extends ConsumerState<VocabularyDetailScreen> {
-  String? _editingMeaningId;
   bool _enrichmentTriggered = false;
 
   @override
   Widget build(BuildContext context) {
     final vocabAsync = ref.watch(vocabularyByIdProvider(widget.vocabularyId));
+    final meaningsAsync = ref.watch(meaningsProvider(widget.vocabularyId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Word Details')),
+      appBar: AppBar(
+        title: const Text('Word Details'),
+        actions: [
+          // Edit icon in header
+          meaningsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
+            data: (meanings) {
+              if (meanings.isEmpty) return const SizedBox.shrink();
+              final meaning = meanings.first;
+              return IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => _openMeaningEditor(context, meaning),
+              );
+            },
+          ),
+        ],
+      ),
       body: vocabAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
@@ -87,12 +102,9 @@ class _VocabularyDetailScreenState
             // Hero
             WordHeader(
               word: vocab.word,
-              pronunciation: vocab.stem,
+              pronunciation: vocab.stem != vocab.word ? vocab.stem : null,
               status: LearningStatus.unknown,
             ),
-            const SizedBox(height: 16),
-
-            _buildPrimaryActionCard(context, isDark),
             const SizedBox(height: 24),
 
             // Meaning
@@ -196,54 +208,6 @@ class _VocabularyDetailScreenState
     );
   }
 
-  Widget _buildPrimaryActionCard(BuildContext context, bool isDark) {
-    final colors = context.masteryColors;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.border,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Next best action',
-            style: MasteryTextStyles.bodyBold.copyWith(
-              color: colors.foreground,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Practice this word now to reinforce memory.',
-            style: MasteryTextStyles.bodySmall.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ShadButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const SessionScreen(),
-                  ),
-                );
-              },
-              child: const Text('Practice now'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildExpandableSection({
     required String title,
     required bool isDark,
@@ -295,37 +259,7 @@ class _VocabularyDetailScreenState
     AsyncValue<List<MeaningModel>> meaningsAsync,
     bool isDark,
   ) {
-    return Row(
-      children: [
-        _buildSectionTitle('Meaning', isDark),
-        const Spacer(),
-        meaningsAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
-          data: (meanings) {
-            if (meanings.isEmpty) return const SizedBox.shrink();
-            final meaning = meanings.first;
-            final isEditing = _editingMeaningId == meaning.id;
-            return TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _editingMeaningId = isEditing ? null : meaning.id;
-                });
-              },
-              icon: Icon(
-                isEditing ? Icons.close : Icons.edit_outlined,
-                size: 16,
-              ),
-              label: Text(isEditing ? 'Close' : 'Edit'),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              ),
-            );
-          },
-        ),
-      ],
-    );
+    return _buildSectionTitle('Meaning', isDark);
   }
 
   Widget _buildLoadingCard({required String message, required bool isDark}) {
@@ -545,36 +479,6 @@ class _VocabularyDetailScreenState
     // Show only the first (primary) meaning directly
     final meaning = meanings.first;
 
-    if (_editingMeaningId == meaning.id) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MeaningEditor(
-            meaning: meaning,
-            onSave:
-                ({
-                  required String translation,
-                  required String definition,
-                  required String partOfSpeech,
-                  required List<String> synonyms,
-                  required List<String> alternativeTranslations,
-                }) {
-                  _handleMeaningSave(
-                    meaning,
-                    translation: translation,
-                    definition: definition,
-                    partOfSpeech: partOfSpeech,
-                    synonyms: synonyms,
-                    alternativeTranslations: alternativeTranslations,
-                  );
-                },
-            onCancel: () => setState(() => _editingMeaningId = null),
-          ),
-          const SizedBox(height: 24),
-        ],
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [MeaningCard(meaning: meaning)],
@@ -665,128 +569,6 @@ class _VocabularyDetailScreenState
       }
     } catch (e) {
       debugPrint('[VocabularyDetail] Enrichment error: $e');
-    }
-  }
-
-  Future<void> _handleMeaningSave(
-    MeaningModel meaning, {
-    required String translation,
-    required String definition,
-    required String partOfSpeech,
-    required List<String> synonyms,
-    required List<String> alternativeTranslations,
-  }) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
-    final service = ref.read(supabaseDataServiceProvider);
-
-    // Record edits for changed fields
-    if (translation != meaning.primaryTranslation) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'primary_translation',
-        originalValue: meaning.primaryTranslation,
-        userValue: translation,
-      );
-    }
-    if (definition != meaning.englishDefinition) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'english_definition',
-        originalValue: meaning.englishDefinition,
-        userValue: definition,
-      );
-    }
-    if (partOfSpeech != (meaning.partOfSpeech ?? 'other')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'part_of_speech',
-        originalValue: meaning.partOfSpeech ?? 'other',
-        userValue: partOfSpeech,
-      );
-    }
-    if (synonyms.join(',') != meaning.synonyms.join(',')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'synonyms',
-        originalValue: meaning.synonyms.join(','),
-        userValue: synonyms.join(','),
-      );
-    }
-    if (alternativeTranslations.join(',') !=
-        meaning.alternativeTranslations.join(',')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'alternative_translations',
-        originalValue: meaning.alternativeTranslations.join(','),
-        userValue: alternativeTranslations.join(','),
-      );
-    }
-
-    // Apply the update
-    await service.updateMeaning(
-      id: meaning.id,
-      primaryTranslation: translation,
-      englishDefinition: definition,
-      partOfSpeech: partOfSpeech != (meaning.partOfSpeech ?? 'other')
-          ? partOfSpeech
-          : meaning.partOfSpeech,
-      synonyms: synonyms,
-      alternativeTranslations: alternativeTranslations,
-    );
-
-    // Auto-update related cues
-    await _autoUpdateCues(
-      meaningId: meaning.id,
-      translationChanged: translation != meaning.primaryTranslation,
-      newTranslation: translation,
-      definitionChanged: definition != meaning.englishDefinition,
-      newDefinition: definition,
-      synonymsChanged: synonyms.join(',') != meaning.synonyms.join(','),
-      newSynonyms: synonyms,
-    );
-
-    // Refresh meanings, cues, and exit edit mode
-    ref.invalidate(meaningsProvider(widget.vocabularyId));
-    ref.invalidate(cuesForVocabularyProvider(widget.vocabularyId));
-    setState(() => _editingMeaningId = null);
-  }
-
-  Future<void> _autoUpdateCues({
-    required String meaningId,
-    required bool translationChanged,
-    required String newTranslation,
-    required bool definitionChanged,
-    required String newDefinition,
-    required bool synonymsChanged,
-    required List<String> newSynonyms,
-  }) async {
-    final service = ref.read(supabaseDataServiceProvider);
-    final cues = await service.getCuesForMeaning(meaningId);
-
-    for (final cue in cues) {
-      final cueType = cue['cue_type'] as String?;
-      final cueId = cue['id'] as String;
-
-      if (translationChanged && cueType == 'translation') {
-        await service.updateCue(cueId, promptText: newTranslation);
-      } else if (definitionChanged && cueType == 'definition') {
-        await service.updateCue(cueId, promptText: newDefinition);
-      } else if (synonymsChanged && cueType == 'synonym') {
-        final synonymsText = newSynonyms.join(', ');
-        await service.updateCue(cueId, promptText: synonymsText);
-      }
     }
   }
 
@@ -929,5 +711,63 @@ class _VocabularyDetailScreenState
         );
       }
     }
+  }
+
+  /// Open meaning editor as full-screen modal
+  Future<void> _openMeaningEditor(BuildContext context, MeaningModel meaning) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MeaningEditor(
+          meaning: meaning,
+          onSave: ({
+            required String translation,
+            required String definition,
+            required String partOfSpeech,
+            required List<String> synonyms,
+            required List<String> alternativeTranslations,
+          }) async {
+            // Update the meaning
+            final service = ref.read(supabaseDataServiceProvider);
+            final userId = ref.read(currentUserIdProvider);
+            if (userId == null) return;
+
+            try {
+              await service.updateMeaning(
+                id: meaning.id,
+                primaryTranslation: translation,
+                englishDefinition: definition,
+                partOfSpeech: partOfSpeech,
+                synonyms: synonyms,
+                alternativeTranslations: alternativeTranslations,
+              );
+
+              // Refresh meanings
+              ref.invalidate(meaningsProvider(widget.vocabularyId));
+
+              if (context.mounted) {
+                Navigator.pop(context, true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Meaning updated'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to update meaning: $e'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            }
+          },
+          onCancel: () => Navigator.pop(context, false),
+        ),
+      ),
+    );
   }
 }
