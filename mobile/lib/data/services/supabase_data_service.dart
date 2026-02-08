@@ -100,6 +100,26 @@ class SupabaseDataService {
     return list.map((m) => m['vocabulary_id'] as String).toSet().toList();
   }
 
+  /// Get all primary translations for the current user's vocabulary
+  /// Returns a map of vocabularyId -> primaryTranslation
+  Future<Map<String, String>> getAllPrimaryTranslations(String userId) async {
+    final response = await _client
+        .from('meanings')
+        .select('vocabulary_id, primary_translation')
+        .eq('user_id', userId)
+        .eq('is_primary', true)
+        .isFilter('deleted_at', null);
+    final list = List<Map<String, dynamic>>.from(response as List);
+    return Map.fromEntries(
+      list.map(
+        (m) => MapEntry(
+          m['vocabulary_id'] as String,
+          m['primary_translation'] as String? ?? '',
+        ),
+      ),
+    );
+  }
+
   /// Update a meaning
   Future<void> updateMeaning({
     required String id,

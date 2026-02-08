@@ -36,6 +36,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
     final vocabularyAsync = ref.watch(vocabularyListProvider);
     final enrichedIdsAsync = ref.watch(enrichedVocabularyIdsProvider);
     final learningCardsAsync = ref.watch(learningCardsProvider);
+    final translationsAsync = ref.watch(primaryTranslationsMapProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -94,6 +95,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                     statusMap[card.vocabularyId] = card.status;
                   }
 
+                  // Get translations map (empty if loading/error)
+                  final translations =
+                      translationsAsync.valueOrNull ?? <String, String>{};
+
                   // Filter by search query
                   var filtered = vocabulary
                       .where(
@@ -144,6 +149,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       ref.invalidate(vocabularyListProvider);
                       ref.invalidate(enrichedVocabularyIdsProvider);
                       ref.invalidate(learningCardsProvider);
+                      ref.invalidate(primaryTranslationsMapProvider);
                     },
                     child: ListView.builder(
                       primary: false,
@@ -153,9 +159,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                         final vocab = filtered[index];
                         final isEnriched = enrichedIds.contains(vocab.id);
                         final status = statusMap[vocab.id];
+                        final translation = translations[vocab.id];
                         return WordCard(
                           word: vocab.word,
-                          definition: vocab.stem ?? vocab.word,
+                          definition: translation ?? vocab.stem ?? vocab.word,
                           isEnriched: isEnriched,
                           status: status,
                           onTap: () {
@@ -278,6 +285,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 ref.invalidate(vocabularyListProvider);
                 ref.invalidate(enrichedVocabularyIdsProvider);
                 ref.invalidate(learningCardsProvider);
+                ref.invalidate(primaryTranslationsMapProvider);
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Refresh'),
@@ -309,6 +317,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
               ref.invalidate(vocabularyListProvider);
               ref.invalidate(enrichedVocabularyIdsProvider);
               ref.invalidate(learningCardsProvider);
+              ref.invalidate(primaryTranslationsMapProvider);
             },
             child: const Text('Retry'),
           ),
