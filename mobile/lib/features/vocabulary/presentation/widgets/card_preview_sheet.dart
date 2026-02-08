@@ -353,8 +353,6 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     final disambiguationOptions = disambiguationCue?.metadata['options'] as List? ??
         [widget.word, meaning.synonyms.firstOrNull ?? 'alternative'];
     final correctIndex = disambiguationCue?.metadata['correct_index'] as int? ?? 0;
-    final explanation = disambiguationCue?.metadata['explanation'] as String? ??
-        'Explanation of the distinction';
 
     cards.add(_CardData(
       label: 'Disambiguation',
@@ -364,7 +362,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
         clozeSentence: disambiguationCue?.promptText ?? 'The ___ was in the text.',
         options: disambiguationOptions.cast<String>(),
         correctIndex: correctIndex,
-        explanation: explanation,
+        explanation: '', // No explanation in preview mode
         onGrade: (_) {}, // No-op in preview mode
       ),
     ));
