@@ -226,11 +226,11 @@ After implementing and testing features, perform manual verification on iPhone s
 
 ```bash
 # Start once with pid tracking
-flutter run -d <UDID> --pid-file /tmp/flutter.pid
+flutter run -d <UDID> --pid-file tmp_flutter_run.pid
 
 # Use signals for control
-kill -SIGUSR1 $(cat /tmp/flutter.pid)  # Hot reload (~1s, preserves state)
-kill -SIGUSR2 $(cat /tmp/flutter.pid)  # Hot restart (~5s, resets state)
+kill -SIGUSR1 $(cat tmp_flutter_run.pid)  # Hot reload (~1s, preserves state)
+kill -SIGUSR2 $(cat tmp_flutter_run.pid)  # Hot restart (~5s, resets state)
 
 # Or send to stdin: r (reload), R (restart), q (quit), d (detach), v (DevTools)
 ```

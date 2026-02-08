@@ -56,3 +56,6 @@ app.*.map.json
 # Local database
 *.sqlite
 *.db
+
+# Fluter PID file
+tmp_flutter_run.pid
