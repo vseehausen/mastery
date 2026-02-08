@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/word_card.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../widgets/vocabulary_search_bar.dart';
 import '../widgets/vocabulary_filter_chips.dart';
@@ -30,9 +32,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final vocabularyAsync = ref.watch(vocabularyListProvider);
     final enrichedIdsAsync = ref.watch(enrichedVocabularyIdsProvider);
+    final learningCardsAsync = ref.watch(learningCardsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -44,7 +47,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
               child: Text(
                 'Vocabulary',
                 style: MasteryTextStyles.displayLarge.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colors.foreground,
                 ),
               ),
             ),
@@ -65,6 +68,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                   ),
                   const SizedBox(height: 12),
                   VocabularyFilterChips(
+                    selectedFilter: _selectedFilter,
                     onFilterChanged: (filter) {
                       setState(() => _selectedFilter = filter);
                     },
@@ -77,11 +81,18 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
             // Vocabulary list
             Expanded(
               child: vocabularyAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => _buildSkeletonLoader(),
                 error: (error, stack) => _buildErrorState(error),
                 data: (vocabulary) {
                   // Get enriched IDs (empty set if loading/error)
                   final enrichedIds = enrichedIdsAsync.valueOrNull ?? <String>{};
+
+                  // Build status map from learning cards
+                  final statusMap = <String, LearningStatus>{};
+                  final learningCards = learningCardsAsync.valueOrNull ?? [];
+                  for (final card in learningCards) {
+                    statusMap[card.vocabularyId] = card.status;
+                  }
 
                   // Filter by search query
                   var filtered = vocabulary
@@ -132,6 +143,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       // Invalidate providers to refetch from Supabase
                       ref.invalidate(vocabularyListProvider);
                       ref.invalidate(enrichedVocabularyIdsProvider);
+                      ref.invalidate(learningCardsProvider);
                     },
                     child: ListView.builder(
                       primary: false,
@@ -140,10 +152,12 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       itemBuilder: (context, index) {
                         final vocab = filtered[index];
                         final isEnriched = enrichedIds.contains(vocab.id);
+                        final status = statusMap[vocab.id];
                         return WordCard(
                           word: vocab.word,
                           definition: vocab.stem ?? vocab.word,
                           isEnriched: isEnriched,
+                          status: status,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
@@ -166,8 +180,47 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
     );
   }
 
+  Widget _buildSkeletonLoader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        itemCount: 8,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: LoadingSkeleton(height: 20, width: double.infinity),
+                    ),
+                    const SizedBox(width: 12),
+                    LoadingSkeleton(
+                      height: 20,
+                      width: 20,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const LoadingSkeleton(height: 14, width: double.infinity),
+                const SizedBox(height: 12),
+                Divider(
+                  height: 1,
+                  color: context.masteryColors.border,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     // Show different messages based on filter
     String message;
@@ -196,14 +249,14 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 ? Icons.check_circle_outline
                 : Icons.book_outlined,
             size: 64,
-            color: isDark ? Colors.grey[700] : Colors.grey[300],
+            color: colors.mutedForeground,
           ),
           const SizedBox(height: 16),
           Text(
             message,
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 18,
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 8),
@@ -213,17 +266,18 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
               subMessage,
               textAlign: TextAlign.center,
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: colors.mutedForeground,
               ),
             ),
           ),
           if (_selectedFilter == VocabularyFilter.all) ...[
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            OutlinedButton.icon(
               onPressed: () async {
                 // Just refresh - Supabase handles the data
                 ref.invalidate(vocabularyListProvider);
                 ref.invalidate(enrichedVocabularyIdsProvider);
+                ref.invalidate(learningCardsProvider);
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Refresh'),
@@ -235,25 +289,26 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
   }
 
   Widget _buildErrorState(Object error) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          Icon(Icons.error_outline, size: 64, color: colors.destructive),
           const SizedBox(height: 16),
           Text(
             'Error: $error',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          OutlinedButton(
             onPressed: () {
               ref.invalidate(vocabularyListProvider);
               ref.invalidate(enrichedVocabularyIdsProvider);
+              ref.invalidate(learningCardsProvider);
             },
             child: const Text('Retry'),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/color_tokens.dart';
 
 /// Skeleton loader widget for displaying loading states
 class LoadingSkeleton extends StatefulWidget {
@@ -38,6 +39,8 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -49,7 +52,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Colors.grey[300]!, Colors.grey[200]!, Colors.grey[300]!],
+              colors: [colors.muted, colors.border, colors.muted],
               stops: [
                 _controller.value - 0.3,
                 _controller.value,

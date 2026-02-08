@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 
 /// Search bar for vocabulary screen
 class VocabularySearchBar extends StatelessWidget {
@@ -15,20 +16,17 @@ class VocabularySearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.grey[300];
+    final colors = context.masteryColors;
 
     return TextField(
       controller: controller,
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: 'Search words...',
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: Icon(Icons.search, color: colors.mutedForeground),
         suffixIcon: controller?.text.isNotEmpty ?? false
             ? IconButton(
-                icon: const Icon(Icons.close),
+                icon: Icon(Icons.close, color: colors.mutedForeground),
                 onPressed: () {
                   controller?.clear();
                   onClear?.call();
@@ -37,23 +35,21 @@ class VocabularySearchBar extends StatelessWidget {
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderColor ?? Colors.grey),
+          borderSide: BorderSide(color: colors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderColor ?? Colors.grey),
+          borderSide: BorderSide(color: colors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
+            color: colors.ring,
             width: 2,
           ),
         ),
         filled: true,
-        fillColor: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.grey[50],
+        fillColor: colors.muted,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
       ),
     );

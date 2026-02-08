@@ -44,17 +44,14 @@ class StatusBadge extends StatelessWidget {
   }
 
   (Color, Color) _getColors(BuildContext context) {
+    final colors = context.masteryColors;
     switch (status) {
       case LearningStatus.known:
-        return (context.masteryColors.successMuted, context.masteryColors.success);
+        return (colors.successMuted, colors.success);
       case LearningStatus.learning:
-        return (context.masteryColors.warningMuted, context.masteryColors.warning);
+        return (colors.warningMuted, colors.warning);
       case LearningStatus.unknown:
-        // Subtle gray for "New" - less prominent
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return isDark
-            ? (const Color(0xFF27272A), const Color(0xFF71717A))
-            : (const Color(0xFFF4F4F5), const Color(0xFF71717A));
+        return (colors.muted, colors.mutedForeground);
     }
   }
 }

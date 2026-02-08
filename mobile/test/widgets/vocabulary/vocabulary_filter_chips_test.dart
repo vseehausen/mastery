@@ -8,7 +8,10 @@ void main() {
   group('VocabularyFilterChips', () {
     testWidgets('displays all filter options', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(onFilterChanged: (_) {}),
+        VocabularyFilterChips(
+          selectedFilter: VocabularyFilter.all,
+          onFilterChanged: (_) {},
+        ),
       );
 
       expect(find.text('All'), findsOneWidget);
@@ -23,6 +26,7 @@ void main() {
 
       await tester.pumpTestWidget(
         VocabularyFilterChips(
+          selectedFilter: selectedFilter,
           onFilterChanged: (filter) => selectedFilter = filter,
         ),
       );
@@ -40,6 +44,7 @@ void main() {
 
         await tester.pumpTestWidget(
           VocabularyFilterChips(
+            selectedFilter: selectedFilter,
             onFilterChanged: (filter) => selectedFilter = filter,
           ),
         );
@@ -53,7 +58,10 @@ void main() {
 
     testWidgets('renders correctly in dark theme', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(onFilterChanged: (_) {}),
+        VocabularyFilterChips(
+          selectedFilter: VocabularyFilter.all,
+          onFilterChanged: (_) {},
+        ),
         themeMode: ThemeMode.dark,
       );
 
@@ -62,7 +70,10 @@ void main() {
 
     testWidgets('renders correctly in light theme', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(onFilterChanged: (_) {}),
+        VocabularyFilterChips(
+          selectedFilter: VocabularyFilter.all,
+          onFilterChanged: (_) {},
+        ),
         themeMode: ThemeMode.light,
       );
 
@@ -71,7 +82,10 @@ void main() {
 
     testWidgets('shows sparkle icon on Enriched chip', (tester) async {
       await tester.pumpTestWidget(
-        VocabularyFilterChips(onFilterChanged: (_) {}),
+        VocabularyFilterChips(
+          selectedFilter: VocabularyFilter.all,
+          onFilterChanged: (_) {},
+        ),
       );
 
       expect(find.byIcon(Icons.auto_awesome), findsOneWidget);

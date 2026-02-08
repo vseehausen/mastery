@@ -1,3 +1,5 @@
+import '../../core/theme/color_tokens.dart';
+
 /// Learning card entity - FSRS state for each vocabulary item
 class LearningCardModel {
   const LearningCardModel({
@@ -57,6 +59,21 @@ class LearningCardModel {
   final DateTime updatedAt;
   final DateTime? deletedAt;
   final int version;
+
+  /// Convert FSRS state to LearningStatus
+  /// state: 0=new, 1=learning, 2=review, 3=relearning
+  LearningStatus get status {
+    if (state == 2) {
+      // review state = known
+      return LearningStatus.known;
+    } else if (state == 1 || state == 3) {
+      // learning or relearning = learning
+      return LearningStatus.learning;
+    } else {
+      // new = unknown
+      return LearningStatus.unknown;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {

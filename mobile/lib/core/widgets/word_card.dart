@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/text_styles.dart';
+import '../theme/color_tokens.dart';
+import 'status_badge.dart';
 
 /// Card widget for displaying vocabulary word in list
 class WordCard extends StatelessWidget {
@@ -9,19 +11,18 @@ class WordCard extends StatelessWidget {
     required this.definition,
     required this.onTap,
     this.isEnriched = false,
+    this.status,
   });
 
   final String word;
   final String definition;
   final VoidCallback onTap;
   final bool isEnriched;
+  final LearningStatus? status;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.grey[300];
+    final colors = context.masteryColors;
 
     return InkWell(
       onTap: onTap,
@@ -44,7 +45,7 @@ class WordCard extends StatelessWidget {
                             child: Text(
                               word,
                               style: MasteryTextStyles.bodyBold.copyWith(
-                                color: isDark ? Colors.white : Colors.black,
+                                color: colors.foreground,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -55,10 +56,12 @@ class WordCard extends StatelessWidget {
                             Icon(
                               Icons.auto_awesome,
                               size: 14,
-                              color: isDark
-                                  ? Colors.amber[300]
-                                  : Colors.amber[700],
+                              color: colors.warning,
                             ),
+                          ],
+                          if (status != null) ...[
+                            const SizedBox(width: 6),
+                            StatusBadge(status: status!, compact: true),
                           ],
                         ],
                       ),
@@ -66,7 +69,7 @@ class WordCard extends StatelessWidget {
                       Text(
                         definition,
                         style: MasteryTextStyles.bodySmall.copyWith(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: colors.mutedForeground,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -77,12 +80,12 @@ class WordCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Icon(
                   Icons.chevron_right,
-                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                  color: colors.mutedForeground,
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: borderColor, indent: 16, endIndent: 16),
+          Divider(height: 1, color: colors.border, indent: 16, endIndent: 16),
         ],
       ),
     );
