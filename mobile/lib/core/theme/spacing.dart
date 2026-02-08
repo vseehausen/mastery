@@ -62,5 +62,4 @@ abstract final class AppSpacing {
 
   /// Screen vertical padding - 24px
   static const double screenPaddingY = s6;
-
 }

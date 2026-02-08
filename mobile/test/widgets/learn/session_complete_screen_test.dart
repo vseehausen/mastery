@@ -81,8 +81,9 @@ final _masteredTransition = StageTransition(
 void main() {
   group('SessionCompleteScreen', () {
     group('Progress Made card visibility', () {
-      testWidgets('shows Progress Made card when transitions are passed',
-          (tester) async {
+      testWidgets('shows Progress Made card when transitions are passed', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -103,54 +104,58 @@ void main() {
         expect(find.text('Progress Made'), findsOneWidget);
       });
 
-      testWidgets('does NOT show Progress Made card when transitions is empty',
-          (tester) async {
-        _setPhoneSize(tester);
-        await tester.pumpWidget(
-          _buildTestableScreen(
-            screen: const SessionCompleteScreen(
-              sessionId: 'session-1',
-              itemsCompleted: 10,
-              totalItems: 10,
-              elapsedSeconds: 300,
-              plannedSeconds: 300,
-              isFullCompletion: true,
-              transitions: [],
+      testWidgets(
+        'does NOT show Progress Made card when transitions is empty',
+        (tester) async {
+          _setPhoneSize(tester);
+          await tester.pumpWidget(
+            _buildTestableScreen(
+              screen: const SessionCompleteScreen(
+                sessionId: 'session-1',
+                itemsCompleted: 10,
+                totalItems: 10,
+                elapsedSeconds: 300,
+                plannedSeconds: 300,
+                isFullCompletion: true,
+                transitions: [],
+              ),
+              overrides: _defaultOverrides(),
             ),
-            overrides: _defaultOverrides(),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('Progress Made'), findsNothing);
-      });
+          expect(find.text('Progress Made'), findsNothing);
+        },
+      );
 
       testWidgets(
-          'does NOT show Progress Made card when transitions is default (empty)',
-          (tester) async {
-        _setPhoneSize(tester);
-        await tester.pumpWidget(
-          _buildTestableScreen(
-            screen: const SessionCompleteScreen(
-              sessionId: 'session-1',
-              itemsCompleted: 5,
-              totalItems: 10,
-              elapsedSeconds: 180,
-              plannedSeconds: 300,
-              isFullCompletion: false,
+        'does NOT show Progress Made card when transitions is default (empty)',
+        (tester) async {
+          _setPhoneSize(tester);
+          await tester.pumpWidget(
+            _buildTestableScreen(
+              screen: const SessionCompleteScreen(
+                sessionId: 'session-1',
+                itemsCompleted: 5,
+                totalItems: 10,
+                elapsedSeconds: 180,
+                plannedSeconds: 300,
+                isFullCompletion: false,
+              ),
+              overrides: _defaultOverrides(),
             ),
-            overrides: _defaultOverrides(),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('Progress Made'), findsNothing);
-      });
+          expect(find.text('Progress Made'), findsNothing);
+        },
+      );
     });
 
     group('transition counts', () {
-      testWidgets('shows correct count for a single Stabilizing transition',
-          (tester) async {
+      testWidgets('shows correct count for a single Stabilizing transition', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -169,18 +174,13 @@ void main() {
         await tester.pumpAndSettle();
 
         // "1 word -> Stabilizing" (singular)
-        expect(
-          find.textContaining('1 word'),
-          findsWidgets,
-        );
-        expect(
-          find.textContaining('Stabilizing'),
-          findsWidgets,
-        );
+        expect(find.textContaining('1 word'), findsWidgets);
+        expect(find.textContaining('Stabilizing'), findsWidgets);
       });
 
-      testWidgets('shows correct count for multiple Stabilizing transitions',
-          (tester) async {
+      testWidgets('shows correct count for multiple Stabilizing transitions', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         final secondStabilizing = StageTransition(
           vocabularyId: '4',
@@ -207,14 +207,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // "2 words -> Stabilizing" (plural)
-        expect(
-          find.textContaining('2 words'),
-          findsOneWidget,
-        );
+        expect(find.textContaining('2 words'), findsOneWidget);
       });
 
-      testWidgets('shows correct counts for mixed transition types',
-          (tester) async {
+      testWidgets('shows correct counts for mixed transition types', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -261,10 +259,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('Mastered'),
-          findsWidgets,
-        );
+        expect(find.textContaining('Mastered'), findsWidgets);
       });
 
       testWidgets('shows Active row with correct text', (tester) async {
@@ -285,10 +280,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('Active'),
-          findsWidgets,
-        );
+        expect(find.textContaining('Active'), findsWidgets);
       });
     });
 
@@ -335,8 +327,9 @@ void main() {
         expect(find.byIcon(Icons.star_rounded), findsOneWidget);
       });
 
-      testWidgets('does not show star icon for Stabilizing transition',
-          (tester) async {
+      testWidgets('does not show star icon for Stabilizing transition', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -357,8 +350,9 @@ void main() {
         expect(find.byIcon(Icons.star_rounded), findsNothing);
       });
 
-      testWidgets('shows two star icons for Active + Mastered transitions',
-          (tester) async {
+      testWidgets('shows two star icons for Active + Mastered transitions', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -402,8 +396,9 @@ void main() {
         expect(find.text('7'), findsOneWidget);
       });
 
-      testWidgets('shows time practiced in minutes and seconds',
-          (tester) async {
+      testWidgets('shows time practiced in minutes and seconds', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -424,8 +419,9 @@ void main() {
         expect(find.text('3 min 5 sec'), findsOneWidget);
       });
 
-      testWidgets('shows time practiced in seconds only when under a minute',
-          (tester) async {
+      testWidgets('shows time practiced in seconds only when under a minute', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -445,8 +441,9 @@ void main() {
         expect(find.text('45 sec'), findsOneWidget);
       });
 
-      testWidgets('shows time practiced without seconds when exact minutes',
-          (tester) async {
+      testWidgets('shows time practiced without seconds when exact minutes', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -512,8 +509,9 @@ void main() {
         expect(find.text('Great work! Come back tomorrow.'), findsOneWidget);
       });
 
-      testWidgets('shows partial completion title and subtitle',
-          (tester) async {
+      testWidgets('shows partial completion title and subtitle', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -534,8 +532,9 @@ void main() {
         expect(find.text('You made progress today.'), findsOneWidget);
       });
 
-      testWidgets('shows all items exhausted title and subtitle',
-          (tester) async {
+      testWidgets('shows all items exhausted title and subtitle', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -554,60 +553,62 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text("You've reviewed everything!"), findsOneWidget);
-        expect(
-            find.text('No more items available right now.'), findsOneWidget);
+        expect(find.text('No more items available right now.'), findsOneWidget);
       });
     });
 
     group('bonus time button', () {
       testWidgets(
-          'shows bonus time button when full completion and items available',
-          (tester) async {
-        _setPhoneSize(tester);
-        await tester.pumpWidget(
-          _buildTestableScreen(
-            screen: const SessionCompleteScreen(
-              sessionId: 'session-1',
-              itemsCompleted: 10,
-              totalItems: 10,
-              elapsedSeconds: 300,
-              plannedSeconds: 300,
-              isFullCompletion: true,
-              allItemsExhausted: false,
+        'shows bonus time button when full completion and items available',
+        (tester) async {
+          _setPhoneSize(tester);
+          await tester.pumpWidget(
+            _buildTestableScreen(
+              screen: const SessionCompleteScreen(
+                sessionId: 'session-1',
+                itemsCompleted: 10,
+                totalItems: 10,
+                elapsedSeconds: 300,
+                plannedSeconds: 300,
+                isFullCompletion: true,
+                allItemsExhausted: false,
+              ),
+              overrides: _defaultOverrides(),
             ),
-            overrides: _defaultOverrides(),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('+2 min bonus'), findsOneWidget);
-      });
+          expect(find.text('+2 min bonus'), findsOneWidget);
+        },
+      );
 
       testWidgets(
-          'does NOT show bonus time button when all items are exhausted',
-          (tester) async {
-        _setPhoneSize(tester);
-        await tester.pumpWidget(
-          _buildTestableScreen(
-            screen: const SessionCompleteScreen(
-              sessionId: 'session-1',
-              itemsCompleted: 10,
-              totalItems: 10,
-              elapsedSeconds: 300,
-              plannedSeconds: 300,
-              isFullCompletion: true,
-              allItemsExhausted: true,
+        'does NOT show bonus time button when all items are exhausted',
+        (tester) async {
+          _setPhoneSize(tester);
+          await tester.pumpWidget(
+            _buildTestableScreen(
+              screen: const SessionCompleteScreen(
+                sessionId: 'session-1',
+                itemsCompleted: 10,
+                totalItems: 10,
+                elapsedSeconds: 300,
+                plannedSeconds: 300,
+                isFullCompletion: true,
+                allItemsExhausted: true,
+              ),
+              overrides: _defaultOverrides(),
             ),
-            overrides: _defaultOverrides(),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('+2 min bonus'), findsNothing);
-      });
+          expect(find.text('+2 min bonus'), findsNothing);
+        },
+      );
 
-      testWidgets('does NOT show bonus time button for partial completion',
-          (tester) async {
+      testWidgets('does NOT show bonus time button for partial completion', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -627,8 +628,9 @@ void main() {
         expect(find.text('+2 min bonus'), findsNothing);
       });
 
-      testWidgets('tapping bonus time button calls addBonusTime',
-          (tester) async {
+      testWidgets('tapping bonus time button calls addBonusTime', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         final mockDataService = MockSupabaseDataService();
         when(
@@ -667,9 +669,9 @@ void main() {
         ).called(1);
       });
 
-      testWidgets(
-          'shows snackbar on error when bonus time fails',
-          (tester) async {
+      testWidgets('shows snackbar on error when bonus time fails', (
+        tester,
+      ) async {
         _setPhoneSize(tester);
         final mockDataService = MockSupabaseDataService();
         when(
@@ -725,9 +727,7 @@ void main() {
         expect(find.text('Done'), findsOneWidget);
       });
 
-      testWidgets('tapping Done navigates back to first route', (
-        tester,
-      ) async {
+      testWidgets('tapping Done navigates back to first route', (tester) async {
         _setPhoneSize(tester);
 
         await tester.pumpWidget(

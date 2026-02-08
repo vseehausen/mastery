@@ -83,9 +83,7 @@ class GlobalStatusBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(
-          top: BorderSide(
-            color: context.masteryColors.border,
-          ),
+          top: BorderSide(color: context.masteryColors.border),
           bottom: BorderSide(color: borderColor),
         ),
       ),

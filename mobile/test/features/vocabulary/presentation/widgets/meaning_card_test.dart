@@ -41,9 +41,7 @@ void main() {
     testWidgets('shows primary translation and definition', (tester) async {
       final meaning = _createMeaning();
 
-      await tester.pumpTestWidget(
-        MeaningCard(meaning: meaning),
-      );
+      await tester.pumpTestWidget(MeaningCard(meaning: meaning));
 
       expect(find.text('effizient'), findsOneWidget);
       expect(
@@ -55,28 +53,23 @@ void main() {
     testWidgets('shows part of speech when present', (tester) async {
       final meaning = _createMeaning(partOfSpeech: 'adjective');
 
-      await tester.pumpTestWidget(
-        MeaningCard(meaning: meaning),
-      );
+      await tester.pumpTestWidget(MeaningCard(meaning: meaning));
 
       expect(find.text('adjective'), findsOneWidget);
     });
 
     testWidgets('shows synonyms inline with dot separator', (tester) async {
-      final meaning = _createMeaning(
-        synonyms: ['effective', 'productive'],
-      );
+      final meaning = _createMeaning(synonyms: ['effective', 'productive']);
 
-      await tester.pumpTestWidget(
-        MeaningCard(meaning: meaning),
-      );
+      await tester.pumpTestWidget(MeaningCard(meaning: meaning));
 
       expect(find.textContaining('effective'), findsOneWidget);
       expect(find.textContaining('productive'), findsOneWidget);
     });
 
-    testWidgets('respects displayMode native - hides definition',
-        (tester) async {
+    testWidgets('respects displayMode native - hides definition', (
+      tester,
+    ) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
@@ -84,14 +77,12 @@ void main() {
       );
 
       expect(find.text('effizient'), findsOneWidget);
-      expect(
-        find.text('Achieving results with minimal waste.'),
-        findsNothing,
-      );
+      expect(find.text('Achieving results with minimal waste.'), findsNothing);
     });
 
-    testWidgets('respects displayMode english - hides translation',
-        (tester) async {
+    testWidgets('respects displayMode english - hides translation', (
+      tester,
+    ) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
@@ -108,9 +99,7 @@ void main() {
     testWidgets('shows Edit button when onEdit provided', (tester) async {
       final meaning = _createMeaning();
 
-      await tester.pumpTestWidget(
-        MeaningCard(meaning: meaning, onEdit: () {}),
-      );
+      await tester.pumpTestWidget(MeaningCard(meaning: meaning, onEdit: () {}));
 
       expect(find.text('Edit'), findsOneWidget);
     });
@@ -118,9 +107,7 @@ void main() {
     testWidgets('hides Edit button when onEdit not provided', (tester) async {
       final meaning = _createMeaning();
 
-      await tester.pumpTestWidget(
-        MeaningCard(meaning: meaning),
-      );
+      await tester.pumpTestWidget(MeaningCard(meaning: meaning));
 
       expect(find.text('Edit'), findsNothing);
     });

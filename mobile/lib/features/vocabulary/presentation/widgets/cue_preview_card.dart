@@ -16,15 +16,9 @@ class CuePreviewCard extends StatelessWidget {
   ) {
     switch (cueType) {
       case 'translation':
-        return (
-          'Translation',
-          MasteryColors.getCueColor(context, cueType),
-        );
+        return ('Translation', MasteryColors.getCueColor(context, cueType));
       case 'definition':
-        return (
-          'Definition',
-          MasteryColors.getCueColor(context, cueType),
-        );
+        return ('Definition', MasteryColors.getCueColor(context, cueType));
       case 'synonym':
         return ('Synonym', MasteryColors.getCueColor(context, cueType));
       case 'cloze':
@@ -33,10 +27,7 @@ class CuePreviewCard extends StatelessWidget {
           MasteryColors.getCueColor(context, cueType),
         );
       case 'multiple_choice':
-        return (
-          'Choose the Word',
-          MasteryColors.getCueColor(context, cueType),
-        );
+        return ('Choose the Word', MasteryColors.getCueColor(context, cueType));
       default:
         return (cueType, MasteryColors.getCueColor(context, cueType));
     }
@@ -57,10 +48,7 @@ class CuePreviewCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -148,36 +148,38 @@ void main() {
       expect(find.text('Practicing'), findsOneWidget);
     });
 
-    testWidgets('shows StatusBadge when status is set and progressStage is null',
-        (tester) async {
-      await tester.pumpTestWidget(
-        WordCard(
-          word: 'test',
-          definition: 'definition',
-          status: LearningStatus.learning,
-          onTap: () {},
-        ),
-      );
+    testWidgets(
+      'shows StatusBadge when status is set and progressStage is null',
+      (tester) async {
+        await tester.pumpTestWidget(
+          WordCard(
+            word: 'test',
+            definition: 'definition',
+            status: LearningStatus.learning,
+            onTap: () {},
+          ),
+        );
 
-      expect(find.byType(StatusBadge), findsOneWidget);
-    });
+        expect(find.byType(StatusBadge), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'prefers ProgressStageBadge over StatusBadge when both are set', (
-      tester,
-    ) async {
-      await tester.pumpTestWidget(
-        WordCard(
-          word: 'test',
-          definition: 'definition',
-          progressStage: ProgressStage.active,
-          status: LearningStatus.learning,
-          onTap: () {},
-        ),
-      );
+      'prefers ProgressStageBadge over StatusBadge when both are set',
+      (tester) async {
+        await tester.pumpTestWidget(
+          WordCard(
+            word: 'test',
+            definition: 'definition',
+            progressStage: ProgressStage.active,
+            status: LearningStatus.learning,
+            onTap: () {},
+          ),
+        );
 
-      expect(find.byType(ProgressStageBadge), findsOneWidget);
-      expect(find.byType(StatusBadge), findsNothing);
-    });
+        expect(find.byType(ProgressStageBadge), findsOneWidget);
+        expect(find.byType(StatusBadge), findsNothing);
+      },
+    );
   });
 }

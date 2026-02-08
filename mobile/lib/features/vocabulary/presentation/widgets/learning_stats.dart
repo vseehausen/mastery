@@ -35,9 +35,7 @@ class LearningStats extends StatelessWidget {
       children: [
         Text(
           'Learning Status',
-          style: MasteryTextStyles.bodyBold.copyWith(
-            color: colors.foreground,
-          ),
+          style: MasteryTextStyles.bodyBold.copyWith(color: colors.foreground),
         ),
         const SizedBox(height: 12),
         Row(
@@ -114,10 +112,7 @@ class LearningStatsInline extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.label,
-    required this.value,
-  });
+  const _StatItem({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -131,9 +126,7 @@ class _StatItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.border,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

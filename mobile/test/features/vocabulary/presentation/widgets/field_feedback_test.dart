@@ -14,17 +14,20 @@ void main() {
     setUp(() {
       mockDataService = MockSupabaseDataService();
       // Default stub for createEnrichmentFeedback
-      when(mockDataService.createEnrichmentFeedback(
-        userId: anyNamed('userId'),
-        meaningId: anyNamed('meaningId'),
-        fieldName: anyNamed('fieldName'),
-        rating: anyNamed('rating'),
-        flagCategory: anyNamed('flagCategory'),
-      )).thenAnswer((_) async => Future<void>.value());
+      when(
+        mockDataService.createEnrichmentFeedback(
+          userId: anyNamed('userId'),
+          meaningId: anyNamed('meaningId'),
+          fieldName: anyNamed('fieldName'),
+          rating: anyNamed('rating'),
+          flagCategory: anyNamed('flagCategory'),
+        ),
+      ).thenAnswer((_) async => Future<void>.value());
     });
 
-    testWidgets('displays thumbs up, thumbs down, and flag icons',
-        (tester) async {
+    testWidgets('displays thumbs up, thumbs down, and flag icons', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         const FieldFeedback(
           meaningId: 'meaning-1',
@@ -66,8 +69,9 @@ void main() {
       expect(find.byIcon(Icons.thumb_down_outlined), findsNothing);
     });
 
-    testWidgets('flag icon tap opens bottom sheet with all 6 categories',
-        (tester) async {
+    testWidgets('flag icon tap opens bottom sheet with all 6 categories', (
+      tester,
+    ) async {
       // Set surface size to avoid overflow in bottom sheet
       await tester.binding.setSurfaceSize(const Size(800, 1200));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
@@ -86,10 +90,7 @@ void main() {
 
       // Verify bottom sheet title
       expect(find.text('Report Issue'), findsOneWidget);
-      expect(
-        find.text('What\'s wrong with this translation?'),
-        findsOneWidget,
-      );
+      expect(find.text('What\'s wrong with this translation?'), findsOneWidget);
 
       // Verify all 6 categories are present
       expect(find.text('Wrong Translation'), findsOneWidget);
@@ -103,8 +104,9 @@ void main() {
       expect(find.text('Cancel'), findsOneWidget);
     });
 
-    testWidgets('selecting a category from flag sheet closes it',
-        (tester) async {
+    testWidgets('selecting a category from flag sheet closes it', (
+      tester,
+    ) async {
       // Set surface size to avoid overflow in bottom sheet
       await tester.binding.setSurfaceSize(const Size(800, 1200));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
@@ -165,6 +167,5 @@ void main() {
       // Verify bottom sheet is closed
       expect(find.text('Report Issue'), findsNothing);
     });
-
   });
 }

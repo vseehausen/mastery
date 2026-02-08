@@ -30,17 +30,17 @@ final class MasteryBrightnessPreview extends MultiPreview {
 
   @override
   List<Preview> get previews => [
-        MasteryPreview(
-          name: '$name - Light',
-          group: group,
-          brightness: Brightness.light,
-        ),
-        MasteryPreview(
-          name: '$name - Dark',
-          group: group,
-          brightness: Brightness.dark,
-        ),
-      ];
+    MasteryPreview(
+      name: '$name - Light',
+      group: group,
+      brightness: Brightness.light,
+    ),
+    MasteryPreview(
+      name: '$name - Dark',
+      group: group,
+      brightness: Brightness.dark,
+    ),
+  ];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -66,10 +66,7 @@ Widget recallCardInitial() {
   );
 }
 
-@MasteryBrightnessPreview(
-  name: 'Recall Card - Revealed',
-  group: 'Recall Card',
-)
+@MasteryBrightnessPreview(name: 'Recall Card - Revealed', group: 'Recall Card')
 Widget recallCardRevealed() {
   return ShadApp(
     theme: MasteryTheme.light,
@@ -192,7 +189,8 @@ Widget definitionCueNoHint() {
     theme: MasteryTheme.light,
     home: Scaffold(
       body: DefinitionCueCard(
-        definition: 'feeling or showing anger or annoyance at what is perceived as unfair treatment',
+        definition:
+            'feeling or showing anger or annoyance at what is perceived as unfair treatment',
         targetWord: 'indignant',
         onGrade: (_) {},
       ),

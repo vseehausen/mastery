@@ -26,10 +26,12 @@ Future<int> currentStreak(Ref ref) async {
     final yesterday = today.subtract(const Duration(days: 1));
     final lastCompleted = streak.lastCompletedDate!;
 
-    final isToday = lastCompleted.year == today.year &&
+    final isToday =
+        lastCompleted.year == today.year &&
         lastCompleted.month == today.month &&
         lastCompleted.day == today.day;
-    final isYesterday = lastCompleted.year == yesterday.year &&
+    final isYesterday =
+        lastCompleted.year == yesterday.year &&
         lastCompleted.month == yesterday.month &&
         lastCompleted.day == yesterday.day;
 
@@ -100,8 +102,9 @@ class StreakNotifier extends _$StreakNotifier {
 
     // Increment streak
     final newCount = streak.currentCount + 1;
-    final newLongest =
-        newCount > streak.longestCount ? newCount : streak.longestCount;
+    final newLongest = newCount > streak.longestCount
+        ? newCount
+        : streak.longestCount;
 
     await dataService.updateStreak(
       id: streak.id,

@@ -16,10 +16,7 @@ void main() {
       );
 
       expect(find.text('Which word fits best?'), findsOneWidget);
-      expect(
-        find.text('Achieves results with minimal waste.'),
-        findsOneWidget,
-      );
+      expect(find.text('Achieves results with minimal waste.'), findsOneWidget);
     });
 
     testWidgets('hides answer before reveal', (tester) async {

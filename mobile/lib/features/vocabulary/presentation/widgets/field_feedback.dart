@@ -142,9 +142,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
         // Thumbs up
         IconButton(
           icon: Icon(
-            _currentRating == 'up'
-                ? Icons.thumb_up
-                : Icons.thumb_up_outlined,
+            _currentRating == 'up' ? Icons.thumb_up : Icons.thumb_up_outlined,
             size: 16,
           ),
           onPressed: _isSaving ? null : () => _submitFeedback('up'),
@@ -153,10 +151,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
               : colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
-          ),
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),
 
         const SizedBox(width: 4),
@@ -175,28 +170,19 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
               : colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
-          ),
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),
 
         const SizedBox(width: 4),
 
         // Flag
         IconButton(
-          icon: const Icon(
-            Icons.flag_outlined,
-            size: 16,
-          ),
+          icon: const Icon(Icons.flag_outlined, size: 16),
           onPressed: _isSaving ? null : _showFlagSheet,
           color: colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
-          ),
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),
       ],
     );
@@ -247,10 +233,7 @@ class _FlagIssueSheet extends StatelessWidget {
               return Column(
                 children: [
                   ListTile(
-                    title: Text(
-                      category,
-                      style: MasteryTextStyles.body,
-                    ),
+                    title: Text(category, style: MasteryTextStyles.body),
                     onTap: () => Navigator.of(context).pop(category),
                     contentPadding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,

@@ -30,9 +30,7 @@ class ContextCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.border,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

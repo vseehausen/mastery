@@ -41,13 +41,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -65,13 +66,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -85,13 +87,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -100,20 +103,22 @@ void main() {
       expect(saveButton.onPressed, isNull);
     });
 
-    testWidgets('Save button enabled after editing translation',
-        (tester) async {
+    testWidgets('Save button enabled after editing translation', (
+      tester,
+    ) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -126,20 +131,20 @@ void main() {
       expect(saveButton.onPressed, isNotNull);
     });
 
-    testWidgets('Save button enabled after editing definition',
-        (tester) async {
+    testWidgets('Save button enabled after editing definition', (tester) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -161,15 +166,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+              },
           onCancel: () {},
         ),
       );
@@ -190,15 +196,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedDefinition = definition;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedDefinition = definition;
+              },
           onCancel: () {},
         ),
       );
@@ -220,16 +227,17 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-            savedDefinition = definition;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+                savedDefinition = definition;
+              },
           onCancel: () {},
         ),
       );
@@ -252,13 +260,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () => cancelCalled = true,
         ),
       );
@@ -274,15 +283,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+              },
           onCancel: () {},
         ),
       );
@@ -302,13 +312,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -322,13 +333,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -337,21 +349,24 @@ void main() {
       expect(find.text('rasch'), findsOneWidget);
     });
 
-    testWidgets('displays alternative translations when provided',
-        (tester) async {
-      final meaning =
-          _createMeaning(alternativeTranslations: ['powerful', 'capable']);
+    testWidgets('displays alternative translations when provided', (
+      tester,
+    ) async {
+      final meaning = _createMeaning(
+        alternativeTranslations: ['powerful', 'capable'],
+      );
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -360,20 +375,22 @@ void main() {
       expect(find.text('capable'), findsOneWidget);
     });
 
-    testWidgets('adding synonym via tag editor enables save button',
-        (tester) async {
+    testWidgets('adding synonym via tag editor enables save button', (
+      tester,
+    ) async {
       final meaning = _createMeaning(synonyms: ['fast']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -395,13 +412,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -427,13 +445,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -460,13 +479,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -491,13 +511,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -525,15 +546,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedSynonyms = synonyms;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedSynonyms = synonyms;
+              },
           onCancel: () {},
         ),
       );
@@ -552,23 +574,25 @@ void main() {
       expect(savedSynonyms, ['fast', 'quick']);
     });
 
-    testWidgets('onSave receives updated alternative translations list',
-        (tester) async {
+    testWidgets('onSave receives updated alternative translations list', (
+      tester,
+    ) async {
       final meaning = _createMeaning(alternativeTranslations: ['capable']);
       List<String>? savedAlternatives;
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedAlternatives = alternativeTranslations;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedAlternatives = alternativeTranslations;
+              },
           onCancel: () {},
         ),
       );
@@ -587,38 +611,43 @@ void main() {
       expect(savedAlternatives, ['capable', 'powerful']);
     });
 
-    testWidgets('save button disabled when removing and re-adding same synonym',
-        (tester) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+    testWidgets(
+      'save button disabled when removing and re-adding same synonym',
+      (tester) async {
+        final meaning = _createMeaning(synonyms: ['fast']);
 
-      await tester.pumpTestWidget(
-        MeaningEditor(
-          meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
-          onCancel: () {},
-        ),
-      );
+        await tester.pumpTestWidget(
+          MeaningEditor(
+            meaning: meaning,
+            onSave:
+                ({
+                  required String translation,
+                  required String definition,
+                  required String partOfSpeech,
+                  required List<String> synonyms,
+                  required List<String> alternativeTranslations,
+                }) {},
+            onCancel: () {},
+          ),
+        );
 
-      // Remove the existing synonym
-      final deleteIcon = find.byIcon(Icons.close).first;
-      await tester.tap(deleteIcon);
-      await tester.pump();
+        // Remove the existing synonym
+        final deleteIcon = find.byIcon(Icons.close).first;
+        await tester.tap(deleteIcon);
+        await tester.pump();
 
-      // Add it back
-      final synonymTextField = find.byType(TextField).at(2);
-      await tester.enterText(synonymTextField, 'fast');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
+        // Add it back
+        final synonymTextField = find.byType(TextField).at(2);
+        await tester.enterText(synonymTextField, 'fast');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
 
-      // Verify save button is disabled (no net change)
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
-      expect(saveButton.onPressed, isNull);
-    });
+        // Verify save button is disabled (no net change)
+        final saveButton = tester.widget<FilledButton>(
+          find.byType(FilledButton),
+        );
+        expect(saveButton.onPressed, isNull);
+      },
+    );
   });
 }

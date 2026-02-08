@@ -90,10 +90,7 @@ void main() {
 
       final container = tester.widget<Container>(find.byType(Container));
       final decoration = container.decoration as BoxDecoration;
-      expect(
-        decoration.borderRadius,
-        BorderRadius.circular(12),
-      );
+      expect(decoration.borderRadius, BorderRadius.circular(12));
     });
 
     testWidgets('renders correctly in dark mode', (tester) async {
@@ -107,10 +104,7 @@ void main() {
       final container = tester.widget<Container>(find.byType(Container));
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.color, isNotNull);
-      expect(
-        decoration.borderRadius,
-        BorderRadius.circular(12),
-      );
+      expect(decoration.borderRadius, BorderRadius.circular(12));
     });
   });
 }

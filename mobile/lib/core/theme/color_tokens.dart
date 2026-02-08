@@ -423,10 +423,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
       foreground: Color.lerp(foreground, other.foreground, t)!,
       cardBackground: Color.lerp(cardBackground, other.cardBackground, t)!,
       cardForeground: Color.lerp(cardForeground, other.cardForeground, t)!,
-      popoverBackground:
-          Color.lerp(popoverBackground, other.popoverBackground, t)!,
-      popoverForeground:
-          Color.lerp(popoverForeground, other.popoverForeground, t)!,
+      popoverBackground: Color.lerp(
+        popoverBackground,
+        other.popoverBackground,
+        t,
+      )!,
+      popoverForeground: Color.lerp(
+        popoverForeground,
+        other.popoverForeground,
+        t,
+      )!,
       primaryAction: Color.lerp(primaryAction, other.primaryAction, t)!,
       primaryActionForeground: Color.lerp(
         primaryActionForeground,
@@ -440,10 +446,17 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
         t,
       )!,
       accent: Color.lerp(accent, other.accent, t)!,
-      accentForeground: Color.lerp(accentForeground, other.accentForeground, t)!,
+      accentForeground: Color.lerp(
+        accentForeground,
+        other.accentForeground,
+        t,
+      )!,
       destructive: Color.lerp(destructive, other.destructive, t)!,
-      destructiveForeground:
-          Color.lerp(destructiveForeground, other.destructiveForeground, t)!,
+      destructiveForeground: Color.lerp(
+        destructiveForeground,
+        other.destructiveForeground,
+        t,
+      )!,
       muted: Color.lerp(muted, other.muted, t)!,
       mutedForeground: Color.lerp(mutedForeground, other.mutedForeground, t)!,
       border: Color.lerp(border, other.border, t)!,
@@ -451,18 +464,27 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
       ring: Color.lerp(ring, other.ring, t)!,
       selection: Color.lerp(selection, other.selection, t)!,
       success: Color.lerp(success, other.success, t)!,
-      successForeground:
-          Color.lerp(successForeground, other.successForeground, t)!,
+      successForeground: Color.lerp(
+        successForeground,
+        other.successForeground,
+        t,
+      )!,
       successMuted: Color.lerp(successMuted, other.successMuted, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
-      warningForeground:
-          Color.lerp(warningForeground, other.warningForeground, t)!,
+      warningForeground: Color.lerp(
+        warningForeground,
+        other.warningForeground,
+        t,
+      )!,
       warningMuted: Color.lerp(warningMuted, other.warningMuted, t)!,
       info: Color.lerp(info, other.info, t)!,
       infoForeground: Color.lerp(infoForeground, other.infoForeground, t)!,
       cueSynonym: Color.lerp(cueSynonym, other.cueSynonym, t)!,
-      cueMultipleChoice:
-          Color.lerp(cueMultipleChoice, other.cueMultipleChoice, t)!,
+      cueMultipleChoice: Color.lerp(
+        cueMultipleChoice,
+        other.cueMultipleChoice,
+        t,
+      )!,
     );
   }
 }

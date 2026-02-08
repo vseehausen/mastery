@@ -162,10 +162,11 @@ class _VocabularyDetailScreenState
     );
   }
 
-
-
   /// Hero area: Word + pronunciation on left, badge + stats on right
-  Widget _buildHeroArea(VocabularyModel vocab, LearningCardModel? learningCard) {
+  Widget _buildHeroArea(
+    VocabularyModel vocab,
+    LearningCardModel? learningCard,
+  ) {
     final colors = context.masteryColors;
 
     return Row(
@@ -209,9 +210,7 @@ class _VocabularyDetailScreenState
               decoration: BoxDecoration(
                 color: colors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: colors.accent.withValues(alpha: 0.2),
-                ),
+                border: Border.all(color: colors.accent.withValues(alpha: 0.2)),
               ),
               child: Text(
                 'New',
@@ -282,22 +281,23 @@ class _VocabularyDetailScreenState
     if (_editingMeaningId == meaning.id) {
       return MeaningEditor(
         meaning: meaning,
-        onSave: ({
-          required String translation,
-          required String definition,
-          required String partOfSpeech,
-          required List<String> synonyms,
-          required List<String> alternativeTranslations,
-        }) {
-          _handleMeaningSave(
-            meaning,
-            translation: translation,
-            definition: definition,
-            partOfSpeech: partOfSpeech,
-            synonyms: synonyms,
-            alternativeTranslations: alternativeTranslations,
-          );
-        },
+        onSave:
+            ({
+              required String translation,
+              required String definition,
+              required String partOfSpeech,
+              required List<String> synonyms,
+              required List<String> alternativeTranslations,
+            }) {
+              _handleMeaningSave(
+                meaning,
+                translation: translation,
+                definition: definition,
+                partOfSpeech: partOfSpeech,
+                synonyms: synonyms,
+                alternativeTranslations: alternativeTranslations,
+              );
+            },
         onCancel: () => setState(() => _editingMeaningId = null),
       );
     }
@@ -334,10 +334,7 @@ class _VocabularyDetailScreenState
         // Definition
         Text(
           meaning.englishDefinition,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.6,
-          ),
+          style: const TextStyle(fontSize: 16, height: 1.6),
         ),
 
         // Synonyms
@@ -345,10 +342,7 @@ class _VocabularyDetailScreenState
           const SizedBox(height: 16),
           Text(
             'Similar: ${meaning.synonyms.join(' · ')}',
-            style: TextStyle(
-              fontSize: 13,
-              color: colors.mutedForeground,
-            ),
+            style: TextStyle(fontSize: 13, color: colors.mutedForeground),
           ),
         ],
       ],
@@ -414,7 +408,9 @@ class _VocabularyDetailScreenState
                           'by ${source.author}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: colors.mutedForeground.withValues(alpha: 0.6),
+                            color: colors.mutedForeground.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -467,7 +463,8 @@ class _VocabularyDetailScreenState
                           backgroundColor: Colors.transparent,
                           builder: (context) => CardPreviewSheet(
                             vocabularyId: vocabularyId,
-                            word: ref
+                            word:
+                                ref
                                     .read(vocabularyByIdProvider(vocabularyId))
                                     .valueOrNull
                                     ?.word ??
@@ -491,7 +488,8 @@ class _VocabularyDetailScreenState
             // Actions menu (feedback + re-generate)
             if (hasMeaning && userId != null)
               IconButton(
-                onPressed: () => _showActionMenu(vocabularyId, meaning!.id, userId),
+                onPressed: () =>
+                    _showActionMenu(vocabularyId, meaning!.id, userId),
                 icon: const Icon(Icons.more_vert, size: 20),
                 style: IconButton.styleFrom(
                   side: BorderSide(color: colors.border),
@@ -522,10 +520,7 @@ class _VocabularyDetailScreenState
         const SizedBox(width: 12),
         Text(
           'Loading...',
-          style: TextStyle(
-            fontSize: 14,
-            color: colors.mutedForeground,
-          ),
+          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
         ),
       ],
     );
@@ -539,16 +534,10 @@ class _VocabularyDetailScreenState
       children: [
         Text(
           message,
-          style: TextStyle(
-            fontSize: 14,
-            color: colors.mutedForeground,
-          ),
+          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
         ),
         const SizedBox(height: 12),
-        ShadButton.outline(
-          onPressed: onRetry,
-          child: const Text('Retry'),
-        ),
+        ShadButton.outline(onPressed: onRetry, child: const Text('Retry')),
       ],
     );
   }
@@ -569,17 +558,18 @@ class _VocabularyDetailScreenState
         const SizedBox(width: 12),
         Text(
           'Generating meanings...',
-          style: TextStyle(
-            fontSize: 14,
-            color: colors.mutedForeground,
-          ),
+          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
         ),
       ],
     );
   }
 
   /// Submit feedback (thumbs up/down)
-  Future<void> _submitFeedback(String meaningId, String userId, String rating) async {
+  Future<void> _submitFeedback(
+    String meaningId,
+    String userId,
+    String rating,
+  ) async {
     final service = ref.read(supabaseDataServiceProvider);
     try {
       await service.createEnrichmentFeedback(
@@ -686,7 +676,11 @@ class _VocabularyDetailScreenState
   }
 
   /// Show actions menu (feedback + re-generate)
-  Future<void> _showActionMenu(String vocabularyId, String meaningId, String userId) async {
+  Future<void> _showActionMenu(
+    String vocabularyId,
+    String meaningId,
+    String userId,
+  ) async {
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => Container(
@@ -732,7 +726,6 @@ class _VocabularyDetailScreenState
       await _showReEnrichDialog(vocabularyId);
     }
   }
-
 
   void _triggerEnrichmentIfNeeded(
     AsyncValue<List<MeaningModel>> meaningsAsync,

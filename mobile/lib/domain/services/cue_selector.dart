@@ -18,10 +18,14 @@ class CueSelector {
   MaturityStage getMaturityStage(SessionCard card) {
     if (card.state == 0) return MaturityStage.newCard;
     if (card.state == 1) {
-      return card.stability < 1.0 ? MaturityStage.newCard : MaturityStage.growing;
+      return card.stability < 1.0
+          ? MaturityStage.newCard
+          : MaturityStage.growing;
     }
     if (card.state == 2) {
-      return card.stability >= 21.0 ? MaturityStage.mature : MaturityStage.growing;
+      return card.stability >= 21.0
+          ? MaturityStage.mature
+          : MaturityStage.growing;
     }
     // state == 3 (relearning) treated as growing
     return MaturityStage.growing;

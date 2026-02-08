@@ -12,9 +12,7 @@ void main() {
         'answer_text': 'Go to the train station.',
       };
 
-      await tester.pumpTestWidget(
-        CuePreviewCard(cue: cue),
-      );
+      await tester.pumpTestWidget(CuePreviewCard(cue: cue));
 
       expect(find.text('Translation'), findsOneWidget);
       expect(find.text('Translate: Gehen Sie zum Bahnhof.'), findsOneWidget);
@@ -28,9 +26,7 @@ void main() {
         'answer_text': 'train station',
       };
 
-      await tester.pumpTestWidget(
-        CuePreviewCard(cue: cue),
-      );
+      await tester.pumpTestWidget(CuePreviewCard(cue: cue));
 
       expect(find.text('Definition'), findsOneWidget);
       expect(find.text('What does "bahnhof" mean?'), findsOneWidget);
@@ -44,9 +40,7 @@ void main() {
         'answer_text': 'rasch',
       };
 
-      await tester.pumpTestWidget(
-        CuePreviewCard(cue: cue),
-      );
+      await tester.pumpTestWidget(CuePreviewCard(cue: cue));
 
       expect(find.text('Synonym'), findsOneWidget);
       expect(find.text('Give a synonym for "schnell"'), findsOneWidget);
@@ -60,9 +54,7 @@ void main() {
         'answer_text': 'Bahnhof',
       };
 
-      await tester.pumpTestWidget(
-        CuePreviewCard(cue: cue),
-      );
+      await tester.pumpTestWidget(CuePreviewCard(cue: cue));
 
       expect(find.text('Fill in the Blank'), findsOneWidget);
       expect(find.text('Complete: Der ___ ist groß.'), findsOneWidget);
@@ -76,9 +68,7 @@ void main() {
         'answer_text': 'Fahren',
       };
 
-      await tester.pumpTestWidget(
-        CuePreviewCard(cue: cue),
-      );
+      await tester.pumpTestWidget(CuePreviewCard(cue: cue));
 
       expect(find.text('Choose the Word'), findsOneWidget);
       expect(find.text('Which word fits: ___ nach Berlin'), findsOneWidget);

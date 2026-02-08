@@ -93,7 +93,11 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: colors.mutedForeground),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: colors.mutedForeground,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -135,7 +139,8 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                 final cuesAsync = ref.watch(cuesForMeaningProvider(meaning.id));
 
                 return cuesAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Text(
                       'Failed to load cues',
@@ -172,10 +177,14 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: cardData.color.withValues(alpha: 0.1),
+                                        color: cardData.color.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: cardData.color.withValues(alpha: 0.3),
+                                          color: cardData.color.withValues(
+                                            alpha: 0.3,
+                                          ),
                                         ),
                                       ),
                                       child: Row(
@@ -183,28 +192,33 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                                         children: [
                                           Text(
                                             cardData.label,
-                                            style: MasteryTextStyles.bodySmall.copyWith(
-                                              color: cardData.color,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                            style: MasteryTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: cardData.color,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                           ),
                                           if (cardData.isSample) ...[
                                             const SizedBox(width: 6),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: colors.muted,
-                                                borderRadius: BorderRadius.circular(4),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                               child: Text(
                                                 'sample',
-                                                style: MasteryTextStyles.caption.copyWith(
-                                                  fontSize: 10,
-                                                  color: colors.mutedForeground,
-                                                ),
+                                                style: MasteryTextStyles.caption
+                                                    .copyWith(
+                                                      fontSize: 10,
+                                                      color: colors
+                                                          .mutedForeground,
+                                                    ),
                                               ),
                                             ),
                                           ],
@@ -215,9 +229,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
 
                                   // Card widget
                                   Expanded(
-                                    child: ClipRect(
-                                      child: cardData.widget,
-                                    ),
+                                    child: ClipRect(child: cardData.widget),
                                   ),
                                 ],
                               );
@@ -233,7 +245,9 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                             children: List.generate(
                               cards.length,
                               (index) => Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 width: 8,
                                 height: 8,
                                 decoration: BoxDecoration(
@@ -263,109 +277,140 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
 
     // Convert maps to CueModel objects
     final cueModels = cues
-        .map((c) => c is CueModel ? c : CueModel.fromJson(c as Map<String, dynamic>))
+        .map(
+          (c) =>
+              c is CueModel ? c : CueModel.fromJson(c as Map<String, dynamic>),
+        )
         .toList();
 
     // 1. Recall Card (translation cue)
-    final translationCue = cueModels.where((c) => c.cueType == 'translation').firstOrNull;
-    cards.add(_CardData(
-      label: 'Recall',
-      color: MasteryColors.getCueColor(context, 'translation'),
-      isSample: translationCue == null,
-      widget: RecallCard(
-        word: widget.word,
-        answer: translationCue?.answerText ?? meaning.primaryTranslation,
-        context: translationCue?.metadata['context_sentence'] as String?,
-        onGrade: (_) {}, // No-op in preview mode
-        isPreview: true,
+    final translationCue = cueModels
+        .where((c) => c.cueType == 'translation')
+        .firstOrNull;
+    cards.add(
+      _CardData(
+        label: 'Recall',
+        color: MasteryColors.getCueColor(context, 'translation'),
+        isSample: translationCue == null,
+        widget: RecallCard(
+          word: widget.word,
+          answer: translationCue?.answerText ?? meaning.primaryTranslation,
+          context: translationCue?.metadata['context_sentence'] as String?,
+          onGrade: (_) {}, // No-op in preview mode
+          isPreview: true,
+        ),
       ),
-    ));
+    );
 
     // 2. Recognition Card (translation + distractors)
     final distractors = translationCue?.metadata['distractors'] as List?;
-    final recognitionDistractors = distractors?.cast<String>() ??
+    final recognitionDistractors =
+        distractors?.cast<String>() ??
         _generateFallbackDistractors(meaning.alternativeTranslations);
-    cards.add(_CardData(
-      label: 'Recognition',
-      color: MasteryColors.getCueColor(context, 'multiple_choice'),
-      isSample: translationCue == null || distractors == null,
-      widget: RecognitionCard(
-        word: widget.word,
-        correctAnswer: translationCue?.answerText ?? meaning.primaryTranslation,
-        distractors: recognitionDistractors,
-        context: translationCue?.metadata['context_sentence'] as String?,
-        onAnswer: (selected, isCorrect) {}, // No-op in preview mode
+    cards.add(
+      _CardData(
+        label: 'Recognition',
+        color: MasteryColors.getCueColor(context, 'multiple_choice'),
+        isSample: translationCue == null || distractors == null,
+        widget: RecognitionCard(
+          word: widget.word,
+          correctAnswer:
+              translationCue?.answerText ?? meaning.primaryTranslation,
+          distractors: recognitionDistractors,
+          context: translationCue?.metadata['context_sentence'] as String?,
+          onAnswer: (selected, isCorrect) {}, // No-op in preview mode
+        ),
       ),
-    ));
+    );
 
     // 3. Definition Cue Card
-    final definitionCue = cueModels.where((c) => c.cueType == 'definition').firstOrNull;
-    cards.add(_CardData(
-      label: 'Definition',
-      color: MasteryColors.getCueColor(context, 'definition'),
-      isSample: definitionCue == null,
-      widget: DefinitionCueCard(
-        definition: definitionCue?.promptText ?? meaning.englishDefinition,
-        targetWord: widget.word,
-        hintText: definitionCue?.hintText,
-        onGrade: (_) {}, // No-op in preview mode
-        isPreview: true,
+    final definitionCue = cueModels
+        .where((c) => c.cueType == 'definition')
+        .firstOrNull;
+    cards.add(
+      _CardData(
+        label: 'Definition',
+        color: MasteryColors.getCueColor(context, 'definition'),
+        isSample: definitionCue == null,
+        widget: DefinitionCueCard(
+          definition: definitionCue?.promptText ?? meaning.englishDefinition,
+          targetWord: widget.word,
+          hintText: definitionCue?.hintText,
+          onGrade: (_) {}, // No-op in preview mode
+          isPreview: true,
+        ),
       ),
-    ));
+    );
 
     // 4. Synonym Cue Card
-    final synonymCue = cueModels.where((c) => c.cueType == 'synonym').firstOrNull;
-    final synonymPhrase = synonymCue?.promptText ??
+    final synonymCue = cueModels
+        .where((c) => c.cueType == 'synonym')
+        .firstOrNull;
+    final synonymPhrase =
+        synonymCue?.promptText ??
         (meaning.synonyms.isNotEmpty
             ? meaning.synonyms.join(', ')
             : 'Similar word or phrase');
-    cards.add(_CardData(
-      label: 'Synonym',
-      color: MasteryColors.getCueColor(context, 'synonym'),
-      isSample: synonymCue == null,
-      widget: SynonymCueCard(
-        synonymPhrase: synonymPhrase,
-        targetWord: widget.word,
-        onGrade: (_) {}, // No-op in preview mode
-        isPreview: true,
+    cards.add(
+      _CardData(
+        label: 'Synonym',
+        color: MasteryColors.getCueColor(context, 'synonym'),
+        isSample: synonymCue == null,
+        widget: SynonymCueCard(
+          synonymPhrase: synonymPhrase,
+          targetWord: widget.word,
+          onGrade: (_) {}, // No-op in preview mode
+          isPreview: true,
+        ),
       ),
-    ));
+    );
 
     // 5. Cloze Cue Card
-    final clozeCue = cueModels.where((c) => c.cueType == 'context_cloze').firstOrNull;
-    final clozeSentence = clozeCue?.promptText ??
-        'The _______ was used in a sentence.';
-    cards.add(_CardData(
-      label: 'Context Cloze',
-      color: MasteryColors.getCueColor(context, 'cloze'),
-      isSample: clozeCue == null,
-      widget: ClozeCueCard(
-        sentenceWithBlank: clozeSentence,
-        targetWord: widget.word,
-        hintText: clozeCue?.hintText ?? meaning.primaryTranslation,
-        onGrade: (_) {}, // No-op in preview mode
-        isPreview: true,
+    final clozeCue = cueModels
+        .where((c) => c.cueType == 'context_cloze')
+        .firstOrNull;
+    final clozeSentence =
+        clozeCue?.promptText ?? 'The _______ was used in a sentence.';
+    cards.add(
+      _CardData(
+        label: 'Context Cloze',
+        color: MasteryColors.getCueColor(context, 'cloze'),
+        isSample: clozeCue == null,
+        widget: ClozeCueCard(
+          sentenceWithBlank: clozeSentence,
+          targetWord: widget.word,
+          hintText: clozeCue?.hintText ?? meaning.primaryTranslation,
+          onGrade: (_) {}, // No-op in preview mode
+          isPreview: true,
+        ),
       ),
-    ));
+    );
 
     // 6. Disambiguation Card
-    final disambiguationCue = cueModels.where((c) => c.cueType == 'disambiguation').firstOrNull;
-    final disambiguationOptions = disambiguationCue?.metadata['options'] as List? ??
+    final disambiguationCue = cueModels
+        .where((c) => c.cueType == 'disambiguation')
+        .firstOrNull;
+    final disambiguationOptions =
+        disambiguationCue?.metadata['options'] as List? ??
         [widget.word, meaning.synonyms.firstOrNull ?? 'alternative'];
-    final correctIndex = disambiguationCue?.metadata['correct_index'] as int? ?? 0;
+    final correctIndex =
+        disambiguationCue?.metadata['correct_index'] as int? ?? 0;
 
-    cards.add(_CardData(
-      label: 'Disambiguation',
-      color: MasteryColors.getCueColor(context, 'disambiguation'),
-      isSample: disambiguationCue == null,
-      widget: DisambiguationCard(
-        clozeSentence: disambiguationCue?.promptText ?? 'The ___ was in the text.',
-        options: disambiguationOptions.cast<String>(),
-        correctIndex: correctIndex,
-        explanation: '', // No explanation in preview mode
-        onGrade: (_) {}, // No-op in preview mode
+    cards.add(
+      _CardData(
+        label: 'Disambiguation',
+        color: MasteryColors.getCueColor(context, 'disambiguation'),
+        isSample: disambiguationCue == null,
+        widget: DisambiguationCard(
+          clozeSentence:
+              disambiguationCue?.promptText ?? 'The ___ was in the text.',
+          options: disambiguationOptions.cast<String>(),
+          correctIndex: correctIndex,
+          explanation: '', // No explanation in preview mode
+          onGrade: (_) {}, // No-op in preview mode
+        ),
       ),
-    ));
+    );
 
     return cards;
   }

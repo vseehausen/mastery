@@ -33,8 +33,14 @@ String getLanguageNativeName(String code) {
 /// Meaning display mode options with descriptions.
 const displayModes = <String, Map<String, String>>{
   'both': {'label': 'Both', 'subtitle': 'Show definition and translation'},
-  'english': {'label': 'Definition only', 'subtitle': 'Immersive learning experience'},
-  'native': {'label': 'Translation only', 'subtitle': 'Quickest for memorization'},
+  'english': {
+    'label': 'Definition only',
+    'subtitle': 'Immersive learning experience',
+  },
+  'native': {
+    'label': 'Translation only',
+    'subtitle': 'Quickest for memorization',
+  },
 };
 
 /// Get display mode label for UI
@@ -176,7 +182,8 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
             Icons.chevron_right,
             color: context.masteryColors.mutedForeground,
           ),
-          onTap: () => _showDisplayModePicker(context, ref, userId, currentMode),
+          onTap: () =>
+              _showDisplayModePicker(context, ref, userId, currentMode),
         );
       },
     );

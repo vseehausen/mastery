@@ -89,11 +89,8 @@ class SyncStatusScreen extends ConsumerWidget {
               ref: ref,
               message: error.toString(),
             ),
-            data: (snapshot) => _buildContent(
-              context: context,
-              ref: ref,
-              snapshot: snapshot,
-            ),
+            data: (snapshot) =>
+                _buildContent(context: context, ref: ref, snapshot: snapshot),
           ),
         ),
       ),

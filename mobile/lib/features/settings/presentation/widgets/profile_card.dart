@@ -19,9 +19,7 @@ class ProfileCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.masteryColors.cardBackground,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: context.masteryColors.border,
-          ),
+          border: Border.all(color: context.masteryColors.border),
         ),
         child: Row(
           children: [
@@ -34,7 +32,11 @@ class ProfileCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
               ),
               child: Center(
-                child: Icon(Icons.person, color: context.masteryColors.primaryActionForeground, size: 28),
+                child: Icon(
+                  Icons.person,
+                  color: context.masteryColors.primaryActionForeground,
+                  size: 28,
+                ),
               ),
             ),
             const SizedBox(width: 16),

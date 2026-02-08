@@ -83,7 +83,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       connectivity: connectivity,
       vocabularyCount: vocabularyCount,
       enrichedVocabularyIds: enrichedVocabularyIds,
-      showEnrichmentProgress: false, // Never show on Home - belongs in SyncStatusScreen
+      showEnrichmentProgress:
+          false, // Never show on Home - belongs in SyncStatusScreen
     );
 
     return Scaffold(
@@ -105,8 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             GlobalStatusBanner(
               data: statusBannerData,
               actionLabel: _statusActionLabel(statusBannerData.type),
-              onActionPressed: () =>
-                  _handleStatusAction(statusBannerData.type),
+              onActionPressed: () => _handleStatusAction(statusBannerData.type),
             ),
           BottomNavBar(
             selectedIndex: _selectedIndex,

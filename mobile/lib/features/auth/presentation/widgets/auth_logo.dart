@@ -24,7 +24,11 @@ class AuthLogo extends StatelessWidget {
             color: colors.accent,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(Icons.auto_stories, color: colors.accentForeground, size: 32),
+          child: Icon(
+            Icons.auto_stories,
+            color: colors.accentForeground,
+            size: 32,
+          ),
         ),
         const SizedBox(height: 12),
         // Title

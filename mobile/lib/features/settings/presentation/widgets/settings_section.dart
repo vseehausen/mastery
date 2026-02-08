@@ -34,9 +34,7 @@ class SettingsSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.masteryColors.cardBackground,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: context.masteryColors.border,
-            ),
+            border: Border.all(color: context.masteryColors.border),
           ),
           child: Column(
             children: List.generate(

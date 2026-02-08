@@ -142,9 +142,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
               decoration: BoxDecoration(
                 color: colors.cardBackground,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: colors.border,
-                ),
+                border: Border.all(color: colors.border),
               ),
               child: Text(
                 widget.targetWord,
@@ -198,33 +196,13 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
     final colors = context.masteryColors;
     return Row(
       children: [
-        _gradeButton(
-          'Again',
-          'Forgot',
-          colors.destructive,
-          ReviewRating.again,
-        ),
+        _gradeButton('Again', 'Forgot', colors.destructive, ReviewRating.again),
         const SizedBox(width: 8),
-        _gradeButton(
-          'Hard',
-          'Difficult',
-          colors.warning,
-          ReviewRating.hard,
-        ),
+        _gradeButton('Hard', 'Difficult', colors.warning, ReviewRating.hard),
         const SizedBox(width: 8),
-        _gradeButton(
-          'Good',
-          'Correct',
-          colors.success,
-          ReviewRating.good,
-        ),
+        _gradeButton('Good', 'Correct', colors.success, ReviewRating.good),
         const SizedBox(width: 8),
-        _gradeButton(
-          'Easy',
-          'Perfect',
-          colors.info,
-          ReviewRating.easy,
-        ),
+        _gradeButton('Easy', 'Perfect', colors.info, ReviewRating.easy),
       ],
     );
   }
@@ -234,7 +212,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
     String description,
     Color color,
     int rating,
-    ) {
+  ) {
     final colors = context.masteryColors;
     return Expanded(
       child: InkWell(

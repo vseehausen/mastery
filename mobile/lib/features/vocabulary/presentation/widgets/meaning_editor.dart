@@ -20,7 +20,8 @@ class MeaningEditor extends StatefulWidget {
     required String partOfSpeech,
     required List<String> synonyms,
     required List<String> alternativeTranslations,
-  }) onSave;
+  })
+  onSave;
   final VoidCallback onCancel;
 
   @override
@@ -123,8 +124,10 @@ class _MeaningEditorState extends State<MeaningEditor> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -147,8 +150,10 @@ class _MeaningEditorState extends State<MeaningEditor> {
             maxLines: 2,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -176,15 +181,15 @@ class _MeaningEditorState extends State<MeaningEditor> {
             },
             decoration: InputDecoration(
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            style: MasteryTextStyles.body.copyWith(
-              color: colors.foreground,
-            ),
+            style: MasteryTextStyles.body.copyWith(color: colors.foreground),
             dropdownColor: colors.cardBackground,
             items: _partsOfSpeech.map((pos) {
               return DropdownMenuItem<String>(
@@ -326,11 +331,11 @@ class _TagEditorState extends State<_TagEditor> {
           onSubmitted: (_) => _addItem(),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             hintText: 'Type and press Enter to add',
             hintStyle: MasteryTextStyles.body.copyWith(
               color: colors.mutedForeground.withValues(alpha: 0.5),

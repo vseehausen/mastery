@@ -43,10 +43,7 @@ class VocabularySearchBar extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colors.ring,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colors.ring, width: 2),
         ),
         filled: true,
         fillColor: colors.muted,
