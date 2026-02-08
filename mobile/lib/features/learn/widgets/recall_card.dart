@@ -124,7 +124,8 @@ class _RecallCardState extends State<RecallCard> {
               ),
               child: Text(
                 widget.answer,
-                style: MasteryTextStyles.bodyLarge.copyWith(
+                style: MasteryTextStyles.displayLarge.copyWith(
+                  fontSize: 28,
                   color: colors.foreground,
                 ),
                 textAlign: TextAlign.center,

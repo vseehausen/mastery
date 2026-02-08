@@ -432,7 +432,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (stageAfter != stageBefore && stageAfter.index > stageBefore.index) {
         final transition = StageTransition(
           vocabularyId: currentItem.vocabularyId,
-          wordText: currentItem.word,
+          wordText: currentItem.displayWord,
           fromStage: stageBefore,
           toStage: stageAfter,
           timestamp: DateTime.now(),
@@ -616,30 +616,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _handleClosePressed() async {
-    final shouldExit = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('End session now?'),
-          content: const Text(
-            'Your progress will be saved and you can continue later.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Keep learning'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Save and exit'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldExit != true) return;
-
     await _saveProgress();
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -854,7 +830,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
 
         return RecallCard(
-          word: card.word,
+          word: card.displayWord,
           answer: translationAnswer,
           context: null,
           isSubmitting: _isSubmittingReview,
@@ -863,7 +839,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       }
 
       return RecognitionCard(
-        word: card.word,
+        word: card.displayWord,
         correctAnswer: translationAnswer,
         distractors: distractors,
         context: null, // Context would need encounter data
@@ -881,7 +857,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               cue?.promptText ??
               meaning?.englishDefinition ??
               translationAnswer,
-          targetWord: cue?.answerText ?? card.word,
+          targetWord: cue?.answerText ?? card.displayWord,
           hintText: cue?.hintText,
           isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
@@ -889,7 +865,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case CueType.synonym:
         return SynonymCueCard(
           synonymPhrase: cue?.promptText ?? _buildSynonymPrompt(meaning),
-          targetWord: cue?.answerText ?? card.word,
+          targetWord: cue?.answerText ?? card.displayWord,
           isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
@@ -897,7 +873,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         final options = _parseDisambiguationOptions(cue);
         if (options.options.isEmpty) {
           return RecallCard(
-            word: card.word,
+            word: card.displayWord,
             answer: translationAnswer,
             context: null,
             onGrade: _handleRecallGrade,
@@ -913,7 +889,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case CueType.contextCloze:
         return ClozeCueCard(
           sentenceWithBlank: cue?.promptText ?? translationAnswer,
-          targetWord: cue?.answerText ?? card.word,
+          targetWord: cue?.answerText ?? card.displayWord,
           hintText: cue?.hintText,
           isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
@@ -921,7 +897,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case CueType.translation:
       case null:
         return RecallCard(
-          word: card.word,
+          word: card.displayWord,
           answer: translationAnswer,
           context: null, // Could load encounter context if needed
           isSubmitting: _isSubmittingReview,
