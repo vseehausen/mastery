@@ -39,6 +39,7 @@ class _ProgressMicroFeedbackState extends State<ProgressMicroFeedback> {
       if (mounted) {
         setState(() => _visible = true);
         // Announce to screen readers
+        // ignore: deprecated_member_use
         SemanticsService.announce(
           'Word progressing to ${widget.stage.displayName}',
           TextDirection.ltr,

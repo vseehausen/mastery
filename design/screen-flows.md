@@ -45,90 +45,58 @@
 
 ---
 
-## Navigation Flow Diagram
+## Screen Action Hierarchy Map
 
 ```mermaid
-graph TD
-    %% Entry Point
-    Start([App Launch]) --> AuthGuard{Authenticated?}
-    AuthGuard -->|No| Auth[Auth Screen]
-    AuthGuard -->|Yes| Home[Home Screen Container]
+graph TB
+    subgraph "Main Navigation (Bottom Nav)"
+        Today["<b>TODAY SCREEN</b><br/>Template: Dashboard<br/>━━━━━━━━━━━━━━━<br/>🔴 Start/Continue Session<br/>🟡 Settings (header icon)<br/>⚪ Pull-to-refresh"]
+        Vocab["<b>VOCABULARY SCREEN</b><br/>Template: List<br/>━━━━━━━━━━━━━━━<br/>🔴 Tap word → Detail<br/>🟡 Search, Filter chips<br/>⚪ Pull-to-refresh"]
+        Progress["<b>PROGRESS SCREEN</b><br/>Template: Dashboard<br/>━━━━━━━━━━━━━━━<br/>🔴 None (read-only)<br/>⚪ Pull-to-refresh"]
+    end
 
-    %% Auth Flow
-    Auth -->|OAuth| OAuthLoad[OAuth Loading Screen]
-    Auth -->|Email Sign Up| SignUp[Email Sign Up Screen]
-    Auth -->|Sign In Link| SignIn[Email Sign In Screen]
-    SignUp -->|Switch| SignIn
-    SignIn -->|Switch| SignUp
-    OAuthLoad --> Home
-    SignUp --> Home
-    SignIn --> Home
+    subgraph "Detail Screens"
+        VocabDetail["<b>VOCABULARY DETAIL</b><br/>Template: Reference (no primary)<br/>━━━━━━━━━━━━━━━<br/>🔴 None (reference screen)<br/>🟡 Edit (header icon), Preview (bottom, outlined)<br/>⚪ Suggest edit (inline, muted)<br/>📦 Re-generate, Share, Delete"]
+        Settings["<b>SETTINGS SCREEN</b><br/>Template: Grouped List<br/>━━━━━━━━━━━━━━━<br/>🔴 None (navigation)<br/>🟡 List items (tappable)<br/>❌ Sign out (destructive)"]
+        SyncStatus["<b>SYNC STATUS</b><br/>Template: Status Dashboard<br/>━━━━━━━━━━━━━━━<br/>🔴 Refresh Status"]
+    end
 
-    %% Bottom Nav Container
-    Home -->|Tab 0| Today[Today Screen]
-    Home -->|Tab 1| Vocab[Vocabulary Screen]
-    Home -->|Tab 2| Progress[Progress Screen]
+    subgraph "Practice Flow"
+        Session["<b>SESSION SCREEN</b><br/>Template: Practice<br/>━━━━━━━━━━━━━━━<br/>🔴 Grade buttons (Again/Hard/Good/Easy)<br/>🟡 Pause, Close<br/>📦 Session settings, Report<br/>⚠️ FIX: Responsive sizing with Expanded, keep all 4 buttons"]
+        SessionComplete["<b>SESSION COMPLETE</b><br/>Template: Result<br/>━━━━━━━━━━━━━━━<br/>🔴 Done (go home)<br/>🟡 +2min Bonus (optional)"]
+        NoItems["<b>NO ITEMS READY</b><br/>Template: Empty State<br/>━━━━━━━━━━━━━━━<br/>🔴 Refresh Availability<br/>🟡 Check Sync Status"]
+    end
 
-    %% Today Screen Flow
-    Today -->|Settings Icon| Settings[Settings Screen]
-    Today -->|Start Session| SessionCheck{Items Available?}
-    SessionCheck -->|No| NoItems[No Items Ready Screen]
-    SessionCheck -->|Yes| Session[Session Screen]
-    Today -->|Open Guidance| NoItems
+    subgraph "Modals & Sheets"
+        CardPreview["<b>CARD PREVIEW SHEET</b><br/>Template: Bottom Sheet<br/>━━━━━━━━━━━━━━━<br/>🔴 Swipe between cards<br/>🟡 Close button"]
+        MeaningEditor["<b>MEANING EDITOR</b><br/>Template: Edit Modal<br/>━━━━━━━━━━━━━━━<br/>🔴 Save (filled, sticky)<br/>🟡 Cancel, ✕ Dismiss"]
+    end
 
-    %% Session Flow
-    Session -->|Complete| SessionComplete[Session Complete Screen]
-    Session -->|Close Dialog| Today
-    SessionComplete -->|Add Bonus| Session
-    SessionComplete -->|Done| Home
+    subgraph "Auth Flow"
+        Auth["<b>AUTH SCREEN</b><br/>Template: Auth<br/>━━━━━━━━━━━━━━━<br/>🔴 OAuth buttons<br/>🟡 Email sign up/in links"]
+        SignIn["<b>EMAIL SIGN IN</b><br/>Template: Form<br/>━━━━━━━━━━━━━━━<br/>🔴 Sign In (submit)<br/>🟡 Sign up link, Show password"]
+        SignUp["<b>EMAIL SIGN UP</b><br/>Template: Form<br/>━━━━━━━━━━━━━━━<br/>🔴 Create Account<br/>🟡 Sign in link"]
+    end
 
-    %% No Items Flow
-    NoItems -->|Sync Status| SyncStatus[Sync Status Screen]
-    NoItems -->|Refresh| Today
-
-    %% Vocabulary Screen Flow
-    Vocab -->|Tap Word Card| VocabDetail[Vocabulary Detail Screen]
-    Vocab -->|Search/Filter| Vocab
-    Vocab -->|Refresh| Vocab
-
-    %% Vocabulary Detail Flow
-    VocabDetail -->|Preview Button| CardPreview[Card Preview Sheet]
-    VocabDetail -->|Edit Icon| MeaningEditor[Meaning Editor Modal]
-    VocabDetail -->|Overflow Menu| VocabDetailMenu{Menu Action}
-    VocabDetailMenu -->|Re-generate| VocabDetail
-    VocabDetailMenu -->|Share| VocabDetail
-    VocabDetailMenu -->|Delete Dialog| Vocab
-    VocabDetail -->|Feedback Sheet| VocabDetail
-    VocabDetail -->|Back| Vocab
-    CardPreview -->|Close| VocabDetail
-    MeaningEditor -->|Save| VocabDetail
-    MeaningEditor -->|Cancel| VocabDetail
-
-    %% Progress Screen Flow
-    Progress -->|Refresh| Progress
-
-    %% Settings Screen Flow
-    Settings -->|Sync Status| SyncStatus
-    Settings -->|Sign Out Dialog| Auth
-    Settings -->|Back| Today
-
-    %% Sync Status Flow
-    SyncStatus -->|Refresh| SyncStatus
-    SyncStatus -->|Back| Settings
-
-    %% Styling
-    classDef mainNav fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef detail fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef modal fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef practice fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    classDef auth fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-
-    class Today,Vocab,Progress mainNav
-    class VocabDetail,Settings,SyncStatus detail
-    class CardPreview,MeaningEditor modal
-    class Session,SessionComplete,NoItems practice
-    class Auth,SignIn,SignUp,OAuthLoad auth
+    %% Navigation connections (simplified)
+    Today -.-> Session
+    Today -.-> Settings
+    Vocab -.-> VocabDetail
+    VocabDetail -.-> CardPreview
+    VocabDetail -.-> MeaningEditor
+    Session -.-> SessionComplete
+    Settings -.-> SyncStatus
+    NoItems -.-> SyncStatus
 ```
+
+**Legend:**
+- 🔴 Primary action
+- 🟡 Secondary action
+- ⚪ Tertiary action
+- 📦 Overflow menu
+- ❌ Destructive action
+- ❓ Unclear/needs decision
+- ⚠️ Violation flagged
 
 ---
 

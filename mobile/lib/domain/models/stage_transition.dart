@@ -28,13 +28,6 @@ class StageTransition {
     required this.timestamp,
   });
 
-  /// Returns true if this transition represents a rare achievement.
-  ///
-  /// Rare achievements are transitions to Active or Mastered stages,
-  /// which deserve special visual emphasis in the session recap.
-  bool get isRareAchievement =>
-      toStage == ProgressStage.active || toStage == ProgressStage.mastered;
-
   /// Creates a StageTransition from a JSON map.
   factory StageTransition.fromJson(Map<String, dynamic> json) {
     return StageTransition(
@@ -47,6 +40,13 @@ class StageTransition {
       timestamp: DateTime.parse(json['timestamp'] as String),
     );
   }
+
+  /// Returns true if this transition represents a rare achievement.
+  ///
+  /// Rare achievements are transitions to Active or Mastered stages,
+  /// which deserve special visual emphasis in the session recap.
+  bool get isRareAchievement =>
+      toStage == ProgressStage.active || toStage == ProgressStage.mastered;
 
   /// Converts this StageTransition to a JSON map.
   Map<String, dynamic> toJson() {
