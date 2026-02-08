@@ -47,6 +47,11 @@ target/
 .packages
 .pub/
 build/
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # Supabase
 .supabase/
