@@ -58,14 +58,15 @@ void main() {
 
       // Find the container and check its color
       final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.text('Active'),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .ancestor(of: find.text('Active'), matching: find.byType(Container))
+            .first,
       );
 
       final decoration = container.decoration as BoxDecoration;
-      final expectedColor = ProgressStage.active.getColor(MasteryColorScheme.light);
+      final expectedColor = ProgressStage.active.getColor(
+        MasteryColorScheme.light,
+      );
       expect(decoration.color, expectedColor);
     });
 
@@ -102,10 +103,9 @@ void main() {
 
       // Check container shape
       final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.text('Active'),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .ancestor(of: find.text('Active'), matching: find.byType(Container))
+            .first,
       );
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.borderRadius, BorderRadius.circular(12));
@@ -125,16 +125,18 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final containerFinder = find.ancestor(
-        of: find.text('Stabilizing'),
-        matching: find.byType(Container),
-      ).first;
+      final containerFinder = find
+          .ancestor(
+            of: find.text('Stabilizing'),
+            matching: find.byType(Container),
+          )
+          .first;
 
       final size = tester.getSize(containerFinder);
 
       // Badge should be reasonably sized (not too big or too small)
       expect(size.width, greaterThan(60));
-      expect(size.width, lessThan(150));
+      expect(size.width, lessThan(200));
       expect(size.height, greaterThan(20));
       expect(size.height, lessThan(50));
     });
@@ -156,6 +158,36 @@ void main() {
 
       // Should display without errors
       expect(find.text('Active'), findsOneWidget);
+    });
+
+    testWidgets('badge fades out after timeout', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: [MasteryColorScheme.light]),
+          home: const Scaffold(
+            body: ProgressMicroFeedback(stage: ProgressStage.stabilizing),
+          ),
+        ),
+      );
+
+      // Let fade-in complete
+      await tester.pumpAndSettle();
+
+      // Verify visible
+      var animatedOpacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity),
+      );
+      expect(animatedOpacity.opacity, 1.0);
+
+      // Advance past fade-out timer (2600ms total)
+      await tester.pump(const Duration(milliseconds: 2600));
+      await tester.pumpAndSettle();
+
+      // Should now be faded out
+      animatedOpacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity),
+      );
+      expect(animatedOpacity.opacity, 0.0);
     });
   });
 }

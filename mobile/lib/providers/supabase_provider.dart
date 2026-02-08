@@ -29,25 +29,22 @@ final supabaseDataServiceProvider = Provider<SupabaseDataService>((ref) {
 /// Provider for all vocabulary of the current user (sorted newest first)
 final vocabularyListProvider =
     FutureProvider.autoDispose<List<VocabularyModel>>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return [];
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return [];
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getVocabulary(userId);
-  return data.map(VocabularyModel.fromJson).toList();
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getVocabulary(userId);
+      return data.map(VocabularyModel.fromJson).toList();
+    });
 
 /// Provider for a single vocabulary entry by ID
-final vocabularyByIdProvider =
-    FutureProvider.autoDispose.family<VocabularyModel?, String>((
-  ref,
-  id,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getVocabularyById(id);
-  if (data == null) return null;
-  return VocabularyModel.fromJson(data);
-});
+final vocabularyByIdProvider = FutureProvider.autoDispose
+    .family<VocabularyModel?, String>((ref, id) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getVocabularyById(id);
+      if (data == null) return null;
+      return VocabularyModel.fromJson(data);
+    });
 
 /// Provider for vocabulary count
 final vocabularyCountProvider = FutureProvider.autoDispose<int>((ref) async {
@@ -59,23 +56,21 @@ final vocabularyCountProvider = FutureProvider.autoDispose<int>((ref) async {
 });
 
 /// Provider for searching vocabulary
-final vocabularySearchProvider =
-    FutureProvider.autoDispose.family<List<VocabularyModel>, String>((
-  ref,
-  query,
-) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return [];
-  if (query.isEmpty) return [];
+final vocabularySearchProvider = FutureProvider.autoDispose
+    .family<List<VocabularyModel>, String>((ref, query) async {
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return [];
+      if (query.isEmpty) return [];
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.searchVocabulary(userId, query);
-  return data.map(VocabularyModel.fromJson).toList();
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.searchVocabulary(userId, query);
+      return data.map(VocabularyModel.fromJson).toList();
+    });
 
 /// Provider for set of vocabulary IDs that have meanings (are enriched)
-final enrichedVocabularyIdsProvider =
-    FutureProvider.autoDispose<Set<String>>((ref) async {
+final enrichedVocabularyIdsProvider = FutureProvider.autoDispose<Set<String>>((
+  ref,
+) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return <String>{};
 
@@ -89,37 +84,31 @@ final enrichedVocabularyIdsProvider =
 // =============================================================================
 
 /// Provider for meanings of a vocabulary item
-final meaningsProvider =
-    FutureProvider.autoDispose.family<List<MeaningModel>, String>((
-  ref,
-  vocabularyId,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getMeanings(vocabularyId);
-  return data.map(MeaningModel.fromJson).toList();
-});
+final meaningsProvider = FutureProvider.autoDispose
+    .family<List<MeaningModel>, String>((ref, vocabularyId) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getMeanings(vocabularyId);
+      return data.map(MeaningModel.fromJson).toList();
+    });
 
 /// Provider for primary meaning of a vocabulary item
-final primaryMeaningProvider =
-    FutureProvider.autoDispose.family<MeaningModel?, String>((
-  ref,
-  vocabularyId,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getPrimaryMeaning(vocabularyId);
-  if (data == null) return null;
-  return MeaningModel.fromJson(data);
-});
+final primaryMeaningProvider = FutureProvider.autoDispose
+    .family<MeaningModel?, String>((ref, vocabularyId) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getPrimaryMeaning(vocabularyId);
+      if (data == null) return null;
+      return MeaningModel.fromJson(data);
+    });
 
 /// Provider for map of all primary translations (vocabularyId -> translation)
 final primaryTranslationsMapProvider =
     FutureProvider.autoDispose<Map<String, String>>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return {};
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return {};
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  return service.getAllPrimaryTranslations(userId);
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      return service.getAllPrimaryTranslations(userId);
+    });
 
 // =============================================================================
 // Learning Card Providers
@@ -128,17 +117,18 @@ final primaryTranslationsMapProvider =
 /// Provider for all learning cards of the current user
 final learningCardsProvider =
     FutureProvider.autoDispose<List<LearningCardModel>>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return [];
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return [];
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getLearningCards(userId);
-  return data.map(LearningCardModel.fromJson).toList();
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getLearningCards(userId);
+      return data.map(LearningCardModel.fromJson).toList();
+    });
 
 /// Provider for due learning cards
-final dueCardsProvider =
-    FutureProvider.autoDispose<List<LearningCardModel>>((ref) async {
+final dueCardsProvider = FutureProvider.autoDispose<List<LearningCardModel>>((
+  ref,
+) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return [];
 
@@ -148,8 +138,9 @@ final dueCardsProvider =
 });
 
 /// Provider for new cards
-final newCardsProvider =
-    FutureProvider.autoDispose<List<LearningCardModel>>((ref) async {
+final newCardsProvider = FutureProvider.autoDispose<List<LearningCardModel>>((
+  ref,
+) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return [];
 
@@ -159,35 +150,36 @@ final newCardsProvider =
 });
 
 /// Provider for a learning card by vocabulary ID
-final learningCardByVocabularyIdProvider =
-    FutureProvider.autoDispose.family<LearningCardModel?, String>((
-  ref,
-  vocabularyId,
-) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return null;
+final learningCardByVocabularyIdProvider = FutureProvider.autoDispose
+    .family<LearningCardModel?, String>((ref, vocabularyId) async {
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) return null;
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getLearningCardByVocabularyId(userId, vocabularyId);
-  if (data == null) return null;
-  return LearningCardModel.fromJson(data);
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getLearningCardByVocabularyId(
+        userId,
+        vocabularyId,
+      );
+      if (data == null) return null;
+      return LearningCardModel.fromJson(data);
+    });
 
 // =============================================================================
 // Session Providers
 // =============================================================================
 
 /// Provider for active learning session
-final activeSessionProvider =
-    FutureProvider.autoDispose<LearningSessionModel?>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return null;
+final activeSessionProvider = FutureProvider.autoDispose<LearningSessionModel?>(
+  (ref) async {
+    final userId = ref.watch(currentUserIdProvider);
+    if (userId == null) return null;
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getActiveSession(userId);
-  if (data == null) return null;
-  return LearningSessionModel.fromJson(data);
-});
+    final service = ref.watch(supabaseDataServiceProvider);
+    final data = await service.getActiveSession(userId);
+    if (data == null) return null;
+    return LearningSessionModel.fromJson(data);
+  },
+);
 
 // =============================================================================
 // User Preferences Providers
@@ -196,15 +188,15 @@ final activeSessionProvider =
 /// Provider for user learning preferences
 final userPreferencesProvider =
     FutureProvider.autoDispose<UserPreferencesModel>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) {
-    throw StateError('User not logged in');
-  }
+      final userId = ref.watch(currentUserIdProvider);
+      if (userId == null) {
+        throw StateError('User not logged in');
+      }
 
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getOrCreatePreferences(userId);
-  return UserPreferencesModel.fromJson(data);
-});
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getOrCreatePreferences(userId);
+      return UserPreferencesModel.fromJson(data);
+    });
 
 // =============================================================================
 // Streak Providers
@@ -227,55 +219,43 @@ final streakProvider = FutureProvider.autoDispose<StreakModel>((ref) async {
 // =============================================================================
 
 /// Provider for most recent encounter for a vocabulary item
-final mostRecentEncounterProvider =
-    FutureProvider.autoDispose.family<EncounterModel?, String>((
-  ref,
-  vocabularyId,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getMostRecentEncounter(vocabularyId);
-  if (data == null) return null;
-  return EncounterModel.fromJson(data);
-});
+final mostRecentEncounterProvider = FutureProvider.autoDispose
+    .family<EncounterModel?, String>((ref, vocabularyId) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getMostRecentEncounter(vocabularyId);
+      if (data == null) return null;
+      return EncounterModel.fromJson(data);
+    });
 
 // =============================================================================
 // Source Providers
 // =============================================================================
 
 /// Provider for a source by ID
-final sourceByIdProvider =
-    FutureProvider.autoDispose.family<SourceModel?, String?>((
-  ref,
-  sourceId,
-) async {
-  if (sourceId == null) return null;
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getSourceById(sourceId);
-  if (data == null) return null;
-  return SourceModel.fromJson(data);
-});
+final sourceByIdProvider = FutureProvider.autoDispose
+    .family<SourceModel?, String?>((ref, sourceId) async {
+      if (sourceId == null) return null;
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getSourceById(sourceId);
+      if (data == null) return null;
+      return SourceModel.fromJson(data);
+    });
 
 // =============================================================================
 // Cue Providers
 // =============================================================================
 
 /// Provider for cues for a vocabulary item
-final cuesForVocabularyProvider =
-    FutureProvider.autoDispose.family<List<CueModel>, String>((
-  ref,
-  vocabularyId,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  final data = await service.getCuesForVocabulary(vocabularyId);
-  return data.map(CueModel.fromJson).toList();
-});
+final cuesForVocabularyProvider = FutureProvider.autoDispose
+    .family<List<CueModel>, String>((ref, vocabularyId) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      final data = await service.getCuesForVocabulary(vocabularyId);
+      return data.map(CueModel.fromJson).toList();
+    });
 
 /// Provider for cues for a specific meaning
-final cuesForMeaningProvider =
-    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
-  ref,
-  meaningId,
-) async {
-  final service = ref.watch(supabaseDataServiceProvider);
-  return service.getCuesForMeaning(meaningId);
-});
+final cuesForMeaningProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, meaningId) async {
+      final service = ref.watch(supabaseDataServiceProvider);
+      return service.getCuesForMeaning(meaningId);
+    });

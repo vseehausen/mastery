@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mastery/core/theme/color_tokens.dart';
+import 'package:mastery/core/widgets/progress_stage_badge.dart';
+import 'package:mastery/core/widgets/status_badge.dart';
 import 'package:mastery/core/widgets/word_card.dart';
+import 'package:mastery/domain/models/progress_stage.dart';
 
 import '../../helpers/test_helpers.dart';
 
@@ -19,7 +23,9 @@ void main() {
       expect(find.text('lasting for a very short time'), findsOneWidget);
     });
 
-    testWidgets('displays enriched icon when isEnriched is true', (tester) async {
+    testWidgets('displays enriched icon when isEnriched is true', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         WordCard(
           word: 'test',
@@ -32,7 +38,9 @@ void main() {
       expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
     });
 
-    testWidgets('does not display enriched icon when isEnriched is false', (tester) async {
+    testWidgets('does not display enriched icon when isEnriched is false', (
+      tester,
+    ) async {
       await tester.pumpTestWidget(
         WordCard(
           word: 'test',
@@ -62,11 +70,7 @@ void main() {
 
     testWidgets('shows chevron icon', (tester) async {
       await tester.pumpTestWidget(
-        WordCard(
-          word: 'test',
-          definition: 'definition',
-          onTap: () {},
-        ),
+        WordCard(word: 'test', definition: 'definition', onTap: () {}),
       );
 
       expect(find.byIcon(Icons.chevron_right), findsOneWidget);
@@ -122,14 +126,58 @@ void main() {
 
     testWidgets('has divider at bottom', (tester) async {
       await tester.pumpTestWidget(
+        WordCard(word: 'test', definition: 'definition', onTap: () {}),
+      );
+
+      expect(find.byType(Divider), findsOneWidget);
+    });
+
+    testWidgets('shows ProgressStageBadge when progressStage is set', (
+      tester,
+    ) async {
+      await tester.pumpTestWidget(
         WordCard(
           word: 'test',
           definition: 'definition',
+          progressStage: ProgressStage.practicing,
           onTap: () {},
         ),
       );
 
-      expect(find.byType(Divider), findsOneWidget);
+      expect(find.byType(ProgressStageBadge), findsOneWidget);
+      expect(find.text('Practicing'), findsOneWidget);
+    });
+
+    testWidgets('shows StatusBadge when status is set and progressStage is null',
+        (tester) async {
+      await tester.pumpTestWidget(
+        WordCard(
+          word: 'test',
+          definition: 'definition',
+          status: LearningStatus.learning,
+          onTap: () {},
+        ),
+      );
+
+      expect(find.byType(StatusBadge), findsOneWidget);
+    });
+
+    testWidgets(
+        'prefers ProgressStageBadge over StatusBadge when both are set', (
+      tester,
+    ) async {
+      await tester.pumpTestWidget(
+        WordCard(
+          word: 'test',
+          definition: 'definition',
+          progressStage: ProgressStage.active,
+          status: LearningStatus.learning,
+          onTap: () {},
+        ),
+      );
+
+      expect(find.byType(ProgressStageBadge), findsOneWidget);
+      expect(find.byType(StatusBadge), findsNothing);
     });
   });
 }

@@ -7,11 +7,14 @@ import 'package:uuid/uuid.dart';
 import '../../../core/app_defaults.dart';
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../data/services/progress_stage_service.dart';
 import '../../../domain/models/cue_type.dart';
 import '../../../domain/models/learning_enums.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
+import '../../../domain/models/progress_stage.dart';
 import '../../../domain/models/session_card.dart';
+import '../../../domain/models/stage_transition.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
@@ -21,6 +24,7 @@ import '../providers/streak_providers.dart';
 import '../widgets/cloze_cue_card.dart';
 import '../widgets/definition_cue_card.dart';
 import '../widgets/disambiguation_card.dart';
+import '../widgets/progress_micro_feedback.dart';
 import '../widgets/recall_card.dart';
 import '../widgets/recognition_card.dart';
 import '../widgets/session_progress_bar.dart';
@@ -71,6 +75,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   int _reviewsPresented = 0;
   String? _loadingDistractorsForCardId;
 
+  // Progress tracking
+  final _progressStageService = ProgressStageService();
+  final List<StageTransition> _stageTransitions = [];
+  ProgressStage? _lastTransitionStage;
+
   final _uuid = const Uuid();
 
   @override
@@ -118,7 +127,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final prefs = await dataService.getOrCreatePreferences(userId);
       final dailyTimeTargetMinutes =
           prefs['daily_time_target_minutes'] as int? ??
-              AppDefaults.dailyTimeTargetMinutes;
+          AppDefaults.dailyTimeTargetMinutes;
       final intensity = prefs['intensity'] as int? ?? AppDefaults.intensity;
 
       // Step 1: Compute lightweight session params (no card data)
@@ -372,6 +381,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Convert SessionCard to LearningCardModel for SRS processing
       final learningCard = currentItem.sessionCard.toLearningCard(userId);
 
+      // Calculate stage BEFORE review
+      final nonTransSuccessBefore = await dataService
+          .getNonTranslationSuccessCount(currentItem.cardId);
+      final stageBefore = _progressStageService.calculateStage(
+        card: learningCard,
+        nonTranslationSuccessCount: nonTransSuccessBefore,
+      );
+
       // Process the review with SRS
       final result = srsScheduler.reviewCard(
         card: learningCard,
@@ -390,6 +407,45 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         lapses: result.updatedCard.lapses,
         isLeech: result.updatedCard.isLeech,
       );
+
+      // Calculate stage AFTER review (count may have changed if this was a success)
+      final isNonTransSuccess =
+          rating >= 3 &&
+          currentItem.cueType != null &&
+          currentItem.cueType != CueType.translation;
+      final nonTransSuccessAfter =
+          nonTransSuccessBefore + (isNonTransSuccess ? 1 : 0);
+      // Build a LearningCardModel with the updated FSRS fields
+      final updatedCard = learningCard.copyWith(
+        state: result.updatedCard.state,
+        stability: result.updatedCard.stability,
+        difficulty: result.updatedCard.difficulty,
+        reps: result.updatedCard.reps,
+        lapses: result.updatedCard.lapses,
+      );
+      final stageAfter = _progressStageService.calculateStage(
+        card: updatedCard,
+        nonTranslationSuccessCount: nonTransSuccessAfter,
+      );
+
+      // Record transition if stage changed (and progressed forward)
+      if (stageAfter != stageBefore && stageAfter.index > stageBefore.index) {
+        final transition = StageTransition(
+          vocabularyId: currentItem.vocabularyId,
+          wordText: currentItem.word,
+          fromStage: stageBefore,
+          toStage: stageAfter,
+          timestamp: DateTime.now(),
+        );
+        _stageTransitions.add(transition);
+        setState(() {
+          _lastTransitionStage = stageAfter;
+        });
+        debugPrint(
+          '[Session] Stage transition: ${currentItem.word} '
+          '${stageBefore.displayName} → ${stageAfter.displayName}',
+        );
+      }
 
       // Save review log to Supabase
       final reviewLogId = _uuid.v4();
@@ -462,6 +518,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       setState(() {
         _currentItemIndex = nextIndex;
         _itemStartTime = DateTime.now();
+        _lastTransitionStage = null;
       });
     } catch (_) {
       if (!mounted) return;
@@ -532,6 +589,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           plannedSeconds: totalSeconds,
           isFullCompletion: outcome == SessionOutcomeEnum.complete,
           allItemsExhausted: allItemsExhausted,
+          transitions: _stageTransitions,
         ),
       ),
     );
@@ -663,11 +721,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: colors.cardBackground,
-                border: Border(
-                  bottom: BorderSide(
-                    color: colors.border,
-                  ),
-                ),
+                border: Border(bottom: BorderSide(color: colors.border)),
               ),
               child: Column(
                 children: [
@@ -676,10 +730,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       // Close button
                       IconButton(
                         onPressed: _handleClosePressed,
-                        icon: Icon(
-                          Icons.close,
-                          color: colors.mutedForeground,
-                        ),
+                        icon: Icon(Icons.close, color: colors.mutedForeground),
                       ),
                       // Timer
                       Expanded(
@@ -743,7 +794,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               )
             else if (currentItem != null)
               // Current item card - now uses SessionCard data directly!
-              Expanded(child: _buildItemCard(currentItem, context))
+              Expanded(
+                child: Stack(
+                  children: [
+                    _buildItemCard(currentItem, context),
+                    if (_lastTransitionStage != null)
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: ProgressMicroFeedback(
+                          key: ValueKey(
+                            '${currentItem.cardId}_$_lastTransitionStage',
+                          ),
+                          stage: _lastTransitionStage!,
+                        ),
+                      ),
+                  ],
+                ),
+              )
             else
               Expanded(
                 child: Center(
@@ -862,7 +930,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  Widget _buildBottomActionZone(PlannedItem? currentItem, BuildContext context) {
+  Widget _buildBottomActionZone(
+    PlannedItem? currentItem,
+    BuildContext context,
+  ) {
     final colors = context.masteryColors;
 
     return Container(
@@ -870,11 +941,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
         color: colors.cardBackground,
-        border: Border(
-          top: BorderSide(
-            color: colors.border,
-          ),
-        ),
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,18 +6,17 @@ import 'package:mastery/domain/models/stage_transition.dart';
 /// Aggregates transitions by type for compact display in the session recap.
 /// Provides counts for each stage and methods for formatting the summary.
 class SessionProgressSummary {
-  /// All stage transitions that occurred during the session.
-  final List<StageTransition> transitions;
-
   const SessionProgressSummary(this.transitions);
 
   /// Creates an empty summary with no transitions.
   const SessionProgressSummary.empty() : transitions = const [];
 
+  /// All stage transitions that occurred during the session.
+  final List<StageTransition> transitions;
+
   /// Count of words that reached Stabilizing stage.
-  int get stabilizingCount => transitions
-      .where((t) => t.toStage == ProgressStage.stabilizing)
-      .length;
+  int get stabilizingCount =>
+      transitions.where((t) => t.toStage == ProgressStage.stabilizing).length;
 
   /// Count of words that reached Active stage.
   int get activeCount =>
@@ -31,8 +30,7 @@ class SessionProgressSummary {
   bool get hasTransitions => transitions.isNotEmpty;
 
   /// Returns true if any rare achievements (Active or Mastered) occurred.
-  bool get hasRareAchievements =>
-      transitions.any((t) => t.isRareAchievement);
+  bool get hasRareAchievements => transitions.any((t) => t.isRareAchievement);
 
   /// Converts the summary to a human-readable display string.
   ///

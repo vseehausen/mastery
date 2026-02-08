@@ -5,6 +5,8 @@ import '../../../../core/widgets/word_card.dart';
 import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../data/services/progress_stage_service.dart';
+import '../../../../domain/models/progress_stage.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../widgets/vocabulary_search_bar.dart';
 import '../widgets/vocabulary_filter_chips.dart';
@@ -86,16 +88,24 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 error: (error, stack) => _buildErrorState(error),
                 data: (vocabulary) {
                   // Get enriched IDs (empty set if loading/error)
-                  final enrichedIds = enrichedIdsAsync.valueOrNull ?? <String>{};
+                  final enrichedIds =
+                      enrichedIdsAsync.valueOrNull ?? <String>{};
 
                   // Get translations map (empty map if loading/error)
-                  final translationsMap = translationsAsync.valueOrNull ?? <String, String>{};
+                  final translationsMap =
+                      translationsAsync.valueOrNull ?? <String, String>{};
 
-                  // Build status map from learning cards
-                  final statusMap = <String, LearningStatus>{};
+                  // Build progress stage map from learning cards
+                  final stageService = ProgressStageService();
+                  final stageMap = <String, ProgressStage>{};
                   final learningCards = learningCardsAsync.valueOrNull ?? [];
                   for (final card in learningCards) {
-                    statusMap[card.vocabularyId] = card.status;
+                    stageMap[card.vocabularyId] = stageService.calculateStage(
+                      card: card,
+                      // Conservative: without batch query, assume 0.
+                      // Active/Mastered detection happens during sessions.
+                      nonTranslationSuccessCount: 0,
+                    );
                   }
 
                   // Filter by search query
@@ -107,21 +117,48 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       )
                       .toList();
 
-                  // Filter by enrichment status
+                  // Filter by enrichment status or progress stage
                   switch (_selectedFilter) {
                     case VocabularyFilter.all:
-                      // No additional filtering
                       break;
                     case VocabularyFilter.enriched:
                       filtered = filtered
                           .where((v) => enrichedIds.contains(v.id))
                           .toList();
-                      break;
                     case VocabularyFilter.notEnriched:
                       filtered = filtered
                           .where((v) => !enrichedIds.contains(v.id))
                           .toList();
-                      break;
+                    case VocabularyFilter.captured:
+                      filtered = filtered
+                          .where(
+                            (v) =>
+                                (stageMap[v.id] ?? ProgressStage.captured) ==
+                                ProgressStage.captured,
+                          )
+                          .toList();
+                    case VocabularyFilter.practicing:
+                      filtered = filtered
+                          .where(
+                            (v) => stageMap[v.id] == ProgressStage.practicing,
+                          )
+                          .toList();
+                    case VocabularyFilter.stabilizing:
+                      filtered = filtered
+                          .where(
+                            (v) => stageMap[v.id] == ProgressStage.stabilizing,
+                          )
+                          .toList();
+                    case VocabularyFilter.active:
+                      filtered = filtered
+                          .where((v) => stageMap[v.id] == ProgressStage.active)
+                          .toList();
+                    case VocabularyFilter.mastered:
+                      filtered = filtered
+                          .where(
+                            (v) => stageMap[v.id] == ProgressStage.mastered,
+                          )
+                          .toList();
                   }
 
                   // Sort: enriched first, then by date (newest first)
@@ -156,12 +193,15 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       itemBuilder: (context, index) {
                         final vocab = filtered[index];
                         final isEnriched = enrichedIds.contains(vocab.id);
-                        final status = statusMap[vocab.id];
+                        final stage = stageMap[vocab.id];
                         return WordCard(
                           word: vocab.word,
-                          definition: translationsMap[vocab.id] ?? vocab.stem ?? vocab.word,
+                          definition:
+                              translationsMap[vocab.id] ??
+                              vocab.stem ??
+                              vocab.word,
                           isEnriched: isEnriched,
-                          status: status,
+                          progressStage: stage,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
@@ -198,7 +238,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 Row(
                   children: [
                     const Expanded(
-                      child: LoadingSkeleton(height: 20, width: double.infinity),
+                      child: LoadingSkeleton(
+                        height: 20,
+                        width: double.infinity,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     LoadingSkeleton(
@@ -211,10 +254,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 const SizedBox(height: 8),
                 const LoadingSkeleton(height: 14, width: double.infinity),
                 const SizedBox(height: 12),
-                Divider(
-                  height: 1,
-                  color: context.masteryColors.border,
-                ),
+                Divider(height: 1, color: context.masteryColors.border),
               ],
             ),
           );
@@ -233,15 +273,19 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
       case VocabularyFilter.all:
         message = 'No vocabulary yet';
         subMessage = 'Import vocabulary from your Kindle using the desktop app';
-        break;
       case VocabularyFilter.enriched:
         message = 'No enriched vocabulary';
         subMessage = 'Enriched words will appear here after processing';
-        break;
       case VocabularyFilter.notEnriched:
         message = 'All vocabulary is enriched!';
         subMessage = 'Great job! All your words have been processed';
-        break;
+      case VocabularyFilter.captured:
+      case VocabularyFilter.practicing:
+      case VocabularyFilter.stabilizing:
+      case VocabularyFilter.active:
+      case VocabularyFilter.mastered:
+        message = 'No words at this stage';
+        subMessage = 'Words will appear here as they progress';
     }
 
     return Center(

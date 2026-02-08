@@ -6,7 +6,6 @@ import 'package:mastery/domain/models/progress_stage.dart';
 void main() {
   group('ProgressStageService', () {
     late ProgressStageService service;
-    final now = DateTime.now();
 
     setUp(() {
       service = ProgressStageService();
@@ -23,12 +22,7 @@ void main() {
       });
 
       test('returns Captured for card with 0 reps (edge case)', () {
-        final card = _createCard(
-          reps: 0,
-          stability: 0,
-          lapses: 0,
-          state: 0,
-        );
+        final card = _createCard(reps: 0, stability: 0, lapses: 0, state: 0);
 
         final stage = service.calculateStage(
           card: card,
@@ -123,12 +117,7 @@ void main() {
 
     group('Stabilizing stage', () {
       test('returns Stabilizing for card meeting all criteria', () {
-        final card = _createCard(
-          reps: 3,
-          stability: 1.0,
-          lapses: 2,
-          state: 2,
-        );
+        final card = _createCard(reps: 3, stability: 1.0, lapses: 2, state: 2);
 
         final stage = service.calculateStage(
           card: card,
@@ -139,12 +128,7 @@ void main() {
       });
 
       test('returns Stabilizing with higher stability', () {
-        final card = _createCard(
-          reps: 5,
-          stability: 10.0,
-          lapses: 1,
-          state: 2,
-        );
+        final card = _createCard(reps: 5, stability: 10.0, lapses: 1, state: 2);
 
         final stage = service.calculateStage(
           card: card,
@@ -173,12 +157,7 @@ void main() {
 
     group('Active stage', () {
       test('returns Active for card with non-translation success', () {
-        final card = _createCard(
-          reps: 3,
-          stability: 1.0,
-          lapses: 2,
-          state: 2,
-        );
+        final card = _createCard(reps: 3, stability: 1.0, lapses: 2, state: 2);
 
         final stage = service.calculateStage(
           card: card,
@@ -189,12 +168,7 @@ void main() {
       });
 
       test('returns Active with multiple non-translation successes', () {
-        final card = _createCard(
-          reps: 5,
-          stability: 10.0,
-          lapses: 0,
-          state: 2,
-        );
+        final card = _createCard(reps: 5, stability: 10.0, lapses: 0, state: 2);
 
         final stage = service.calculateStage(
           card: card,
@@ -205,12 +179,7 @@ void main() {
       });
 
       test('returns Stabilizing without non-translation success', () {
-        final card = _createCard(
-          reps: 3,
-          stability: 1.0,
-          lapses: 2,
-          state: 2,
-        );
+        final card = _createCard(reps: 3, stability: 1.0, lapses: 2, state: 2);
 
         final stage = service.calculateStage(
           card: card,
@@ -336,21 +305,24 @@ void main() {
         expect(stage, ProgressStage.practicing);
       });
 
-      test('regresses from Stabilizing to Practicing when not in review state', () {
-        final card = _createCard(
-          reps: 5,
-          stability: 2.0,
-          lapses: 1,
-          state: 3, // relearning
-        );
+      test(
+        'regresses from Stabilizing to Practicing when not in review state',
+        () {
+          final card = _createCard(
+            reps: 5,
+            stability: 2.0,
+            lapses: 1,
+            state: 3, // relearning
+          );
 
-        final stage = service.calculateStage(
-          card: card,
-          nonTranslationSuccessCount: 0,
-        );
+          final stage = service.calculateStage(
+            card: card,
+            nonTranslationSuccessCount: 0,
+          );
 
-        expect(stage, ProgressStage.practicing);
-      });
+          expect(stage, ProgressStage.practicing);
+        },
+      );
 
       test('regresses from Stabilizing to Practicing with low stability', () {
         final card = _createCard(
@@ -387,12 +359,7 @@ void main() {
       });
 
       test('handles zero stability', () {
-        final card = _createCard(
-          reps: 1,
-          stability: 0.0,
-          lapses: 0,
-          state: 1,
-        );
+        final card = _createCard(reps: 1, stability: 0.0, lapses: 0, state: 1);
 
         final stage = service.calculateStage(
           card: card,
@@ -421,18 +388,10 @@ void main() {
 
     group('Performance', () {
       test('calculates stage in under 50ms', () {
-        final card = _createCard(
-          reps: 5,
-          stability: 10.0,
-          lapses: 1,
-          state: 2,
-        );
+        final card = _createCard(reps: 5, stability: 10.0, lapses: 1, state: 2);
 
         final stopwatch = Stopwatch()..start();
-        service.calculateStage(
-          card: card,
-          nonTranslationSuccessCount: 1,
-        );
+        service.calculateStage(card: card, nonTranslationSuccessCount: 1);
         stopwatch.stop();
 
         expect(stopwatch.elapsedMilliseconds, lessThan(50));

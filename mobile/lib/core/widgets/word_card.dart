@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../domain/models/progress_stage.dart';
 import '../theme/text_styles.dart';
 import '../theme/color_tokens.dart';
+import 'progress_stage_badge.dart';
 import 'status_badge.dart';
 
 /// Card widget for displaying vocabulary word in list
@@ -12,6 +14,7 @@ class WordCard extends StatelessWidget {
     required this.onTap,
     this.isEnriched = false,
     this.status,
+    this.progressStage,
   });
 
   final String word;
@@ -19,6 +22,7 @@ class WordCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool isEnriched;
   final LearningStatus? status;
+  final ProgressStage? progressStage;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +63,13 @@ class WordCard extends StatelessWidget {
                               color: colors.warning,
                             ),
                           ],
-                          if (status != null) ...[
+                          if (progressStage != null) ...[
+                            const SizedBox(width: 6),
+                            ProgressStageBadge(
+                              stage: progressStage!,
+                              compact: true,
+                            ),
+                          ] else if (status != null) ...[
                             const SizedBox(width: 6),
                             StatusBadge(status: status!, compact: true),
                           ],
@@ -78,10 +88,7 @@ class WordCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(
-                  Icons.chevron_right,
-                  color: colors.mutedForeground,
-                ),
+                Icon(Icons.chevron_right, color: colors.mutedForeground),
               ],
             ),
           ),

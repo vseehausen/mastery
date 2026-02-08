@@ -61,7 +61,8 @@ Future<double> todayProgress(Ref ref) async {
   if (activeSessionData == null) return 0.0;
 
   final elapsed = activeSessionData['elapsed_seconds'] as int? ?? 0;
-  final plannedMinutes = activeSessionData['planned_minutes'] as int? ??
+  final plannedMinutes =
+      activeSessionData['planned_minutes'] as int? ??
       AppDefaults.dailyTimeTargetMinutes;
   final planned = plannedMinutes * 60;
 
@@ -127,10 +128,12 @@ Future<SessionPlan?> sessionPlan(Ref ref) async {
 
   return planner.buildSessionPlan(
     userId: userId,
-    timeTargetMinutes: prefs['daily_time_target_minutes'] as int? ??
+    timeTargetMinutes:
+        prefs['daily_time_target_minutes'] as int? ??
         AppDefaults.dailyTimeTargetMinutes,
     intensity: prefs['intensity'] as int? ?? AppDefaults.intensity,
-    targetRetention: (prefs['target_retention'] as num?)?.toDouble() ??
+    targetRetention:
+        (prefs['target_retention'] as num?)?.toDouble() ??
         AppDefaults.targetRetention,
   );
 }

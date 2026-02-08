@@ -13,10 +13,7 @@ import 'package:mastery/domain/models/progress_stage.dart';
 /// Designed to be non-intrusive and contextual - appears near the card being reviewed.
 /// Follows the "minimal cognitive noise" design principle.
 class ProgressMicroFeedback extends StatefulWidget {
-  const ProgressMicroFeedback({
-    required this.stage,
-    super.key,
-  });
+  const ProgressMicroFeedback({required this.stage, super.key});
 
   /// The progress stage to display.
   final ProgressStage stage;
@@ -39,6 +36,7 @@ class _ProgressMicroFeedbackState extends State<ProgressMicroFeedback> {
       if (mounted) {
         setState(() => _visible = true);
         // Announce to screen readers
+        // ignore: deprecated_member_use
         SemanticsService.announce(
           'Word progressing to ${widget.stage.displayName}',
           TextDirection.ltr,

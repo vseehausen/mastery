@@ -7,6 +7,11 @@ enum VocabularyFilter {
   all,
   enriched,
   notEnriched,
+  captured,
+  practicing,
+  stabilizing,
+  active,
+  mastered,
 }
 
 /// Filter chips for vocabulary filtering
@@ -43,6 +48,36 @@ class VocabularyFilterChips extends StatelessWidget {
             label: 'Not Enriched',
             isSelected: selectedFilter == VocabularyFilter.notEnriched,
             onTap: () => onFilterChanged(VocabularyFilter.notEnriched),
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Captured',
+            isSelected: selectedFilter == VocabularyFilter.captured,
+            onTap: () => onFilterChanged(VocabularyFilter.captured),
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Practicing',
+            isSelected: selectedFilter == VocabularyFilter.practicing,
+            onTap: () => onFilterChanged(VocabularyFilter.practicing),
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Stabilizing',
+            isSelected: selectedFilter == VocabularyFilter.stabilizing,
+            onTap: () => onFilterChanged(VocabularyFilter.stabilizing),
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Active',
+            isSelected: selectedFilter == VocabularyFilter.active,
+            onTap: () => onFilterChanged(VocabularyFilter.active),
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Mastered',
+            isSelected: selectedFilter == VocabularyFilter.mastered,
+            onTap: () => onFilterChanged(VocabularyFilter.mastered),
           ),
         ],
       ),

@@ -139,9 +139,7 @@ void main() {
           progressStage: ProgressStage.stabilizing,
         );
 
-        final updated = original.copyWith(
-          progressStage: ProgressStage.active,
-        );
+        final updated = original.copyWith(progressStage: ProgressStage.active);
 
         expect(updated.progressStage, ProgressStage.active);
         expect(updated.id, original.id); // other fields unchanged
