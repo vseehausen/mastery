@@ -124,6 +124,40 @@ class MasteryColors {
   static const Color infoForegroundDark = Color(0xFF172554);
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // VOCABULARY STAGES (8B-R4 lightness ramp: dark→bright)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Captured (Stone) — word captured, not yet reviewed
+  static const Color stageCapturedLight = Color(0xFF57534E); // stone-600
+  static const Color stageCapturedDark = Color(0xFF78716C); // stone-500
+  static const Color stageCapturedBgLight = Color(0xFFF5F5F4); // stone-100
+  static const Color stageCapturedBgDark = Color(0xFF1C1917); // stone-900
+
+  // Practicing (Lime) — first review completed, in SRS rotation
+  static const Color stagePracticingLight = Color(0xFF3F6212); // lime-800
+  static const Color stagePracticingDark = Color(0xFF65A30D); // lime-600
+  static const Color stagePracticingBgLight = Color(0xFFECFCCB); // lime-100
+  static const Color stagePracticingBgDark = Color(0xFF1A2E05); // lime-950
+
+  // Stabilizing (Emerald) — multiple successful recalls
+  static const Color stageStabilizingLight = Color(0xFF047857); // emerald-700
+  static const Color stageStabilizingDark = Color(0xFF10B981); // emerald-500
+  static const Color stageStabilizingBgLight = Color(0xFFD1FAE5); // emerald-100
+  static const Color stageStabilizingBgDark = Color(0xFF064E3B); // emerald-800
+
+  // Active (Blue) — production recall from non-translation cues
+  static const Color stageActiveLight = Color(0xFF2563EB); // blue-600
+  static const Color stageActiveDark = Color(0xFF93C5FD); // blue-300
+  static const Color stageActiveBgLight = Color(0xFFDBEAFE); // blue-100
+  static const Color stageActiveBgDark = Color(0xFF1E3A5F); // blue-900
+
+  // Mastered (Amber) — high stability, rare reviews
+  static const Color stageMasteredLight = Color(0xFFF59E0B); // amber-500
+  static const Color stageMasteredDark = Color(0xFFFBBF24); // amber-400
+  static const Color stageMasteredBgLight = Color(0xFFFEF9C3); // yellow-100
+  static const Color stageMasteredBgDark = Color(0xFF451A03); // amber-950
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // DOMAIN CUE COLORS (unique hues only)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -136,35 +170,6 @@ class MasteryColors {
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS (domain mapping)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  /// Maps spaced-repetition status to semantic color (context-aware)
-  static Color getStatusColor(BuildContext context, LearningStatus status) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    switch (status) {
-      case LearningStatus.known:
-        return isDark ? successDark : successLight;
-      case LearningStatus.learning:
-        return isDark ? warningDark : warningLight;
-      case LearningStatus.unknown:
-        return isDark ? mutedDark : mutedLight;
-    }
-  }
-
-  /// Maps spaced-repetition status to muted badge color (context-aware)
-  static Color getStatusMutedColor(
-    BuildContext context,
-    LearningStatus status,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    switch (status) {
-      case LearningStatus.known:
-        return isDark ? successMutedDark : successMutedLight;
-      case LearningStatus.learning:
-        return isDark ? warningMutedDark : warningMutedLight;
-      case LearningStatus.unknown:
-        return isDark ? mutedDark : mutedLight;
-    }
-  }
 
   /// Maps cue type to semantic or domain color (context-aware)
   static Color getCueColor(BuildContext context, String cueType) {
@@ -230,6 +235,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     required this.infoForeground,
     required this.cueSynonym,
     required this.cueMultipleChoice,
+    required this.stageCaptured,
+    required this.stageCapturedBg,
+    required this.stagePracticing,
+    required this.stagePracticingBg,
+    required this.stageStabilizing,
+    required this.stageStabilizingBg,
+    required this.stageActive,
+    required this.stageActiveBg,
+    required this.stageMastered,
+    required this.stageMasteredBg,
   });
 
   // Surfaces
@@ -274,6 +289,18 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
   final Color cueSynonym;
   final Color cueMultipleChoice;
 
+  // Vocabulary stages
+  final Color stageCaptured;
+  final Color stageCapturedBg;
+  final Color stagePracticing;
+  final Color stagePracticingBg;
+  final Color stageStabilizing;
+  final Color stageStabilizingBg;
+  final Color stageActive;
+  final Color stageActiveBg;
+  final Color stageMastered;
+  final Color stageMasteredBg;
+
   /// Light mode color scheme
   static const light = MasteryColorScheme(
     background: MasteryColors.backgroundLight,
@@ -306,6 +333,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     infoForeground: MasteryColors.infoForegroundLight,
     cueSynonym: MasteryColors.cueSynonymLight,
     cueMultipleChoice: MasteryColors.cueMultipleChoiceLight,
+    stageCaptured: MasteryColors.stageCapturedLight,
+    stageCapturedBg: MasteryColors.stageCapturedBgLight,
+    stagePracticing: MasteryColors.stagePracticingLight,
+    stagePracticingBg: MasteryColors.stagePracticingBgLight,
+    stageStabilizing: MasteryColors.stageStabilizingLight,
+    stageStabilizingBg: MasteryColors.stageStabilizingBgLight,
+    stageActive: MasteryColors.stageActiveLight,
+    stageActiveBg: MasteryColors.stageActiveBgLight,
+    stageMastered: MasteryColors.stageMasteredLight,
+    stageMasteredBg: MasteryColors.stageMasteredBgLight,
   );
 
   /// Dark mode color scheme
@@ -340,6 +377,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     infoForeground: MasteryColors.infoForegroundDark,
     cueSynonym: MasteryColors.cueSynonymDark,
     cueMultipleChoice: MasteryColors.cueMultipleChoiceDark,
+    stageCaptured: MasteryColors.stageCapturedDark,
+    stageCapturedBg: MasteryColors.stageCapturedBgDark,
+    stagePracticing: MasteryColors.stagePracticingDark,
+    stagePracticingBg: MasteryColors.stagePracticingBgDark,
+    stageStabilizing: MasteryColors.stageStabilizingDark,
+    stageStabilizingBg: MasteryColors.stageStabilizingBgDark,
+    stageActive: MasteryColors.stageActiveDark,
+    stageActiveBg: MasteryColors.stageActiveBgDark,
+    stageMastered: MasteryColors.stageMasteredDark,
+    stageMasteredBg: MasteryColors.stageMasteredBgDark,
   );
 
   @override
@@ -374,6 +421,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     Color? infoForeground,
     Color? cueSynonym,
     Color? cueMultipleChoice,
+    Color? stageCaptured,
+    Color? stageCapturedBg,
+    Color? stagePracticing,
+    Color? stagePracticingBg,
+    Color? stageStabilizing,
+    Color? stageStabilizingBg,
+    Color? stageActive,
+    Color? stageActiveBg,
+    Color? stageMastered,
+    Color? stageMasteredBg,
   }) {
     return MasteryColorScheme(
       background: background ?? this.background,
@@ -409,6 +466,16 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
       infoForeground: infoForeground ?? this.infoForeground,
       cueSynonym: cueSynonym ?? this.cueSynonym,
       cueMultipleChoice: cueMultipleChoice ?? this.cueMultipleChoice,
+      stageCaptured: stageCaptured ?? this.stageCaptured,
+      stageCapturedBg: stageCapturedBg ?? this.stageCapturedBg,
+      stagePracticing: stagePracticing ?? this.stagePracticing,
+      stagePracticingBg: stagePracticingBg ?? this.stagePracticingBg,
+      stageStabilizing: stageStabilizing ?? this.stageStabilizing,
+      stageStabilizingBg: stageStabilizingBg ?? this.stageStabilizingBg,
+      stageActive: stageActive ?? this.stageActive,
+      stageActiveBg: stageActiveBg ?? this.stageActiveBg,
+      stageMastered: stageMastered ?? this.stageMastered,
+      stageMasteredBg: stageMasteredBg ?? this.stageMasteredBg,
     );
   }
 
@@ -485,6 +552,28 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
         other.cueMultipleChoice,
         t,
       )!,
+      stageCaptured: Color.lerp(stageCaptured, other.stageCaptured, t)!,
+      stageCapturedBg: Color.lerp(stageCapturedBg, other.stageCapturedBg, t)!,
+      stagePracticing: Color.lerp(stagePracticing, other.stagePracticing, t)!,
+      stagePracticingBg: Color.lerp(
+        stagePracticingBg,
+        other.stagePracticingBg,
+        t,
+      )!,
+      stageStabilizing: Color.lerp(
+        stageStabilizing,
+        other.stageStabilizing,
+        t,
+      )!,
+      stageStabilizingBg: Color.lerp(
+        stageStabilizingBg,
+        other.stageStabilizingBg,
+        t,
+      )!,
+      stageActive: Color.lerp(stageActive, other.stageActive, t)!,
+      stageActiveBg: Color.lerp(stageActiveBg, other.stageActiveBg, t)!,
+      stageMastered: Color.lerp(stageMastered, other.stageMastered, t)!,
+      stageMasteredBg: Color.lerp(stageMasteredBg, other.stageMasteredBg, t)!,
     );
   }
 }
@@ -501,8 +590,3 @@ extension MasteryThemeContext on BuildContext {
       MasteryColorScheme.light;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ENUMS
-// ═══════════════════════════════════════════════════════════════════════════
-
-enum LearningStatus { known, learning, unknown }

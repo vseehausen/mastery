@@ -35,22 +35,35 @@ enum ProgressStage {
     }
   }
 
-  /// Returns the appropriate color for this stage from the theme.
-  ///
-  /// Color mapping:
-  /// - Captured: mutedForeground (gray)
-  /// - Practicing/Stabilizing: accent (amber)
-  /// - Active/Mastered: success (green)
+  /// Returns the foreground color for this stage from the theme.
   Color getColor(MasteryColorScheme colors) {
     switch (this) {
       case ProgressStage.captured:
-        return colors.mutedForeground;
+        return colors.stageCaptured;
       case ProgressStage.practicing:
+        return colors.stagePracticing;
       case ProgressStage.stabilizing:
-        return colors.accent;
+        return colors.stageStabilizing;
       case ProgressStage.active:
+        return colors.stageActive;
       case ProgressStage.mastered:
-        return colors.success;
+        return colors.stageMastered;
+    }
+  }
+
+  /// Returns the background color for this stage from the theme.
+  Color getBgColor(MasteryColorScheme colors) {
+    switch (this) {
+      case ProgressStage.captured:
+        return colors.stageCapturedBg;
+      case ProgressStage.practicing:
+        return colors.stagePracticingBg;
+      case ProgressStage.stabilizing:
+        return colors.stageStabilizingBg;
+      case ProgressStage.active:
+        return colors.stageActiveBg;
+      case ProgressStage.mastered:
+        return colors.stageMasteredBg;
     }
   }
 

@@ -95,13 +95,11 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                   final translationsMap =
                       translationsAsync.valueOrNull ?? <String, String>{};
 
-                  // Build status and stage maps from learning cards
-                  final statusMap = <String, LearningStatus>{};
+                  // Build stage map from learning cards
                   final stageService = ProgressStageService();
                   final stageMap = <String, ProgressStage>{};
                   final learningCards = learningCardsAsync.valueOrNull ?? [];
                   for (final card in learningCards) {
-                    statusMap[card.vocabularyId] = card.status;
                     stageMap[card.vocabularyId] = stageService.calculateStage(
                       card: card,
                       // Conservative: without batch query, assume 0.
@@ -188,7 +186,6 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       itemBuilder: (context, index) {
                         final vocab = filtered[index];
                         final isEnriched = enrichedIds.contains(vocab.id);
-                        final status = statusMap[vocab.id];
                         final stage = stageMap[vocab.id];
                         return WordCard(
                           word: vocab.word,
@@ -197,7 +194,6 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                               vocab.stem ??
                               vocab.word,
                           isEnriched: isEnriched,
-                          status: status,
                           progressStage: stage,
                           onTap: () {
                             Navigator.of(context).push(

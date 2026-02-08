@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/widgets/status_badge.dart';
+import '../../../../core/widgets/progress_stage_badge.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../domain/models/progress_stage.dart';
 
 /// Header section of word detail showing word and status
 class WordHeader extends StatelessWidget {
@@ -9,12 +10,12 @@ class WordHeader extends StatelessWidget {
     super.key,
     required this.word,
     this.pronunciation,
-    this.status,
+    this.progressStage,
   });
 
   final String word;
   final String? pronunciation;
-  final LearningStatus? status;
+  final ProgressStage? progressStage;
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +48,9 @@ class WordHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (status != null) ...[
+        if (progressStage != null) ...[
           const SizedBox(width: 12),
-          StatusBadge(status: status!),
+          ProgressStageBadge(stage: progressStage!),
         ],
       ],
     );

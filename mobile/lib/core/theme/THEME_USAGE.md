@@ -32,25 +32,7 @@ Widget build(BuildContext context) {
 
 **Note**: This requires ThemeExtension support in ShadApp (currently in progress). For now, use method #2 or #3.
 
-#### 2. **Helper Methods (Current Best Practice)**
-
-Use context-aware helper methods for semantic colors:
-
-```dart
-Widget build(BuildContext context) {
-  return Container(
-    color: MasteryColors.getStatusColor(context, LearningStatus.known),
-    child: Text(
-      'Known Word',
-      style: TextStyle(
-        color: MasteryColors.getCueColor(context, 'translation'),
-      ),
-    ),
-  );
-}
-```
-
-#### 3. **Static Constants (Backward Compatible, avoid and refactor to 1.)**
+#### 2. **Static Constants (Backward Compatible, avoid and refactor to 1.)**
 
 Direct access when you already know the brightness:
 
@@ -85,9 +67,16 @@ Widget build(BuildContext context) {
 - `destructive` / `destructiveLight` / `destructiveDark` - Delete/danger actions
 
 ### Semantic States
-- `success` / `successLight` / `successDark` - ✅ "Known" status, correct answers
-- `warning` / `warningLight` / `warningDark` - ⚠️ "Learning" status, timers
-- `info` / `infoLight` / `infoDark` - ℹ️ Informational states
+- `success` / `successLight` / `successDark` - Correct answers, positive states
+- `warning` / `warningLight` / `warningDark` - Timer warnings, caution states
+- `info` / `infoLight` / `infoDark` - Informational states
+
+### Vocabulary Stages (8B-R4 lightness ramp)
+- `stageCaptured` / `stageCapturedBg` - Stone (word captured, not yet reviewed)
+- `stagePracticing` / `stagePracticingBg` - Lime (first review, in SRS rotation)
+- `stageStabilizing` / `stageStabilizingBg` - Emerald (multiple successful recalls)
+- `stageActive` / `stageActiveBg` - Blue (production recall)
+- `stageMastered` / `stageMasteredBg` - Amber (high stability, rare reviews)
 
 ### Form Elements
 - `border` / `borderLight` / `borderDark` - Subtle borders
@@ -105,14 +94,6 @@ Widget build(BuildContext context) {
 - Cloze → `warning`
 
 ## 🔧 Helper Methods
-
-### Status Colors
-
-```dart
-// Get color for learning status (Known/Learning/Unknown)
-MasteryColors.getStatusColor(context, LearningStatus.known)
-MasteryColors.getStatusMutedColor(context, LearningStatus.learning)
-```
 
 ### Cue Type Colors
 
@@ -151,18 +132,18 @@ Removed tokens have been replaced with semantic equivalents:
 
 ## 📖 Examples
 
-### Status Badge
+### Progress Stage Badge
 ```dart
+final colors = context.masteryColors;
+final stage = ProgressStage.practicing;
 Container(
   decoration: BoxDecoration(
-    color: MasteryColors.getStatusMutedColor(context, status),
+    color: stage.getBgColor(colors),
     borderRadius: BorderRadius.circular(12),
   ),
   child: Text(
-    'Known',
-    style: TextStyle(
-      color: MasteryColors.getStatusColor(context, status),
-    ),
+    stage.displayName,
+    style: TextStyle(color: stage.getColor(colors)),
   ),
 )
 ```

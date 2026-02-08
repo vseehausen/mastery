@@ -21,6 +21,7 @@ class ProgressStageBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
     final stageColor = stage.getColor(colors);
+    final stageBgColor = stage.getBgColor(colors);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -28,7 +29,7 @@ class ProgressStageBadge extends StatelessWidget {
         vertical: compact ? 4 : 5,
       ),
       decoration: BoxDecoration(
-        color: stageColor.withValues(alpha: 0.15),
+        color: stageBgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
