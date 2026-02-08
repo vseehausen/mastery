@@ -1,4 +1,5 @@
 import '../../core/theme/color_tokens.dart';
+import 'progress_stage.dart';
 
 /// Learning card entity - FSRS state for each vocabulary item
 class LearningCardModel {
@@ -18,6 +19,7 @@ class LearningCardModel {
     required this.updatedAt,
     this.deletedAt,
     this.version = 1,
+    this.progressStage,
   });
 
   factory LearningCardModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,9 @@ class LearningCardModel {
           ? DateTime.parse(json['deleted_at'] as String)
           : null,
       version: json['version'] as int? ?? 1,
+      progressStage: json['progress_stage'] != null
+          ? ProgressStage.fromString(json['progress_stage'] as String)
+          : null,
     );
   }
 
@@ -59,6 +64,7 @@ class LearningCardModel {
   final DateTime updatedAt;
   final DateTime? deletedAt;
   final int version;
+  final ProgressStage? progressStage;
 
   /// Convert FSRS state to LearningStatus
   /// state: 0=new, 1=learning, 2=review, 3=relearning
@@ -92,6 +98,7 @@ class LearningCardModel {
       'updated_at': updatedAt.toIso8601String(),
       'deleted_at': deletedAt?.toIso8601String(),
       'version': version,
+      'progress_stage': progressStage?.toDbString(),
     };
   }
 
@@ -111,6 +118,7 @@ class LearningCardModel {
     DateTime? updatedAt,
     DateTime? deletedAt,
     int? version,
+    ProgressStage? progressStage,
   }) {
     return LearningCardModel(
       id: id ?? this.id,
@@ -128,6 +136,7 @@ class LearningCardModel {
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       version: version ?? this.version,
+      progressStage: progressStage ?? this.progressStage,
     );
   }
 }
