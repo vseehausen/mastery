@@ -36,6 +36,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
     final vocabularyAsync = ref.watch(vocabularyListProvider);
     final enrichedIdsAsync = ref.watch(enrichedVocabularyIdsProvider);
     final learningCardsAsync = ref.watch(learningCardsProvider);
+    final translationsAsync = ref.watch(primaryTranslationsMapProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -86,6 +87,9 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                 data: (vocabulary) {
                   // Get enriched IDs (empty set if loading/error)
                   final enrichedIds = enrichedIdsAsync.valueOrNull ?? <String>{};
+
+                  // Get translations map (empty map if loading/error)
+                  final translationsMap = translationsAsync.valueOrNull ?? <String, String>{};
 
                   // Build status map from learning cards
                   final statusMap = <String, LearningStatus>{};
@@ -155,7 +159,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                         final status = statusMap[vocab.id];
                         return WordCard(
                           word: vocab.word,
-                          definition: vocab.stem ?? vocab.word,
+                          definition: translationsMap[vocab.id] ?? vocab.stem ?? vocab.word,
                           isEnriched: isEnriched,
                           status: status,
                           onTap: () {

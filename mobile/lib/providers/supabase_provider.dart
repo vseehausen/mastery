@@ -111,6 +111,16 @@ final primaryMeaningProvider =
   return MeaningModel.fromJson(data);
 });
 
+/// Provider for map of all primary translations (vocabularyId -> translation)
+final primaryTranslationsMapProvider =
+    FutureProvider.autoDispose<Map<String, String>>((ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return {};
+
+  final service = ref.watch(supabaseDataServiceProvider);
+  return service.getAllPrimaryTranslations(userId);
+});
+
 // =============================================================================
 // Learning Card Providers
 // =============================================================================
