@@ -255,9 +255,12 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
   }
 
   List<_CardData> _buildCardList(MeaningModel meaning, List<dynamic> cues) {
-    // Cast to CueModel list
-    final cueModels = cues.cast<CueModel>();
     final cards = <_CardData>[];
+
+    // Convert maps to CueModel objects
+    final cueModels = cues
+        .map((c) => c is CueModel ? c : CueModel.fromJson(c as Map<String, dynamic>))
+        .toList();
 
     // 1. Recall Card (translation cue)
     final translationCue = cueModels.where((c) => c.cueType == 'translation').firstOrNull;

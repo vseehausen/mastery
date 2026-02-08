@@ -15,7 +15,6 @@ import '../../providers/supabase_provider.dart';
 import '../learn/screens/session_screen.dart';
 import 'presentation/widgets/word_header.dart';
 import 'presentation/widgets/context_card.dart';
-import 'presentation/widgets/cue_preview_card.dart';
 import 'presentation/widgets/card_preview_sheet.dart';
 import 'presentation/widgets/dev_info_panel.dart';
 import 'presentation/widgets/field_feedback.dart';
@@ -806,71 +805,33 @@ class _VocabularyDetailScreenState
   }
 
   Widget _buildQuizPreviewSection(String meaningId, bool isDark) {
-    final cuesAsync = ref.watch(cuesForMeaningProvider(meaningId));
     final vocabAsync = ref.watch(vocabularyByIdProvider(widget.vocabularyId));
     final word = vocabAsync.valueOrNull?.word ?? '';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Preview as cards button
-        SizedBox(
-          width: double.infinity,
-          child: ShadButton.outline(
-            onPressed: () {
-              showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) => CardPreviewSheet(
-                  vocabularyId: widget.vocabularyId,
-                  word: word,
-                ),
-              );
-            },
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.preview, size: 18),
-                SizedBox(width: 8),
-                Text('Preview as cards'),
-              ],
+    // Preview as cards button
+    return SizedBox(
+      width: double.infinity,
+      child: ShadButton.outline(
+        onPressed: () {
+          showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => CardPreviewSheet(
+              vocabularyId: widget.vocabularyId,
+              word: word,
             ),
-          ),
+          );
+        },
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.preview, size: 18),
+            SizedBox(width: 8),
+            Text('Preview as cards'),
+          ],
         ),
-        const SizedBox(height: 12),
-
-        // Existing cue preview cards
-        cuesAsync.when(
-          loading: () =>
-              _buildLoadingCard(message: 'Loading cue cards...', isDark: isDark),
-          error: (_, _) => _buildStateCard(
-            title: 'Couldn\'t load cue cards',
-            message: 'Try refreshing meaning data.',
-            isDark: isDark,
-          ),
-          data: (cues) {
-            if (cues.isEmpty) {
-              return _buildStateCard(
-                title: 'No cue cards yet',
-                message: 'Generate enrichment to create practice prompts.',
-                isDark: isDark,
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: cues
-                  .map(
-                    (cue) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: CuePreviewCard(cue: cue),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
-        ),
-      ],
+      ),
     );
   }
 
