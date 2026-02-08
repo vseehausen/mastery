@@ -864,11 +864,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   Widget _buildBottomActionZone(PlannedItem? currentItem, BuildContext context) {
     final colors = context.masteryColors;
-    final helperText = currentItem == null
-        ? 'Wrapping up your session.'
-        : currentItem.isRecognition
-        ? 'Pick the best answer.'
-        : 'Step 1: reveal. Step 2: grade your recall.';
 
     return Container(
       width: double.infinity,
@@ -933,13 +928,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
             ),
           ],
-          if (_inlineRecoveryMessage == null && !_isSubmittingReview)
-            Text(
-              helperText,
-              style: MasteryTextStyles.caption.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
         ],
       ),
     );

@@ -109,20 +109,6 @@ class _RecallCardState extends State<RecallCard> {
 
           // Answer section
           if (_isRevealed) ...[
-            Text(
-              'Step 2 of 2: Grade your recall',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'How well did you remember?',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 8),
             // Show the answer
             Container(
               width: double.infinity,
@@ -201,13 +187,6 @@ class _RecallCardState extends State<RecallCard> {
               ),
             ],
           ] else ...[
-            Text(
-              'Step 1 of 2: Try to recall first',
-              style: MasteryTextStyles.bodySmall.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 10),
             // Show reveal button
             SizedBox(
               width: double.infinity,
