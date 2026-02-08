@@ -119,18 +119,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                       )
                       .toList();
 
-                  // Filter by enrichment status or progress stage
+                  // Filter by progress stage
                   switch (_selectedFilter) {
                     case VocabularyFilter.all:
                       break;
-                    case VocabularyFilter.enriched:
-                      filtered = filtered
-                          .where((v) => enrichedIds.contains(v.id))
-                          .toList();
-                    case VocabularyFilter.notEnriched:
-                      filtered = filtered
-                          .where((v) => !enrichedIds.contains(v.id))
-                          .toList();
                     case VocabularyFilter.captured:
                       filtered = filtered
                           .where(
@@ -278,12 +270,6 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
       case VocabularyFilter.all:
         message = 'No vocabulary yet';
         subMessage = 'Import vocabulary from your Kindle using the desktop app';
-      case VocabularyFilter.enriched:
-        message = 'No enriched vocabulary';
-        subMessage = 'Enriched words will appear here after processing';
-      case VocabularyFilter.notEnriched:
-        message = 'All vocabulary is enriched!';
-        subMessage = 'Great job! All your words have been processed';
       case VocabularyFilter.captured:
       case VocabularyFilter.practicing:
       case VocabularyFilter.stabilizing:
@@ -298,9 +284,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _selectedFilter == VocabularyFilter.notEnriched
-                ? Icons.check_circle_outline
-                : Icons.book_outlined,
+            Icons.book_outlined,
             size: 64,
             color: colors.mutedForeground,
           ),

@@ -5,8 +5,6 @@ import '../../../../core/theme/color_tokens.dart';
 /// Filter types for vocabulary list
 enum VocabularyFilter {
   all,
-  enriched,
-  notEnriched,
   captured,
   practicing,
   stabilizing,
@@ -35,19 +33,6 @@ class VocabularyFilterChips extends StatelessWidget {
             label: 'All',
             isSelected: selectedFilter == VocabularyFilter.all,
             onTap: () => onFilterChanged(VocabularyFilter.all),
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Enriched',
-            icon: Icons.auto_awesome,
-            isSelected: selectedFilter == VocabularyFilter.enriched,
-            onTap: () => onFilterChanged(VocabularyFilter.enriched),
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Not Enriched',
-            isSelected: selectedFilter == VocabularyFilter.notEnriched,
-            onTap: () => onFilterChanged(VocabularyFilter.notEnriched),
           ),
           const SizedBox(width: 8),
           _FilterChip(
