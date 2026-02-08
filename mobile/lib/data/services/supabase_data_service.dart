@@ -205,6 +205,31 @@ class SupabaseDataService {
     return response;
   }
 
+  /// Get count of successful non-translation reviews for a learning card.
+  ///
+  /// Non-translation reviews are those where the cue type is NOT 'translation',
+  /// meaning the user had to produce the word from definition, synonym, or context.
+  /// This indicates active recall capability (not just recognition).
+  ///
+  /// Returns count of reviews with:
+  /// - rating >= 3 (Good or Easy)
+  /// - cue_type IN ('definition', 'synonym', 'context_cloze', 'disambiguation')
+  Future<int> getNonTranslationSuccessCount(String learningCardId) async {
+    final response = await _client
+        .from('review_logs')
+        .select('id', const FetchOptions(count: CountOption.exact))
+        .eq('learning_card_id', learningCardId)
+        .gte('rating', 3)
+        .inFilter('cue_type', [
+      'definition',
+      'synonym',
+      'context_cloze',
+      'disambiguation'
+    ]);
+
+    return response.count ?? 0;
+  }
+
   /// Get due cards (where due <= now) - only returns cards with meanings
   Future<List<Map<String, dynamic>>> getDueCards(
     String userId, {

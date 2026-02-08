@@ -5,6 +5,7 @@ import '../../../core/app_defaults.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
+import '../../../domain/models/stage_transition.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
 import '../../../providers/supabase_provider.dart';
@@ -147,6 +148,7 @@ class ActiveSessionState {
     this.elapsedSeconds = 0,
     this.isPaused = false,
     this.isComplete = false,
+    this.transitions = const [],
   });
 
   final LearningSessionModel? session;
@@ -155,6 +157,7 @@ class ActiveSessionState {
   final int elapsedSeconds;
   final bool isPaused;
   final bool isComplete;
+  final List<StageTransition> transitions;
 
   PlannedItem? get currentItem {
     if (plan == null || currentItemIndex >= plan!.items.length) return null;
@@ -177,6 +180,7 @@ class ActiveSessionState {
     int? elapsedSeconds,
     bool? isPaused,
     bool? isComplete,
+    List<StageTransition>? transitions,
   }) {
     return ActiveSessionState(
       session: session ?? this.session,
@@ -185,6 +189,7 @@ class ActiveSessionState {
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       isPaused: isPaused ?? this.isPaused,
       isComplete: isComplete ?? this.isComplete,
+      transitions: transitions ?? this.transitions,
     );
   }
 }
@@ -236,6 +241,22 @@ class ActiveSessionNotifier extends _$ActiveSessionNotifier {
   /// Mark session as complete
   void complete() {
     state = state.copyWith(isComplete: true);
+  }
+
+  /// Record a stage transition for a word during the session.
+  ///
+  /// This should be called when a word's progress stage changes after a review.
+  /// Transitions are used to display micro-feedback and session recaps.
+  void recordTransition(StageTransition transition) {
+    final updatedTransitions = [...state.transitions, transition];
+    state = state.copyWith(transitions: updatedTransitions);
+  }
+
+  /// Clear all recorded transitions.
+  ///
+  /// Useful when resetting or restarting a session.
+  void clearTransitions() {
+    state = state.copyWith(transitions: const []);
   }
 
   /// Check if time has expired
