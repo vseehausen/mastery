@@ -49,7 +49,11 @@ class _VocabularyDetailScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Word Details'),
+        title: vocabAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (vocab) => Text(vocab?.word ?? ''),
+        ),
         actions: [
           // Edit icon in header
           meaningsAsync.when(
@@ -102,13 +106,13 @@ class _VocabularyDetailScreenState
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s5, AppSpacing.s2, AppSpacing.s5, AppSpacing.s5,
+                AppSpacing.s5, AppSpacing.s0, AppSpacing.s5, AppSpacing.s5,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // HERO AREA: Word + Stats (side by side)
-                  _buildHeroArea(vocab, learningCard),
+                  // Metadata line: stage · reviews · next review
+                  _buildMetadataLine(vocab, learningCard),
                   const SizedBox(height: AppSpacing.s10), // 40
 
                   // MEANING AREA (sectioned)
@@ -165,94 +169,52 @@ class _VocabularyDetailScreenState
     );
   }
 
-  /// Hero area: Word + pronunciation on left, badge + stats on right
-  Widget _buildHeroArea(
+  /// Compact metadata line: stage · reviews · next review
+  Widget _buildMetadataLine(
     VocabularyModel vocab,
     LearningCardModel? learningCard,
   ) {
     final colors = context.masteryColors;
-
-    // Calculate progress stage if learning card exists
     final stageService = ProgressStageService();
     final stage = stageService.calculateStage(
       card: learningCard,
-      nonTranslationSuccessCount: 0, // Conservative estimate
+      nonTranslationSuccessCount: 0,
     );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left: Word + pronunciation
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                vocab.word,
-                style: const TextStyle(
-                  fontSize: AppTypography.fontSize2xl,
-                  fontWeight: AppTypography.fontWeightSemibold,
-                  letterSpacing: AppTypography.letterSpacingTight,
-                  height: AppTypography.lineHeightTight,
-                ),
-              ),
-              if (vocab.stem != null) ...[
-                const SizedBox(height: AppSpacing.s1), // 4
-                Text(
-                  vocab.stem!,
-                  style: MasteryTextStyles.bodySmall.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s4), // 16
-        // Right: Badge + stats
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Status/Stage badge
-            ProgressStageBadge(
-              stage: stage,
-              compact: false,
-            ),
-            const SizedBox(height: AppSpacing.s2), // 8 (closest to 6)
-            // Stats
-            if (learningCard != null) ...[
-              Text(
-                '${learningCard.reps} reviews',
-                style: TextStyle(
-                  fontSize: AppTypography.fontSizeXs,
-                  fontWeight: AppTypography.fontWeightMedium,
-                  color: colors.mutedForeground,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                'Next: ${_formatNextReview(learningCard.due)}',
-                style: TextStyle(
-                  fontSize: AppTypography.fontSizeXs,
-                  fontWeight: AppTypography.fontWeightMedium,
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ] else ...[
-              Text(
-                'Not yet reviewed',
-                style: TextStyle(
-                  fontSize: AppTypography.fontSizeXs,
-                  fontWeight: AppTypography.fontWeightMedium,
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
+    final metaStyle = TextStyle(
+      fontSize: AppTypography.fontSizeXs,
+      fontWeight: AppTypography.fontWeightMedium,
+      color: colors.mutedForeground,
+    );
+
+    final parts = <Widget>[
+      ProgressStageBadge(stage: stage, compact: true),
+    ];
+
+    if (learningCard != null) {
+      parts.addAll([
+        _metaDot(colors),
+        Text('${learningCard.reps} reviews', style: metaStyle),
+        _metaDot(colors),
+        Text(_formatNextReview(learningCard.due), style: metaStyle),
+      ]);
+    }
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: AppSpacing.s1,
+      children: parts,
+    );
+  }
+
+  Widget _metaDot(MasteryColorScheme colors) {
+    return Text(
+      ' · ',
+      style: TextStyle(
+        fontSize: AppTypography.fontSizeXs,
+        fontWeight: AppTypography.fontWeightMedium,
+        color: colors.mutedForeground,
+      ),
     );
   }
 
