@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:mastery/domain/models/meaning.dart';
 import 'package:mastery/features/vocabulary/presentation/widgets/meaning_editor.dart';
 
@@ -99,7 +100,7 @@ void main() {
         ),
       );
 
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNull);
     });
 
@@ -127,7 +128,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'leistungsfähig');
       await tester.pump();
 
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -155,7 +156,7 @@ void main() {
       await tester.enterText(textFields.at(1), 'New definition.');
       await tester.pump();
 
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -183,7 +184,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'leistungsfähig');
       await tester.pump();
 
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       expect(savedTranslation, 'leistungsfähig');
@@ -213,7 +214,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'Updated def.');
       await tester.pump();
 
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       expect(savedDefinition, 'Updated def.');
@@ -246,7 +247,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'New def.');
       await tester.pump();
 
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       expect(savedTranslation, 'neu');
@@ -300,7 +301,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, '  trimmed  ');
       await tester.pump();
 
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       expect(savedTranslation, 'trimmed');
@@ -324,7 +325,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Part of Speech'), findsOneWidget);
+      expect(find.text('PART OF SPEECH'), findsOneWidget);
     });
 
     testWidgets('displays synonyms when provided', (tester) async {
@@ -402,7 +403,7 @@ void main() {
       await tester.pump();
 
       // Verify save button is enabled
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -462,6 +463,8 @@ void main() {
 
       // Find and tap the delete icon on the chip
       final deleteIcon = find.byIcon(Icons.close).first;
+      await tester.ensureVisible(deleteIcon);
+      await tester.pumpAndSettle();
       await tester.tap(deleteIcon);
       await tester.pump();
 
@@ -469,7 +472,7 @@ void main() {
       expect(find.text('fast'), findsNothing);
 
       // Verify save button is enabled (change detected)
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -501,7 +504,7 @@ void main() {
       expect(find.text('powerful'), findsOneWidget);
 
       // Verify save button is enabled
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -528,6 +531,8 @@ void main() {
 
       // Find and tap the delete icon
       final deleteIcon = find.byIcon(Icons.close).first;
+      await tester.ensureVisible(deleteIcon);
+      await tester.pumpAndSettle();
       await tester.tap(deleteIcon);
       await tester.pump();
 
@@ -535,7 +540,7 @@ void main() {
       expect(find.text('capable'), findsNothing);
 
       // Verify save button is enabled
-      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
+      final saveButton = tester.widget<ShadButton>(find.byType(ShadButton).last);
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -567,7 +572,7 @@ void main() {
       await tester.pump();
 
       // Save
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       // Verify saved list contains both synonyms
@@ -604,7 +609,7 @@ void main() {
       await tester.pump();
 
       // Save
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pump();
 
       // Verify saved list contains both translations
@@ -643,8 +648,8 @@ void main() {
         await tester.pump();
 
         // Verify save button is disabled (no net change)
-        final saveButton = tester.widget<FilledButton>(
-          find.byType(FilledButton),
+        final saveButton = tester.widget<ShadButton>(
+          find.byType(ShadButton).last,
         );
         expect(saveButton.onPressed, isNull);
       },

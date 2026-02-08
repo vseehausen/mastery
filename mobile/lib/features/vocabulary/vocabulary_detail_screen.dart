@@ -39,7 +39,6 @@ class VocabularyDetailScreen extends ConsumerStatefulWidget {
 
 class _VocabularyDetailScreenState
     extends ConsumerState<VocabularyDetailScreen> {
-  String? _editingMeaningId;
   bool _enrichmentTriggered = false;
 
   @override
@@ -52,7 +51,7 @@ class _VocabularyDetailScreenState
         title: vocabAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, _) => const SizedBox.shrink(),
-          data: (vocab) => Text(vocab?.word ?? ''),
+          data: (vocab) => Text(vocab?.displayWord ?? ''),
         ),
         actions: [
           // Edit icon in header
@@ -61,15 +60,9 @@ class _VocabularyDetailScreenState
             error: (_, _) => const SizedBox.shrink(),
             data: (meanings) {
               if (meanings.isEmpty) return const SizedBox.shrink();
-              final meaning = meanings.first;
-              final isEditing = _editingMeaningId == meaning.id;
               return IconButton(
-                icon: Icon(isEditing ? Icons.close : Icons.edit_outlined),
-                onPressed: () {
-                  setState(() {
-                    _editingMeaningId = isEditing ? null : meaning.id;
-                  });
-                },
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => _openMeaningEditor(meanings.first),
               );
             },
           ),
@@ -278,11 +271,7 @@ class _VocabularyDetailScreenState
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.s1),
           child: TextButton(
-            onPressed: () {
-              setState(() {
-                _editingMeaningId = meaning.id;
-              });
-            },
+            onPressed: () => _openMeaningEditor(meaning),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
@@ -357,32 +346,6 @@ class _VocabularyDetailScreenState
 
     final meaning = meanings.first;
 
-    // If editing, show editor
-    if (_editingMeaningId == meaning.id) {
-      return MeaningEditor(
-        meaning: meaning,
-        onSave:
-            ({
-              required String translation,
-              required String definition,
-              required String partOfSpeech,
-              required List<String> synonyms,
-              required List<String> alternativeTranslations,
-            }) {
-              _handleMeaningSave(
-                meaning,
-                translation: translation,
-                definition: definition,
-                partOfSpeech: partOfSpeech,
-                synonyms: synonyms,
-                alternativeTranslations: alternativeTranslations,
-              );
-            },
-        onCancel: () => setState(() => _editingMeaningId = null),
-      );
-    }
-
-    // Normal view with sections
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -519,7 +482,7 @@ class _VocabularyDetailScreenState
                                   ref
                                       .read(vocabularyByIdProvider(vocabularyId))
                                       .valueOrNull
-                                      ?.word ??
+                                      ?.displayWord ??
                                   '',
                             ),
                           );
@@ -840,6 +803,35 @@ class _VocabularyDetailScreenState
     }
   }
 
+  void _openMeaningEditor(MeaningModel meaning) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => MeaningEditor(
+          meaning: meaning,
+          onSave: ({
+            required String translation,
+            required String definition,
+            required String partOfSpeech,
+            required List<String> synonyms,
+            required List<String> alternativeTranslations,
+          }) {
+            Navigator.of(context).pop();
+            _handleMeaningSave(
+              meaning,
+              translation: translation,
+              definition: definition,
+              partOfSpeech: partOfSpeech,
+              synonyms: synonyms,
+              alternativeTranslations: alternativeTranslations,
+            );
+          },
+          onCancel: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleMeaningSave(
     MeaningModel meaning, {
     required String translation,
@@ -929,10 +921,9 @@ class _VocabularyDetailScreenState
       newSynonyms: synonyms,
     );
 
-    // Refresh meanings, cues, and exit edit mode
+    // Refresh meanings and cues
     ref.invalidate(meaningsProvider(widget.vocabularyId));
     ref.invalidate(cuesForVocabularyProvider(widget.vocabularyId));
-    setState(() => _editingMeaningId = null);
   }
 
   Future<void> _autoUpdateCues({
