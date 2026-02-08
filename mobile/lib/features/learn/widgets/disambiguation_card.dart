@@ -128,6 +128,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     _isCorrect ? 'Correct!' : 'Not quite.',
@@ -135,13 +136,15 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
                       color: _isCorrect ? colors.success : colors.destructive,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.explanation,
-                    style: MasteryTextStyles.bodySmall.copyWith(
-                      color: colors.foreground,
+                  if (widget.explanation.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.explanation,
+                      style: MasteryTextStyles.bodySmall.copyWith(
+                        color: colors.foreground,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
