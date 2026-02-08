@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../domain/models/meaning.dart';
 
@@ -86,14 +87,12 @@ class _MeaningEditorState extends State<MeaningEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.grey.withValues(alpha: 0.1),
+        color: colors.muted,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
@@ -106,7 +105,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
           Text(
             'Edit Meaning',
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 12),
@@ -115,7 +114,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
           Text(
             'Translation',
             style: MasteryTextStyles.formLabel.copyWith(
-              color: isDark ? Colors.white60 : Colors.black54,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 4),
@@ -138,7 +137,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
           Text(
             'English Definition',
             style: MasteryTextStyles.formLabel.copyWith(
-              color: isDark ? Colors.white60 : Colors.black54,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 4),
@@ -162,7 +161,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
           Text(
             'Part of Speech',
             style: MasteryTextStyles.formLabel.copyWith(
-              color: isDark ? Colors.white60 : Colors.black54,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 4),
@@ -184,9 +183,9 @@ class _MeaningEditorState extends State<MeaningEditor> {
               ),
             ),
             style: MasteryTextStyles.body.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
+              color: colors.foreground,
             ),
-            dropdownColor: isDark ? Colors.grey[850] : Colors.white,
+            dropdownColor: colors.cardBackground,
             items: _partsOfSpeech.map((pos) {
               return DropdownMenuItem<String>(
                 value: pos,
@@ -213,7 +212,6 @@ class _MeaningEditorState extends State<MeaningEditor> {
                 _synonyms.removeAt(index);
               });
             },
-            isDark: isDark,
           ),
           const SizedBox(height: 12),
 
@@ -231,7 +229,6 @@ class _MeaningEditorState extends State<MeaningEditor> {
                 _alternativeTranslations.removeAt(index);
               });
             },
-            isDark: isDark,
           ),
           const SizedBox(height: 16),
 
@@ -276,14 +273,12 @@ class _TagEditor extends StatefulWidget {
     required this.items,
     required this.onAdd,
     required this.onRemove,
-    required this.isDark,
   });
 
   final String label;
   final List<String> items;
   final void Function(String value) onAdd;
   final void Function(int index) onRemove;
-  final bool isDark;
 
   @override
   State<_TagEditor> createState() => _TagEditorState();
@@ -314,13 +309,15 @@ class _TagEditorState extends State<_TagEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.label,
           style: MasteryTextStyles.formLabel.copyWith(
-            color: widget.isDark ? Colors.white60 : Colors.black54,
+            color: colors.mutedForeground,
           ),
         ),
         const SizedBox(height: 4),
@@ -336,9 +333,7 @@ class _TagEditorState extends State<_TagEditor> {
             ),
             hintText: 'Type and press Enter to add',
             hintStyle: MasteryTextStyles.body.copyWith(
-              color: widget.isDark
-                  ? Colors.white.withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.3),
+              color: colors.mutedForeground.withValues(alpha: 0.5),
             ),
             suffixIcon: IconButton(
               icon: const Icon(Icons.add, size: 20),

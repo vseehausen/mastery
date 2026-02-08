@@ -108,7 +108,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
                 child: Text(
                   'Show hint',
                   style: MasteryTextStyles.bodySmall.copyWith(
-                    color: Theme.of(context).primaryColor,
+                    color: colors.accent,
                   ),
                 ),
               ),
@@ -189,13 +189,14 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
   }
 
   Widget _buildGradeButtons(BuildContext context) {
+    final colors = context.masteryColors;
     return Row(
       children: [
         _gradeButton(
           context,
           'Again',
           'Forgot',
-          const Color(0xFFEF4444),
+          colors.destructive,
           ReviewRating.again,
         ),
         const SizedBox(width: 8),
@@ -203,7 +204,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
           context,
           'Hard',
           'Difficult',
-          const Color(0xFFF59E0B),
+          colors.warning,
           ReviewRating.hard,
         ),
         const SizedBox(width: 8),
@@ -211,7 +212,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
           context,
           'Good',
           'Correct',
-          const Color(0xFF10B981),
+          colors.success,
           ReviewRating.good,
         ),
         const SizedBox(width: 8),
@@ -219,7 +220,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
           context,
           'Easy',
           'Perfect',
-          const Color(0xFF3B82F6),
+          colors.info,
           ReviewRating.easy,
         ),
       ],

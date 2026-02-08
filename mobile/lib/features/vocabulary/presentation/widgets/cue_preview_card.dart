@@ -44,10 +44,7 @@ class CuePreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark
-        ? MasteryColors.cardDark
-        : MasteryColors.secondaryLight;
+    final colors = context.masteryColors;
 
     final cueType = cue['cue_type'] as String? ?? 'unknown';
     final promptText = cue['prompt_text'] as String? ?? '';
@@ -58,10 +55,10 @@ class CuePreviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
           width: 1,
         ),
       ),
@@ -95,9 +92,7 @@ class CuePreviewCard extends StatelessWidget {
             Text(
               promptText,
               style: MasteryTextStyles.body.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.foregroundLight,
+                color: colors.mutedForeground,
                 height: 1.4,
               ),
             ),
@@ -110,9 +105,7 @@ class CuePreviewCard extends StatelessWidget {
               answerText,
               style: MasteryTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark
-                    ? MasteryColors.foregroundDark
-                    : MasteryColors.foregroundLight,
+                color: colors.foreground,
               ),
             ),
         ],

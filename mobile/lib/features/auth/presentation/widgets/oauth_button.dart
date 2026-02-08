@@ -17,11 +17,7 @@ class OAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark
-        ? MasteryColors.borderDark
-        : MasteryColors.borderLight;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final colors = context.masteryColors;
 
     return Material(
       color: Colors.transparent,
@@ -32,17 +28,17 @@ class OAuthButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
-            border: Border.all(color: borderColor),
+            border: Border.all(color: colors.border),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: textColor),
+              Icon(icon, size: 20, color: colors.foreground),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: MasteryTextStyles.bodyBold.copyWith(color: textColor),
+                style: MasteryTextStyles.bodyBold.copyWith(color: colors.foreground),
               ),
             ],
           ),

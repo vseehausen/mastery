@@ -32,7 +32,7 @@ class MeaningPickerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -44,16 +44,14 @@ class MeaningPickerScreen extends StatelessWidget {
             'Which meaning do you want to learn first?',
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 20,
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'You can learn the others later.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 24),
@@ -64,7 +62,6 @@ class MeaningPickerScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 return _MeaningOptionCard(
                   option: meanings[index],
-                  isDark: isDark,
                   onSelect: () => onSelect(meanings[index].meaningId),
                 );
               },
@@ -79,27 +76,25 @@ class MeaningPickerScreen extends StatelessWidget {
 class _MeaningOptionCard extends StatelessWidget {
   const _MeaningOptionCard({
     required this.option,
-    required this.isDark,
     required this.onSelect,
   });
 
   final MeaningOption option;
-  final bool isDark;
   final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: option.isRecommended
               ? Theme.of(context).primaryColor
-              : (isDark
-                  ? MasteryColors.borderDark
-                  : MasteryColors.borderLight),
+              : colors.border,
         ),
       ),
       child: Column(
@@ -111,7 +106,7 @@ class _MeaningOptionCard extends StatelessWidget {
                 child: Text(
                   option.primaryTranslation,
                   style: MasteryTextStyles.bodyBold.copyWith(
-                    color: isDark ? Colors.white : Colors.black,
+                    color: colors.foreground,
                   ),
                 ),
               ),
@@ -140,9 +135,7 @@ class _MeaningOptionCard extends StatelessWidget {
           Text(
             option.englishDefinition,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 12),

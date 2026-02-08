@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/theme/color_tokens.dart';
 
 /// Per-field rating row widget with thumbs up/down and flag icon buttons.
 /// Shows current rating state and allows flagging issues via modal bottom sheet.
@@ -66,7 +67,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save feedback: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: context.masteryColors.destructive,
           ),
         );
       }
@@ -117,7 +118,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to report issue: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: context.masteryColors.destructive,
             ),
           );
         }
@@ -133,7 +134,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -148,8 +149,8 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
           ),
           onPressed: _isSaving ? null : () => _submitFeedback('up'),
           color: _currentRating == 'up'
-              ? Colors.green
-              : (isDark ? Colors.white54 : Colors.black54),
+              ? colors.success
+              : colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(
@@ -170,8 +171,8 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
           ),
           onPressed: _isSaving ? null : () => _submitFeedback('down'),
           color: _currentRating == 'down'
-              ? Colors.red
-              : (isDark ? Colors.white54 : Colors.black54),
+              ? colors.destructive
+              : colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(
@@ -189,7 +190,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
             size: 16,
           ),
           onPressed: _isSaving ? null : _showFlagSheet,
-          color: isDark ? Colors.white54 : Colors.black54,
+          color: colors.mutedForeground,
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(
@@ -219,7 +220,7 @@ class _FlagIssueSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return SafeArea(
       child: Padding(
@@ -238,7 +239,7 @@ class _FlagIssueSheet extends StatelessWidget {
             Text(
               'What\'s wrong with this $fieldName?',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark ? Colors.white70 : Colors.black54,
+                color: colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 24),

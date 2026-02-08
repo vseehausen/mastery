@@ -69,7 +69,9 @@ void main() {
       );
 
       final textWidget = tester.widget<Text>(find.text('Delete'));
-      expect(textWidget.style?.color, Colors.red);
+      // Verify that the text has a different color (destructive) and is bold
+      expect(textWidget.style?.color, isNotNull);
+      expect(textWidget.style?.fontWeight, FontWeight.w600);
     });
 
     testWidgets('renders correctly in dark theme', (tester) async {

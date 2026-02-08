@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../widgets/auth_logo.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../providers/auth_provider.dart';
 import 'email_sign_in_screen.dart';
 
@@ -33,7 +34,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
@@ -59,21 +60,21 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: colors.destructive.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
+                        color: colors.destructive.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
+                        Icon(Icons.error_outline, color: colors.destructive),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
                             style: MasteryTextStyles.bodySmall.copyWith(
-                              color: Colors.red,
+                              color: colors.destructive,
                             ),
                           ),
                         ),
@@ -179,7 +180,7 @@ class _EmailSignUpScreenState extends ConsumerState<EmailSignUpScreen> {
                     Text(
                       'Already have an account?',
                       style: MasteryTextStyles.bodySmall.copyWith(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        color: colors.mutedForeground,
                       ),
                     ),
                     TextButton(

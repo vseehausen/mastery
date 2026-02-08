@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../core/theme/color_tokens.dart';
 
 /// Sign up screen for new user registration
 class SignupScreen extends ConsumerStatefulWidget {
@@ -35,6 +36,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return _buildSuccessScreen();
     }
 
+    final colors = context.masteryColors;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
@@ -55,7 +58,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Create an account to sync your highlights',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 16, color: colors.mutedForeground),
                 ),
                 const SizedBox(height: 32),
 
@@ -64,18 +67,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: colors.destructive.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                      border: Border.all(color: colors.destructive.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700),
+                        Icon(Icons.error_outline, color: colors.destructive),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700),
+                            style: TextStyle(color: colors.destructive),
                           ),
                         ),
                       ],
@@ -201,7 +204,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   children: [
                     Text(
                       'Already have an account?',
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: TextStyle(color: colors.mutedForeground),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -219,45 +222,50 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Widget _buildSuccessScreen() {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.mark_email_read, size: 80, color: Colors.green),
-              const SizedBox(height: 24),
-              const Text(
-                'Check Your Email',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: Builder(
+        builder: (context) {
+          final colors = context.masteryColors;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(Icons.mark_email_read, size: 80, color: colors.success),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Check Your Email',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'We sent a verification email to:\n${_emailController.text}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: colors.mutedForeground),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please click the link in the email to verify your account.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+                  ),
+                  const SizedBox(height: 32),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text('Back to Sign In'),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'We sent a verification email to:\n${_emailController.text}',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please click the link in the email to verify your account.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-              ),
-              const SizedBox(height: 32),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Back to Sign In'),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -111,7 +111,7 @@ class NativeLanguageSetting extends ConsumerWidget {
             return ListTile(
               title: Text(englishName),
               trailing: code == currentCode
-                  ? const Icon(Icons.check, color: Colors.green)
+                  ? Icon(Icons.check, color: context.masteryColors.success)
                   : null,
               onTap: () async {
                 final dataService = ref.read(supabaseDataServiceProvider);
@@ -199,7 +199,7 @@ class MeaningDisplayModeSetting extends ConsumerWidget {
             return ListTile(
               title: Text(label),
               trailing: mode == currentMode
-                  ? const Icon(Icons.check, color: Colors.green)
+                  ? Icon(Icons.check, color: context.masteryColors.success)
                   : null,
               onTap: () async {
                 final dataService = ref.read(supabaseDataServiceProvider);

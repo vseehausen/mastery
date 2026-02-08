@@ -19,7 +19,7 @@ class MeaningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final showTranslation = displayMode == 'native' || displayMode == 'both';
     final showDefinition = displayMode == 'english' || displayMode == 'both';
     final synonyms = meaning.synonyms;
@@ -32,9 +32,7 @@ class MeaningCard extends StatelessWidget {
           Text(
             meaning.partOfSpeech!,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -47,9 +45,7 @@ class MeaningCard extends StatelessWidget {
             meaning.primaryTranslation,
             style: MasteryTextStyles.bodyLarge.copyWith(
               fontWeight: FontWeight.w600,
-              color: isDark
-                  ? MasteryColors.foregroundDark
-                  : MasteryColors.foregroundLight,
+              color: colors.foreground,
             ),
           ),
 
@@ -60,9 +56,7 @@ class MeaningCard extends StatelessWidget {
           Text(
             meaning.englishDefinition,
             style: MasteryTextStyles.body.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
               height: 1.4,
             ),
           ),
@@ -73,9 +67,7 @@ class MeaningCard extends StatelessWidget {
           Text(
             synonyms.join(' · '),
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
         ],

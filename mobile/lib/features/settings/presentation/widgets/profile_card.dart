@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Card displaying user profile information
@@ -11,21 +12,15 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.grey[50],
+          color: context.masteryColors.cardBackground,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.grey[300]!,
+            color: context.masteryColors.border,
           ),
         ),
         child: Row(
@@ -35,11 +30,11 @@ class ProfileCard extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
+                color: context.masteryColors.primaryAction,
                 borderRadius: BorderRadius.circular(28),
               ),
-              child: const Center(
-                child: Icon(Icons.person, color: Colors.white, size: 28),
+              child: Center(
+                child: Icon(Icons.person, color: context.masteryColors.primaryActionForeground, size: 28),
               ),
             ),
             const SizedBox(width: 16),
@@ -52,14 +47,14 @@ class ProfileCard extends StatelessWidget {
                   Text(
                     name ?? 'User',
                     style: MasteryTextStyles.bodyBold.copyWith(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: context.masteryColors.foreground,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     email ?? 'user@example.com',
                     style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: context.masteryColors.mutedForeground,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -72,7 +67,7 @@ class ProfileCard extends StatelessWidget {
             if (onTap != null)
               Icon(
                 Icons.chevron_right,
-                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                color: context.masteryColors.mutedForeground,
               ),
           ],
         ),

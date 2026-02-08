@@ -28,7 +28,7 @@ class LearningStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,9 +36,7 @@ class LearningStats extends StatelessWidget {
         Text(
           'Learning Status',
           style: MasteryTextStyles.bodyBold.copyWith(
-            color: isDark
-                ? MasteryColors.foregroundDark
-                : MasteryColors.foregroundLight,
+            color: colors.foreground,
           ),
         ),
         const SizedBox(height: 12),
@@ -48,7 +46,6 @@ class LearningStats extends StatelessWidget {
               child: _StatItem(
                 label: 'Times Reviewed',
                 value: timesReviewed?.toString() ?? '-',
-                isDark: isDark,
               ),
             ),
             const SizedBox(width: 12),
@@ -56,7 +53,6 @@ class LearningStats extends StatelessWidget {
               child: _StatItem(
                 label: 'Confidence',
                 value: confidence != null ? '$confidence/5' : '-',
-                isDark: isDark,
               ),
             ),
           ],
@@ -67,7 +63,6 @@ class LearningStats extends StatelessWidget {
           child: _StatItem(
             label: 'Next Review',
             value: _formatDate(nextReview),
-            isDark: isDark,
           ),
         ),
       ],
@@ -79,22 +74,22 @@ class _StatItem extends StatelessWidget {
   const _StatItem({
     required this.label,
     required this.value,
-    required this.isDark,
   });
 
   final String label;
   final String value;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: Column(
@@ -103,18 +98,14 @@ class _StatItem extends StatelessWidget {
           Text(
             label,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark
-                  ? MasteryColors.foregroundDark
-                  : MasteryColors.foregroundLight,
+              color: colors.foreground,
             ),
           ),
         ],

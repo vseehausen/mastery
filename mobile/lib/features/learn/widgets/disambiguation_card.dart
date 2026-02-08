@@ -118,15 +118,11 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: (_isCorrect
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444))
+                color: (_isCorrect ? colors.success : colors.destructive)
                     .withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (_isCorrect
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444))
+                  color: (_isCorrect ? colors.success : colors.destructive)
                       .withValues(alpha: 0.5),
                 ),
               ),
@@ -136,9 +132,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
                   Text(
                     _isCorrect ? 'Correct!' : 'Not quite.',
                     style: MasteryTextStyles.bodyBold.copyWith(
-                      color: _isCorrect
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444),
+                      color: _isCorrect ? colors.success : colors.destructive,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -171,11 +165,11 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
       borderColor = colors.border;
       bgColor = colors.cardBackground;
     } else if (isCorrectOption) {
-      borderColor = const Color(0xFF10B981);
-      bgColor = const Color(0xFF10B981).withValues(alpha: 0.15);
+      borderColor = colors.success;
+      bgColor = colors.success.withValues(alpha: 0.15);
     } else if (isSelected) {
-      borderColor = const Color(0xFFEF4444);
-      bgColor = const Color(0xFFEF4444).withValues(alpha: 0.15);
+      borderColor = colors.destructive;
+      bgColor = colors.destructive.withValues(alpha: 0.15);
     } else {
       borderColor = colors.border;
       bgColor = colors.cardBackground;

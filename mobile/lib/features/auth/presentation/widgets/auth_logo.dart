@@ -11,7 +11,7 @@ class AuthLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -21,10 +21,10 @@ class AuthLogo extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: MasteryColors.accentLight,
+            color: colors.accent,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.auto_stories, color: Colors.white, size: 32),
+          child: Icon(Icons.auto_stories, color: colors.accentForeground, size: 32),
         ),
         const SizedBox(height: 12),
         // Title
@@ -32,7 +32,7 @@ class AuthLogo extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: MasteryTextStyles.displayLarge.copyWith(
-            color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+            color: colors.foreground,
           ),
         ),
         if (subtitle != null) ...[
@@ -41,7 +41,7 @@ class AuthLogo extends StatelessWidget {
             subtitle!,
             textAlign: TextAlign.center,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: colors.mutedForeground,
             ),
           ),
         ],

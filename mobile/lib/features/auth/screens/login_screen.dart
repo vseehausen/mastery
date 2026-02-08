@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../core/theme/color_tokens.dart';
 import 'signup_screen.dart';
 
 /// Login screen for email/password authentication
@@ -29,6 +30,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -40,10 +43,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 16),
                 // Logo and title
-                const Icon(
+                Icon(
                   Icons.auto_stories,
                   size: 80,
-                  color: Colors.deepPurple,
+                  color: colors.accent,
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -55,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Sign in to continue',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 16, color: colors.mutedForeground),
                 ),
                 const SizedBox(height: 48),
 
@@ -64,18 +67,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: colors.destructive.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                      border: Border.all(color: colors.destructive.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700),
+                        Icon(Icons.error_outline, color: colors.destructive),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700),
+                            style: TextStyle(color: colors.destructive),
                           ),
                         ),
                       ],
@@ -168,18 +171,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // OAuth divider
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider(color: colors.border)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'Or continue with',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: colors.mutedForeground,
                           fontSize: 14,
                         ),
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider(color: colors.border)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -221,7 +224,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Text(
                       "Don't have an account?",
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: TextStyle(color: colors.mutedForeground),
                     ),
                     TextButton(
                       onPressed: () {

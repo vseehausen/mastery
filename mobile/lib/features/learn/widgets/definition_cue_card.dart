@@ -108,7 +108,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
                 child: Text(
                   'Show hint',
                   style: MasteryTextStyles.bodySmall.copyWith(
-                    color: Theme.of(context).primaryColor,
+                    color: colors.accent,
                   ),
                 ),
               ),
@@ -189,33 +189,34 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
   }
 
   Widget _buildGradeButtons() {
+    final colors = context.masteryColors;
     return Row(
       children: [
         _gradeButton(
           'Again',
           'Forgot',
-          const Color(0xFFEF4444),
+          colors.destructive,
           ReviewRating.again,
         ),
         const SizedBox(width: 8),
         _gradeButton(
           'Hard',
           'Difficult',
-          const Color(0xFFF59E0B),
+          colors.warning,
           ReviewRating.hard,
         ),
         const SizedBox(width: 8),
         _gradeButton(
           'Good',
           'Correct',
-          const Color(0xFF10B981),
+          colors.success,
           ReviewRating.good,
         ),
         const SizedBox(width: 8),
         _gradeButton(
           'Easy',
           'Perfect',
-          const Color(0xFF3B82F6),
+          colors.info,
           ReviewRating.easy,
         ),
       ],

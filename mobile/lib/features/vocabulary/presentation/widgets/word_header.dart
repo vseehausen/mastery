@@ -18,7 +18,7 @@ class WordHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,9 +31,7 @@ class WordHeader extends StatelessWidget {
               Text(
                 word,
                 style: MasteryTextStyles.displayLarge.copyWith(
-                  color: isDark
-                      ? MasteryColors.foregroundDark
-                      : MasteryColors.foregroundLight,
+                  color: colors.foreground,
                 ),
               ),
               if (pronunciation != null && pronunciation!.isNotEmpty) ...[
@@ -41,9 +39,7 @@ class WordHeader extends StatelessWidget {
                 Text(
                   pronunciation!,
                   style: MasteryTextStyles.bodySmall.copyWith(
-                    color: isDark
-                        ? MasteryColors.mutedForegroundDark
-                        : MasteryColors.mutedForegroundLight,
+                    color: colors.mutedForeground,
                     fontStyle: FontStyle.italic,
                   ),
                 ),

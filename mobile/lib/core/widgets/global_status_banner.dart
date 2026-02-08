@@ -153,38 +153,35 @@ class GlobalStatusBanner extends StatelessWidget {
   }
 
   Color _backgroundColor(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
-        return isDark ? const Color(0xFF3A2A05) : const Color(0xFFFFF7E6);
+        return context.masteryColors.warningMuted;
       case GlobalStatusType.enrichmentProgress:
         return context.masteryColors.cardBackground;
       case GlobalStatusType.syncError:
-        return isDark ? const Color(0xFF3F1B1B) : const Color(0xFFFEE2E2);
+        return context.masteryColors.destructive.withValues(alpha: 0.1);
     }
   }
 
   Color _borderColor(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
-        return isDark ? const Color(0xFF7C5A06) : const Color(0xFFFCD34D);
+        return context.masteryColors.warning;
       case GlobalStatusType.enrichmentProgress:
         return context.masteryColors.border;
       case GlobalStatusType.syncError:
-        return isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5);
+        return context.masteryColors.destructive.withValues(alpha: 0.3);
     }
   }
 
   Color _foregroundColor(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (data.type) {
       case GlobalStatusType.offline:
-        return isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
+        return context.masteryColors.warning;
       case GlobalStatusType.enrichmentProgress:
         return context.masteryColors.foreground;
       case GlobalStatusType.syncError:
-        return isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B);
+        return context.masteryColors.destructive;
     }
   }
 }

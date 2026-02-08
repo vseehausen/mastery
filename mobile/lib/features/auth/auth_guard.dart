@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/learning_providers.dart';
+import '../../core/theme/color_tokens.dart';
 import 'presentation/screens/auth_screen.dart';
 import 'presentation/screens/oauth_loading_screen.dart';
 
@@ -82,22 +83,27 @@ class AuthGuard extends ConsumerWidget {
           return const AuthScreen();
         }
         return Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                Text('Authentication error: $error'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Supabase.instance.client.auth.signOut();
-                  },
-                  child: const Text('Go to Sign In'),
+          body: Builder(
+            builder: (context) {
+              final colors = context.masteryColors;
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: colors.destructive),
+                    const SizedBox(height: 16),
+                    Text('Authentication error: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Supabase.instance.client.auth.signOut();
+                      },
+                      child: const Text('Go to Sign In'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },

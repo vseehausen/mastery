@@ -209,12 +209,14 @@ supabase stop
 After implementing and testing features, perform manual verification on iPhone simulator using the **ios-simulator MCP** (all commands prefixed with `mcp__ios-simulator__`). The MCP provides tools for UI interaction (tap, swipe, type), screen capture (screenshots, video recording), accessibility inspection (describe elements), and app management.
 
 **Manual testing checklist:**
-1. Launch app with `flutter run -d <UDID>`
+1. Launch app with `flutter run -d <UDID> --pid-file=/tmp/flutter_mastery.pid`
 2. Log in with test credentials (from memory)
 3. Use ios-simulator MCP to navigate through key user flows
 4. Verify new features render correctly (take screenshots/videos for documentation)
 5. Test interactions (buttons, forms, navigation, edge cases)
 6. Document findings with saved screenshots or videos
+
+**IMPORTANT: Keep the app running between test runs** — Use hot reload (SIGUSR1) or hot restart (SIGUSR2) instead of killing and relaunching. Only perform full restarts when necessary (native code changes, pubspec updates).
 
 ### UI Sync Parity Rule
 - For visual sync tasks, treat simulator runtime rendering as the final source of truth over token assumptions.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/color_tokens.dart';
+
 /// Onboarding screen for first-time users
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -83,8 +85,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
                     color: _currentPage == index
-                        ? Colors.deepPurple
-                        : Colors.grey[300],
+                        ? context.masteryColors.accent
+                        : context.masteryColors.border,
                   ),
                 ),
               ),
@@ -157,7 +159,7 @@ class _OnboardingPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 120, color: Colors.deepPurple),
+              Icon(icon, size: 120, color: context.masteryColors.accent),
               const SizedBox(height: 32),
               Text(
                 title,
@@ -171,7 +173,9 @@ class _OnboardingPage extends StatelessWidget {
                 description,
                 style: Theme.of(
                   context,
-                ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                ).textTheme.bodyLarge?.copyWith(
+                      color: context.masteryColors.mutedForeground,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],

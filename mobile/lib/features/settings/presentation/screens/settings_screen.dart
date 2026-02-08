@@ -31,7 +31,7 @@ class SettingsScreen extends ConsumerWidget {
             color: context.masteryColors.foreground,
           ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: context.masteryColors.background,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -714,7 +714,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: MasteryTextStyles.bodyBold.copyWith(
                       fontSize: 14,
                       color: isSelected
-                          ? MasteryColors.accentLight
+                          ? context.masteryColors.accent
                           : context.masteryColors.foreground,
                     ),
                   ),
@@ -732,9 +732,9 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             if (isSelected)
-              const Icon(
+              Icon(
                 Icons.check,
-                color: MasteryColors.accentLight,
+                color: context.masteryColors.accent,
                 size: 24,
               )
             else
@@ -774,7 +774,7 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.of(context).pop();
               }
             },
-            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            child: Text('Sign Out', style: TextStyle(color: context.masteryColors.destructive)),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/text_styles.dart';
+import '../theme/color_tokens.dart';
 
 /// Card for displaying statistics
 class StatCard extends StatelessWidget {
@@ -18,11 +19,8 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor =
-        backgroundColor ??
-        (isDark ? Colors.grey[900] : const Color(0xFFF5F5F5));
-    final textColor = isDark ? Colors.white : Colors.black;
+    final colors = context.masteryColors;
+    final bgColor = backgroundColor ?? colors.secondaryAction;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -30,9 +28,7 @@ class StatCard extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey[300]!,
+          color: colors.border,
         ),
       ),
       child: Column(
@@ -41,12 +37,14 @@ class StatCard extends StatelessWidget {
           Row(
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 20, color: textColor),
+                Icon(icon, size: 20, color: colors.foreground),
                 const SizedBox(width: 8),
               ],
               Text(
                 label,
-                style: MasteryTextStyles.bodySmall.copyWith(color: textColor),
+                style: MasteryTextStyles.bodySmall.copyWith(
+                  color: colors.foreground,
+                ),
               ),
             ],
           ),
@@ -55,7 +53,7 @@ class StatCard extends StatelessWidget {
             value,
             style: MasteryTextStyles.displayLarge.copyWith(
               fontSize: 24,
-              color: textColor,
+              color: colors.foreground,
             ),
           ),
         ],

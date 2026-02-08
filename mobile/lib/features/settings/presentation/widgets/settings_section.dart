@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 
 /// Section grouping for settings items
@@ -14,8 +15,6 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,7 +24,7 @@ class SettingsSection extends StatelessWidget {
             title,
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 14,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: context.masteryColors.mutedForeground,
               letterSpacing: 0.5,
             ),
           ),
@@ -33,14 +32,10 @@ class SettingsSection extends StatelessWidget {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.grey[50],
+            color: context.masteryColors.cardBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.grey[300]!,
+              color: context.masteryColors.border,
             ),
           ),
           child: Column(
@@ -54,9 +49,7 @@ class SettingsSection extends StatelessWidget {
                       height: 1,
                       indent: 16,
                       endIndent: 16,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.grey[300],
+                      color: context.masteryColors.border,
                     ),
                 ],
               ),

@@ -140,7 +140,7 @@ class _RecallCardState extends State<RecallCard> {
                   child: _GradeButton(
                     label: 'Again',
                     description: 'Forgot',
-                    color: const Color(0xFFEF4444),
+                    color: colors.destructive,
                     onPressed: () => _handleGrade(ReviewRating.again),
                     isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
@@ -150,7 +150,7 @@ class _RecallCardState extends State<RecallCard> {
                   child: _GradeButton(
                     label: 'Hard',
                     description: 'Difficult',
-                    color: const Color(0xFFF59E0B),
+                    color: colors.warning,
                     onPressed: () => _handleGrade(ReviewRating.hard),
                     isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
@@ -160,7 +160,7 @@ class _RecallCardState extends State<RecallCard> {
                   child: _GradeButton(
                     label: 'Good',
                     description: 'Correct',
-                    color: const Color(0xFF10B981),
+                    color: colors.success,
                     onPressed: () => _handleGrade(ReviewRating.good),
                     isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),
@@ -170,7 +170,7 @@ class _RecallCardState extends State<RecallCard> {
                   child: _GradeButton(
                     label: 'Easy',
                     description: 'Perfect',
-                    color: const Color(0xFF3B82F6),
+                    color: colors.info,
                     onPressed: () => _handleGrade(ReviewRating.easy),
                     isEnabled: !_hasGraded && !widget.isSubmitting,
                   ),

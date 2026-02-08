@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/color_tokens.dart';
 
 /// Widget for displaying error states with retry capability
 class ErrorState extends StatelessWidget {
@@ -17,12 +18,14 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Center(
       child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: Colors.red.shade300),
+            Icon(icon, size: 80, color: colors.destructive),
             const SizedBox(height: 24),
             Text(
               title,
@@ -34,7 +37,7 @@ class ErrorState extends StatelessWidget {
               child: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 16, color: colors.mutedForeground),
               ),
             ),
             if (onRetry != null) ...[
@@ -69,12 +72,14 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
     return Center(
       child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: Colors.grey.shade400),
+            Icon(icon, size: 80, color: colors.mutedForeground),
             const SizedBox(height: 24),
             Text(
               title,
@@ -86,7 +91,7 @@ class EmptyState extends StatelessWidget {
               child: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 16, color: colors.mutedForeground),
               ),
             ),
             if (action != null) ...[const SizedBox(height: 24), action!],

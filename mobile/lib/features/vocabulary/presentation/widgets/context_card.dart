@@ -19,10 +19,7 @@ class ContextCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark
-        ? MasteryColors.cardDark
-        : MasteryColors.secondaryLight;
+    final colors = context.masteryColors;
 
     if (this.context == null || this.context!.isEmpty) {
       return const SizedBox.shrink();
@@ -31,10 +28,10 @@ class ContextCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: Column(
@@ -43,9 +40,7 @@ class ContextCard extends StatelessWidget {
           Text(
             '"${this.context}"',
             style: MasteryTextStyles.body.copyWith(
-              color: isDark
-                  ? MasteryColors.foregroundDark
-                  : MasteryColors.foregroundLight,
+              color: colors.foreground,
               fontStyle: FontStyle.italic,
               height: 1.6,
             ),
@@ -57,18 +52,14 @@ class ContextCard extends StatelessWidget {
                 Icon(
                   Icons.book_outlined,
                   size: 16,
-                  color: isDark
-                      ? MasteryColors.mutedForegroundDark
-                      : MasteryColors.mutedForegroundLight,
+                  color: colors.mutedForeground,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     bookTitle!,
                     style: MasteryTextStyles.bodySmall.copyWith(
-                      color: isDark
-                          ? MasteryColors.mutedForegroundDark
-                          : MasteryColors.mutedForegroundLight,
+                      color: colors.mutedForeground,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -82,9 +73,7 @@ class ContextCard extends StatelessWidget {
             Text(
               'by $author',
               style: MasteryTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? MasteryColors.mutedForegroundDark
-                    : MasteryColors.mutedForegroundLight,
+                color: colors.mutedForeground,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

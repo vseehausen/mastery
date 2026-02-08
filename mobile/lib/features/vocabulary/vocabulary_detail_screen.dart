@@ -197,14 +197,16 @@ class _VocabularyDetailScreenState
   }
 
   Widget _buildPrimaryActionCard(BuildContext context, bool isDark) {
+    final colors = context.masteryColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: Column(
@@ -213,16 +215,14 @@ class _VocabularyDetailScreenState
           Text(
             'Next best action',
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Practice this word now to reinforce memory.',
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(height: 12),
@@ -249,12 +249,14 @@ class _VocabularyDetailScreenState
     required bool isDark,
     required Widget child,
   }) {
+    final colors = context.masteryColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.cardLight,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: ExpansionTile(
@@ -327,14 +329,16 @@ class _VocabularyDetailScreenState
   }
 
   Widget _buildLoadingCard({required String message, required bool isDark}) {
+    final colors = context.masteryColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: Row(
@@ -344,18 +348,14 @@ class _VocabularyDetailScreenState
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           const SizedBox(width: 12),
           Text(
             message,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
         ],
@@ -370,14 +370,16 @@ class _VocabularyDetailScreenState
     String? actionLabel,
     VoidCallback? onAction,
   }) {
+    final colors = context.masteryColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? MasteryColors.cardDark : MasteryColors.secondaryLight,
+        color: colors.secondaryAction,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? MasteryColors.borderDark : MasteryColors.borderLight,
+          color: colors.border,
         ),
       ),
       child: Column(
@@ -386,18 +388,14 @@ class _VocabularyDetailScreenState
           Text(
             title,
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark
-                  ? MasteryColors.foregroundDark
-                  : MasteryColors.foregroundLight,
+              color: colors.foreground,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             message,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: colors.mutedForeground,
             ),
           ),
           if (actionLabel != null && onAction != null) ...[

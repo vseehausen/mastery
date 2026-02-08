@@ -22,7 +22,7 @@ class SettingsListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labelColor = isDanger
-        ? Colors.red
+        ? context.masteryColors.destructive
         : context.masteryColors.foreground;
 
     return InkWell(

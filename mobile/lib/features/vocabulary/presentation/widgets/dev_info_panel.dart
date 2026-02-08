@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/theme/color_tokens.dart';
 import '../../../../providers/dev_mode_provider.dart';
 
 /// Developer information panel for debugging and monitoring.
@@ -30,7 +31,7 @@ class DevInfoPanel extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.masteryColors;
     final confidence = (meaning['confidence'] as num?)?.toDouble() ?? 1.0;
     final source = meaning['source'] as String? ?? 'ai';
     final createdAt = _parseDateTime(meaning['created_at']);
@@ -41,7 +42,7 @@ class DevInfoPanel extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+          color: colors.border,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -55,13 +56,13 @@ class DevInfoPanel extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.orange[900] : Colors.orange[100],
+                  color: colors.warningMuted,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   'DEV',
                   style: MasteryTextStyles.caption.copyWith(
-                    color: isDark ? Colors.orange[200] : Colors.orange[900],
+                    color: colors.warning,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'monospace',
                   ),
@@ -75,19 +76,19 @@ class DevInfoPanel extends ConsumerWidget {
           _buildInfoRow(
             'Confidence',
             '${(confidence * 100).toStringAsFixed(0)}%',
-            isDark,
+            colors,
           ),
           const SizedBox(height: 4),
-          _buildInfoRow('Source', source, isDark),
+          _buildInfoRow('Source', source, colors),
 
           // Timestamps
           if (createdAt != null) ...[
             const SizedBox(height: 4),
-            _buildInfoRow('Created', _dateFormat.format(createdAt), isDark),
+            _buildInfoRow('Created', _dateFormat.format(createdAt), colors),
           ],
           if (updatedAt != null) ...[
             const SizedBox(height: 4),
-            _buildInfoRow('Updated', _dateFormat.format(updatedAt), isDark),
+            _buildInfoRow('Updated', _dateFormat.format(updatedAt), colors),
           ],
 
           // Queue status (if provided)
@@ -98,14 +99,14 @@ class DevInfoPanel extends ConsumerWidget {
             _buildInfoRow(
               'Queue Status',
               queueStatus!['status'] as String? ?? 'unknown',
-              isDark,
+              colors,
             ),
             if (queueStatus!['position'] != null) ...[
               const SizedBox(height: 4),
               _buildInfoRow(
                 'Position',
                 queueStatus!['position'].toString(),
-                isDark,
+                colors,
               ),
             ],
           ],
@@ -114,7 +115,7 @@ class DevInfoPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, bool isDark) {
+  Widget _buildInfoRow(String label, String value, MasteryColorScheme colors) {
     return Row(
       children: [
         Expanded(
@@ -122,7 +123,7 @@ class DevInfoPanel extends ConsumerWidget {
           child: Text(
             label,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: colors.mutedForeground,
               fontFamily: 'monospace',
             ),
           ),
@@ -132,7 +133,7 @@ class DevInfoPanel extends ConsumerWidget {
           child: Text(
             value,
             style: MasteryTextStyles.caption.copyWith(
-              color: isDark ? Colors.grey[300] : Colors.grey[800],
+              color: colors.foreground,
               fontFamily: 'monospace',
               fontWeight: FontWeight.w600,
             ),

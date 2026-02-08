@@ -72,7 +72,6 @@ class SyncStatusScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final syncSnapshot = ref.watch(syncSnapshotProvider);
 
     return Scaffold(
@@ -88,13 +87,11 @@ class SyncStatusScreen extends ConsumerWidget {
             error: (error, _) => _buildError(
               context: context,
               ref: ref,
-              isDark: isDark,
               message: error.toString(),
             ),
             data: (snapshot) => _buildContent(
               context: context,
               ref: ref,
-              isDark: isDark,
               snapshot: snapshot,
             ),
           ),
@@ -106,7 +103,6 @@ class SyncStatusScreen extends ConsumerWidget {
   Widget _buildContent({
     required BuildContext context,
     required WidgetRef ref,
-    required bool isDark,
     required _SyncSnapshot snapshot,
   }) {
     final importReady = snapshot.vocabularyCount > 0;
@@ -121,16 +117,14 @@ class SyncStatusScreen extends ConsumerWidget {
           _headline(snapshot.stage),
           style: MasteryTextStyles.displayLarge.copyWith(
             fontSize: 24,
-            color: isDark ? Colors.white : Colors.black,
+            color: context.masteryColors.foreground,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           _subline(snapshot),
           style: MasteryTextStyles.bodySmall.copyWith(
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
         ),
         const SizedBox(height: 24),
@@ -178,7 +172,6 @@ class SyncStatusScreen extends ConsumerWidget {
   Widget _buildError({
     required BuildContext context,
     required WidgetRef ref,
-    required bool isDark,
     required String message,
   }) {
     return Center(
@@ -188,15 +181,13 @@ class SyncStatusScreen extends ConsumerWidget {
           Icon(
             Icons.error_outline,
             size: 56,
-            color: isDark
-                ? MasteryColors.mutedForegroundDark
-                : MasteryColors.mutedForegroundLight,
+            color: context.masteryColors.mutedForeground,
           ),
           const SizedBox(height: 16),
           Text(
             'Could not load sync status',
             style: MasteryTextStyles.bodyBold.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+              color: context.masteryColors.foreground,
             ),
           ),
           const SizedBox(height: 8),
@@ -204,9 +195,7 @@ class SyncStatusScreen extends ConsumerWidget {
             message,
             textAlign: TextAlign.center,
             style: MasteryTextStyles.bodySmall.copyWith(
-              color: isDark
-                  ? MasteryColors.mutedForegroundDark
-                  : MasteryColors.mutedForegroundLight,
+              color: context.masteryColors.mutedForeground,
             ),
           ),
           const SizedBox(height: 20),
@@ -261,16 +250,9 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark
-        ? MasteryColors.borderDark
-        : MasteryColors.borderLight;
-    final doneColor = isDark
-        ? MasteryColors.successDark
-        : MasteryColors.successLight;
-    final pendingColor = isDark
-        ? MasteryColors.mutedForegroundDark
-        : MasteryColors.mutedForegroundLight;
+    final lineColor = context.masteryColors.border;
+    final doneColor = context.masteryColors.success;
+    final pendingColor = context.masteryColors.mutedForeground;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,7 +287,7 @@ class _TimelineRow extends StatelessWidget {
                 Text(
                   title,
                   style: MasteryTextStyles.bodyBold.copyWith(
-                    color: isDark ? Colors.white : Colors.black,
+                    color: context.masteryColors.foreground,
                   ),
                 ),
                 const SizedBox(height: 4),
