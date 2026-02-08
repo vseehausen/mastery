@@ -15,6 +15,7 @@ class DefinitionCueCard extends StatefulWidget {
     required this.onGrade,
     this.hintText,
     this.isSubmitting = false,
+    this.isPreview = false,
   });
 
   /// The English definition shown as prompt
@@ -29,6 +30,9 @@ class DefinitionCueCard extends StatefulWidget {
   /// Callback when user grades themselves
   final void Function(int rating) onGrade;
   final bool isSubmitting;
+
+  /// Preview mode - hides grade buttons and saving message
+  final bool isPreview;
 
   @override
   State<DefinitionCueCard> createState() => _DefinitionCueCardState();
@@ -153,15 +157,17 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 16),
-            _buildGradeButtons(),
-            if (widget.isSubmitting || _hasGraded) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Saving response…',
-                style: MasteryTextStyles.caption.copyWith(
-                  color: colors.mutedForeground,
+            if (!widget.isPreview) ...[
+              _buildGradeButtons(),
+              if (widget.isSubmitting || _hasGraded) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Saving response…',
+                  style: MasteryTextStyles.caption.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
-              ),
+              ],
             ],
           ] else ...[
             Text(

@@ -15,6 +15,7 @@ class RecallCard extends StatefulWidget {
     required this.onGrade,
     this.context,
     this.isSubmitting = false,
+    this.isPreview = false,
   });
 
   /// The word being tested
@@ -30,6 +31,9 @@ class RecallCard extends StatefulWidget {
   /// Returns the rating (1=Again, 2=Hard, 3=Good, 4=Easy)
   final void Function(int rating) onGrade;
   final bool isSubmitting;
+
+  /// Preview mode - hides grade buttons and saving message
+  final bool isPreview;
 
   @override
   State<RecallCard> createState() => _RecallCardState();
@@ -133,58 +137,60 @@ class _RecallCardState extends State<RecallCard> {
 
             const SizedBox(height: 16),
 
-            // Grade buttons
-            Row(
-              children: [
-                Expanded(
-                  child: _GradeButton(
-                    label: 'Again',
-                    description: 'Forgot',
-                    color: const Color(0xFFEF4444),
-                    onPressed: () => _handleGrade(ReviewRating.again),
-                    isEnabled: !_hasGraded && !widget.isSubmitting,
+            // Grade buttons (hidden in preview mode)
+            if (!widget.isPreview) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _GradeButton(
+                      label: 'Again',
+                      description: 'Forgot',
+                      color: const Color(0xFFEF4444),
+                      onPressed: () => _handleGrade(ReviewRating.again),
+                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _GradeButton(
-                    label: 'Hard',
-                    description: 'Difficult',
-                    color: const Color(0xFFF59E0B),
-                    onPressed: () => _handleGrade(ReviewRating.hard),
-                    isEnabled: !_hasGraded && !widget.isSubmitting,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _GradeButton(
+                      label: 'Hard',
+                      description: 'Difficult',
+                      color: const Color(0xFFF59E0B),
+                      onPressed: () => _handleGrade(ReviewRating.hard),
+                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _GradeButton(
-                    label: 'Good',
-                    description: 'Correct',
-                    color: const Color(0xFF10B981),
-                    onPressed: () => _handleGrade(ReviewRating.good),
-                    isEnabled: !_hasGraded && !widget.isSubmitting,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _GradeButton(
+                      label: 'Good',
+                      description: 'Correct',
+                      color: const Color(0xFF10B981),
+                      onPressed: () => _handleGrade(ReviewRating.good),
+                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _GradeButton(
-                    label: 'Easy',
-                    description: 'Perfect',
-                    color: const Color(0xFF3B82F6),
-                    onPressed: () => _handleGrade(ReviewRating.easy),
-                    isEnabled: !_hasGraded && !widget.isSubmitting,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _GradeButton(
+                      label: 'Easy',
+                      description: 'Perfect',
+                      color: const Color(0xFF3B82F6),
+                      onPressed: () => _handleGrade(ReviewRating.easy),
+                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                    ),
+                  ),
+                ],
+              ),
+              if (widget.isSubmitting || _hasGraded) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Saving response…',
+                  style: MasteryTextStyles.caption.copyWith(
+                    color: colors.mutedForeground,
                   ),
                 ),
               ],
-            ),
-            if (widget.isSubmitting || _hasGraded) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Saving response…',
-                style: MasteryTextStyles.caption.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
             ],
           ] else ...[
             // Show reveal button

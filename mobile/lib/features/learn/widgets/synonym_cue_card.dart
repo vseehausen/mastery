@@ -14,6 +14,7 @@ class SynonymCueCard extends StatefulWidget {
     required this.targetWord,
     required this.onGrade,
     this.isSubmitting = false,
+    this.isPreview = false,
   });
 
   /// The synonym phrase shown as prompt
@@ -25,6 +26,9 @@ class SynonymCueCard extends StatefulWidget {
   /// Callback when user grades themselves
   final void Function(int rating) onGrade;
   final bool isSubmitting;
+
+  /// Preview mode - hides grade buttons and saving message
+  final bool isPreview;
 
   @override
   State<SynonymCueCard> createState() => _SynonymCueCardState();
@@ -123,15 +127,17 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 16),
-            _buildGradeButtons(),
-            if (widget.isSubmitting || _hasGraded) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Saving response…',
-                style: MasteryTextStyles.caption.copyWith(
-                  color: colors.mutedForeground,
+            if (!widget.isPreview) ...[
+              _buildGradeButtons(),
+              if (widget.isSubmitting || _hasGraded) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Saving response…',
+                  style: MasteryTextStyles.caption.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
-              ),
+              ],
             ],
           ] else ...[
             Text(

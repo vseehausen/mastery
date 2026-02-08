@@ -15,6 +15,7 @@ class ClozeCueCard extends StatefulWidget {
     required this.onGrade,
     this.hintText,
     this.isSubmitting = false,
+    this.isPreview = false,
   });
 
   /// The sentence with ___ blank
@@ -29,6 +30,9 @@ class ClozeCueCard extends StatefulWidget {
   /// Callback when user grades themselves
   final void Function(int rating) onGrade;
   final bool isSubmitting;
+
+  /// Preview mode - hides grade buttons and saving message
+  final bool isPreview;
 
   @override
   State<ClozeCueCard> createState() => _ClozeCueCardState();
@@ -153,15 +157,17 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 16),
-            _buildGradeButtons(context),
-            if (widget.isSubmitting || _hasGraded) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Saving response…',
-                style: MasteryTextStyles.caption.copyWith(
-                  color: colors.mutedForeground,
+            if (!widget.isPreview) ...[
+              _buildGradeButtons(context),
+              if (widget.isSubmitting || _hasGraded) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Saving response…',
+                  style: MasteryTextStyles.caption.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
-              ),
+              ],
             ],
           ] else ...[
             Text(
