@@ -124,6 +124,149 @@ what can I do next
 - Confirm only irreversible actions.
 - Keep affordances honest and consistent.
 
+#### 2a. Action Hierarchy (Implementation Rules)
+
+**Purpose**: Use when designing, building, or reviewing any screen. Provides systematic framework for deciding what actions to show, where to place them, and how to style them.
+
+**Sources**: Material Design 3 (action hierarchy, FAB, bottom sheets), Apple HIG (action sheets, context menus, swipe actions), Carbon Design System (button grouping, emphasis), Helios Design System (button ordering), NN/g research (bottom sheet guidelines, progressive disclosure).
+
+**Non-Negotiable Rules**:
+
+1. **One Primary Per Screen**: Every screen has exactly ONE primary action (or zero if purely informational). This is the action that moves the user forward in their goal. If you can't identify it, you don't understand the screen's purpose yet.
+
+2. **Max 3 Visible Buttons**: At any time, the user should see at most: 1 primary + 2 secondary actions. Everything else goes into progressive disclosure (overflow menu, bottom sheet, swipe, long-press).
+
+3. **Hierarchy Must Be Visually Obvious**: A user who has never seen the screen should be able to identify the primary action in <1 second. If they can't, your visual hierarchy is broken.
+
+4. **Consistent Patterns Across Similar Screens**: All list screens use the same action pattern. All detail screens use the same action pattern. All edit modals use the same action pattern. No ad-hoc solutions.
+
+**Action Tiers**:
+
+- **🔴 Primary** (FilledButton / FAB): The ONE action that fulfills the screen's purpose. Filled button with high contrast, or FAB for creation actions. Placement: bottom of screen (sticky) for task completion, or inline with content. Flutter: `FilledButton`, `FloatingActionButton`.
+
+- **🟡 Secondary** (OutlinedButton / IconButton in AppBar): Actions that support the primary goal (1-2 max visible). Outlined button or icon in app bar. Flutter: `OutlinedButton`, `IconButton` in `AppBar.actions`.
+
+- **⚪ Tertiary** (TextButton / Small IconButton): Low-priority actions that are useful but not essential. Text button or small muted icon row. Feedback (👍👎) lives here — visible but quiet. Flutter: `TextButton`, small `IconButton` with muted colors.
+
+- **📦 Overflow** (PopupMenuButton / BottomSheet): Everything else: share, export, flag, report, advanced settings. Triggered by ⋯ button or long-press. Flutter: `PopupMenuButton`, `showModalBottomSheet`.
+
+- **❌ Destructive** (Red text, separated, with confirmation): Delete, reset, remove — always in overflow menu, never inline. Red text color, visually separated (divider above). Always requires confirmation dialog. Flutter: Red `TextStyle` in menu, `showDialog` for confirmation.
+
+**Screen Type Templates**:
+
+*LIST SCREEN*:
+```
+┌─ AppBar ───────────────────────────┐
+│  Title                    🔍  ⚙️   │  ← search + sort in app bar
+├────────────────────────────────────┤
+│  [Filter] [Filter] [Filter]  →     │  ← horizontal scrolling chips
+├────────────────────────────────────┤
+│  ┌ List Item ──────────────────┐   │
+│  │  Content              →     │   │  ← tap navigates to detail
+│  └─────────────────────────────┘   │  ← swipe left: delete
+│  ┌ List Item ──────────────────┐   │     swipe right: archive
+│  │  Content              →     │   │
+│  └─────────────────────────────┘   │
+│                                    │
+│                          [+] FAB   │  ← primary: create new item
+└────────────────────────────────────┘
+```
+Actions: 🔴 Primary: FAB (Add) or Search bar (if finding > creating), 🟡 Secondary: Filter chips (scrollable), ⚪ Tertiary: Sort toggle (icon in app bar), 📦 Overflow: Bulk select, Export, Import, 👆 Swipe: Quick actions on items, Long-press: Context menu for item-specific actions.
+
+*DETAIL SCREEN*:
+```
+┌─ AppBar ───────────────────────────┐
+│  ←  Title                     ✏️   │  ← edit in app bar
+├────────────────────────────────────┤
+│                                    │
+│  Content area                      │
+│  (scrollable)                      │
+│                                    │
+│  👍  👎  ↻                         │  ← inline feedback (muted)
+│                                    │
+│  Supporting content                │
+│  (examples, quotes, etc.)         │
+│                                    │
+├────────────────────────────────────┤
+│  [ Primary Action ]          ⋯     │  ← filled btn + overflow
+└────────────────────────────────────┘
+```
+Actions: 🔴 Primary: The forward-moving action (Practice, Start Reading, etc.), 🟡 Secondary: Edit (✏️ in app bar), ⚪ Tertiary: Feedback row (👍👎↻) — inline, muted, 1-tap, 📦 Overflow (⋯): Share, Flag, Report, Delete, ❌ Destructive: Delete at bottom of overflow menu, red, with divider.
+
+*EDIT MODAL (Full Screen)*:
+```
+┌─ Header ───────────────────────────┐
+│  ✕  Edit [Thing]                   │  ← X to dismiss
+├────────────────────────────────────┤
+│                                    │
+│  Form fields                       │
+│  (scrollable)                      │
+│                                    │
+├────────────────────────────────────┤
+│  Cancel              [Save] filled │  ← sticky bottom
+└────────────────────────────────────┘
+```
+Actions: 🔴 Primary: Save (filled, right-aligned, sticky bottom), 🟡 Secondary: Cancel (text button, left of primary), ✕ Dismiss: X in top-left (same as Cancel but more discoverable), No overflow menu needed — edit modals are focused.
+
+*PRACTICE/INTERACTION SCREEN*:
+```
+┌─ Minimal AppBar ───────────────────┐
+│  ✕                    ⋯            │  ← exit + overflow
+├────────────────────────────────────┤
+│  ━━━━━━━━━━━━━━━━━━━━ 3/20        │  ← progress bar
+│                                    │
+│  Card content                      │
+│  (the thing being practiced)       │
+│                                    │
+│                                    │
+├────────────────────────────────────┤
+│  [Again] [Hard] [Good] [Easy]      │  ← primary: the answer
+│  or                                │
+│  [ Show Answer ] (single primary)  │
+└────────────────────────────────────┘
+```
+Actions: 🔴 Primary: Answer buttons (the whole point of the screen), 🟡 Secondary: Show Answer (before revealing), ⚪ Tertiary: Skip (swipe gesture or text button), 📦 Overflow (⋯): Pause, Session settings, Report issue, ✕ Exit: Always available, top-left, with "are you sure?" if mid-session.
+
+**Decision Checklists**:
+
+*Before Building a Screen*:
+- [ ] What is the ONE thing the user came here to do? → That's your primary action
+- [ ] What supports that goal? → Those are secondary (max 2)
+- [ ] What do power users occasionally need? → Overflow menu
+- [ ] Is there anything destructive? → Red, separated, confirm
+- [ ] Which template above matches this screen type?
+- [ ] Does this pattern match other screens of the same type?
+
+*Before Shipping a Screen*:
+- [ ] Exactly 1 primary action (or 0 if informational)
+- [ ] Primary is visually dominant (filled, high contrast, largest)
+- [ ] ≤ 3 visible action buttons total
+- [ ] Additional actions in overflow/bottom sheet
+- [ ] Destructive actions: red, separated, confirmation required
+- [ ] Feedback (if applicable): inline, muted, 1-tap
+- [ ] All touch targets ≥ 48x48dp
+- [ ] No overflow on smallest device (test 375pt width)
+- [ ] Pattern consistent with other screens of same type
+
+*Feedback Placement Decision*:
+- Is feedback the CORE interaction? (practice session) → Inline, prominent, primary tier
+- Is feedback about content quality? (word detail) → Inline, muted, tertiary tier
+- Is feedback about app issues? (bug report) → Overflow menu
+- Does feedback need explanation? (report reason) → Bottom sheet with options
+
+**Anti-Patterns to Catch**:
+
+| Anti-Pattern | Why It's Bad | Fix |
+|--------------|--------------|-----|
+| Multiple filled buttons on one screen | Destroys hierarchy, user doesn't know what to tap | One filled, rest outlined or text |
+| "Preview" as primary on a detail screen | User is already viewing the content | Make practice/forward action primary |
+| Feedback in overflow menu only | Nobody will use it, too many taps | Inline muted icon row for 👍👎, overflow for report |
+| Buttons in middle of scrollable content | Gets lost, inconsistent position | Sticky bottom bar or clear section |
+| 4+ buttons in a row | Overflow, tiny tap targets | Max 3 visible, rest in menu |
+| Delete button same style as other actions | Accidental destructive actions | Red, separated, confirmation required |
+| Different patterns for similar screens | Users can't build muscle memory | Use templates above consistently |
+| FAB + bottom action bar | Visual conflict, unclear primary | Choose one: FAB for creation, bottom bar for completion |
+
 ### 3. Content Worth (Default)
 
 - Every metric on screen must answer: what should the user do next?
@@ -274,8 +417,15 @@ Minimum pass checks:
 - Define entry points.
 - Define exit points.
 - Define back versus close semantics.
-- Define one primary action.
-- Define secondary actions.
+- Define one primary action (reference Action Hierarchy section 2a).
+- Define secondary actions (max 2 visible, reference Action Hierarchy section 2a).
+- Verify action hierarchy compliance:
+  - Exactly 1 primary action (or 0 if informational)
+  - Primary is visually dominant (filled, high contrast, largest)
+  - ≤ 3 visible action buttons total
+  - Additional actions in overflow/bottom sheet
+  - Destructive actions: red, separated, confirmation required
+  - Pattern matches screen type template (List/Detail/Edit/Practice)
 - Define state model:
 loading
 ready
