@@ -347,6 +347,8 @@ supabase functions deploy --no-verify-jwt              # Deploy Edge Functions
 - Every pushed screen must have AppBar with back button — no dead ends
 - One concept = one screen — never split settings across multiple screens
 - Don't ship stub UI ("not yet implemented" snackbars) — remove until functional
+
+**Screen Action Map**: `design/screen-flows.md` contains the Mermaid diagram of all screens and their action hierarchy. Update it when adding/removing screens or changing a screen's actions. See `.agents/skills/systematic-app-design/SKILL.md` for the UX Action Hierarchy framework
 - Never use `--no-sound-null-safety` or similar suppression flags — resolve the underlying issue
 
 ## Pencil Mobile Sync Playbook
