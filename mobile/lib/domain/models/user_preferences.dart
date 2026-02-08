@@ -19,16 +19,20 @@ class UserPreferencesModel {
     return UserPreferencesModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      dailyTimeTargetMinutes: json['daily_time_target_minutes'] as int? ??
+      dailyTimeTargetMinutes:
+          json['daily_time_target_minutes'] as int? ??
           AppDefaults.dailyTimeTargetMinutes,
-      targetRetention: (json['target_retention'] as num?)?.toDouble() ??
+      targetRetention:
+          (json['target_retention'] as num?)?.toDouble() ??
           AppDefaults.targetRetention,
       intensity: json['intensity'] as int? ?? AppDefaults.intensity,
       newWordSuppressionActive:
           json['new_word_suppression_active'] as bool? ?? false,
-      nativeLanguageCode: json['native_language_code'] as String? ??
+      nativeLanguageCode:
+          json['native_language_code'] as String? ??
           AppDefaults.nativeLanguageCode,
-      meaningDisplayMode: json['meaning_display_mode'] as String? ??
+      meaningDisplayMode:
+          json['meaning_display_mode'] as String? ??
           AppDefaults.meaningDisplayMode,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),

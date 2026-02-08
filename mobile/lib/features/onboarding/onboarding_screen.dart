@@ -171,11 +171,9 @@ class _OnboardingPage extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 description,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(
-                      color: context.masteryColors.mutedForeground,
-                    ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: context.masteryColors.mutedForeground,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

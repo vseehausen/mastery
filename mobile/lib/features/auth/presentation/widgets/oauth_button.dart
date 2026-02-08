@@ -38,7 +38,9 @@ class OAuthButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: MasteryTextStyles.bodyBold.copyWith(color: colors.foreground),
+                style: MasteryTextStyles.bodyBold.copyWith(
+                  color: colors.foreground,
+                ),
               ),
             ],
           ),

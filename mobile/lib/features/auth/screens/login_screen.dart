@@ -43,11 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 16),
                 // Logo and title
-                Icon(
-                  Icons.auto_stories,
-                  size: 80,
-                  color: colors.accent,
-                ),
+                Icon(Icons.auto_stories, size: 80, color: colors.accent),
                 const SizedBox(height: 24),
                 const Text(
                   'Welcome to Mastery',
@@ -69,7 +65,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     decoration: BoxDecoration(
                       color: colors.destructive.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.destructive.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.destructive.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [

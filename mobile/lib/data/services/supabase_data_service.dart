@@ -170,10 +170,7 @@ class SupabaseDataService {
   }) async {
     final response = await _client.rpc<List<dynamic>>(
       'get_session_cards',
-      params: {
-        'p_user_id': userId,
-        'p_limit': limit,
-      },
+      params: {'p_user_id': userId, 'p_limit': limit},
     );
     return List<Map<String, dynamic>>.from(response);
   }
@@ -225,15 +222,16 @@ class SupabaseDataService {
   Future<int> getNonTranslationSuccessCount(String learningCardId) async {
     final response = await _client
         .from('review_logs')
-        .select()
+        .select('id')
         .eq('learning_card_id', learningCardId)
         .gte('rating', 3)
         .inFilter('cue_type', [
-      'definition',
-      'synonym',
-      'context_cloze',
-      'disambiguation'
-    ]).count(CountOption.exact);
+          'definition',
+          'synonym',
+          'context_cloze',
+          'disambiguation',
+        ])
+        .count(CountOption.exact);
 
     return response.count;
   }
@@ -354,17 +352,20 @@ class SupabaseDataService {
     required bool isLeech,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('learning_cards').update({
-      'state': state,
-      'due': due.toUtc().toIso8601String(),
-      'stability': stability,
-      'difficulty': difficulty,
-      'reps': reps,
-      'lapses': lapses,
-      'is_leech': isLeech,
-      'last_review': now,
-      'updated_at': now,
-    }).eq('id', cardId);
+    await _client
+        .from('learning_cards')
+        .update({
+          'state': state,
+          'due': due.toUtc().toIso8601String(),
+          'stability': stability,
+          'difficulty': difficulty,
+          'reps': reps,
+          'lapses': lapses,
+          'is_leech': isLeech,
+          'last_review': now,
+          'updated_at': now,
+        })
+        .eq('id', cardId);
   }
 
   // ===========================================================================
@@ -467,14 +468,17 @@ class SupabaseDataService {
     required int reviewsPresented,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('learning_sessions').update({
-      'elapsed_seconds': elapsedSeconds,
-      'items_presented': itemsPresented,
-      'items_completed': itemsCompleted,
-      'new_words_presented': newWordsPresented,
-      'reviews_presented': reviewsPresented,
-      'updated_at': now,
-    }).eq('id', sessionId);
+    await _client
+        .from('learning_sessions')
+        .update({
+          'elapsed_seconds': elapsedSeconds,
+          'items_presented': itemsPresented,
+          'items_completed': itemsCompleted,
+          'new_words_presented': newWordsPresented,
+          'reviews_presented': reviewsPresented,
+          'updated_at': now,
+        })
+        .eq('id', sessionId);
   }
 
   /// End a session
@@ -485,12 +489,15 @@ class SupabaseDataService {
     int? avgResponseTimeMs,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('learning_sessions').update({
-      'outcome': outcome,
-      'accuracy_rate': accuracyRate,
-      'avg_response_time_ms': avgResponseTimeMs,
-      'updated_at': now,
-    }).eq('id', sessionId);
+    await _client
+        .from('learning_sessions')
+        .update({
+          'outcome': outcome,
+          'accuracy_rate': accuracyRate,
+          'avg_response_time_ms': avgResponseTimeMs,
+          'updated_at': now,
+        })
+        .eq('id', sessionId);
   }
 
   /// Add bonus time to an active session
@@ -511,11 +518,14 @@ class SupabaseDataService {
     final now = DateTime.now().toUtc();
     final newExpiry = currentExpiry.add(Duration(seconds: bonusSeconds));
 
-    await _client.from('learning_sessions').update({
-      'bonus_seconds': currentBonus + bonusSeconds,
-      'expires_at': newExpiry.toIso8601String(),
-      'updated_at': now.toIso8601String(),
-    }).eq('id', sessionId);
+    await _client
+        .from('learning_sessions')
+        .update({
+          'bonus_seconds': currentBonus + bonusSeconds,
+          'expires_at': newExpiry.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        })
+        .eq('id', sessionId);
   }
 
   // ===========================================================================
@@ -629,12 +639,15 @@ class SupabaseDataService {
     DateTime? lastCompletedDate,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('streaks').update({
-      'current_count': currentCount,
-      'longest_count': longestCount,
-      'last_completed_date': lastCompletedDate?.toUtc().toIso8601String(),
-      'updated_at': now,
-    }).eq('id', id);
+    await _client
+        .from('streaks')
+        .update({
+          'current_count': currentCount,
+          'longest_count': longestCount,
+          'last_completed_date': lastCompletedDate?.toUtc().toIso8601String(),
+          'updated_at': now,
+        })
+        .eq('id', id);
   }
 
   // ===========================================================================
@@ -703,9 +716,7 @@ class SupabaseDataService {
   }
 
   /// Get cues for a specific meaning
-  Future<List<Map<String, dynamic>>> getCuesForMeaning(
-    String meaningId,
-  ) async {
+  Future<List<Map<String, dynamic>>> getCuesForMeaning(String meaningId) async {
     final response = await _client
         .from('cues')
         .select()
@@ -752,8 +763,9 @@ class SupabaseDataService {
     final members = List<Map<String, dynamic>>.from(membersResponse as List);
     if (members.isEmpty) return [];
 
-    final setIds =
-        members.map((m) => m['confusable_set_id'] as String).toList();
+    final setIds = members
+        .map((m) => m['confusable_set_id'] as String)
+        .toList();
     final response = await _client
         .from('confusable_sets')
         .select()
@@ -868,7 +880,10 @@ class SupabaseDataService {
     final list = List<Map<String, dynamic>>.from(response as List);
     if (list.isEmpty) return 15000.0; // Default 15 seconds
 
-    final total = list.fold<int>(0, (sum, r) => sum + (r['response_time_ms'] as int));
+    final total = list.fold<int>(
+      0,
+      (sum, r) => sum + (r['response_time_ms'] as int),
+    );
     return total / list.length;
   }
 

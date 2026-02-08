@@ -15,9 +15,8 @@ class SessionProgressSummary {
   final List<StageTransition> transitions;
 
   /// Count of words that reached Stabilizing stage.
-  int get stabilizingCount => transitions
-      .where((t) => t.toStage == ProgressStage.stabilizing)
-      .length;
+  int get stabilizingCount =>
+      transitions.where((t) => t.toStage == ProgressStage.stabilizing).length;
 
   /// Count of words that reached Active stage.
   int get activeCount =>
@@ -31,8 +30,7 @@ class SessionProgressSummary {
   bool get hasTransitions => transitions.isNotEmpty;
 
   /// Returns true if any rare achievements (Active or Mastered) occurred.
-  bool get hasRareAchievements =>
-      transitions.any((t) => t.isRareAchievement);
+  bool get hasRareAchievements => transitions.any((t) => t.isRareAchievement);
 
   /// Converts the summary to a human-readable display string.
   ///

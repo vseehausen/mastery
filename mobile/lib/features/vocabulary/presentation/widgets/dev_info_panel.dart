@@ -12,11 +12,7 @@ import '../../../../providers/dev_mode_provider.dart';
 /// - Created/updated timestamps
 /// - Enrichment queue status (if available)
 class DevInfoPanel extends ConsumerWidget {
-  const DevInfoPanel({
-    super.key,
-    required this.meaning,
-    this.queueStatus,
-  });
+  const DevInfoPanel({super.key, required this.meaning, this.queueStatus});
 
   final Map<String, dynamic> meaning;
   final Map<String, dynamic>? queueStatus;
@@ -41,10 +37,7 @@ class DevInfoPanel extends ConsumerWidget {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

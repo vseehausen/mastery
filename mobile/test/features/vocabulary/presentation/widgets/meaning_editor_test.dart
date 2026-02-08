@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mastery/domain/models/meaning.dart';
 import 'package:mastery/features/vocabulary/presentation/widgets/meaning_editor.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../helpers/test_helpers.dart';
 
@@ -42,13 +41,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -66,13 +66,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -86,37 +87,38 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
 
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNull);
     });
 
-    testWidgets('Save button enabled after editing translation',
-        (tester) async {
+    testWidgets('Save button enabled after editing translation', (
+      tester,
+    ) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -125,26 +127,24 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'leistungsfähig');
       await tester.pump();
 
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
-    testWidgets('Save button enabled after editing definition',
-        (tester) async {
+    testWidgets('Save button enabled after editing definition', (tester) async {
       final meaning = _createMeaning();
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -155,9 +155,7 @@ void main() {
       await tester.enterText(textFields.at(1), 'New definition.');
       await tester.pump();
 
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -168,15 +166,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+              },
           onCancel: () {},
         ),
       );
@@ -184,7 +183,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'leistungsfähig');
       await tester.pump();
 
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       expect(savedTranslation, 'leistungsfähig');
@@ -197,15 +196,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedDefinition = definition;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedDefinition = definition;
+              },
           onCancel: () {},
         ),
       );
@@ -213,7 +213,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'Updated def.');
       await tester.pump();
 
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       expect(savedDefinition, 'Updated def.');
@@ -227,16 +227,17 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-            savedDefinition = definition;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+                savedDefinition = definition;
+              },
           onCancel: () {},
         ),
       );
@@ -245,7 +246,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'New def.');
       await tester.pump();
 
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       expect(savedTranslation, 'neu');
@@ -259,13 +260,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () => cancelCalled = true,
         ),
       );
@@ -281,15 +283,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedTranslation = translation;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedTranslation = translation;
+              },
           onCancel: () {},
         ),
       );
@@ -297,7 +300,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, '  trimmed  ');
       await tester.pump();
 
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       expect(savedTranslation, 'trimmed');
@@ -309,13 +312,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -329,13 +333,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -344,21 +349,24 @@ void main() {
       expect(find.text('rasch'), findsOneWidget);
     });
 
-    testWidgets('displays alternative translations when provided',
-        (tester) async {
-      final meaning =
-          _createMeaning(alternativeTranslations: ['powerful', 'capable']);
+    testWidgets('displays alternative translations when provided', (
+      tester,
+    ) async {
+      final meaning = _createMeaning(
+        alternativeTranslations: ['powerful', 'capable'],
+      );
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -367,20 +375,22 @@ void main() {
       expect(find.text('capable'), findsOneWidget);
     });
 
-    testWidgets('adding synonym via tag editor enables save button',
-        (tester) async {
+    testWidgets('adding synonym via tag editor enables save button', (
+      tester,
+    ) async {
       final meaning = _createMeaning(synonyms: ['fast']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -392,9 +402,7 @@ void main() {
       await tester.pump();
 
       // Verify save button is enabled
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -404,13 +412,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -436,13 +445,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -459,9 +469,7 @@ void main() {
       expect(find.text('fast'), findsNothing);
 
       // Verify save button is enabled (change detected)
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -471,13 +479,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -492,9 +501,7 @@ void main() {
       expect(find.text('powerful'), findsOneWidget);
 
       // Verify save button is enabled
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -504,13 +511,14 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {},
           onCancel: () {},
         ),
       );
@@ -527,9 +535,7 @@ void main() {
       expect(find.text('capable'), findsNothing);
 
       // Verify save button is enabled
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
+      final saveButton = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(saveButton.onPressed, isNotNull);
     });
 
@@ -540,15 +546,16 @@ void main() {
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedSynonyms = synonyms;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedSynonyms = synonyms;
+              },
           onCancel: () {},
         ),
       );
@@ -560,30 +567,32 @@ void main() {
       await tester.pump();
 
       // Save
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       // Verify saved list contains both synonyms
       expect(savedSynonyms, ['fast', 'quick']);
     });
 
-    testWidgets('onSave receives updated alternative translations list',
-        (tester) async {
+    testWidgets('onSave receives updated alternative translations list', (
+      tester,
+    ) async {
       final meaning = _createMeaning(alternativeTranslations: ['capable']);
       List<String>? savedAlternatives;
 
       await tester.pumpTestWidget(
         MeaningEditor(
           meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            savedAlternatives = alternativeTranslations;
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                savedAlternatives = alternativeTranslations;
+              },
           onCancel: () {},
         ),
       );
@@ -595,47 +604,50 @@ void main() {
       await tester.pump();
 
       // Save
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Save'));
       await tester.pump();
 
       // Verify saved list contains both translations
       expect(savedAlternatives, ['capable', 'powerful']);
     });
 
-    testWidgets('save button disabled when removing and re-adding same synonym',
-        (tester) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+    testWidgets(
+      'save button disabled when removing and re-adding same synonym',
+      (tester) async {
+        final meaning = _createMeaning(synonyms: ['fast']);
 
-      await tester.pumpTestWidget(
-        MeaningEditor(
-          meaning: meaning,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {},
-          onCancel: () {},
-        ),
-      );
+        await tester.pumpTestWidget(
+          MeaningEditor(
+            meaning: meaning,
+            onSave:
+                ({
+                  required String translation,
+                  required String definition,
+                  required String partOfSpeech,
+                  required List<String> synonyms,
+                  required List<String> alternativeTranslations,
+                }) {},
+            onCancel: () {},
+          ),
+        );
 
-      // Remove the existing synonym
-      final deleteIcon = find.byIcon(Icons.close).first;
-      await tester.tap(deleteIcon);
-      await tester.pump();
+        // Remove the existing synonym
+        final deleteIcon = find.byIcon(Icons.close).first;
+        await tester.tap(deleteIcon);
+        await tester.pump();
 
-      // Add it back
-      final synonymTextField = find.byType(TextField).at(2);
-      await tester.enterText(synonymTextField, 'fast');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
+        // Add it back
+        final synonymTextField = find.byType(TextField).at(2);
+        await tester.enterText(synonymTextField, 'fast');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
 
-      // Verify save button is disabled (no net change)
-      final saveButton = tester.widget<ShadButton>(
-        find.widgetWithText(ShadButton, 'Save Changes'),
-      );
-      expect(saveButton.onPressed, isNull);
-    });
+        // Verify save button is disabled (no net change)
+        final saveButton = tester.widget<FilledButton>(
+          find.byType(FilledButton),
+        );
+        expect(saveButton.onPressed, isNull);
+      },
+    );
   });
 }

@@ -18,9 +18,7 @@ class StreakIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: hasStreak
-            ? (colors.warningMuted)
-            : (colors.muted),
+        color: hasStreak ? (colors.warningMuted) : (colors.muted),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -29,18 +27,14 @@ class StreakIndicator extends StatelessWidget {
           Icon(
             Icons.local_fire_department,
             size: 18,
-            color: hasStreak
-                ? (colors.warning)
-                : (colors.mutedForeground),
+            color: hasStreak ? (colors.warning) : (colors.mutedForeground),
           ),
           const SizedBox(width: 4),
           Text(
             count.toString(),
             style: MasteryTextStyles.bodyBold.copyWith(
               fontSize: 14,
-              color: hasStreak
-                  ? (colors.warning)
-                  : (colors.mutedForeground),
+              color: hasStreak ? (colors.warning) : (colors.mutedForeground),
             ),
           ),
         ],

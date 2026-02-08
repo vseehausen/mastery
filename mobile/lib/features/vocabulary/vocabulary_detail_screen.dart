@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../core/theme/animation_tokens.dart';
 import '../../core/theme/color_tokens.dart';
 import '../../core/theme/text_styles.dart';
 import '../../domain/models/encounter.dart';
@@ -41,7 +40,6 @@ class _VocabularyDetailScreenState
     extends ConsumerState<VocabularyDetailScreen> {
   String? _editingMeaningId;
   bool _enrichmentTriggered = false;
-  bool _isRefreshing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +57,14 @@ class _VocabularyDetailScreenState
             data: (meanings) {
               if (meanings.isEmpty) return const SizedBox.shrink();
               final meaning = meanings.first;
+              final isEditing = _editingMeaningId == meaning.id;
               return IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => _openMeaningEditor(context, meaning),
+                icon: Icon(isEditing ? Icons.close : Icons.edit_outlined),
+                onPressed: () {
+                  setState(() {
+                    _editingMeaningId = isEditing ? null : meaning.id;
+                  });
+                },
               );
             },
           ),
@@ -91,85 +94,71 @@ class _VocabularyDetailScreenState
     // Trigger enrichment check for un-enriched words
     _triggerEnrichmentIfNeeded(meaningsAsync, vocab.id);
 
-    return Stack(
-      children: [
-        // Scrollable content (fill entire space)
-        Positioned.fill(
-          child: SafeArea(
-            child: SingleChildScrollView(
-              primary: false,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // HERO AREA: Word + Stats (side by side)
-                  _buildHeroArea(vocab, learningCard),
-                  const SizedBox(height: 32),
+    return SafeArea(
+      child: SingleChildScrollView(
+        primary: false,
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // HERO AREA: Word + Stats (side by side)
+            _buildHeroArea(vocab, learningCard),
+            const SizedBox(height: 32),
 
-                  // MEANING AREA (no card, no label)
-                  AnimatedSwitcher(
-                    duration: AppAnimation.duration300,
-                    transitionBuilder: (child, animation) =>
-                        FadeTransition(opacity: animation, child: child),
-                    child: _isRefreshing
-                        ? _buildMeaningSkeleton()
-                        : meaningsAsync.when(
-                            loading: () => _buildLoadingIndicator(),
-                            error: (_, _) => _buildErrorMessage(
-                              'Couldn\'t load meaning. Please try again.',
-                              onRetry: () =>
-                                  ref.invalidate(meaningsProvider(vocab.id)),
-                            ),
-                            data: (meanings) => _buildMeaningContent(meanings),
-                          ),
-                  ),
-
-                  // Show context only if available
-                  encounterAsync.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
-                    data: (encounter) {
-                      if (encounter == null ||
-                          encounter.context == null ||
-                          encounter.context!.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // DIVIDER before context
-                          _buildDivider(),
-                          const SizedBox(height: 32),
-
-                          // CONTEXT AREA (no card, no label)
-                          _buildContextContent(encounter),
-                        ],
-                      );
-                    },
-                  ),
-
-                  // Dev info
-                  meaningsAsync.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
-                    data: (meanings) {
-                      if (meanings.isEmpty) return const SizedBox.shrink();
-                      return _buildDevInfoSection(
-                        meanings.first,
-                        vocab.id,
-                        ref,
-                      );
-                    },
-                  ),
-                ],
+            // MEANING AREA (no card, no label)
+            meaningsAsync.when(
+              loading: () => _buildLoadingIndicator(),
+              error: (_, _) => _buildErrorMessage(
+                'Couldn\'t load meaning. Please try again.',
+                onRetry: () => ref.invalidate(meaningsProvider(vocab.id)),
               ),
+              data: (meanings) => _buildMeaningContent(meanings),
             ),
-          ),
-        ),
 
-        // Sticky bottom bar
-        _buildBottomBar(meaningsAsync, vocab.id),
-      ],
+            // Show context only if available
+            encounterAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (encounter) {
+                if (encounter == null ||
+                    encounter.context == null ||
+                    encounter.context!.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // DIVIDER before context
+                    _buildDivider(),
+                    const SizedBox(height: 32),
+
+                    // CONTEXT AREA (no card, no label)
+                    _buildContextContent(encounter),
+                  ],
+                );
+              },
+            ),
+
+            // DIVIDER before actions
+            _buildDivider(),
+            const SizedBox(height: 32),
+
+            // ACTION BAR (all subtle)
+            _buildActionBar(meaningsAsync, vocab.id),
+            const SizedBox(height: 24),
+
+            // Dev info
+            meaningsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (meanings) {
+                if (meanings.isEmpty) return const SizedBox.shrink();
+                return _buildDevInfoSection(meanings.first, vocab.id, ref);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -196,7 +185,7 @@ class _VocabularyDetailScreenState
                   height: 1.1,
                 ),
               ),
-              if (vocab.stem != null && vocab.stem != vocab.word) ...[
+              if (vocab.stem != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   vocab.stem!,
@@ -315,7 +304,6 @@ class _VocabularyDetailScreenState
 
     // Normal view (no card)
     return Column(
-      key: ValueKey(meaning.id),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Part of speech
@@ -339,34 +327,6 @@ class _VocabularyDetailScreenState
             fontSize: 26,
             fontWeight: FontWeight.w600,
             height: 1.2,
-          ),
-        ),
-
-        // Alternative translations (if available)
-        if (meaning.alternativeTranslations.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(
-            'Also: ${meaning.alternativeTranslations.join(' · ')}',
-            style: TextStyle(fontSize: 13, color: colors.mutedForeground),
-          ),
-        ],
-        const SizedBox(height: 6),
-
-        // Suggest edit link (inline feedback)
-        TextButton(
-          onPressed: () => _showInlineFeedback(meaning.id),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            'Suggest edit',
-            style: TextStyle(
-              fontSize: 13,
-              color: colors.mutedForeground,
-              decoration: TextDecoration.underline,
-            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -477,95 +437,70 @@ class _VocabularyDetailScreenState
   }
 
   /// Action bar (all subtle)
-  /// Sticky bottom bar with Preview button and overflow menu
-  Widget _buildBottomBar(
+  Widget _buildActionBar(
     AsyncValue<List<MeaningModel>> meaningsAsync,
     String vocabularyId,
   ) {
     final colors = context.masteryColors;
+    return meaningsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (meanings) {
+        final hasMeaning = meanings.isNotEmpty;
+        final meaning = hasMeaning ? meanings.first : null;
+        final userId = ref.watch(currentUserIdProvider);
 
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            color: colors.background.withValues(alpha: 0.95),
-            border: Border(
-              top: BorderSide(
-                color: colors.border.withValues(alpha: 0.2),
-                width: 1,
+        return Row(
+          children: [
+            // Preview Cards - outline (not primary)
+            Expanded(
+              child: ShadButton.outline(
+                onPressed: hasMeaning
+                    ? () {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => CardPreviewSheet(
+                            vocabularyId: vocabularyId,
+                            word:
+                                ref
+                                    .read(vocabularyByIdProvider(vocabularyId))
+                                    .valueOrNull
+                                    ?.word ??
+                                '',
+                          ),
+                        );
+                      }
+                    : null,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.visibility_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Text('Preview'),
+                  ],
+                ),
               ),
             ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: meaningsAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (meanings) {
-              final hasMeaning = meanings.isNotEmpty;
-              final meaning = hasMeaning ? meanings.first : null;
-              final userId = ref.watch(currentUserIdProvider);
+            const SizedBox(width: 12),
 
-              return Row(
-                children: [
-                  // Preview button - secondary style (TextButton with icon)
-                  Expanded(
-                    child: TextButton.icon(
-                      onPressed: hasMeaning
-                          ? () {
-                              showModalBottomSheet<void>(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => CardPreviewSheet(
-                                  vocabularyId: vocabularyId,
-                                  word:
-                                      ref
-                                          .read(
-                                            vocabularyByIdProvider(
-                                              vocabularyId,
-                                            ),
-                                          )
-                                          .valueOrNull
-                                          ?.word ??
-                                      '',
-                                ),
-                              );
-                            }
-                          : null,
-                      icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: const Text('Preview'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
+            // Actions menu (feedback + re-generate)
+            if (hasMeaning && userId != null)
+              IconButton(
+                onPressed: () =>
+                    _showActionMenu(vocabularyId, meaning!.id, userId),
+                icon: const Icon(Icons.more_vert, size: 20),
+                style: IconButton.styleFrom(
+                  side: BorderSide(color: colors.border),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 12),
-
-                  // Overflow menu
-                  if (hasMeaning && userId != null)
-                    IconButton(
-                      onPressed: () =>
-                          _showActionMenu(vocabularyId, meaning!.id, userId),
-                      icon: const Icon(Icons.more_vert, size: 20),
-                      style: IconButton.styleFrom(
-                        side: BorderSide(color: colors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -741,11 +676,11 @@ class _VocabularyDetailScreenState
   }
 
   /// Show actions menu (feedback + re-generate)
-  /// Show inline feedback options for AI-generated translation
-  Future<void> _showInlineFeedback(String meaningId) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
+  Future<void> _showActionMenu(
+    String vocabularyId,
+    String meaningId,
+    String userId,
+  ) async {
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => Container(
@@ -755,18 +690,24 @@ class _VocabularyDetailScreenState
           children: [
             ListTile(
               leading: const Icon(Icons.thumb_up_outlined),
-              title: const Text('This translation is correct'),
+              title: const Text('This meaning is helpful'),
               onTap: () => Navigator.pop(context, 'positive'),
             ),
             ListTile(
               leading: const Icon(Icons.thumb_down_outlined),
-              title: const Text('This translation is wrong'),
+              title: const Text('This meaning is not helpful'),
               onTap: () => Navigator.pop(context, 'negative'),
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined),
               title: const Text('Report an issue'),
               onTap: () => Navigator.pop(context, 'flag'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.refresh),
+              title: const Text('Re-generate AI Enrichment'),
+              onTap: () => Navigator.pop(context, 're-generate'),
             ),
           ],
         ),
@@ -781,56 +722,8 @@ class _VocabularyDetailScreenState
       if (mounted) {
         await _showFlagSheet(meaningId, userId);
       }
-    }
-  }
-
-  /// Show overflow menu with content actions
-  Future<void> _showActionMenu(
-    String vocabularyId,
-    String meaningId,
-    String userId,
-  ) async {
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: const Text('Refresh Content'),
-              onTap: () => Navigator.pop(context, 're-generate'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.share_outlined),
-              title: const Text('Share'),
-              onTap: () => Navigator.pop(context, 'share'),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-              onTap: () => Navigator.pop(context, 'delete'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (action == null) return;
-
-    if (action == 're-generate') {
+    } else if (action == 're-generate') {
       await _showReEnrichDialog(vocabularyId);
-    } else if (action == 'share') {
-      // TODO: Implement share functionality
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Share functionality coming soon')),
-        );
-      }
-    } else if (action == 'delete') {
-      await _showDeleteConfirmation(vocabularyId);
     }
   }
 
@@ -863,66 +756,16 @@ class _VocabularyDetailScreenState
         batchSize: 1,
         languageCode: 'de',
       );
+      debugPrint(
+        '[VocabularyDetail] Enrichment result: ${result.enrichedCount} enriched, ${result.failedCount} failed',
+      );
 
-      // Refresh meanings after enrichment
+      // Refresh the meanings after enrichment
       if (result.enrichedCount > 0) {
         ref.invalidate(meaningsProvider(vocabularyId));
       }
-
-      // Show beautiful feedback
-      if (mounted) {
-        String message;
-        Color backgroundColor;
-        IconData icon;
-
-        if (result.enrichedCount > 0) {
-          message = 'Enrichment complete';
-          backgroundColor = Colors.green.shade600;
-          icon = Icons.check_circle_outline;
-        } else if (result.failedCount > 0) {
-          message = 'Enrichment failed';
-          backgroundColor = Theme.of(context).colorScheme.error;
-          icon = Icons.error_outline;
-        } else {
-          // Shouldn't happen with force_re_enrich, but handle gracefully
-          message = 'No changes';
-          backgroundColor = Colors.grey.shade600;
-          icon = Icons.info_outline;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(icon, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(message),
-              ],
-            ),
-            backgroundColor: backgroundColor,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     } catch (e) {
       debugPrint('[VocabularyDetail] Enrichment error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text('Enrichment failed: $e'),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     }
   }
 
@@ -1083,212 +926,10 @@ class _VocabularyDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Refresh Content?'),
+        title: const Text('Re-generate Enrichment'),
         content: const Text(
-          'Get fresh translations, definitions, and quiz cues for this word.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Refresh'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isRefreshing = true);
-
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) {
-      setState(() => _isRefreshing = false);
-      return;
-    }
-
-    try {
-      final enrichmentService = ref.read(enrichmentServiceProvider);
-      final result = await enrichmentService.reEnrich(
-        userId: userId,
-        vocabularyId: vocabularyId,
-      );
-
-      // Refresh meanings and cues
-      if (result.enrichedCount > 0) {
-        ref.invalidate(meaningsProvider(vocabularyId));
-        ref.invalidate(cuesForVocabularyProvider(vocabularyId));
-      }
-
-      // Show beautiful feedback
-      if (mounted) {
-        String message;
-        Color backgroundColor;
-        IconData icon;
-
-        if (result.enrichedCount > 0) {
-          message = 'Enrichment complete';
-          backgroundColor = Colors.green.shade600;
-          icon = Icons.check_circle_outline;
-        } else if (result.failedCount > 0) {
-          message = 'Enrichment failed';
-          backgroundColor = Theme.of(context).colorScheme.error;
-          icon = Icons.error_outline;
-        } else {
-          // Shouldn't happen with force_re_enrich, but handle gracefully
-          message = 'No changes';
-          backgroundColor = Colors.grey.shade600;
-          icon = Icons.info_outline;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(icon, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(message),
-              ],
-            ),
-            backgroundColor: backgroundColor,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('[VocabularyDetail] Re-enrichment error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text('Enrichment failed: $e'),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isRefreshing = false);
-      }
-    }
-  }
-
-  /// Skeleton loader that matches the meaning content layout
-  Widget _buildMeaningSkeleton() {
-    final colors = context.masteryColors;
-    return Column(
-      key: const ValueKey('skeleton'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Part of speech skeleton
-        Container(
-          width: 60,
-          height: 14,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // Primary translation skeleton (large)
-        Container(
-          width: 200,
-          height: 31,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // Alternative translations skeleton
-        Container(
-          width: 140,
-          height: 16,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // Suggest edit link skeleton
-        Container(
-          width: 80,
-          height: 16,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Definition skeleton (multiple lines)
-        Container(
-          width: double.infinity,
-          height: 19,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 19,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: 180,
-          height: 19,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Synonyms skeleton
-        Container(
-          width: 160,
-          height: 16,
-          decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Show delete confirmation dialog
-  Future<void> _showDeleteConfirmation(String vocabularyId) async {
-    final vocab = ref.read(vocabularyByIdProvider(vocabularyId)).valueOrNull;
-    if (vocab == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Vocabulary'),
-        content: Text(
-          'Are you sure you want to delete "${vocab.word}"? '
-          'This will also delete all associated meanings, cues, and learning progress.',
+          'This will generate new AI translations, definitions, and quiz cues. '
+          'Current data will be replaced. Are you sure?',
         ),
         actions: [
           TextButton(
@@ -1297,8 +938,14 @@ class _VocabularyDetailScreenState
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(
+              'Re-generate',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? MasteryColors.warningDark
+                    : MasteryColors.warningLight,
+              ),
+            ),
           ),
         ],
       ),
@@ -1310,87 +957,33 @@ class _VocabularyDetailScreenState
     if (userId == null) return;
 
     try {
-      final service = ref.read(supabaseDataServiceProvider);
-      await service.deleteVocabulary(vocabularyId);
+      final enrichmentService = ref.read(enrichmentServiceProvider);
+      await enrichmentService.reEnrich(
+        userId: userId,
+        vocabularyId: vocabularyId,
+      );
 
-      // Navigate back
+      // Refresh meanings and cues
+      ref.invalidate(meaningsProvider(vocabularyId));
+      ref.invalidate(cuesForVocabularyProvider(vocabularyId));
+
       if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('"${vocab.word}" deleted')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Re-enrichment started'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Delete failed: $e'),
+            content: Text('Re-enrichment failed: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
     }
-  }
-
-  /// Open meaning editor as full-screen modal
-  Future<void> _openMeaningEditor(
-    BuildContext context,
-    MeaningModel meaning,
-  ) async {
-    await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MeaningEditor(
-          meaning: meaning,
-          onSave:
-              ({
-                required String translation,
-                required String definition,
-                required String partOfSpeech,
-                required List<String> synonyms,
-                required List<String> alternativeTranslations,
-              }) async {
-                // Update the meaning
-                final service = ref.read(supabaseDataServiceProvider);
-                final userId = ref.read(currentUserIdProvider);
-                if (userId == null) return;
-
-                try {
-                  await service.updateMeaning(
-                    id: meaning.id,
-                    primaryTranslation: translation,
-                    englishDefinition: definition,
-                    partOfSpeech: partOfSpeech,
-                    synonyms: synonyms,
-                    alternativeTranslations: alternativeTranslations,
-                  );
-
-                  // Refresh meanings
-                  ref.invalidate(meaningsProvider(widget.vocabularyId));
-
-                  if (context.mounted) {
-                    Navigator.pop(context, true);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Meaning updated'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to update meaning: $e'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                    );
-                  }
-                }
-              },
-          onCancel: () => Navigator.pop(context, false),
-        ),
-      ),
-    );
   }
 }

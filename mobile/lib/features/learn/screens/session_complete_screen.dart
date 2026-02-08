@@ -4,6 +4,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../domain/models/progress_stage.dart';
+import '../../../domain/models/session_progress_summary.dart';
+import '../../../domain/models/stage_transition.dart';
 import '../../../providers/supabase_provider.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
@@ -20,6 +23,7 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
     required this.plannedSeconds,
     required this.isFullCompletion,
     this.allItemsExhausted = false,
+    this.transitions = const [],
   });
 
   final String sessionId;
@@ -29,6 +33,7 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
   final int plannedSeconds;
   final bool isFullCompletion;
   final bool allItemsExhausted;
+  final List<StageTransition> transitions;
 
   @override
   ConsumerState<SessionCompleteScreen> createState() =>
@@ -136,27 +141,21 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                 decoration: BoxDecoration(
                   color: colors.cardBackground,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: colors.border,
-                  ),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Column(
                   children: [
                     _StatRow(
                       label: 'Items reviewed',
                       value: '${widget.itemsCompleted}',
-                      
                     ),
                     const SizedBox(height: 12),
                     _StatRow(
                       label: 'Time practiced',
                       value: _formatTime(widget.elapsedSeconds),
-                      
                     ),
                     const SizedBox(height: 12),
-                    Divider(
-                      color: colors.border,
-                    ),
+                    Divider(color: colors.border),
                     const SizedBox(height: 12),
                     // Streak
                     Row(
@@ -178,6 +177,14 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                   ],
                 ),
               ),
+
+              // Progress Made card (only when transitions exist)
+              if (widget.transitions.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _ProgressMadeCard(
+                  summary: SessionProgressSummary(widget.transitions),
+                ),
+              ],
 
               const Spacer(),
 
@@ -253,10 +260,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
 }
 
 class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.label,
-    required this.value,
-  });
+  const _StatRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -275,11 +279,109 @@ class _StatRow extends StatelessWidget {
         ),
         Text(
           value,
-          style: MasteryTextStyles.bodyBold.copyWith(
-            color: colors.foreground,
-          ),
+          style: MasteryTextStyles.bodyBold.copyWith(color: colors.foreground),
         ),
       ],
+    );
+  }
+}
+
+class _ProgressMadeCard extends StatelessWidget {
+  const _ProgressMadeCard({required this.summary});
+
+  final SessionProgressSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
+    return Semantics(
+      liveRegion: true,
+      label: summary.toDisplayString(),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Progress Made',
+              style: MasteryTextStyles.h4.copyWith(color: colors.foreground),
+            ),
+            const SizedBox(height: 12),
+            // Show in order: Mastered → Active → Stabilizing (by significance)
+            if (summary.masteredCount > 0)
+              _TransitionRow(
+                stage: ProgressStage.mastered,
+                count: summary.masteredCount,
+                isRare: true,
+              ),
+            if (summary.activeCount > 0)
+              _TransitionRow(
+                stage: ProgressStage.active,
+                count: summary.activeCount,
+                isRare: true,
+              ),
+            if (summary.stabilizingCount > 0)
+              _TransitionRow(
+                stage: ProgressStage.stabilizing,
+                count: summary.stabilizingCount,
+                isRare: false,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TransitionRow extends StatelessWidget {
+  const _TransitionRow({
+    required this.stage,
+    required this.count,
+    required this.isRare,
+  });
+
+  final ProgressStage stage;
+  final int count;
+  final bool isRare;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+    final stageColor = stage.getColor(colors);
+    final wordLabel = count == 1 ? 'word' : 'words';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: stageColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$count $wordLabel → ${stage.displayName}',
+              style: MasteryTextStyles.body.copyWith(
+                color: colors.foreground,
+                fontWeight: isRare ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+          if (isRare) Icon(Icons.star_rounded, size: 18, color: stageColor),
+        ],
+      ),
     );
   }
 }

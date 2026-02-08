@@ -69,7 +69,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     decoration: BoxDecoration(
                       color: colors.destructive.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.destructive.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.destructive.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -243,13 +245,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   Text(
                     'We sent a verification email to:\n${_emailController.text}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: colors.mutedForeground),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colors.mutedForeground,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Please click the link in the email to verify your account.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colors.mutedForeground,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   FilledButton(

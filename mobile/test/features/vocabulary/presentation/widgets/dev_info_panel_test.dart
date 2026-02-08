@@ -7,17 +7,16 @@ import '../../../../helpers/test_helpers.dart';
 
 void main() {
   group('DevInfoPanel', () {
-    testWidgets('returns SizedBox.shrink() when dev mode is false',
-        (tester) async {
+    testWidgets('returns SizedBox.shrink() when dev mode is false', (
+      tester,
+    ) async {
       final meaning = {
         'confidence': 0.95,
         'source': 'ai',
         'created_at': '2026-01-15T10:30:00Z',
       };
 
-      await tester.pumpTestWidget(
-        DevInfoPanel(meaning: meaning),
-      );
+      await tester.pumpTestWidget(DevInfoPanel(meaning: meaning));
 
       // Should not render DEV badge or any content
       expect(find.text('DEV'), findsNothing);
@@ -26,32 +25,22 @@ void main() {
     });
 
     testWidgets('shows DEV label when dev mode is true', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('DEV'), findsOneWidget);
     });
 
     testWidgets('shows confidence as percentage', (tester) async {
-      final meaning = {
-        'confidence': 0.87,
-        'source': 'ai',
-      };
+      final meaning = {'confidence': 0.87, 'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Confidence'), findsOneWidget);
@@ -59,15 +48,11 @@ void main() {
     });
 
     testWidgets('defaults confidence to 100% when null', (tester) async {
-      final meaning = {
-        'source': 'ai',
-      };
+      final meaning = {'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Confidence'), findsOneWidget);
@@ -75,16 +60,11 @@ void main() {
     });
 
     testWidgets('shows source text', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'manual',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'manual'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Source'), findsOneWidget);
@@ -92,15 +72,11 @@ void main() {
     });
 
     testWidgets('defaults source to "ai" when null', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-      };
+      final meaning = {'confidence': 0.95};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Source'), findsOneWidget);
@@ -116,9 +92,7 @@ void main() {
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Created'), findsOneWidget);
@@ -135,9 +109,7 @@ void main() {
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Updated'), findsOneWidget);
@@ -145,16 +117,11 @@ void main() {
     });
 
     testWidgets('handles missing timestamps gracefully', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       // Should not show timestamp labels if not provided
@@ -162,8 +129,7 @@ void main() {
       expect(find.text('Updated'), findsNothing);
     });
 
-    testWidgets('handles invalid timestamp strings gracefully',
-        (tester) async {
+    testWidgets('handles invalid timestamp strings gracefully', (tester) async {
       final meaning = {
         'confidence': 0.95,
         'source': 'ai',
@@ -173,9 +139,7 @@ void main() {
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       // Should not show timestamp labels if parsing failed
@@ -184,22 +148,12 @@ void main() {
     });
 
     testWidgets('shows queue status when provided', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
-      final queueStatus = {
-        'status': 'pending',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
+      final queueStatus = {'status': 'pending'};
 
       await tester.pumpTestWidget(
-        DevInfoPanel(
-          meaning: meaning,
-          queueStatus: queueStatus,
-        ),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        DevInfoPanel(meaning: meaning, queueStatus: queueStatus),
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Queue Status'), findsOneWidget);
@@ -207,23 +161,12 @@ void main() {
     });
 
     testWidgets('shows queue position when provided', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
-      final queueStatus = {
-        'status': 'queued',
-        'position': 3,
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
+      final queueStatus = {'status': 'queued', 'position': 3};
 
       await tester.pumpTestWidget(
-        DevInfoPanel(
-          meaning: meaning,
-          queueStatus: queueStatus,
-        ),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        DevInfoPanel(meaning: meaning, queueStatus: queueStatus),
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Queue Status'), findsOneWidget);
@@ -232,22 +175,15 @@ void main() {
       expect(find.text('3'), findsOneWidget);
     });
 
-    testWidgets('defaults queue status to "unknown" when missing',
-        (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
+    testWidgets('defaults queue status to "unknown" when missing', (
+      tester,
+    ) async {
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
       final queueStatus = <String, dynamic>{};
 
       await tester.pumpTestWidget(
-        DevInfoPanel(
-          meaning: meaning,
-          queueStatus: queueStatus,
-        ),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        DevInfoPanel(meaning: meaning, queueStatus: queueStatus),
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Queue Status'), findsOneWidget);
@@ -255,16 +191,11 @@ void main() {
     });
 
     testWidgets('hides queue status when null', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Queue Status'), findsNothing);
@@ -278,19 +209,11 @@ void main() {
         'created_at': '2026-01-20T08:15:00Z',
         'updated_at': '2026-02-05T16:22:00Z',
       };
-      final queueStatus = {
-        'status': 'processing',
-        'position': 1,
-      };
+      final queueStatus = {'status': 'processing', 'position': 1};
 
       await tester.pumpTestWidget(
-        DevInfoPanel(
-          meaning: meaning,
-          queueStatus: queueStatus,
-        ),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        DevInfoPanel(meaning: meaning, queueStatus: queueStatus),
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       // Badge
@@ -318,8 +241,9 @@ void main() {
       expect(find.byType(Divider), findsOneWidget);
     });
 
-    testWidgets('handles DateTime objects in addition to strings',
-        (tester) async {
+    testWidgets('handles DateTime objects in addition to strings', (
+      tester,
+    ) async {
       final createdDate = DateTime(2026, 1, 10, 12, 30);
       final meaning = {
         'confidence': 0.95,
@@ -329,9 +253,7 @@ void main() {
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
       );
 
       expect(find.text('Created'), findsOneWidget);
@@ -339,16 +261,11 @@ void main() {
     });
 
     testWidgets('renders in dark mode', (tester) async {
-      final meaning = {
-        'confidence': 0.95,
-        'source': 'ai',
-      };
+      final meaning = {'confidence': 0.95, 'source': 'ai'};
 
       await tester.pumpTestWidget(
         DevInfoPanel(meaning: meaning),
-        overrides: [
-          devModeProvider.overrideWith((ref) => true),
-        ],
+        overrides: [devModeProvider.overrideWith((ref) => true)],
         themeMode: ThemeMode.dark,
       );
 

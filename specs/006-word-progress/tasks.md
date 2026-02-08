@@ -122,7 +122,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
     - Correct color for each stage
     - Screen reader announcement fires
 
-- [ ] [TASK-010] [P1] [US1] Integrate ProgressMicroFeedback into learn session screens
+- [X] [TASK-010] [P1] [US1] Integrate ProgressMicroFeedback into learn session screens
   - Update `mobile/lib/features/learn/widgets/definition_cue_card.dart`
   - Update `mobile/lib/features/learn/widgets/synonym_cue_card.dart`
   - Update `mobile/lib/features/learn/widgets/cloze_cue_card.dart`
@@ -135,7 +135,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Testing & Verification
 
-- [ ] [TASK-011] [P1] [US1] Verify US1 acceptance scenarios
+- [X] [TASK-011] [P1] [US1] Verify US1 acceptance scenarios
   - AS1: Review word with multiple successful recalls → see "Stabilizing" feedback
   - AS2: First correct non-translation review → see "Active now" feedback
   - AS3: Review word not meeting criteria → no feedback shown
@@ -149,7 +149,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Session Recap UI
 
-- [ ] [TASK-012] [P2] [US2] Extend SessionCompleteScreen at `mobile/lib/features/session/screens/session_complete_screen.dart`
+- [X] [TASK-012] [P2] [US2] Extend SessionCompleteScreen at `mobile/lib/features/session/screens/session_complete_screen.dart`
   - Add conditional "Progress Made" card (only show if transitions exist)
   - Card layout: Title + icon/count/label rows for each transition type
   - Order: Mastered → Active → Stabilizing (by significance)
@@ -164,7 +164,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
     - Rare achievements highlighted
     - Screen reader announces summary
 
-- [ ] [TASK-013] [P2] [US2] Connect SessionProvider transitions to SessionCompleteScreen
+- [X] [TASK-013] [P2] [US2] Connect SessionProvider transitions to SessionCompleteScreen
   - Pass SessionProgressSummary from SessionProvider to SessionCompleteScreen
   - Update navigation to SessionCompleteScreen to include summary data
   - Clear transitions when session restarts
@@ -173,7 +173,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Testing & Verification
 
-- [ ] [TASK-014] [P2] [US2] Verify US2 acceptance scenarios
+- [X] [TASK-014] [P2] [US2] Verify US2 acceptance scenarios
   - AS1: Session with 2 stabilized + 1 active → see "2 words stabilized • 1 word became Active"
   - AS2: Session with no transitions → see standard "Done ✅" without recap
   - AS3: Session with mastered word → recap highlights rare achievement
@@ -187,28 +187,28 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Vocabulary List UI
 
-- [ ] [TASK-015] [P3] [US3] Update VocabularyProvider to calculate stages at `mobile/lib/providers/vocabulary_provider.dart`
+- [X] [TASK-015] [P3] [US3] Update VocabularyProvider to calculate stages at `mobile/lib/providers/vocabulary_provider.dart`
   - Extend loadVocabulary() to fetch learning_cards with vocabulary
   - For each word: calculate stage using ProgressStageService
   - Cache stage in VocabularyWithStage wrapper model (create if needed)
   - **Acceptance**: Provider loads vocabulary with computed stages, no errors
   - **Test**: Unit test verifying stage calculation for vocabulary list items
 
-- [ ] [TASK-016] [P3] [US3] Update StatusBadge widget at `mobile/lib/features/vocabulary/presentation/widgets/status_badge.dart`
+- [X] [TASK-016] [P3] [US3] Update StatusBadge widget at `mobile/lib/features/vocabulary/presentation/widgets/status_badge.dart`
   - Add progress stage display mode
   - Map ProgressStage enum to badge text and color
   - Reuse existing badge styling (small pill shape)
   - **Acceptance**: Badge displays progress stage with correct color
   - **Test**: Widget test verifying badge appearance for each stage
 
-- [ ] [TASK-017] [P3] [US3] Update VocabularyListItem to display progress stage badge
+- [X] [TASK-017] [P3] [US3] Update VocabularyListItem to display progress stage badge
   - Update `mobile/lib/features/vocabulary/presentation/widgets/word_card.dart`
   - Replace or augment existing StatusBadge with progress stage
   - Position in metadata row (below word text)
   - **Acceptance**: Vocabulary list items show progress stage badges
   - **Test**: Widget test verifying badge appears for each list item
 
-- [ ] [TASK-018] [P3] [US3] Add filtering/sorting by progress stage to vocabulary list
+- [X] [TASK-018] [P3] [US3] Add filtering/sorting by progress stage to vocabulary list
   - Update VocabularyScreen at `mobile/lib/features/vocabulary/presentation/screens/vocabulary_screen.dart`
   - Add filter dropdown for stage (All, Captured, Practicing, Stabilizing, Active, Mastered)
   - Add sort option by stage (in addition to existing sorts)
@@ -217,7 +217,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Testing & Verification
 
-- [ ] [TASK-019] [P3] [US3] Verify US3 acceptance scenarios
+- [X] [TASK-019] [P3] [US3] Verify US3 acceptance scenarios
   - AS1: Word captured but not reviewed → shows "Captured"
   - AS2: Word being practiced → shows correct stage (Practicing/Stabilizing/Active/Mastered)
   - AS3: Filter/sort by stage → easily identify words at specific stages
@@ -230,14 +230,14 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Performance Optimization
 
-- [ ] [TASK-020] [P2] Add performance instrumentation to ProgressStageService
+- [X] [TASK-020] [P2] Add performance instrumentation to ProgressStageService
   - Wrap calculateStage() with Stopwatch timing
   - Add debugPrint for calculations >50ms (warning threshold)
   - Test with 100-word vocabulary list load
   - **Acceptance**: Stage calculation averages <50ms per word
   - **Test**: Performance benchmark test measuring calculation time
 
-- [ ] [TASK-021] [P2] Optimize vocabulary list query for stage display
+- [X] [TASK-021] [P2] Optimize vocabulary list query for stage display
   - Verify index usage with EXPLAIN ANALYZE on learning_cards query
   - Add batch stage calculation (calculate all stages in single pass)
   - Consider caching stage in learning_cards.progress_stage column (write-behind pattern)
@@ -246,7 +246,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Accessibility
 
-- [ ] [TASK-022] [P2] Verify color contrast for all progress stage colors
+- [X] [TASK-022] [P2] Verify color contrast for all progress stage colors
   - Test Captured (mutedForeground) on Stone background
   - Test Practicing/Stabilizing (accent/amber) on Stone background
   - Test Active/Mastered (success/green) on Stone background
@@ -254,7 +254,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
   - **Acceptance**: All stage colors meet WCAG AA contrast ratio (4.5:1 for text)
   - **Test**: Automated contrast checker or manual verification
 
-- [ ] [TASK-023] [P2] Verify screen reader experience
+- [X] [TASK-023] [P2] Verify screen reader experience
   - Test micro-feedback announcements during session
   - Test session recap announcement on SessionCompleteScreen
   - Test vocabulary list stage badge semantics
@@ -264,21 +264,21 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 ### Code Quality
 
-- [ ] [TASK-024] [P1] Run full test suite and verify coverage
+- [X] [TASK-024] [P1] Run full test suite and verify coverage
   - Execute `flutter test` for all new tests
   - Verify unit test coverage for ProgressStageService (100%)
   - Verify widget test coverage for micro-feedback, session recap
   - **Acceptance**: All tests pass, no test failures
   - **Test**: CI pipeline or local `flutter test` command
 
-- [ ] [TASK-025] [P1] Run flutter analyze and fix any issues
+- [X] [TASK-025] [P1] Run flutter analyze and fix any issues
   - Execute `flutter analyze` in strict mode
   - Fix all errors, warnings, and hints
   - Ensure type-safe code (no dynamic types without justification)
   - **Acceptance**: `flutter analyze` returns 0 issues
   - **Test**: CI pipeline or local `flutter analyze` command
 
-- [ ] [TASK-026] [P1] Format all Dart code
+- [X] [TASK-026] [P1] Format all Dart code
   - Execute `dart format mobile/lib mobile/test`
   - Verify consistent code style across all new files
   - **Acceptance**: All files formatted per Dart style guide

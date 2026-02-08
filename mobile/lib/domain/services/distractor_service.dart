@@ -84,7 +84,10 @@ class DistractorService {
   }
 
   /// Generate fallback distractors when not enough vocabulary exists
-  List<Distractor> _generateFallbackDistractors(VocabularyModel target, int count) {
+  List<Distractor> _generateFallbackDistractors(
+    VocabularyModel target,
+    int count,
+  ) {
     // Simple fallbacks - in production these would be from a larger pool
     final fallbacks = <String>[
       'something else',

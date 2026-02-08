@@ -37,7 +37,8 @@ class CueModel {
   final String id;
   final String userId;
   final String meaningId;
-  final String cueType; // 'translation', 'definition', 'synonym', 'context_cloze', 'disambiguation'
+  final String
+  cueType; // 'translation', 'definition', 'synonym', 'context_cloze', 'disambiguation'
   final String promptText;
   final String answerText;
   final String? hintText;

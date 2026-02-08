@@ -34,20 +34,13 @@ class SettingsScreen extends ConsumerWidget {
         backgroundColor: context.masteryColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: context.masteryColors.foreground,
-          ),
+          icon: Icon(Icons.arrow_back, color: context.masteryColors.foreground),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: prefsAsync.when(
-        data: (prefs) => _buildSettingsContent(
-          context,
-          ref,
-          prefs,
-          currentUser,
-        ),
+        data: (prefs) =>
+            _buildSettingsContent(context, ref, prefs, currentUser),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Text(
@@ -171,10 +164,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   );
                 },
-                child: const SettingsListItem(
-                  label: 'Version',
-                  value: '1.0.0',
-                ),
+                child: const SettingsListItem(label: 'Version', value: '1.0.0'),
               ),
             ],
           ),
@@ -187,11 +177,7 @@ class SettingsScreen extends ConsumerWidget {
   // Profile Row
   // =============================================================================
 
-  Widget _buildProfileRow(
-    BuildContext context,
-    String name,
-    String email,
-  ) {
+  Widget _buildProfileRow(BuildContext context, String name, String email) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -203,10 +189,7 @@ class SettingsScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: context.masteryColors.muted,
-              border: Border.all(
-                color: context.masteryColors.border,
-                width: 1,
-              ),
+              border: Border.all(color: context.masteryColors.border, width: 1),
             ),
             child: Icon(
               Icons.person,
@@ -258,10 +241,14 @@ class SettingsScreen extends ConsumerWidget {
 
   String _getIntensityLabel(int intensity) {
     switch (intensity) {
-      case 0: return 'Light';
-      case 1: return 'Normal';
-      case 2: return 'Intense';
-      default: return 'Normal';
+      case 0:
+        return 'Light';
+      case 1:
+        return 'Normal';
+      case 2:
+        return 'Intense';
+      default:
+        return 'Normal';
     }
   }
 
@@ -304,7 +291,10 @@ class SettingsScreen extends ConsumerWidget {
               ),
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Session length',
                   style: MasteryTextStyles.bodyBold.copyWith(
@@ -333,7 +323,9 @@ class SettingsScreen extends ConsumerWidget {
                 ref: ref,
                 label: 'Regular',
                 subtitle: '5 minutes per session',
-                isSelected: prefs.dailyTimeTargetMinutes > 3 && prefs.dailyTimeTargetMinutes <= 5,
+                isSelected:
+                    prefs.dailyTimeTargetMinutes > 3 &&
+                    prefs.dailyTimeTargetMinutes <= 5,
                 onTap: () {
                   ref
                       .read(learningPreferencesNotifierProvider.notifier)
@@ -390,7 +382,10 @@ class SettingsScreen extends ConsumerWidget {
               ),
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Intensity',
                   style: MasteryTextStyles.bodyBold.copyWith(
@@ -476,7 +471,10 @@ class SettingsScreen extends ConsumerWidget {
               ),
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Target retention',
                   style: MasteryTextStyles.bodyBold.copyWith(
@@ -505,7 +503,9 @@ class SettingsScreen extends ConsumerWidget {
                 ref: ref,
                 label: 'Balanced',
                 subtitle: '90% retention • Recommended',
-                isSelected: prefs.targetRetention >= 0.87 && prefs.targetRetention < 0.92,
+                isSelected:
+                    prefs.targetRetention >= 0.87 &&
+                    prefs.targetRetention < 0.92,
                 onTap: () {
                   ref
                       .read(learningPreferencesNotifierProvider.notifier)
@@ -566,7 +566,10 @@ class SettingsScreen extends ConsumerWidget {
               ),
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Native language',
                   style: MasteryTextStyles.bodyBold.copyWith(
@@ -582,26 +585,28 @@ class SettingsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Column(
                     children: supportedLanguages.entries.map((entry) {
-                final code = entry.key;
-                final englishName = entry.value['english']!;
-                final nativeName = entry.value['native']!;
-                return _buildSheetOption(
-                  context: context,
-                  ref: ref,
-                  label: englishName,
-                  subtitle: nativeName,
-                  isSelected: prefs.nativeLanguageCode == code,
-                  onTap: () async {
-                    final dataService = ref.read(supabaseDataServiceProvider);
-                    await dataService.updatePreferences(
-                      userId: userId,
-                      nativeLanguageCode: code,
-                    );
-                    ref.invalidate(learningPreferencesNotifierProvider);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }).toList(),
+                      final code = entry.key;
+                      final englishName = entry.value['english']!;
+                      final nativeName = entry.value['native']!;
+                      return _buildSheetOption(
+                        context: context,
+                        ref: ref,
+                        label: englishName,
+                        subtitle: nativeName,
+                        isSelected: prefs.nativeLanguageCode == code,
+                        onTap: () async {
+                          final dataService = ref.read(
+                            supabaseDataServiceProvider,
+                          );
+                          await dataService.updatePreferences(
+                            userId: userId,
+                            nativeLanguageCode: code,
+                          );
+                          ref.invalidate(learningPreferencesNotifierProvider);
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
@@ -644,7 +649,10 @@ class SettingsScreen extends ConsumerWidget {
               ),
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Meaning display',
                   style: MasteryTextStyles.bodyBold.copyWith(
@@ -697,10 +705,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(
-              color: context.masteryColors.border,
-              width: 1,
-            ),
+            bottom: BorderSide(color: context.masteryColors.border, width: 1),
           ),
         ),
         child: Row(
@@ -732,11 +737,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check,
-                color: context.masteryColors.accent,
-                size: 24,
-              )
+              Icon(Icons.check, color: context.masteryColors.accent, size: 24)
             else
               Container(
                 width: 20,
@@ -774,7 +775,10 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.of(context).pop();
               }
             },
-            child: Text('Sign Out', style: TextStyle(color: context.masteryColors.destructive)),
+            child: Text(
+              'Sign Out',
+              style: TextStyle(color: context.masteryColors.destructive),
+            ),
           ),
         ],
       ),

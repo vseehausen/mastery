@@ -142,9 +142,7 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
               decoration: BoxDecoration(
                 color: colors.cardBackground,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: colors.border,
-                ),
+                border: Border.all(color: colors.border),
               ),
               child: Text(
                 widget.targetWord,

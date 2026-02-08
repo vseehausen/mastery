@@ -38,9 +38,7 @@ class SessionProgressBar extends StatelessWidget {
             value: progress.clamp(0.0, 1.0),
             minHeight: 6,
             backgroundColor: colors.muted,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              colors.success,
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(colors.success),
           ),
         ),
         if (showLabel) ...[

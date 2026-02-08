@@ -64,10 +64,7 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     if (userId == null) return;
 
     final dataService = ref.read(supabaseDataServiceProvider);
-    await dataService.updatePreferences(
-      userId: userId,
-      intensity: intensity,
-    );
+    await dataService.updatePreferences(userId: userId, intensity: intensity);
 
     // Refresh state
     final prefsData = await dataService.getOrCreatePreferences(userId);

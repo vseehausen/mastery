@@ -74,10 +74,7 @@ class MeaningPickerScreen extends StatelessWidget {
 }
 
 class _MeaningOptionCard extends StatelessWidget {
-  const _MeaningOptionCard({
-    required this.option,
-    required this.onSelect,
-  });
+  const _MeaningOptionCard({required this.option, required this.onSelect});
 
   final MeaningOption option;
   final VoidCallback onSelect;
@@ -117,9 +114,9 @@ class _MeaningOptionCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .primaryColor
-                        .withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

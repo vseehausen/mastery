@@ -129,11 +129,7 @@ class _SessionTimerState extends State<SessionTimer> {
           // Pause indicator
           if (widget.isPaused) ...[
             const SizedBox(width: 8),
-            Icon(
-              Icons.pause,
-              size: 16,
-              color: colors.mutedForeground,
-            ),
+            Icon(Icons.pause, size: 16, color: colors.mutedForeground),
           ],
         ],
       ),

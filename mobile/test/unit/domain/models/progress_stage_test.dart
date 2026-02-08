@@ -50,27 +50,33 @@ void main() {
     group('fromString', () {
       test('parses all valid stage names (lowercase)', () {
         expect(ProgressStage.fromString('captured'), ProgressStage.captured);
-        expect(ProgressStage.fromString('practicing'), ProgressStage.practicing);
-        expect(ProgressStage.fromString('stabilizing'), ProgressStage.stabilizing);
+        expect(
+          ProgressStage.fromString('practicing'),
+          ProgressStage.practicing,
+        );
+        expect(
+          ProgressStage.fromString('stabilizing'),
+          ProgressStage.stabilizing,
+        );
         expect(ProgressStage.fromString('active'), ProgressStage.active);
         expect(ProgressStage.fromString('mastered'), ProgressStage.mastered);
       });
 
       test('parses mixed case strings', () {
         expect(ProgressStage.fromString('Captured'), ProgressStage.captured);
-        expect(ProgressStage.fromString('PRACTICING'), ProgressStage.practicing);
-        expect(ProgressStage.fromString('Stabilizing'), ProgressStage.stabilizing);
+        expect(
+          ProgressStage.fromString('PRACTICING'),
+          ProgressStage.practicing,
+        );
+        expect(
+          ProgressStage.fromString('Stabilizing'),
+          ProgressStage.stabilizing,
+        );
       });
 
       test('throws ArgumentError for invalid string', () {
-        expect(
-          () => ProgressStage.fromString('invalid'),
-          throwsArgumentError,
-        );
-        expect(
-          () => ProgressStage.fromString(''),
-          throwsArgumentError,
-        );
+        expect(() => ProgressStage.fromString('invalid'), throwsArgumentError);
+        expect(() => ProgressStage.fromString(''), throwsArgumentError);
         expect(
           () => ProgressStage.fromString('clarified'), // old stage name
           throwsArgumentError,

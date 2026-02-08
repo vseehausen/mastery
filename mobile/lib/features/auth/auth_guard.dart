@@ -39,11 +39,12 @@ class AuthGuard extends ConsumerWidget {
         ref.read(oauthInProgressProvider.notifier).state = false;
       }
     });
-    
+
     // Safety timeout: clear OAuth flag after 30 seconds if still in progress
     if (oauthInProgress && !isAuthenticated) {
       Future.delayed(const Duration(seconds: 30), () {
-        if (ref.read(oauthInProgressProvider) && !ref.read(isAuthenticatedProvider)) {
+        if (ref.read(oauthInProgressProvider) &&
+            !ref.read(isAuthenticatedProvider)) {
           ref.read(oauthInProgressProvider.notifier).state = false;
         }
       });
@@ -90,7 +91,11 @@ class AuthGuard extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 48, color: colors.destructive),
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: colors.destructive,
+                    ),
                     const SizedBox(height: 16),
                     Text('Authentication error: $error'),
                     const SizedBox(height: 16),

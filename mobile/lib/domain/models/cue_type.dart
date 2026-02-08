@@ -59,5 +59,5 @@ enum MaturityStage {
   growing,
 
   /// Well-known word. stability >= 21.0
-  mature;
+  mature,
 }

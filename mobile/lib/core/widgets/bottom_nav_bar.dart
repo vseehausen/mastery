@@ -28,11 +28,7 @@ class BottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        border: Border(
-          top: BorderSide(
-            color: context.masteryColors.border,
-          ),
-        ),
+        border: Border(top: BorderSide(color: context.masteryColors.border)),
       ),
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 32),
       child: Row(

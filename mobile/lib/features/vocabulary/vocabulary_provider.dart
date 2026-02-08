@@ -15,7 +15,8 @@ import '../../providers/supabase_provider.dart' as sp;
 
 /// Provider for all vocabulary of the current user (sorted newest first)
 /// Alias for backward compatibility with existing code
-final allVocabularyProvider =
-    FutureProvider.autoDispose<List<VocabularyModel>>((ref) {
-  return ref.watch(sp.vocabularyListProvider.future);
-});
+final allVocabularyProvider = FutureProvider.autoDispose<List<VocabularyModel>>(
+  (ref) {
+    return ref.watch(sp.vocabularyListProvider.future);
+  },
+);

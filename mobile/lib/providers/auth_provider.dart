@@ -104,11 +104,13 @@ class AuthService {
       idToken: idToken,
       accessToken: accessToken,
     );
-    
+
     if (response.session == null) {
-      throw Exception('Google sign-in succeeded but no session was created. Check webClientId configuration.');
+      throw Exception(
+        'Google sign-in succeeded but no session was created. Check webClientId configuration.',
+      );
     }
-    
+
     return response;
   }
 }

@@ -8,10 +8,7 @@ import '../../data/services/supabase_data_service.dart';
 /// Service that calls the enrich-vocabulary edge function.
 /// Data is stored server-side and fetched via SupabaseDataService.
 class EnrichmentService {
-  EnrichmentService({
-    required this.supabaseClient,
-    required this.dataService,
-  });
+  EnrichmentService({required this.supabaseClient, required this.dataService});
 
   final SupabaseClient supabaseClient;
   final SupabaseDataService dataService;

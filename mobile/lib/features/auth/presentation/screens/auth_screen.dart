@@ -188,12 +188,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       final authRepo = ref.read(authRepositoryProvider);
       final response = await authRepo.signInWithGoogle();
-      
+
       // Check if sign-in actually succeeded
       if (response.session == null) {
         throw Exception('Sign in succeeded but no session was created');
       }
-      
+
       // Don't navigate here - AuthGuard handles it
       // OAuth flag will be cleared by AuthGuard when isAuthenticated becomes true
     } catch (e) {

@@ -30,10 +30,7 @@ void main() {
         find.text('Which meaning do you want to learn first?'),
         findsOneWidget,
       );
-      expect(
-        find.text('You can learn the others later.'),
-        findsOneWidget,
-      );
+      expect(find.text('You can learn the others later.'), findsOneWidget);
     });
 
     testWidgets('shows all meaning options', (tester) async {

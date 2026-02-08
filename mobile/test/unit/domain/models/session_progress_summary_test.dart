@@ -339,5 +339,72 @@ void main() {
         expect(summary.masteredCount, 0);
       });
     });
+
+    group('equality', () {
+      test('two summaries with same transitions are equal', () {
+        final transitions = [
+          StageTransition(
+            vocabularyId: '1',
+            wordText: 'word1',
+            fromStage: ProgressStage.practicing,
+            toStage: ProgressStage.stabilizing,
+            timestamp: timestamp,
+          ),
+        ];
+
+        final summary1 = SessionProgressSummary(transitions);
+        final summary2 = SessionProgressSummary(transitions);
+
+        expect(summary1 == summary2, true);
+      });
+
+      test('two summaries with different transitions are not equal', () {
+        final summary1 = SessionProgressSummary([
+          StageTransition(
+            vocabularyId: '1',
+            wordText: 'word1',
+            fromStage: ProgressStage.practicing,
+            toStage: ProgressStage.stabilizing,
+            timestamp: timestamp,
+          ),
+        ]);
+        final summary2 = SessionProgressSummary([
+          StageTransition(
+            vocabularyId: '2',
+            wordText: 'word2',
+            fromStage: ProgressStage.stabilizing,
+            toStage: ProgressStage.active,
+            timestamp: timestamp,
+          ),
+        ]);
+
+        expect(summary1 == summary2, false);
+      });
+
+      test('hashCode is consistent for equal objects', () {
+        final transitions = [
+          StageTransition(
+            vocabularyId: '1',
+            wordText: 'word1',
+            fromStage: ProgressStage.practicing,
+            toStage: ProgressStage.stabilizing,
+            timestamp: timestamp,
+          ),
+        ];
+
+        final summary1 = SessionProgressSummary(transitions);
+        final summary2 = SessionProgressSummary(transitions);
+
+        expect(summary1.hashCode, summary2.hashCode);
+      });
+
+      test('empty summaries are equal', () {
+        const summary1 = SessionProgressSummary.empty();
+        const summary2 = SessionProgressSummary.empty();
+
+        expect(summary1 == summary2, true);
+        expect(summary1.hashCode, summary2.hashCode);
+      });
+    });
   });
 }
