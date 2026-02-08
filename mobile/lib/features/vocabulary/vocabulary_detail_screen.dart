@@ -179,7 +179,7 @@ class _VocabularyDetailScreenState
                   height: 1.1,
                 ),
               ),
-              if (vocab.stem != null) ...[
+              if (vocab.stem != null && vocab.stem != vocab.word) ...[
                 const SizedBox(height: 4),
                 Text(
                   vocab.stem!,
