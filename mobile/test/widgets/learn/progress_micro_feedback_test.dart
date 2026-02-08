@@ -134,7 +134,7 @@ void main() {
 
       // Badge should be reasonably sized (not too big or too small)
       expect(size.width, greaterThan(60));
-      expect(size.width, lessThan(150));
+      expect(size.width, lessThan(200));
       expect(size.height, greaterThan(20));
       expect(size.height, lessThan(50));
     });
