@@ -101,7 +101,9 @@ class _VocabularyDetailScreenState
           // Scrollable content area
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s5, AppSpacing.s2, AppSpacing.s5, AppSpacing.s5,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -188,9 +190,10 @@ class _VocabularyDetailScreenState
               Text(
                 vocab.word,
                 style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w600,
-                  height: 1.1,
+                  fontSize: AppTypography.fontSize2xl,
+                  fontWeight: AppTypography.fontWeightSemibold,
+                  letterSpacing: AppTypography.letterSpacingTight,
+                  height: AppTypography.lineHeightTight,
                 ),
               ),
               if (vocab.stem != null) ...[
@@ -223,16 +226,17 @@ class _VocabularyDetailScreenState
               Text(
                 '${learningCard.reps} reviews',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontSize: AppTypography.fontSizeXs,
+                  fontWeight: AppTypography.fontWeightMedium,
                   color: colors.mutedForeground,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s1),
               Text(
                 'Next: ${_formatNextReview(learningCard.due)}',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppTypography.fontSizeXs,
+                  fontWeight: AppTypography.fontWeightMedium,
                   color: colors.mutedForeground,
                 ),
               ),
@@ -240,7 +244,8 @@ class _VocabularyDetailScreenState
               Text(
                 'Not yet reviewed',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppTypography.fontSizeXs,
+                  fontWeight: AppTypography.fontWeightMedium,
                   color: colors.mutedForeground,
                 ),
               ),
@@ -326,6 +331,7 @@ class _VocabularyDetailScreenState
               'Suggest edit',
               style: TextStyle(
                 fontSize: AppTypography.fontSizeXs,
+                fontWeight: AppTypography.fontWeightMedium,
                 color: colors.mutedForeground,
               ),
             ),
@@ -345,10 +351,11 @@ class _VocabularyDetailScreenState
         // Definition text
         Text(
           meaning.englishDefinition,
-          style: const TextStyle(
-            fontSize: AppTypography.fontSizeLg, // 18
+          style: TextStyle(
+            fontSize: AppTypography.fontSizeLg,
             fontWeight: AppTypography.fontWeightMedium,
-            height: 1.6,
+            height: AppTypography.lineHeightRelaxed,
+            color: colors.foreground,
           ),
         ),
 
@@ -471,6 +478,7 @@ class _VocabularyDetailScreenState
                     'Loading source...',
                     style: TextStyle(
                       fontSize: AppTypography.fontSizeXs,
+                      fontWeight: AppTypography.fontWeightMedium,
                       color: colors.mutedForeground,
                     ),
                   ),
@@ -498,6 +506,7 @@ class _VocabularyDetailScreenState
                           source.title,
                           style: TextStyle(
                             fontSize: AppTypography.fontSizeXs,
+                            fontWeight: AppTypography.fontWeightMedium,
                             color: colors.mutedForeground,
                           ),
                           maxLines: 1,
@@ -532,10 +541,10 @@ class _VocabularyDetailScreenState
           final userId = ref.watch(currentUserIdProvider);
 
           return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               // Preview Cards - outlined button
-              Expanded(
-                child: OutlinedButton(
+              OutlinedButton(
                   onPressed: hasMeaning
                       ? () {
                           showModalBottomSheet<void>(
@@ -559,26 +568,28 @@ class _VocabularyDetailScreenState
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s4,
+                      vertical: AppSpacing.s3,
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.visibility_outlined, size: 18),
-                      SizedBox(width: 8),
+                      Icon(Icons.visibility_outlined, size: AppTypography.fontSizeLg),
+                      SizedBox(width: AppSpacing.s2),
                       Text('Preview'),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s3),
 
               // Actions menu (feedback + re-generate)
               if (hasMeaning && userId != null)
                 IconButton(
                   onPressed: () =>
                       _showActionMenu(vocabularyId, meaning!.id, userId),
-                  icon: const Icon(Icons.more_vert, size: 20),
+                  icon: const Icon(Icons.more_vert, size: AppSpacing.s5),
                   style: IconButton.styleFrom(
                     side: BorderSide(color: colors.border),
                     shape: RoundedRectangleBorder(
@@ -599,17 +610,20 @@ class _VocabularyDetailScreenState
     return Row(
       children: [
         SizedBox(
-          width: 16,
-          height: 16,
+          width: AppSpacing.s4,
+          height: AppSpacing.s4,
           child: CircularProgressIndicator(
-            strokeWidth: 2,
+            strokeWidth: AppBorderWidth.medium,
             color: colors.mutedForeground,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s3),
         Text(
           'Loading...',
-          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+          style: TextStyle(
+            fontSize: AppTypography.fontSizeSm,
+            color: colors.mutedForeground,
+          ),
         ),
       ],
     );
@@ -623,9 +637,12 @@ class _VocabularyDetailScreenState
       children: [
         Text(
           message,
-          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+          style: TextStyle(
+            fontSize: AppTypography.fontSizeSm,
+            color: colors.mutedForeground,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s3),
         ShadButton.outline(onPressed: onRetry, child: const Text('Retry')),
       ],
     );
@@ -637,17 +654,20 @@ class _VocabularyDetailScreenState
     return Row(
       children: [
         SizedBox(
-          width: 16,
-          height: 16,
+          width: AppSpacing.s4,
+          height: AppSpacing.s4,
           child: CircularProgressIndicator(
-            strokeWidth: 2,
+            strokeWidth: AppBorderWidth.medium,
             color: colors.mutedForeground,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s3),
         Text(
           'Generating meanings...',
-          style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+          style: TextStyle(
+            fontSize: AppTypography.fontSizeSm,
+            color: colors.mutedForeground,
+          ),
         ),
       ],
     );
@@ -773,7 +793,7 @@ class _VocabularyDetailScreenState
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s5),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
