@@ -116,6 +116,7 @@ what can I do next
 - Split into steps when action is irreversible, complex, or high error cost.
 - Keep reversible tasks on one screen when possible.
 - Show immediate feedback and visible state changes.
+- Zero-Latency Actions: Background processes (saving, fetching) must not block user flow.
 - Show progress for long-running actions.
 - Prevent errors before explaining.
 - Validate inline.
@@ -163,7 +164,8 @@ what can I do next
 - Avoid impossible states.
 - Show immediate visual response.
 - Use skeletons or progress for delay.
-- Use optimistic UI only when safe.
+- Use optimistic UI by default for all non-critical actions.
+- Background all saving and fetching operations; never block the UI for network latency.
 - Show consequences before commitment.
 - Make permissions and limits visible.
 - Keep history or logs available for trust.
