@@ -1,0 +1,36 @@
+{
+  "name": "mastery-chrome-extension",
+  "description": "Mastery vocabulary capture Chrome extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@tailwindcss/vite": "^4.1.0",
+    "@wxt-dev/module-svelte": "^2.0.4",
+    "eslint": "^9.39.2",
+    "jsdom": "^26.0.0",
+    "prettier": "^3.5.1",
+    "prettier-plugin-svelte": "^3.3.3",
+    "svelte": "^5.19.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^3.0.5",
+    "wxt": "^0.20.14"
+  }
+}

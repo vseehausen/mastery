@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-mastery-known: oklch(0.65 0.15 160);
+  --color-mastery-learning: oklch(0.75 0.15 85);
+  --color-mastery-success: oklch(0.65 0.15 160);
+  --color-mastery-warning: oklch(0.75 0.15 85);
+  --color-mastery-new: oklch(0.6 0.15 250);
+}
