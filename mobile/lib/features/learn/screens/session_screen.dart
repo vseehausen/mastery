@@ -147,8 +147,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final prefs = await dataService.getOrCreatePreferences(userId);
       final dailyTimeTargetMinutes =
           prefs['daily_time_target_minutes'] as int? ??
-          AppDefaults.dailyTimeTargetMinutes;
-      final intensity = prefs['intensity'] as int? ?? AppDefaults.intensity;
+          AppDefaults.sessionDefault;
+      final newWordsPerSession =
+          prefs['new_words_per_session'] as int? ??
+          AppDefaults.newWordsDefault;
 
       // Step 1: Compute lightweight session params (no card data)
       // For quick review, derive item count from time target and force review-only
@@ -157,7 +159,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final params = await planner.computeSessionParams(
         userId: userId,
         timeTargetMinutes: timeTarget,
-        intensity: intensity,
+        newWordsPerSession: newWordsPerSession,
       );
 
       if (params.maxItems <= 0) {

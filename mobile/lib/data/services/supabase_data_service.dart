@@ -653,9 +653,9 @@ class SupabaseDataService {
       final data = {
         'id': id,
         'user_id': userId,
-        'daily_time_target_minutes': AppDefaults.dailyTimeTargetMinutes,
-        'target_retention': AppDefaults.targetRetention,
-        'intensity': AppDefaults.intensity,
+        'daily_time_target_minutes': AppDefaults.sessionDefault,
+        'target_retention': AppDefaults.retentionDefault,
+        'new_words_per_session': AppDefaults.newWordsDefault,
         'new_word_suppression_active': false,
         'native_language_code': AppDefaults.nativeLanguageCode,
         'meaning_display_mode': AppDefaults.meaningDisplayMode,
@@ -674,7 +674,7 @@ class SupabaseDataService {
     required String userId,
     int? dailyTimeTargetMinutes,
     double? targetRetention,
-    int? intensity,
+    int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
     String? meaningDisplayMode,
@@ -688,8 +688,8 @@ class SupabaseDataService {
     if (targetRetention != null) {
       updates['target_retention'] = targetRetention;
     }
-    if (intensity != null) {
-      updates['intensity'] = intensity;
+    if (newWordsPerSession != null) {
+      updates['new_words_per_session'] = newWordsPerSession;
     }
     if (newWordSuppressionActive != null) {
       updates['new_word_suppression_active'] = newWordSuppressionActive;

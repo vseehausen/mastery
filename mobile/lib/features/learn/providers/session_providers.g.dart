@@ -6,7 +6,7 @@ part of 'session_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dailyTimeTargetHash() => r'5dd3b6885c47b03b00dd9bb9b443a583e54ada24';
+String _$dailyTimeTargetHash() => r'3fce2340076b90bae539fd3a4c7225334504dbc8';
 
 /// Provides the user's daily time target in minutes
 ///
@@ -165,7 +165,7 @@ final activeSessionProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ActiveSessionRef = AutoDisposeFutureProviderRef<LearningSessionModel?>;
-String _$sessionPlanHash() => r'79e9ee63e6327ecf2f7cb05c0a244615ad36dee6';
+String _$sessionPlanHash() => r'12462dce13e700b129eade50f138f0be519514a7';
 
 /// Provides the session plan for the current/new session
 ///

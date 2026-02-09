@@ -2,17 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/app_defaults.dart';
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../domain/models/user_preferences.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/dev_mode_provider.dart';
-import '../../../../providers/supabase_provider.dart';
 import '../../../learn/providers/learning_preferences_providers.dart';
 import '../../../sync/presentation/screens/sync_status_screen.dart';
 import '../../language_setting.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_list_item.dart';
+
+String retentionLabelFor(double retention) {
+  if (retention <= AppDefaults.retentionEfficient) {
+    return 'Efficient';
+  }
+  if (retention <= AppDefaults.retentionBalanced) {
+    return 'Balanced';
+  }
+  return 'Reinforced';
+}
+
+String newWordsPerSessionLabelFor(int newWordsPerSession) {
+  switch (newWordsPerSession) {
+    case AppDefaults.newWordsFew:
+      return 'Few';
+    case AppDefaults.newWordsNormal:
+      return 'Normal';
+    case AppDefaults.newWordsMany:
+      return 'Many';
+    default:
+      return 'Normal';
+  }
+}
 
 /// Unified settings screen with iOS grouped-list pattern
 class SettingsScreen extends ConsumerWidget {
@@ -79,13 +102,13 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => _showSessionLengthSheet(context, ref, prefs),
               ),
               SettingsListItem(
-                label: 'Intensity',
-                value: _getIntensityLabel(prefs.intensity),
-                onTap: () => _showIntensitySheet(context, ref, prefs),
+                label: 'New words per session',
+                value: newWordsPerSessionLabelFor(prefs.newWordsPerSession),
+                onTap: () => _showNewWordsPerSessionSheet(context, ref, prefs),
               ),
               SettingsListItem(
-                label: 'Target retention',
-                value: _getRetentionLabel(prefs.targetRetention),
+                label: 'Review intensity',
+                value: retentionLabelFor(prefs.targetRetention),
                 onTap: () => _showRetentionSheet(context, ref, prefs),
               ),
               SettingsListItem(
@@ -233,29 +256,76 @@ class SettingsScreen extends ConsumerWidget {
   // =============================================================================
 
   String _getSessionLengthLabel(int minutes) {
-    if (minutes <= 3) return 'Quick and easy';
-    if (minutes <= 5) return 'Regular';
-    if (minutes <= 8) return 'Serious';
+    if (minutes <= AppDefaults.sessionQuick) return 'Quick and easy';
+    if (minutes <= AppDefaults.sessionRegular) return 'Regular';
+    if (minutes <= AppDefaults.sessionSerious) return 'Serious';
     return 'Custom ($minutes min)';
   }
 
-  String _getIntensityLabel(int intensity) {
-    switch (intensity) {
-      case 0:
-        return 'Light';
-      case 1:
-        return 'Normal';
-      case 2:
-        return 'Intense';
-      default:
-        return 'Normal';
-    }
-  }
+  // =============================================================================
+  // Bottom Sheet Helper
+  // =============================================================================
 
-  String _getRetentionLabel(double retention) {
-    if (retention < 0.87) return 'Moderate';
-    if (retention < 0.90) return 'Balanced';
-    return 'Perfectionist';
+  /// Shared bottom sheet scaffold with drag handle and title
+  void _showBottomSheet({
+    required BuildContext context,
+    required String title,
+    required List<Widget> options,
+    BoxConstraints? constraints,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.masteryColors.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.only(top: 20),
+          constraints: constraints,
+          child: Column(
+            mainAxisSize: constraints != null ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: context.masteryColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: Text(
+                  title,
+                  style: MasteryTextStyles.bodyBold.copyWith(
+                    fontSize: 18,
+                    color: context.masteryColors.foreground,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Options
+              if (constraints != null)
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(children: options),
+                  ),
+                )
+              else
+                ...options,
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // =============================================================================
@@ -267,178 +337,119 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     UserPreferencesModel prefs,
   ) {
-    showModalBottomSheet<void>(
+    _showBottomSheet(
       context: context,
-      backgroundColor: context.masteryColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: context.masteryColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Session length',
-                  style: MasteryTextStyles.bodyBold.copyWith(
-                    fontSize: 18,
-                    color: context.masteryColors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Options (Fibonacci: 3, 5, 8)
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Quick and easy',
-                subtitle: '3 minutes per session',
-                isSelected: prefs.dailyTimeTargetMinutes <= 3,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateDailyTimeTarget(3);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Regular',
-                subtitle: '5 minutes per session',
-                isSelected:
-                    prefs.dailyTimeTargetMinutes > 3 &&
-                    prefs.dailyTimeTargetMinutes <= 5,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateDailyTimeTarget(5);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Serious',
-                subtitle: '8 minutes per session',
-                isSelected: prefs.dailyTimeTargetMinutes > 5,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateDailyTimeTarget(8);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+      title: 'Session length',
+      options: [
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Quick and easy',
+          subtitle: '${AppDefaults.sessionQuick} minutes per session',
+          isSelected: prefs.dailyTimeTargetMinutes <= AppDefaults.sessionQuick,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateDailyTimeTarget(AppDefaults.sessionQuick);
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Regular',
+          subtitle: '${AppDefaults.sessionRegular} minutes per session',
+          isSelected:
+              prefs.dailyTimeTargetMinutes > AppDefaults.sessionQuick &&
+              prefs.dailyTimeTargetMinutes <= AppDefaults.sessionRegular,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateDailyTimeTarget(AppDefaults.sessionRegular);
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Serious',
+          subtitle: '${AppDefaults.sessionSerious} minutes per session',
+          isSelected: prefs.dailyTimeTargetMinutes > AppDefaults.sessionRegular,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateDailyTimeTarget(AppDefaults.sessionSerious);
+            Navigator.pop(context);
+          },
+        ),
+      ],
     );
   }
 
-  void _showIntensitySheet(
+  void _showNewWordsPerSessionSheet(
     BuildContext context,
     WidgetRef ref,
     UserPreferencesModel prefs,
   ) {
-    showModalBottomSheet<void>(
+    _showBottomSheet(
       context: context,
-      backgroundColor: context.masteryColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: context.masteryColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Intensity',
-                  style: MasteryTextStyles.bodyBold.copyWith(
-                    fontSize: 18,
-                    color: context.masteryColors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Options (Fibonacci: 3, 5, 8)
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Light',
-                subtitle: '3 new words per session',
-                isSelected: prefs.intensity == 0,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateIntensity(0);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Normal',
-                subtitle: '5 new words per session',
-                isSelected: prefs.intensity == 1,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateIntensity(1);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Intense',
-                subtitle: '8 new words per session',
-                isSelected: prefs.intensity == 2,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateIntensity(2);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+      title: 'New words per session',
+      options: [
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Few',
+          subtitle:
+              '${AppDefaults.newWordsFew} new words • More time for reviews',
+          isSelected:
+              prefs.newWordsPerSession ==
+              AppDefaults.newWordsFew,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateNewWordsPerSession(
+                  AppDefaults.newWordsFew,
+                );
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Normal',
+          subtitle:
+              '${AppDefaults.newWordsNormal} new words • Best for most learners',
+          isSelected:
+              prefs.newWordsPerSession ==
+              AppDefaults.newWordsNormal,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateNewWordsPerSession(
+                  AppDefaults.newWordsNormal,
+                );
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Many',
+          subtitle:
+              '${AppDefaults.newWordsMany} new words • Faster vocabulary growth',
+          isSelected:
+              prefs.newWordsPerSession ==
+              AppDefaults.newWordsMany,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateNewWordsPerSession(
+                  AppDefaults.newWordsMany,
+                );
+            Navigator.pop(context);
+          },
+        ),
+      ],
     );
   }
 
@@ -447,89 +458,67 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     UserPreferencesModel prefs,
   ) {
-    showModalBottomSheet<void>(
+    _showBottomSheet(
       context: context,
-      backgroundColor: context.masteryColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: context.masteryColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Target retention',
-                  style: MasteryTextStyles.bodyBold.copyWith(
-                    fontSize: 18,
-                    color: context.masteryColors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Options (85%, 90%, 95%)
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Moderate',
-                subtitle: '85% retention • Fewer reviews',
-                isSelected: prefs.targetRetention < 0.87,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateTargetRetention(0.85);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Balanced',
-                subtitle: '90% retention • Recommended',
-                isSelected:
-                    prefs.targetRetention >= 0.87 &&
-                    prefs.targetRetention < 0.92,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateTargetRetention(0.90);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildSheetOption(
-                context: context,
-                ref: ref,
-                label: 'Perfectionist',
-                subtitle: '95% retention • Heavy workload',
-                isSelected: prefs.targetRetention >= 0.92,
-                onTap: () {
-                  ref
-                      .read(learningPreferencesNotifierProvider.notifier)
-                      .updateTargetRetention(0.95);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+      title: 'Review intensity',
+      options: [
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Efficient',
+          subtitle:
+              '${(AppDefaults.retentionEfficient * 100).toInt()}% retention • Fewer reviews, each one is harder',
+          isSelected:
+              prefs.targetRetention <=
+              AppDefaults.retentionEfficient,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateTargetRetention(
+                  AppDefaults.retentionEfficient,
+                );
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Balanced',
+          subtitle:
+              '${(AppDefaults.retentionBalanced * 100).toInt()}% retention • Best for most learners',
+          isSelected:
+              prefs.targetRetention >
+                  AppDefaults.retentionEfficient &&
+              prefs.targetRetention <=
+                  AppDefaults.retentionBalanced,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateTargetRetention(
+                  AppDefaults.retentionBalanced,
+                );
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'Reinforced',
+          subtitle:
+              '${(AppDefaults.retentionReinforced * 100).toInt()}% retention • More reviews, each one is easier',
+          isSelected:
+              prefs.targetRetention >
+              AppDefaults.retentionBalanced,
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateTargetRetention(
+                  AppDefaults.retentionReinforced,
+                );
+            Navigator.pop(context);
+          },
+        ),
+      ],
     );
   }
 
@@ -538,82 +527,28 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     UserPreferencesModel prefs,
   ) {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
-    showModalBottomSheet<void>(
+    _showBottomSheet(
       context: context,
-      backgroundColor: context.masteryColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.only(top: 20),
-          constraints: const BoxConstraints(maxHeight: 500),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: context.masteryColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Native language',
-                  style: MasteryTextStyles.bodyBold.copyWith(
-                    fontSize: 18,
-                    color: context.masteryColors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Scrollable options
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    children: supportedLanguages.entries.map((entry) {
-                      final code = entry.key;
-                      final englishName = entry.value['english']!;
-                      final nativeName = entry.value['native']!;
-                      return _buildSheetOption(
-                        context: context,
-                        ref: ref,
-                        label: englishName,
-                        subtitle: nativeName,
-                        isSelected: prefs.nativeLanguageCode == code,
-                        onTap: () async {
-                          final dataService = ref.read(
-                            supabaseDataServiceProvider,
-                          );
-                          await dataService.updatePreferences(
-                            userId: userId,
-                            nativeLanguageCode: code,
-                          );
-                          ref.invalidate(learningPreferencesNotifierProvider);
-                          if (context.mounted) Navigator.pop(context);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      title: 'Native language',
+      constraints: const BoxConstraints(maxHeight: 500),
+      options: supportedLanguages.entries.map((entry) {
+        final code = entry.key;
+        final englishName = entry.value['english']!;
+        final nativeName = entry.value['native']!;
+        return _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: englishName,
+          subtitle: nativeName,
+          isSelected: prefs.nativeLanguageCode == code,
+          onTap: () async {
+            await ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateNativeLanguage(code);
+            if (context.mounted) Navigator.pop(context);
+          },
         );
-      },
+      }).toList(),
     );
   }
 
@@ -622,72 +557,27 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     UserPreferencesModel prefs,
   ) {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
-    showModalBottomSheet<void>(
+    _showBottomSheet(
       context: context,
-      backgroundColor: context.masteryColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: context.masteryColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Meaning display',
-                  style: MasteryTextStyles.bodyBold.copyWith(
-                    fontSize: 18,
-                    color: context.masteryColors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Options
-              ...displayModes.entries.map((entry) {
-                final mode = entry.key;
-                final label = entry.value['label']!;
-                final subtitle = entry.value['subtitle']!;
-                return _buildSheetOption(
-                  context: context,
-                  ref: ref,
-                  label: label,
-                  subtitle: subtitle,
-                  isSelected: prefs.meaningDisplayMode == mode,
-                  onTap: () async {
-                    final dataService = ref.read(supabaseDataServiceProvider);
-                    await dataService.updatePreferences(
-                      userId: userId,
-                      meaningDisplayMode: mode,
-                    );
-                    ref.invalidate(learningPreferencesNotifierProvider);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-            ],
-          ),
+      title: 'Meaning display',
+      options: displayModes.entries.map((entry) {
+        final mode = entry.key;
+        final label = entry.value['label']!;
+        final subtitle = entry.value['subtitle']!;
+        return _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: label,
+          subtitle: subtitle,
+          isSelected: prefs.meaningDisplayMode == mode,
+          onTap: () async {
+            await ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateMeaningDisplayMode(mode);
+            if (context.mounted) Navigator.pop(context);
+          },
         );
-      },
+      }).toList(),
     );
   }
 

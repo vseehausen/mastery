@@ -120,7 +120,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 1,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -151,7 +151,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -192,7 +192,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -232,7 +232,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -270,7 +270,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 0, // Light intensity
+          newWordsPerSession: 3, // Light intensity
           targetRetention: 0.90,
         );
 
@@ -296,7 +296,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -327,7 +327,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -426,7 +426,7 @@ void main() {
         await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -458,7 +458,7 @@ void main() {
           await planner.buildSessionPlan(
             userId: userId,
             timeTargetMinutes: 10,
-            intensity: 1,
+            newWordsPerSession: 5,
             targetRetention: 0.90,
           );
 
@@ -553,7 +553,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -591,7 +591,7 @@ void main() {
         final plan = await planner.buildSessionPlan(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
           targetRetention: 0.90,
         );
 
@@ -610,7 +610,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 1,
-          intensity: 1,
+          newWordsPerSession: 5,
         );
 
         expect(params.maxItems, 0);
@@ -625,7 +625,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1, // Normal: 5 new words per 10 min
+          newWordsPerSession: 5, // Normal: 5 new words per 10 min
         );
 
         expect(params.maxItems, 40);
@@ -643,7 +643,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
         );
 
         expect(params.estimatedItemCount, 15);
@@ -658,7 +658,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
         );
 
         expect(params.estimatedItemCount, 40);
@@ -673,7 +673,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 1,
+          newWordsPerSession: 5,
         );
 
         expect(params.estimatedItemCount, 2);
@@ -687,7 +687,7 @@ void main() {
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
-          intensity: 2, // Intense
+          newWordsPerSession: 8, // Intense
         );
 
         expect(params.maxItems, 40);

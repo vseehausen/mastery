@@ -5,9 +5,9 @@ class UserPreferencesModel {
   const UserPreferencesModel({
     required this.id,
     required this.userId,
-    this.dailyTimeTargetMinutes = AppDefaults.dailyTimeTargetMinutes,
-    this.targetRetention = AppDefaults.targetRetention,
-    this.intensity = AppDefaults.intensity,
+    this.dailyTimeTargetMinutes = AppDefaults.sessionDefault,
+    this.targetRetention = AppDefaults.retentionDefault,
+    this.newWordsPerSession = AppDefaults.newWordsDefault,
     this.newWordSuppressionActive = false,
     this.nativeLanguageCode = AppDefaults.nativeLanguageCode,
     this.meaningDisplayMode = AppDefaults.meaningDisplayMode,
@@ -21,11 +21,13 @@ class UserPreferencesModel {
       userId: json['user_id'] as String,
       dailyTimeTargetMinutes:
           json['daily_time_target_minutes'] as int? ??
-          AppDefaults.dailyTimeTargetMinutes,
+          AppDefaults.sessionDefault,
       targetRetention:
           (json['target_retention'] as num?)?.toDouble() ??
-          AppDefaults.targetRetention,
-      intensity: json['intensity'] as int? ?? AppDefaults.intensity,
+          AppDefaults.retentionDefault,
+      newWordsPerSession:
+          json['new_words_per_session'] as int? ??
+          AppDefaults.newWordsDefault,
       newWordSuppressionActive:
           json['new_word_suppression_active'] as bool? ?? false,
       nativeLanguageCode:
@@ -43,7 +45,7 @@ class UserPreferencesModel {
   final String userId;
   final int dailyTimeTargetMinutes;
   final double targetRetention;
-  final int intensity; // 0=light, 1=normal, 2=intense
+  final int newWordsPerSession; // 3=few, 5=normal, 8=many
   final bool newWordSuppressionActive;
   final String nativeLanguageCode;
   final String meaningDisplayMode; // 'native', 'english', 'both'
@@ -56,7 +58,7 @@ class UserPreferencesModel {
       'user_id': userId,
       'daily_time_target_minutes': dailyTimeTargetMinutes,
       'target_retention': targetRetention,
-      'intensity': intensity,
+      'new_words_per_session': newWordsPerSession,
       'new_word_suppression_active': newWordSuppressionActive,
       'native_language_code': nativeLanguageCode,
       'meaning_display_mode': meaningDisplayMode,
@@ -70,7 +72,7 @@ class UserPreferencesModel {
     String? userId,
     int? dailyTimeTargetMinutes,
     double? targetRetention,
-    int? intensity,
+    int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
     String? meaningDisplayMode,
@@ -83,7 +85,7 @@ class UserPreferencesModel {
       dailyTimeTargetMinutes:
           dailyTimeTargetMinutes ?? this.dailyTimeTargetMinutes,
       targetRetention: targetRetention ?? this.targetRetention,
-      intensity: intensity ?? this.intensity,
+      newWordsPerSession: newWordsPerSession ?? this.newWordsPerSession,
       newWordSuppressionActive:
           newWordSuppressionActive ?? this.newWordSuppressionActive,
       nativeLanguageCode: nativeLanguageCode ?? this.nativeLanguageCode,

@@ -21,12 +21,12 @@ part 'session_providers.g.dart';
 Future<int> dailyTimeTarget(Ref ref) async {
   final currentUser = ref.watch(currentUserProvider);
   final userId = currentUser.valueOrNull?.id;
-  if (userId == null) return AppDefaults.dailyTimeTargetMinutes;
+  if (userId == null) return AppDefaults.sessionDefault;
 
   final dataService = ref.watch(supabaseDataServiceProvider);
   final prefs = await dataService.getOrCreatePreferences(userId);
   return prefs['daily_time_target_minutes'] as int? ??
-      AppDefaults.dailyTimeTargetMinutes;
+      AppDefaults.sessionDefault;
 }
 
 /// Provides whether user has completed their session today
@@ -63,7 +63,7 @@ Future<double> todayProgress(Ref ref) async {
   final elapsed = activeSessionData['elapsed_seconds'] as int? ?? 0;
   final plannedMinutes =
       activeSessionData['planned_minutes'] as int? ??
-      AppDefaults.dailyTimeTargetMinutes;
+      AppDefaults.sessionDefault;
   final planned = plannedMinutes * 60;
 
   if (planned <= 0) return 0.0;
@@ -173,11 +173,13 @@ Future<SessionPlan?> sessionPlan(Ref ref) async {
     userId: userId,
     timeTargetMinutes:
         prefs['daily_time_target_minutes'] as int? ??
-        AppDefaults.dailyTimeTargetMinutes,
-    intensity: prefs['intensity'] as int? ?? AppDefaults.intensity,
+        AppDefaults.sessionDefault,
+    newWordsPerSession:
+        prefs['new_words_per_session'] as int? ??
+        AppDefaults.newWordsDefault,
     targetRetention:
         (prefs['target_retention'] as num?)?.toDouble() ??
-        AppDefaults.targetRetention,
+        AppDefaults.retentionDefault,
   );
 }
 

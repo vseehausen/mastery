@@ -57,14 +57,17 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     ref.invalidate(userLearningPreferencesProvider);
   }
 
-  /// Update intensity (0=light, 1=normal, 2=intense)
-  Future<void> updateIntensity(int intensity) async {
+  /// Update new words per session preset (3=few, 5=normal, 8=many)
+  Future<void> updateNewWordsPerSession(int newWordsPerSession) async {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser.valueOrNull?.id;
     if (userId == null) return;
 
     final dataService = ref.read(supabaseDataServiceProvider);
-    await dataService.updatePreferences(userId: userId, intensity: intensity);
+    await dataService.updatePreferences(
+      userId: userId,
+      newWordsPerSession: newWordsPerSession,
+    );
 
     // Refresh state
     final prefsData = await dataService.getOrCreatePreferences(userId);
@@ -74,7 +77,7 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     ref.invalidate(userLearningPreferencesProvider);
   }
 
-  /// Update target retention (0.85-0.95)
+  /// Update target retention (presets: 0.85, 0.90, 0.93)
   Future<void> updateTargetRetention(double retention) async {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser.valueOrNull?.id;
@@ -84,6 +87,46 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     await dataService.updatePreferences(
       userId: userId,
       targetRetention: retention,
+    );
+
+    // Refresh state
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
+
+    // Invalidate related providers
+    ref.invalidate(userLearningPreferencesProvider);
+  }
+
+  /// Update native language code
+  Future<void> updateNativeLanguage(String code) async {
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser.valueOrNull?.id;
+    if (userId == null) return;
+
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      nativeLanguageCode: code,
+    );
+
+    // Refresh state
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
+
+    // Invalidate related providers
+    ref.invalidate(userLearningPreferencesProvider);
+  }
+
+  /// Update meaning display mode
+  Future<void> updateMeaningDisplayMode(String mode) async {
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser.valueOrNull?.id;
+    if (userId == null) return;
+
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      meaningDisplayMode: mode,
     );
 
     // Refresh state

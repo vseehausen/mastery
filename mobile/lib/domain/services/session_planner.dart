@@ -59,7 +59,7 @@ class SessionPlanner {
   Future<SessionParams> computeSessionParams({
     required String userId,
     required int timeTargetMinutes,
-    required int intensity,
+    required int newWordsPerSession,
   }) async {
     final estimatedSecondsPerItem = await _telemetryService
         .getEstimatedSecondsPerItem(userId);
@@ -95,7 +95,10 @@ class SessionPlanner {
 
     final newWordCap = shouldSuppress
         ? 0
-        : Intensity.getNewWordCap(intensity, timeTargetMinutes);
+        : NewWordsPerSession.getNewWordCap(
+            newWordsPerSession,
+            timeTargetMinutes,
+          );
 
     final availableNewWords = await _dataService.countEnrichedNewWords(userId);
     final estimatedItemCount = min<int>(
@@ -174,7 +177,7 @@ class SessionPlanner {
   Future<SessionPlan> buildSessionPlan({
     required String userId,
     required int timeTargetMinutes,
-    required int intensity,
+    required int newWordsPerSession,
     required double targetRetention,
   }) async {
     // Get estimated time per item
@@ -209,10 +212,13 @@ class SessionPlanner {
       );
     }
 
-    // Compute new word cap based on intensity (or 0 if suppressed)
+    // Compute new word cap based on new-words-per-session setting (or 0 if suppressed)
     final newWordCap = shouldSuppress
         ? 0
-        : Intensity.getNewWordCap(intensity, timeTargetMinutes);
+        : NewWordsPerSession.getNewWordCap(
+            newWordsPerSession,
+            timeTargetMinutes,
+          );
 
     // Fetch session cards with all data in ONE query
     final cardsData = await _dataService.getSessionCards(

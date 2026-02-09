@@ -70,60 +70,15 @@ enum InteractionModeEnum {
   }
 }
 
-/// Intensity level enum
-/// Maps to UserLearningPreferences.intensity column
-enum IntensityEnum {
-  /// Light: fewer new words (2 per 10 min)
-  light(0),
+/// New-words-per-session helpers.
+/// Stored value is the words-per-10-minutes setting (3, 5, 8).
+class NewWordsPerSession {
+  const NewWordsPerSession._();
 
-  /// Normal: default new words (5 per 10 min)
-  normal(1),
-
-  /// Intense: more new words (8 per 10 min)
-  intense(2);
-
-  const IntensityEnum(this.value);
-  final int value;
-
-  /// Get new words per 10 minutes for this intensity
-  int get newWordsPerTenMinutes {
-    switch (this) {
-      case IntensityEnum.light:
-        return 2;
-      case IntensityEnum.normal:
-        return 5;
-      case IntensityEnum.intense:
-        return 8;
-    }
-  }
-
-  /// Get new word cap for a given time budget
-  int getNewWordCap(int timeMinutes) {
+  /// Get new word cap for a given words-per-10-minutes value and time budget.
+  static int getNewWordCap(int wordsPerTenMinutes, int timeMinutes) {
     if (timeMinutes <= 0) return 0;
-    return (timeMinutes * newWordsPerTenMinutes / 10).ceil();
-  }
-
-  static IntensityEnum fromValue(int value) {
-    return IntensityEnum.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => IntensityEnum.normal,
-    );
-  }
-}
-
-/// Intensity constants class for backwards compatibility
-/// Use IntensityEnum for type-safe usage
-class Intensity {
-  const Intensity._();
-
-  static const int light = 0;
-  static const int normal = 1;
-  static const int intense = 2;
-
-  /// Get new word cap for a given intensity value and time budget
-  static int getNewWordCap(int intensityValue, int timeMinutes) {
-    final intensity = IntensityEnum.fromValue(intensityValue);
-    return intensity.getNewWordCap(timeMinutes);
+    return (timeMinutes * wordsPerTenMinutes / 10).ceil();
   }
 }
 
