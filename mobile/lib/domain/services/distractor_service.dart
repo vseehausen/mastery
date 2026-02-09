@@ -41,8 +41,11 @@ class DistractorService {
     final candidates = allVocabulary.where((v) {
       if (v.id == targetItemId) return false;
       if (excludeIds.contains(v.id)) return false;
-      // Exclude items with the same word (different meanings of same word)
+      // Exclude items with the same word or stem (avoid near-duplicate distractors)
       if (v.word.toLowerCase() == targetItem.word.toLowerCase()) return false;
+      if (v.displayWord.toLowerCase() == targetItem.displayWord.toLowerCase()) {
+        return false;
+      }
       return true;
     }).toList();
 

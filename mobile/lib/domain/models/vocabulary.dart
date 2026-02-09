@@ -35,6 +35,9 @@ class VocabularyModel {
   final DateTime updatedAt;
   final DateTime? deletedAt;
 
+  /// The display form of the word: stem (base/lemma) if available, otherwise raw word.
+  String get displayWord => stem ?? word;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

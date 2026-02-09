@@ -40,6 +40,9 @@ class PlannedItem {
   /// Get the word being learned
   String get word => sessionCard.word;
 
+  /// The display form of the word (stem if available, otherwise raw word)
+  String get displayWord => sessionCard.displayWord;
+
   /// Get the card ID
   String get cardId => sessionCard.cardId;
 

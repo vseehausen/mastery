@@ -108,12 +108,14 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                     );
                   }
 
-                  // Filter by search query
+                  // Filter by search query (match on both displayWord and raw word)
                   var filtered = vocabulary
                       .where(
-                        (v) => v.word.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ),
+                        (v) {
+                          final query = _searchQuery.toLowerCase();
+                          return v.displayWord.toLowerCase().contains(query) ||
+                              v.word.toLowerCase().contains(query);
+                        },
                       )
                       .toList();
 
@@ -188,11 +190,10 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                         final isEnriched = enrichedIds.contains(vocab.id);
                         final stage = stageMap[vocab.id];
                         return WordCard(
-                          word: vocab.word,
+                          word: vocab.displayWord,
                           definition:
                               translationsMap[vocab.id] ??
-                              vocab.stem ??
-                              vocab.word,
+                              vocab.displayWord,
                           isEnriched: isEnriched,
                           progressStage: stage,
                           onTap: () {

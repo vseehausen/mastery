@@ -34,6 +34,7 @@ interface AIEnhancement {
   }>;
   confidence: number;
   native_alternatives: string[];
+  stem: string | null;
 }
 
 interface EnrichedCue {
@@ -85,7 +86,9 @@ function buildEnrichedWord(
   translationSource: string,
   aiEnhancement: AIEnhancement | null,
   _nativeLanguageCode: string,
+  displayWord?: string,
 ): EnrichedWord {
+  const answerWord = displayWord || word.stem || word.word;
   const meaningId = crypto.randomUUID();
   const cues: EnrichedCue[] = [];
 
@@ -94,7 +97,7 @@ function buildEnrichedWord(
     id: crypto.randomUUID(),
     cue_type: 'translation',
     prompt_text: translation,
-    answer_text: word.word,
+    answer_text: answerWord,
     hint_text: null,
     metadata: { source: translationSource },
   });
@@ -105,7 +108,7 @@ function buildEnrichedWord(
       id: crypto.randomUUID(),
       cue_type: 'definition',
       prompt_text: aiEnhancement.english_definition,
-      answer_text: word.word,
+      answer_text: answerWord,
       hint_text: null,
       metadata: {},
     });
@@ -117,7 +120,7 @@ function buildEnrichedWord(
       id: crypto.randomUUID(),
       cue_type: 'synonym',
       prompt_text: aiEnhancement.synonyms.join(', '),
-      answer_text: word.word,
+      answer_text: answerWord,
       hint_text: null,
       metadata: {},
     });
@@ -152,7 +155,7 @@ function buildEnrichedWord(
         id: crypto.randomUUID(),
         cue_type: 'disambiguation',
         prompt_text: `Choose the word that means: ${aiEnhancement.english_definition}`,
-        answer_text: word.word,
+        answer_text: answerWord,
         hint_text: null,
         metadata: {
           options: disambigOptions,
@@ -199,6 +202,7 @@ function parseOpenAIResponse(content: string): AIEnhancement {
     native_alternatives: Array.isArray(parsed.native_alternatives)
       ? parsed.native_alternatives.filter((a: string) => a && typeof a === 'string')
       : [],
+    stem: parsed.stem || null,
   };
 }
 
@@ -210,7 +214,7 @@ function makeWord(overrides?: Partial<VocabWord>): VocabWord {
   return {
     id: crypto.randomUUID(),
     word: 'ephemeral',
-    stem: 'ephemer',
+    stem: null,
     ...overrides,
   };
 }
@@ -223,6 +227,7 @@ function makeAIEnhancement(overrides?: Partial<AIEnhancement>): AIEnhancement {
     confusables: [],
     confidence: 0.95,
     native_alternatives: [],
+    stem: null,
     ...overrides,
   };
 }
@@ -342,6 +347,31 @@ Deno.test('parseOpenAIResponse: handles non-array native_alternatives', () => {
   assertEquals(parsed.native_alternatives, []);
 });
 
+Deno.test('parseOpenAIResponse: extracts stem', () => {
+  const response = JSON.stringify({
+    english_definition: 'Moving quickly on foot',
+    synonyms: ['jogging'],
+    stem: 'run',
+    confusables: [],
+  });
+
+  const parsed = parseOpenAIResponse(response);
+
+  assertEquals(parsed.stem, 'run');
+});
+
+Deno.test('parseOpenAIResponse: stem null when missing', () => {
+  const response = JSON.stringify({
+    english_definition: 'Test',
+    synonyms: [],
+    confusables: [],
+  });
+
+  const parsed = parseOpenAIResponse(response);
+
+  assertEquals(parsed.stem, null);
+});
+
 Deno.test('buildEnrichedWord: preserves 2-4 native alternatives from OpenAI', () => {
   const word = makeWord({ word: 'beautiful' });
   const aiEnhancement = makeAIEnhancement({
@@ -459,6 +489,28 @@ Deno.test('buildEnrichedWord: no synonym cue when synonyms empty', () => {
 
   const synonymCue = result.meaning.cues.find(c => c.cue_type === 'synonym');
   assertEquals(synonymCue, undefined);
+});
+
+Deno.test('buildEnrichedWord: answer_text uses stem when available', () => {
+  const word = makeWord({ word: 'running', stem: 'run' });
+  const aiEnhancement = makeAIEnhancement({
+    english_definition: 'Moving quickly on foot',
+    synonyms: ['jogging'],
+  });
+  const result = buildEnrichedWord(word, 'laufen', 'deepl', aiEnhancement, 'de');
+
+  // All cues should use the stem as answer_text
+  for (const cue of result.meaning.cues) {
+    assertEquals(cue.answer_text, 'run');
+  }
+});
+
+Deno.test('buildEnrichedWord: answer_text falls back to word when no stem', () => {
+  const word = makeWord({ word: 'ephemeral', stem: null });
+  const result = buildEnrichedWord(word, 'vergänglich', 'deepl', null, 'de');
+
+  const translationCue = result.meaning.cues.find(c => c.cue_type === 'translation');
+  assertEquals(translationCue!.answer_text, 'ephemeral');
 });
 
 Deno.test('buildEnrichedWord: all cues have unique IDs', () => {
@@ -889,6 +941,7 @@ Deno.test('Complete flow: DeepL + OpenAI with native alternatives', () => {
     ],
     confidence: 0.94,
     native_alternatives: ['Fügung', 'glückliche Fügung', 'Zufall'],
+    stem: null,
   };
 
   const result = buildEnrichedWord(word, translation, 'deepl', aiEnhancement, 'de');

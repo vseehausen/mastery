@@ -166,15 +166,19 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Clean Kindle artifacts (e.g. trailing empty parens "wee ()")
+          const cleanedWord = sanitizeKindleWord(word as string);
+          const cleanedStem = stem ? sanitizeKindleWord(stem as string) : null;
+
           // Generate content hash for deduplication: hash(word|stem)
           const contentHash = await generateContentHash(
-            word as string,
-            (stem as string) || null,
+            cleanedWord,
+            cleanedStem,
           );
 
           entries.push({
-            word: word as string,
-            stem: (stem as string) || null,
+            word: cleanedWord,
+            stem: cleanedStem,
             context: (context as string) || null,
             lookupTimestamp,
             bookTitle: (bookTitle as string) || null,
@@ -420,6 +424,13 @@ Deno.serve(async (req) => {
     return errorResponse('Internal server error', 500);
   }
 });
+
+/** Strip Kindle artifacts from word/stem strings (e.g. trailing empty parens, extra whitespace) */
+function sanitizeKindleWord(raw: string): string {
+  return raw
+    .replace(/\s*\(\s*\)\s*$/, '') // strip trailing empty parens like "wee ()"
+    .trim();
+}
 
 async function generateContentHash(
   word: string,

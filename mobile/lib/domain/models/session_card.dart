@@ -142,6 +142,9 @@ class SessionCard {
   final String word;
   final String? stem;
 
+  /// The display form of the word: stem (base/lemma) if available, otherwise raw word.
+  String get displayWord => stem ?? word;
+
   // Aggregated data
   final List<SessionMeaning> meanings;
   final List<SessionCue> cues;

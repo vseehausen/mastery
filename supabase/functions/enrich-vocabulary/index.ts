@@ -225,8 +225,17 @@ async function enrichWord(
     }
   }
 
+  // Update vocabulary stem if missing and AI provided one
+  if (!word.stem && aiEnhancement?.stem) {
+    await client.from('vocabulary')
+      .update({ stem: aiEnhancement.stem, updated_at: new Date().toISOString() })
+      .eq('id', word.id);
+    console.log(`[enrich-vocabulary] Updated stem for "${word.word}" → "${aiEnhancement.stem}"`);
+  }
+
   // Build the single meaning record
-  const result = buildEnrichedWord(word, translation, translationSource, aiEnhancement, nativeLanguageCode);
+  const displayWord = word.stem || aiEnhancement?.stem || word.word;
+  const result = buildEnrichedWord(word, translation, translationSource, aiEnhancement, nativeLanguageCode, displayWord);
 
   // Store the result (single meaning, upsert to handle unique constraint)
   await storeEnrichmentResult(client, userId, word.id, result, nativeLanguageCode);
@@ -329,6 +338,8 @@ interface AIEnhancement {
   confidence: number;
   // Native language alternatives (2-4, no duplicates, no trivial variants)
   native_alternatives: string[];
+  // Base/dictionary form (lemma) of the word
+  stem: string | null;
 }
 
 async function getOpenAIEnhancement(
@@ -349,6 +360,7 @@ async function getOpenAIEnhancement(
   const prompt = `You are a vocabulary enhancement assistant for language learners.
 
 Given an English word and optional context sentence, return a JSON object with:
+- stem: the base/dictionary form (lemma) of the word. For verbs, the infinitive. For nouns, nominative singular. If the word is already in base form, return it unchanged.
 - english_definition: one-sentence plain English definition
 - synonyms: up to 3 English synonyms (array of strings)
 - part_of_speech: noun/verb/adjective/adverb/other (string)
@@ -397,6 +409,7 @@ Primary ${langName} translation: ${primaryTranslation}`;
     native_alternatives: Array.isArray(parsed.native_alternatives)
       ? parsed.native_alternatives.filter((a: string) => a && typeof a === 'string')
       : [],
+    stem: parsed.stem || null,
   };
 }
 
@@ -410,7 +423,11 @@ function buildEnrichedWord(
   translationSource: string,
   aiEnhancement: AIEnhancement | null,
   _nativeLanguageCode: string,
+  displayWord?: string,
 ): EnrichedWord {
+  // The display form: stem (base/lemma) if available, otherwise raw word
+  const answerWord = displayWord || word.stem || word.word;
+
   // Generate deterministic ID based on user context (will be set during storage)
   const meaningId = crypto.randomUUID();
 
@@ -422,7 +439,7 @@ function buildEnrichedWord(
     id: crypto.randomUUID(),
     cue_type: 'translation',
     prompt_text: translation,
-    answer_text: word.word,
+    answer_text: answerWord,
     hint_text: null,
     metadata: { source: translationSource },
   });
@@ -433,7 +450,7 @@ function buildEnrichedWord(
       id: crypto.randomUUID(),
       cue_type: 'definition',
       prompt_text: aiEnhancement.english_definition,
-      answer_text: word.word,
+      answer_text: answerWord,
       hint_text: null,
       metadata: {},
     });
@@ -445,7 +462,7 @@ function buildEnrichedWord(
       id: crypto.randomUUID(),
       cue_type: 'synonym',
       prompt_text: aiEnhancement.synonyms.join(', '),
-      answer_text: word.word,
+      answer_text: answerWord,
       hint_text: null,
       metadata: {},
     });
@@ -480,7 +497,7 @@ function buildEnrichedWord(
         id: crypto.randomUUID(),
         cue_type: 'disambiguation',
         prompt_text: `Choose the word that means: ${aiEnhancement.english_definition}`,
-        answer_text: word.word,
+        answer_text: answerWord,
         hint_text: null,
         metadata: {
           options: disambigOptions,
