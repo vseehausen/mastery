@@ -92,6 +92,39 @@
 --cue-multiple-choice-dark: #0369A1;
 ```
 
+### Vocabulary Stages (progress status)
+```css
+/* New (Stone) — word captured, not yet reviewed */
+--stage-new-light: #78716C;          /* stone-500 */
+--stage-new-dark: #A8A29E;           /* stone-400 */
+--stage-new-bg-light: #F5F5F4;       /* stone-100 */
+--stage-new-bg-dark: #292524;         /* stone-800 */
+
+/* Practicing (Lime) — first review completed, in SRS rotation */
+--stage-practicing-light: #84CC16;    /* lime-500 */
+--stage-practicing-dark: #A3E635;     /* lime-400 */
+--stage-practicing-bg-light: #F7FEE7; /* lime-50 */
+--stage-practicing-bg-dark: #1A2E05;  /* lime-950 */
+
+/* Stabilizing (Teal) — multiple successful recalls */
+--stage-stabilizing-light: #0D9488;   /* teal-600 */
+--stage-stabilizing-dark: #2DD4BF;    /* teal-400 */
+--stage-stabilizing-bg-light: #F0FDFA; /* teal-50 */
+--stage-stabilizing-bg-dark: #134E4A; /* teal-900 */
+
+/* Known (Blue) — production recall from non-translation cues */
+--stage-known-light: #2563EB;         /* blue-600 */
+--stage-known-dark: #60A5FA;          /* blue-400 */
+--stage-known-bg-light: #DBEAFE;      /* blue-100 */
+--stage-known-bg-dark: #1E3A5F;       /* blue-900 */
+
+/* Mastered (Amber) — high stability, rare reviews */
+--stage-mastered-light: #F59E0B;      /* amber-500 */
+--stage-mastered-dark: #FBBF24;       /* amber-400 */
+--stage-mastered-bg-light: #FEF9C3;   /* amber-50 */
+--stage-mastered-bg-dark: #451A03;    /* amber-950 */
+```
+
 ## Typography
 
 ### Font Family
