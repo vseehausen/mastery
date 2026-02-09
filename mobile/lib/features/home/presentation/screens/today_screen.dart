@@ -9,6 +9,7 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../domain/models/progress_stage.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../vocabulary/presentation/screens/vocabulary_screen.dart';
+import '../../../learn/providers/learning_preferences_providers.dart';
 import '../../../learn/providers/session_providers.dart';
 import '../../../learn/providers/streak_providers.dart';
 import '../../../learn/screens/session_screen.dart';
@@ -34,6 +35,44 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           builder: (context) => const SessionScreen(),
         ),
       );
+
+      // Invalidate all providers to refresh data after session
+      if (mounted) {
+        ref.invalidate(hasItemsToReviewProvider);
+        ref.invalidate(hasCompletedTodayProvider);
+        ref.invalidate(currentStreakProvider);
+        ref.invalidate(dueItemCountProvider);
+        ref.invalidate(todaySessionStatsProvider);
+        ref.invalidate(nextReviewLabelProvider);
+        ref.invalidate(vocabularyStageCountsProvider);
+        ref.invalidate(vocabularyCountProvider);
+      }
+    } finally {
+      if (mounted) _isNavigating = false;
+    }
+  }
+
+  Future<void> _startQuickReview() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => const SessionScreen(isQuickReview: true),
+        ),
+      );
+
+      // Invalidate all providers to refresh data after session
+      if (mounted) {
+        ref.invalidate(hasItemsToReviewProvider);
+        ref.invalidate(hasCompletedTodayProvider);
+        ref.invalidate(currentStreakProvider);
+        ref.invalidate(dueItemCountProvider);
+        ref.invalidate(todaySessionStatsProvider);
+        ref.invalidate(nextReviewLabelProvider);
+        ref.invalidate(vocabularyStageCountsProvider);
+        ref.invalidate(vocabularyCountProvider);
+      }
     } finally {
       if (mounted) _isNavigating = false;
     }
@@ -50,12 +89,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final nextReview = ref.watch(nextReviewLabelProvider);
     final stageCounts = ref.watch(vocabularyStageCountsProvider);
     final vocabCount = ref.watch(vocabularyCountProvider);
+    final userPrefs = ref.watch(userLearningPreferencesProvider);
 
     final hasItemsToPractice = hasItems.valueOrNull ?? false;
     final isCompleted = completedToday.valueOrNull ?? false;
     final streakCount = streak.valueOrNull ?? 0;
     final itemsDue = dueCount.valueOrNull ?? 0;
     final totalVocab = vocabCount.valueOrNull ?? 0;
+    final dailyTimeTarget = userPrefs.valueOrNull?.dailyTimeTargetMinutes ?? 5;
 
     return Scaffold(
       body: SafeArea(
@@ -145,7 +186,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   itemsDue: itemsDue,
                   sessionStats: sessionStats.valueOrNull,
                   nextReviewLabel: nextReview.valueOrNull,
+                  dailyTimeTarget: dailyTimeTarget,
                   onStartSession: _startSession,
+                  onStartQuickReview: _startQuickReview,
                 ),
 
                 const SizedBox(height: AppSpacing.s4),
@@ -187,7 +230,9 @@ class _SessionCard extends StatelessWidget {
     required this.itemsDue,
     required this.sessionStats,
     required this.nextReviewLabel,
+    required this.dailyTimeTarget,
     required this.onStartSession,
+    required this.onStartQuickReview,
   });
 
   final bool isCompleted;
@@ -195,7 +240,9 @@ class _SessionCard extends StatelessWidget {
   final int itemsDue;
   final ({int itemsReviewed, double? accuracyPercent})? sessionStats;
   final String? nextReviewLabel;
+  final int dailyTimeTarget;
   final VoidCallback onStartSession;
+  final VoidCallback onStartQuickReview;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +294,9 @@ class _SessionCard extends StatelessWidget {
   // State 2: Completed today
   Widget _completedState(BuildContext context, MasteryColorScheme colors) {
     final stats = sessionStats;
+    final wordCount = dailyTimeTarget; // Adaptive: 3min→3 words, 5min→5 words, etc.
+    final quickReviewLabel = 'Quick review — $wordCount ${wordCount == 1 ? 'word' : 'words'}';
+
     return Column(
       children: [
         Text(
@@ -276,8 +326,8 @@ class _SessionCard extends StatelessWidget {
             child: ShadButton.outline(
               size: ShadButtonSize.lg,
               backgroundColor: colors.background,
-              onPressed: onStartSession,
-              child: const Text('Review anyway'),
+              onPressed: onStartQuickReview,
+              child: Text(quickReviewLabel),
             ),
           ),
         ),

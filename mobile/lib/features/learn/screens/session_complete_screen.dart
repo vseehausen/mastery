@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
+import '../../../core/theme/radius_tokens.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../domain/models/progress_stage.dart';
 import '../../../domain/models/session_progress_summary.dart';
@@ -10,7 +12,6 @@ import '../../../domain/models/stage_transition.dart';
 import '../../../providers/review_write_queue_provider.dart';
 import '../../../providers/supabase_provider.dart';
 import '../providers/streak_providers.dart';
-import '../widgets/streak_indicator.dart';
 import 'session_screen.dart';
 
 /// Screen shown after completing a learning session
@@ -25,6 +26,7 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
     required this.isFullCompletion,
     this.allItemsExhausted = false,
     this.transitions = const [],
+    this.isQuickReview = false,
   });
 
   final String sessionId;
@@ -35,6 +37,7 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
   final bool isFullCompletion;
   final bool allItemsExhausted;
   final List<StageTransition> transitions;
+  final bool isQuickReview;
 
   @override
   ConsumerState<SessionCompleteScreen> createState() =>
@@ -44,11 +47,6 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
 class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
   bool _isAddingBonus = false;
   int _queuedWritesCount = 0;
-
-  int get _upgradedWordsCount => widget.transitions
-      .map((transition) => transition.vocabularyId)
-      .toSet()
-      .length;
 
   @override
   void initState() {
@@ -116,29 +114,13 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
             children: [
               const Spacer(),
 
-              // Success icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: widget.isFullCompletion
-                      ? (colors.successMuted)
-                      : (colors.warningMuted),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  widget.isFullCompletion
-                      ? Icons.check_circle
-                      : Icons.access_time,
-                  size: 64,
-                  color: widget.isFullCompletion
-                      ? (colors.success)
-                      : (colors.warning),
-                ),
+              // Hero icon - double-circle with checkmark
+              _DoubleCircleHeroIcon(
+                isFullCompletion: widget.isFullCompletion,
               ),
               const SizedBox(height: 32),
 
-              // Title
+              // Title (no subtitle)
               Text(
                 _getTitle(),
                 style: MasteryTextStyles.displayLarge.copyWith(
@@ -146,73 +128,40 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-
-              // Subtitle
-              Text(
-                _getSubtitle(),
-                style: MasteryTextStyles.body.copyWith(
-                  color: colors.mutedForeground,
-                ),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 32),
 
-              // Stats
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colors.cardBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Column(
-                  children: [
-                    _StatRow(
-                      label: 'Items reviewed',
-                      value: '${widget.itemsCompleted}',
-                    ),
-                    const SizedBox(height: 12),
-                    _StatRow(
-                      label: 'Time practiced',
-                      value: _formatTime(widget.elapsedSeconds),
-                    ),
-                    const SizedBox(height: 12),
-                    _StatRow(
-                      label: 'Words progressed',
-                      value: '$_upgradedWordsCount',
-                    ),
-                    const SizedBox(height: 12),
-                    Divider(color: colors.border),
-                    const SizedBox(height: 12),
-                    // Streak
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Current streak',
-                          style: MasteryTextStyles.bodySmall.copyWith(
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                        currentStreak.when(
-                          data: (streak) => StreakIndicator(count: streak),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const StreakIndicator(count: 0),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Progress Made card (only when transitions exist)
+              // Progress card (only when transitions exist)
               if (widget.transitions.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _ProgressMadeCard(
+                _ProgressCard(
                   summary: SessionProgressSummary(widget.transitions),
                 ),
+                const SizedBox(height: 16),
               ],
+
+              // Stats + streak as one muted line
+              currentStreak.when(
+                data: (streak) => Text(
+                  _buildStatsLine(streak),
+                  style: MasteryTextStyles.bodySmall.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                loading: () => Text(
+                  _buildStatsLine(null),
+                  style: MasteryTextStyles.bodySmall.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                error: (error, stack) => Text(
+                  _buildStatsLine(null),
+                  style: MasteryTextStyles.bodySmall.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
 
               // Subtle sync notice (only when queue has pending writes)
               if (_queuedWritesCount > 0) ...[
@@ -289,6 +238,9 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
   }
 
   String _getTitle() {
+    if (widget.isQuickReview) {
+      return 'Quick review done!';
+    }
     if (widget.allItemsExhausted) {
       return "You've reviewed everything!";
     }
@@ -298,14 +250,21 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     return 'Session ended';
   }
 
-  String _getSubtitle() {
-    if (widget.allItemsExhausted) {
-      return 'No more items available right now.';
+  String _buildStatsLine(int? streak) {
+    final parts = <String>[];
+
+    // Items
+    parts.add('${widget.itemsCompleted} items');
+
+    // Time
+    parts.add(_formatTime(widget.elapsedSeconds));
+
+    // Streak (if exists)
+    if (streak != null && streak > 0) {
+      parts.add('$streak-day streak');
     }
-    if (widget.isFullCompletion) {
-      return 'Great work! Come back tomorrow.';
-    }
-    return 'You made progress today.';
+
+    return parts.join(' · ');
   }
 
   String _formatTime(int seconds) {
@@ -318,35 +277,56 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
+/// Double-circle hero icon with checkmark
+class _DoubleCircleHeroIcon extends StatelessWidget {
+  const _DoubleCircleHeroIcon({required this.isFullCompletion});
 
-  final String label;
-  final String value;
+  final bool isFullCompletion;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: MasteryTextStyles.bodySmall.copyWith(
-            color: colors.mutedForeground,
+
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer ring at 18% opacity
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: isFullCompletion
+                  ? colors.success.withValues(alpha: 0.18)
+                  : colors.warning.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: MasteryTextStyles.bodyBold.copyWith(color: colors.foreground),
-        ),
-      ],
+          // Inner solid circle with icon
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: isFullCompletion ? colors.success : colors.warning,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isFullCompletion ? Icons.check : Icons.access_time,
+              size: 40,
+              color: colors.background,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _ProgressMadeCard extends StatelessWidget {
-  const _ProgressMadeCard({required this.summary});
+/// Progress card showing stage transitions without star icons or header
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard({required this.summary});
 
   final SessionProgressSummary summary;
 
@@ -354,45 +334,43 @@ class _ProgressMadeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
 
+    // Build list of transition rows with spacing between them
+    final rows = <Widget>[];
+    if (summary.masteredCount > 0) {
+      rows.add(_TransitionRow(
+        stage: ProgressStage.mastered,
+        count: summary.masteredCount,
+      ));
+    }
+    if (summary.knownCount > 0) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.s2));
+      rows.add(_TransitionRow(
+        stage: ProgressStage.known,
+        count: summary.knownCount,
+      ));
+    }
+    if (summary.stabilizingCount > 0) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.s2));
+      rows.add(_TransitionRow(
+        stage: ProgressStage.stabilizing,
+        count: summary.stabilizingCount,
+      ));
+    }
+
     return Semantics(
       liveRegion: true,
       label: summary.toDisplayString(),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: colors.cardBackground,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Progress Made',
-              style: MasteryTextStyles.h4.copyWith(color: colors.foreground),
-            ),
-            const SizedBox(height: 12),
-            // Show in order: Mastered → Known → Stabilizing (by significance)
-            if (summary.masteredCount > 0)
-              _TransitionRow(
-                stage: ProgressStage.mastered,
-                count: summary.masteredCount,
-                isRare: true,
-              ),
-            if (summary.knownCount > 0)
-              _TransitionRow(
-                stage: ProgressStage.known,
-                count: summary.knownCount,
-                isRare: true,
-              ),
-            if (summary.stabilizingCount > 0)
-              _TransitionRow(
-                stage: ProgressStage.stabilizing,
-                count: summary.stabilizingCount,
-                isRare: false,
-              ),
-          ],
+          children: rows,
         ),
       ),
     );
@@ -403,12 +381,10 @@ class _TransitionRow extends StatelessWidget {
   const _TransitionRow({
     required this.stage,
     required this.count,
-    required this.isRare,
   });
 
   final ProgressStage stage;
   final int count;
-  final bool isRare;
 
   @override
   Widget build(BuildContext context) {
@@ -416,31 +392,26 @@ class _TransitionRow extends StatelessWidget {
     final stageColor = stage.getColor(colors);
     final wordLabel = count == 1 ? 'word' : 'words';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: stageColor,
-              shape: BoxShape.circle,
+    return Row(
+      children: [
+        Container(
+          width: AppSpacing.s2,
+          height: AppSpacing.s2,
+          decoration: BoxDecoration(
+            color: stageColor,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s2 + AppSpacing.s1), // 12px
+        Expanded(
+          child: Text(
+            '$count $wordLabel → ${stage.displayName}',
+            style: MasteryTextStyles.body.copyWith(
+              color: colors.foreground,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '$count $wordLabel moved to ${stage.displayName}',
-              style: MasteryTextStyles.body.copyWith(
-                color: colors.foreground,
-                fontWeight: isRare ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ),
-          if (isRare) Icon(Icons.star_rounded, size: 18, color: stageColor),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

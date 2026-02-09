@@ -39,7 +39,12 @@ import 'session_complete_screen.dart';
 /// Uses incremental batch loading: fetches 5 cards initially, prefetches
 /// more in the background as the user progresses.
 class SessionScreen extends ConsumerStatefulWidget {
-  const SessionScreen({super.key});
+  const SessionScreen({
+    super.key,
+    this.isQuickReview = false,
+  });
+
+  final bool isQuickReview;
 
   @override
   ConsumerState<SessionScreen> createState() => _SessionScreenState();
@@ -146,9 +151,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final intensity = prefs['intensity'] as int? ?? AppDefaults.intensity;
 
       // Step 1: Compute lightweight session params (no card data)
+      // For quick review, derive item count from time target and force review-only
+      final int timeTarget = dailyTimeTargetMinutes;
+
       final params = await planner.computeSessionParams(
         userId: userId,
-        timeTargetMinutes: dailyTimeTargetMinutes,
+        timeTargetMinutes: timeTarget,
         intensity: intensity,
       );
 
@@ -163,10 +171,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       }
 
       // Step 2: Fetch initial batch of cards only
+      // For quick review, use specified item count and newWordCap=0
+      final int effectiveNewWordCap;
+      final int effectiveBatchSize;
+      if (widget.isQuickReview) {
+        effectiveNewWordCap = 0;
+        effectiveBatchSize = timeTarget; // e.g., 3, 5, or 8 items
+      } else {
+        effectiveNewWordCap = params.newWordCap;
+        effectiveBatchSize = _initialBatchSize;
+      }
+
       final initialItems = await planner.fetchBatch(
         userId: userId,
-        batchSize: _initialBatchSize,
-        newWordCap: params.newWordCap,
+        batchSize: effectiveBatchSize,
+        newWordCap: effectiveNewWordCap,
       );
 
       debugPrint('[Session] Initial batch: ${initialItems.length} items');
@@ -227,14 +246,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
       if (mounted) {
         // Self-correct estimate if initial batch is already smaller
-        final estimate = initialItems.length < _initialBatchSize
-            ? initialItems.length
-            : params.estimatedItemCount;
+        final int estimate;
+        if (widget.isQuickReview) {
+          // Quick review: total items = initial batch (no prefetching)
+          estimate = initialItems.length;
+        } else {
+          estimate = initialItems.length < _initialBatchSize
+              ? initialItems.length
+              : params.estimatedItemCount;
+        }
         setState(() {
           _items = initialItems;
           _estimatedTotalItems = estimate;
           _newWordsQueued = newWords;
-          _newWordCap = params.newWordCap;
+          _newWordCap = effectiveNewWordCap;
           _session = activeSession;
           _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
           _currentItemIndex = 0;
@@ -261,6 +286,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   /// When [force] is true, waits for any in-flight fetch and always attempts
   /// to load more (used when the user has exhausted the current batch).
   Future<void> _maybePrefetchMore({bool force = false}) async {
+    // Skip prefetching in quick review mode — fixed item count
+    if (widget.isQuickReview) return;
+
     if (!force) {
       final remaining = _items.length - _currentItemIndex - 1;
       if (remaining >= _prefetchThreshold || _isFetchingMore) return;
@@ -696,8 +724,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       outcome: outcome.value,
     );
 
-    // Increment streak if complete
-    if (outcome == SessionOutcomeEnum.complete) {
+    // Increment streak if complete AND not a quick review
+    // Quick reviews are bonus rounds and don't affect streak
+    if (outcome == SessionOutcomeEnum.complete && !widget.isQuickReview) {
       await ref.read(streakNotifierProvider.notifier).incrementStreak();
     }
 
@@ -722,6 +751,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           isFullCompletion: outcome == SessionOutcomeEnum.complete,
           allItemsExhausted: allItemsExhausted,
           transitions: _stageTransitions,
+          isQuickReview: widget.isQuickReview,
         ),
       ),
     );

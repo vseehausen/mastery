@@ -11,6 +11,7 @@ class SessionProgressBar extends StatelessWidget {
     required this.completedItems,
     required this.totalItems,
     this.showLabel = true,
+    this.isQuickReview = false,
   });
 
   /// Number of items completed
@@ -21,6 +22,9 @@ class SessionProgressBar extends StatelessWidget {
 
   /// Whether to show the text label
   final bool showLabel;
+
+  /// Whether this is a quick review session
+  final bool isQuickReview;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +48,9 @@ class SessionProgressBar extends StatelessWidget {
         if (showLabel) ...[
           const SizedBox(height: 4),
           Text(
-            '$completedItems of $totalItems items',
+            isQuickReview
+                ? 'Quick review • $completedItems/$totalItems'
+                : '$completedItems of $totalItems items',
             style: MasteryTextStyles.caption.copyWith(
               color: colors.mutedForeground,
             ),
