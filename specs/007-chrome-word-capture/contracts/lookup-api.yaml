@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Mastery Word Lookup API
+  description: Edge function for Chrome extension word lookup, translation, and vocabulary capture.
+  version: 1.0.0
+
+servers:
+  - url: https://{project-ref}.supabase.co/functions/v1
+    description: Supabase Edge Functions
+
+paths:
+  /lookup-word:
+    post:
+      summary: Look up a word — translate, lemmatize, capture to vocabulary
+      description: |
+        Called by the Chrome extension when a user double-clicks a word or uses
+        the context menu. Performs lemmatization, translation (word + context sentence),
+        pronunciation lookup, and saves the word to the user's vocabulary.
+
+        If the word (by lemma) already exists in the user's vocabulary, a new encounter
+        (context sentence) is added and the current learning stage is returned.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LookupRequest'
+            examples:
+              newWord:
+                summary: First lookup of a new word
+                value:
+                  raw_word: "ubiquitous"
+                  sentence: "The ubiquitous smartphone has transformed how we consume information."
+                  url: "https://economist.com/article/digital-revolution"
+                  title: "The Digital Revolution"
+              inflectedForm:
+                summary: Inflected form of existing word
+                value:
+                  raw_word: "ameliorating"
+                  sentence: "The new policy is ameliorating the effects of the crisis."
+                  url: "https://nytimes.com/article/policy-update"
+                  title: "Policy Update"
+              multiWord:
+                summary: Multi-word phrase (context menu)
+                value:
+                  raw_word: "break down"
+                  sentence: "Let me break down the key findings from the report."
+                  url: "https://medium.com/article/research-findings"
+                  title: "Research Findings"
+      responses:
+        '200':
+          description: Successful lookup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupResponse'
+              examples:
+                newWord:
+                  summary: New word captured
+                  value:
+                    lemma: "ubiquitous"
+                    raw_word: "ubiquitous"
+                    translation: "allgegenwärtig"
+                    pronunciation: "/juːˈbɪk.wɪ.təs/"
+                    part_of_speech: "adjective"
+                    english_definition: "present, appearing, or found everywhere"
+                    context_original: "The *ubiquitous* smartphone has transformed how we consume information."
+                    context_translated: "Das *allgegenwärtige* Smartphone hat verändert, wie wir Informationen konsumieren."
+                    stage: "new"
+                    is_new: true
+                    vocabulary_id: "550e8400-e29b-41d4-a716-446655440000"
+                existingWord:
+                  summary: Existing word — new context added
+                  value:
+                    lemma: "ameliorate"
+                    raw_word: "ameliorating"
+                    translation: "verbessern"
+                    pronunciation: "/əˈmiː.li.ə.reɪt/"
+                    part_of_speech: "verb"
+                    english_definition: "to make something bad or unsatisfactory better"
+                    context_original: "The new policy is *ameliorating* the effects of the crisis."
+                    context_translated: "Die neue Politik *verbessert* die Auswirkungen der Krise."
+                    stage: "stabilizing"
+                    is_new: false
+                    vocabulary_id: "550e8400-e29b-41d4-a716-446655440001"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized — missing or invalid auth token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /lookup-word/batch-status:
+    get:
+      summary: Get vocabulary stats for the current user
+      description: |
+        Returns the total vocabulary count and optionally the words looked up
+        for a specific page URL. Used by the popup to display stats.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: url
+          in: query
+          required: false
+          description: Page URL to get per-page lookup stats
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stats response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token from user authentication
+
+  schemas:
+    LookupRequest:
+      type: object
+      required:
+        - raw_word
+        - sentence
+        - url
+        - title
+      properties:
+        raw_word:
+          type: string
+          description: The word as selected/double-clicked by the user (may be inflected)
+          maxLength: 100
+          example: "ameliorating"
+        sentence:
+          type: string
+          description: The context sentence containing the word
+          maxLength: 500
+          example: "The new policy is ameliorating the effects of the crisis."
+        url:
+          type: string
+          format: uri
+          description: Full URL of the page where the word was encountered
+          example: "https://economist.com/article/digital-revolution"
+        title:
+          type: string
+          description: Page title (document.title)
+          maxLength: 500
+          example: "The Digital Revolution"
+
+    LookupResponse:
+      type: object
+      required:
+        - lemma
+        - raw_word
+        - translation
+        - pronunciation
+        - english_definition
+        - context_original
+        - context_translated
+        - stage
+        - is_new
+        - vocabulary_id
+      properties:
+        lemma:
+          type: string
+          description: Canonical (lemmatized) form of the word
+          example: "ameliorate"
+        raw_word:
+          type: string
+          description: The original word as encountered
+          example: "ameliorating"
+        translation:
+          type: string
+          description: Translation in the user's native language
+          example: "verbessern"
+        pronunciation:
+          type: string
+          description: IPA pronunciation of the lemma
+          example: "/əˈmiː.li.ə.reɪt/"
+        part_of_speech:
+          type: string
+          nullable: true
+          description: Part of speech of the lemma
+          example: "verb"
+        english_definition:
+          type: string
+          description: English definition of the word
+          example: "to make something bad or unsatisfactory better"
+        context_original:
+          type: string
+          description: Original context sentence with the target word wrapped in asterisks
+          example: "The new policy is *ameliorating* the effects of the crisis."
+        context_translated:
+          type: string
+          description: Translated context sentence with the corresponding word wrapped in asterisks
+          example: "Die neue Politik *verbessert* die Auswirkungen der Krise."
+        stage:
+          type: string
+          enum: [new, practicing, stabilizing, known, mastered]
+          description: Current learning stage from the SRS system
+          example: "new"
+        is_new:
+          type: boolean
+          description: Whether this is a newly captured word (first lookup) or an existing one
+          example: true
+        vocabulary_id:
+          type: string
+          format: uuid
+          description: The vocabulary record ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    StatsResponse:
+      type: object
+      required:
+        - total_words
+        - page_words
+      properties:
+        total_words:
+          type: integer
+          description: Total vocabulary count for the user
+          example: 76
+        page_words:
+          type: array
+          description: Words looked up on the specified page (empty if no URL param)
+          items:
+            type: object
+            properties:
+              lemma:
+                type: string
+                example: "ubiquitous"
+              translation:
+                type: string
+                example: "allgegenwärtig"
+              stage:
+                type: string
+                enum: [new, practicing, stabilizing, known, mastered]
+                example: "stabilizing"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Bad Request"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "raw_word is required"
+        details:
+          type: object
+          nullable: true
+          description: Additional error context
