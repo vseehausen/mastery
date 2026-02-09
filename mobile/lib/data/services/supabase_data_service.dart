@@ -658,7 +658,6 @@ class SupabaseDataService {
         'new_words_per_session': AppDefaults.newWordsDefault,
         'new_word_suppression_active': false,
         'native_language_code': AppDefaults.nativeLanguageCode,
-        'meaning_display_mode': AppDefaults.meaningDisplayMode,
         'created_at': now,
         'updated_at': now,
       };
@@ -677,7 +676,6 @@ class SupabaseDataService {
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
-    String? meaningDisplayMode,
   }) async {
     final updates = <String, dynamic>{
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -696,9 +694,6 @@ class SupabaseDataService {
     }
     if (nativeLanguageCode != null) {
       updates['native_language_code'] = nativeLanguageCode;
-    }
-    if (meaningDisplayMode != null) {
-      updates['meaning_display_mode'] = meaningDisplayMode;
     }
     await _client
         .from('user_learning_preferences')

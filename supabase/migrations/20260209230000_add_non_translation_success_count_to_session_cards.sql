@@ -1,6 +1,9 @@
 -- Migration: Add non_translation_success_count to get_session_cards RPC
 -- Enables instant local stage calculation without async DB calls during grading
 
+-- Drop the existing function first (required when changing return type)
+DROP FUNCTION IF EXISTS get_session_cards(UUID, INT);
+
 CREATE OR REPLACE FUNCTION get_session_cards(
   p_user_id UUID,
   p_limit INT DEFAULT 50

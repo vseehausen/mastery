@@ -30,24 +30,6 @@ String getLanguageNativeName(String code) {
   return supportedLanguages[code]?['native'] ?? code;
 }
 
-/// Meaning display mode options with descriptions.
-const displayModes = <String, Map<String, String>>{
-  'both': {'label': 'Both', 'subtitle': 'Show definition and translation'},
-  'english': {
-    'label': 'Definition only',
-    'subtitle': 'Immersive learning experience',
-  },
-  'native': {
-    'label': 'Translation only',
-    'subtitle': 'Quickest for memorization',
-  },
-};
-
-/// Get display mode label for UI
-String getDisplayModeLabel(String mode) {
-  return displayModes[mode]?['label'] ?? mode;
-}
-
 /// Widget for selecting native language for enrichment.
 class NativeLanguageSetting extends ConsumerWidget {
   const NativeLanguageSetting({super.key});
@@ -124,95 +106,6 @@ class NativeLanguageSetting extends ConsumerWidget {
                 await dataService.updatePreferences(
                   userId: userId,
                   nativeLanguageCode: code,
-                );
-                ref.invalidate(userPreferencesProvider);
-                if (context.mounted) Navigator.pop(context);
-              },
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-}
-
-/// Widget for toggling meaning display mode.
-class MeaningDisplayModeSetting extends ConsumerWidget {
-  const MeaningDisplayModeSetting({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userId = ref.watch(currentUserIdProvider);
-    if (userId == null) return const SizedBox.shrink();
-
-    final prefsAsync = ref.watch(userPreferencesProvider);
-
-    return prefsAsync.when(
-      loading: () => ListTile(
-        title: Text(
-          'Meaning display',
-          style: MasteryTextStyles.body.copyWith(
-            color: context.masteryColors.foreground,
-          ),
-        ),
-        subtitle: Text(
-          'Loading...',
-          style: MasteryTextStyles.bodySmall.copyWith(
-            color: context.masteryColors.mutedForeground,
-          ),
-        ),
-      ),
-      error: (e, s) => const SizedBox.shrink(),
-      data: (prefs) {
-        final currentMode = prefs.meaningDisplayMode;
-        return ListTile(
-          title: Text(
-            'Meaning display',
-            style: MasteryTextStyles.body.copyWith(
-              color: context.masteryColors.foreground,
-            ),
-          ),
-          subtitle: Text(
-            getDisplayModeLabel(currentMode),
-            style: MasteryTextStyles.bodySmall.copyWith(
-              color: context.masteryColors.mutedForeground,
-            ),
-          ),
-          trailing: Icon(
-            Icons.chevron_right,
-            color: context.masteryColors.mutedForeground,
-          ),
-          onTap: () =>
-              _showDisplayModePicker(context, ref, userId, currentMode),
-        );
-      },
-    );
-  }
-
-  void _showDisplayModePicker(
-    BuildContext context,
-    WidgetRef ref,
-    String userId,
-    String currentMode,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return ListView(
-          shrinkWrap: true,
-          children: displayModes.entries.map((entry) {
-            final mode = entry.key;
-            final label = entry.value['label']!;
-            return ListTile(
-              title: Text(label),
-              trailing: mode == currentMode
-                  ? Icon(Icons.check, color: context.masteryColors.success)
-                  : null,
-              onTap: () async {
-                final dataService = ref.read(supabaseDataServiceProvider);
-                await dataService.updatePreferences(
-                  userId: userId,
-                  meaningDisplayMode: mode,
                 );
                 ref.invalidate(userPreferencesProvider);
                 if (context.mounted) Navigator.pop(context);

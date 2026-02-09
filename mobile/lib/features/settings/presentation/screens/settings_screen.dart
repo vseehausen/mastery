@@ -116,11 +116,6 @@ class SettingsScreen extends ConsumerWidget {
                 value: getLanguageEnglishName(prefs.nativeLanguageCode),
                 onTap: () => _showNativeLanguageSheet(context, ref, prefs),
               ),
-              SettingsListItem(
-                label: 'Meaning display',
-                value: getDisplayModeLabel(prefs.meaningDisplayMode),
-                onTap: () => _showMeaningDisplaySheet(context, ref, prefs),
-              ),
             ],
           ),
 
@@ -545,35 +540,6 @@ class SettingsScreen extends ConsumerWidget {
             await ref
                 .read(learningPreferencesNotifierProvider.notifier)
                 .updateNativeLanguage(code);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  void _showMeaningDisplaySheet(
-    BuildContext context,
-    WidgetRef ref,
-    UserPreferencesModel prefs,
-  ) {
-    _showBottomSheet(
-      context: context,
-      title: 'Meaning display',
-      options: displayModes.entries.map((entry) {
-        final mode = entry.key;
-        final label = entry.value['label']!;
-        final subtitle = entry.value['subtitle']!;
-        return _buildSheetOption(
-          context: context,
-          ref: ref,
-          label: label,
-          subtitle: subtitle,
-          isSelected: prefs.meaningDisplayMode == mode,
-          onTap: () async {
-            await ref
-                .read(learningPreferencesNotifierProvider.notifier)
-                .updateMeaningDisplayMode(mode);
             if (context.mounted) Navigator.pop(context);
           },
         );

@@ -116,24 +116,4 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     // Invalidate related providers
     ref.invalidate(userLearningPreferencesProvider);
   }
-
-  /// Update meaning display mode
-  Future<void> updateMeaningDisplayMode(String mode) async {
-    final currentUser = ref.read(currentUserProvider);
-    final userId = currentUser.valueOrNull?.id;
-    if (userId == null) return;
-
-    final dataService = ref.read(supabaseDataServiceProvider);
-    await dataService.updatePreferences(
-      userId: userId,
-      meaningDisplayMode: mode,
-    );
-
-    // Refresh state
-    final prefsData = await dataService.getOrCreatePreferences(userId);
-    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
-
-    // Invalidate related providers
-    ref.invalidate(userLearningPreferencesProvider);
-  }
 }

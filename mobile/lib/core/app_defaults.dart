@@ -19,5 +19,4 @@ abstract final class AppDefaults {
 
   // Display
   static const String nativeLanguageCode = 'de';
-  static const String meaningDisplayMode = 'both';
 }

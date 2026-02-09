@@ -10,7 +10,6 @@ class UserPreferencesModel {
     this.newWordsPerSession = AppDefaults.newWordsDefault,
     this.newWordSuppressionActive = false,
     this.nativeLanguageCode = AppDefaults.nativeLanguageCode,
-    this.meaningDisplayMode = AppDefaults.meaningDisplayMode,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,9 +32,6 @@ class UserPreferencesModel {
       nativeLanguageCode:
           json['native_language_code'] as String? ??
           AppDefaults.nativeLanguageCode,
-      meaningDisplayMode:
-          json['meaning_display_mode'] as String? ??
-          AppDefaults.meaningDisplayMode,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -48,7 +44,6 @@ class UserPreferencesModel {
   final int newWordsPerSession; // 3=few, 5=normal, 8=many
   final bool newWordSuppressionActive;
   final String nativeLanguageCode;
-  final String meaningDisplayMode; // 'native', 'english', 'both'
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -61,7 +56,6 @@ class UserPreferencesModel {
       'new_words_per_session': newWordsPerSession,
       'new_word_suppression_active': newWordSuppressionActive,
       'native_language_code': nativeLanguageCode,
-      'meaning_display_mode': meaningDisplayMode,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -75,7 +69,6 @@ class UserPreferencesModel {
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
-    String? meaningDisplayMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -89,7 +82,6 @@ class UserPreferencesModel {
       newWordSuppressionActive:
           newWordSuppressionActive ?? this.newWordSuppressionActive,
       nativeLanguageCode: nativeLanguageCode ?? this.nativeLanguageCode,
-      meaningDisplayMode: meaningDisplayMode ?? this.meaningDisplayMode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
