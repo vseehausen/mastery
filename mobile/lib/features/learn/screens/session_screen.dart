@@ -8,6 +8,8 @@ import '../../../core/app_defaults.dart';
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/services/progress_stage_service.dart';
+import '../../../data/services/review_write_queue.dart';
+import '../../../data/services/supabase_data_service.dart';
 import '../../../domain/models/cue_type.dart';
 import '../../../domain/models/learning_enums.dart';
 import '../../../domain/models/learning_session.dart';
@@ -18,6 +20,7 @@ import '../../../domain/models/stage_transition.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
+import '../../../providers/review_write_queue_provider.dart';
 import '../../../providers/supabase_provider.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
@@ -63,21 +66,22 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Timer? _elapsedTimer;
   bool _isLoading = true;
   bool _isSessionComplete = false;
-  bool _isSubmittingReview = false;
   String? _errorMessage;
-  String? _inlineRecoveryMessage;
-  int? _failedRating;
-  int? _failedResponseTimeMs;
   DateTime? _itemStartTime;
   List<String>? _currentDistractors;
   int _newWordsPresented = 0;
   int _reviewsPresented = 0;
   String? _loadingDistractorsForCardId;
+  final Set<Future<void>> _pendingReviewWrites = <Future<void>>{};
 
   // Progress tracking
   final _progressStageService = ProgressStageService();
   final List<StageTransition> _stageTransitions = [];
   ProgressStage? _lastTransitionStage;
+  Timer? _transitionFeedbackTimer;
+  int _transitionFeedbackNonce = 0;
+  // Track local count increments within session for accurate stage calculation
+  final Map<String, int> _localSuccessCountDeltas = {};
 
   final _uuid = const Uuid();
 
@@ -90,6 +94,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   void dispose() {
     _elapsedTimer?.cancel();
+    _transitionFeedbackTimer?.cancel();
     super.dispose();
   }
 
@@ -109,6 +114,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     try {
       final dataService = ref.read(supabaseDataServiceProvider);
       final planner = ref.read(sessionPlannerProvider);
+      final queue = ref.read(reviewWriteQueueProvider);
+
+      // Drain any queued writes from previous sessions (Layer 3: startup drain)
+      unawaited(_drainQueueSilently(queue, dataService, userId));
 
       // Check for existing active session
       final activeSessionData = await dataService.getActiveSession(userId);
@@ -364,177 +373,296 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _processReview(int rating, int responseTimeMs) async {
-    if (_isSubmittingReview) return;
     if (_session == null) return;
     if (_currentItemIndex >= _items.length) return;
 
-    final currentItem = _items[_currentItemIndex];
+    final reviewedIndex = _currentItemIndex;
+    final currentItem = _items[reviewedIndex];
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
+    // Track counters immediately to keep UI responsive.
+    if (currentItem.isNewWord) {
+      _newWordsPresented++;
+    } else {
+      _reviewsPresented++;
+    }
+
+    final elapsedSecondsSnapshot = _elapsedSeconds;
+    final itemsCompletedSnapshot = reviewedIndex + 1;
+    final newWordsPresentedSnapshot = _newWordsPresented;
+    final reviewsPresentedSnapshot = _reviewsPresented;
+    final sessionId = _session!.id;
+
+    // Calculate stage transition INSTANTLY (before advancing to next card)
+    final srsScheduler = ref.read(srsSchedulerProvider());
+    final learningCard = currentItem.sessionCard.toLearningCard(userId);
+
+    // Get base count + any increments from earlier reviews in this session
+    final baseCount = currentItem.sessionCard.nonTranslationSuccessCount;
+    final localDelta = _localSuccessCountDeltas[currentItem.cardId] ?? 0;
+    final currentCount = baseCount + localDelta;
+
+    final stageBefore = _progressStageService.calculateStage(
+      card: learningCard,
+      nonTranslationSuccessCount: currentCount,
+    );
+
+    final reviewResult = srsScheduler.reviewCard(
+      card: learningCard,
+      rating: rating,
+      interactionMode: currentItem.interactionMode,
+    );
+
+    // Check if this review increments the non-translation success count
+    final isNonTransSuccess = rating >= 3 &&
+        currentItem.cueType != null &&
+        currentItem.cueType != CueType.translation;
+    final newCount = currentCount + (isNonTransSuccess ? 1 : 0);
+
+    // Update local delta tracking
+    if (isNonTransSuccess) {
+      _localSuccessCountDeltas[currentItem.cardId] = localDelta + 1;
+    }
+
+    final updatedCard = learningCard.copyWith(
+      state: reviewResult.updatedCard.state,
+      stability: reviewResult.updatedCard.stability,
+      difficulty: reviewResult.updatedCard.difficulty,
+      reps: reviewResult.updatedCard.reps,
+      lapses: reviewResult.updatedCard.lapses,
+    );
+
+    final stageAfter = _progressStageService.calculateStage(
+      card: updatedCard,
+      nonTranslationSuccessCount: newCount,
+    );
+
+    // Show transition feedback immediately if stage progressed
+    if (stageAfter != stageBefore && stageAfter.index > stageBefore.index) {
+      final transition = StageTransition(
+        vocabularyId: currentItem.vocabularyId,
+        wordText: currentItem.displayWord,
+        fromStage: stageBefore,
+        toStage: stageAfter,
+        timestamp: DateTime.now(),
+      );
+      _stageTransitions.add(transition);
+      _showStageTransitionFeedback(stageAfter);
+      debugPrint(
+        '[Session] Stage transition: ${currentItem.word} '
+        '${stageBefore.displayName} → ${stageAfter.displayName}',
+      );
+    }
+
+    // Persist review in the background with pre-computed stage data.
+    final persistFuture = _persistReview(
+      userId: userId,
+      currentItem: currentItem,
+      rating: rating,
+      responseTimeMs: responseTimeMs,
+      sessionId: sessionId,
+      elapsedSecondsSnapshot: elapsedSecondsSnapshot,
+      itemsCompletedSnapshot: itemsCompletedSnapshot,
+      newWordsPresentedSnapshot: newWordsPresentedSnapshot,
+      reviewsPresentedSnapshot: reviewsPresentedSnapshot,
+      reviewResult: reviewResult,
+      stageAfter: stageAfter,
+    );
+    _trackPendingReviewWrite(persistFuture);
+
+    // Update session progress immediately (sequential, monotonic)
+    final dataService = ref.read(supabaseDataServiceProvider);
+    unawaited(
+      dataService.updateSessionProgress(
+        sessionId: sessionId,
+        elapsedSeconds: elapsedSecondsSnapshot,
+        itemsPresented: itemsCompletedSnapshot,
+        itemsCompleted: itemsCompletedSnapshot,
+        newWordsPresented: newWordsPresentedSnapshot,
+        reviewsPresented: reviewsPresentedSnapshot,
+      ),
+    );
+
+    // Move to next item (or complete) without waiting for network writes.
+    final nextIndex = reviewedIndex + 1;
+    if (nextIndex >= _items.length) {
+      await _maybePrefetchMore(force: true);
+      if (nextIndex >= _items.length) {
+        await _completeSession();
+        return;
+      }
+    } else {
+      unawaited(_maybePrefetchMore());
+    }
+
+    if (!mounted) return;
+    final nextItem = _items[nextIndex];
     setState(() {
-      _isSubmittingReview = true;
-      _inlineRecoveryMessage = null;
+      _currentItemIndex = nextIndex;
+      _itemStartTime = DateTime.now();
+      _currentDistractors = null;
     });
 
-    final srsScheduler = ref.read(srsSchedulerProvider());
+    if (nextItem.isRecognition) {
+      unawaited(_loadDistractorsForItem(nextItem, userId));
+    }
+  }
+
+  Future<void> _persistReview({
+    required String userId,
+    required PlannedItem currentItem,
+    required int rating,
+    required int responseTimeMs,
+    required String sessionId,
+    required int elapsedSecondsSnapshot,
+    required int itemsCompletedSnapshot,
+    required int newWordsPresentedSnapshot,
+    required int reviewsPresentedSnapshot,
+    required ReviewResult reviewResult,
+    required ProgressStage stageAfter,
+  }) async {
     final dataService = ref.read(supabaseDataServiceProvider);
+    final queue = ref.read(reviewWriteQueueProvider);
 
     try {
-      // Track new words vs reviews
-      if (currentItem.isNewWord) {
-        _newWordsPresented++;
-      } else {
-        _reviewsPresented++;
-      }
-
-      // Convert SessionCard to LearningCardModel for SRS processing
-      final learningCard = currentItem.sessionCard.toLearningCard(userId);
-
-      // Calculate stage BEFORE review
-      final nonTransSuccessBefore = await dataService
-          .getNonTranslationSuccessCount(currentItem.cardId);
-      final stageBefore = _progressStageService.calculateStage(
-        card: learningCard,
-        nonTranslationSuccessCount: nonTransSuccessBefore,
-      );
-
-      // Process the review with SRS
-      final result = srsScheduler.reviewCard(
-        card: learningCard,
-        rating: rating,
-        interactionMode: currentItem.interactionMode,
-      );
-
-      // Calculate stage AFTER review (count may have changed if this was a success)
-      final isNonTransSuccess =
-          rating >= 3 &&
-          currentItem.cueType != null &&
-          currentItem.cueType != CueType.translation;
-      final nonTransSuccessAfter =
-          nonTransSuccessBefore + (isNonTransSuccess ? 1 : 0);
-      // Build a LearningCardModel with the updated FSRS fields
-      final updatedCard = learningCard.copyWith(
-        state: result.updatedCard.state,
-        stability: result.updatedCard.stability,
-        difficulty: result.updatedCard.difficulty,
-        reps: result.updatedCard.reps,
-        lapses: result.updatedCard.lapses,
-      );
-      final stageAfter = _progressStageService.calculateStage(
-        card: updatedCard,
-        nonTranslationSuccessCount: nonTransSuccessAfter,
-      );
-
-      // Save updated card to Supabase (including computed progress stage)
-      await dataService.updateLearningCard(
-        cardId: currentItem.cardId,
-        state: result.updatedCard.state,
-        due: result.updatedCard.due,
-        stability: result.updatedCard.stability,
-        difficulty: result.updatedCard.difficulty,
-        reps: result.updatedCard.reps,
-        lapses: result.updatedCard.lapses,
-        isLeech: result.updatedCard.isLeech,
-        progressStage: stageAfter.toDbString(),
-      );
-
-      // Record transition if stage changed (and progressed forward)
-      if (stageAfter != stageBefore && stageAfter.index > stageBefore.index) {
-        final transition = StageTransition(
-          vocabularyId: currentItem.vocabularyId,
-          wordText: currentItem.displayWord,
-          fromStage: stageBefore,
-          toStage: stageAfter,
-          timestamp: DateTime.now(),
+      // Layer 1: Retry with exponential backoff (3 attempts, 1s/2s/4s)
+      await retryWithBackoff(() async {
+        await dataService.updateLearningCard(
+          cardId: currentItem.cardId,
+          state: reviewResult.updatedCard.state,
+          due: reviewResult.updatedCard.due,
+          stability: reviewResult.updatedCard.stability,
+          difficulty: reviewResult.updatedCard.difficulty,
+          reps: reviewResult.updatedCard.reps,
+          lapses: reviewResult.updatedCard.lapses,
+          isLeech: reviewResult.updatedCard.isLeech,
+          progressStage: stageAfter.toDbString(),
         );
-        _stageTransitions.add(transition);
-        setState(() {
-          _lastTransitionStage = stageAfter;
-        });
-        debugPrint(
-          '[Session] Stage transition: ${currentItem.word} '
-          '${stageBefore.displayName} → ${stageAfter.displayName}',
+
+        final reviewLogId = _uuid.v4();
+        await dataService.insertReviewLog(
+          id: reviewLogId,
+          userId: userId,
+          learningCardId: currentItem.cardId,
+          rating: rating,
+          interactionMode: currentItem.interactionMode,
+          stateBefore: reviewResult.reviewLog.stateBefore,
+          stateAfter: reviewResult.reviewLog.stateAfter,
+          stabilityBefore: reviewResult.reviewLog.stabilityBefore,
+          stabilityAfter: reviewResult.reviewLog.stabilityAfter,
+          difficultyBefore: reviewResult.reviewLog.difficultyBefore,
+          difficultyAfter: reviewResult.reviewLog.difficultyAfter,
+          responseTimeMs: responseTimeMs,
+          retrievabilityAtReview: reviewResult.reviewLog.retrievabilityAtReview,
+          sessionId: sessionId,
+          cueType: currentItem.cueType?.toDbString(),
         );
-      }
-
-      // Save review log to Supabase
-      final reviewLogId = _uuid.v4();
-      await dataService.insertReviewLog(
-        id: reviewLogId,
-        userId: userId,
-        learningCardId: currentItem.cardId,
-        rating: rating,
-        interactionMode: currentItem.interactionMode,
-        stateBefore: result.reviewLog.stateBefore,
-        stateAfter: result.reviewLog.stateAfter,
-        stabilityBefore: result.reviewLog.stabilityBefore,
-        stabilityAfter: result.reviewLog.stabilityAfter,
-        difficultyBefore: result.reviewLog.difficultyBefore,
-        difficultyAfter: result.reviewLog.difficultyAfter,
-        responseTimeMs: responseTimeMs,
-        retrievabilityAtReview: result.reviewLog.retrievabilityAtReview,
-        sessionId: _session!.id,
-        cueType: currentItem.cueType?.toDbString(),
-      );
-
-      // Update session progress
-      await dataService.updateSessionProgress(
-        sessionId: _session!.id,
-        elapsedSeconds: _elapsedSeconds,
-        itemsPresented: _currentItemIndex + 1,
-        itemsCompleted: _currentItemIndex + 1,
-        newWordsPresented: _newWordsPresented,
-        reviewsPresented: _reviewsPresented,
-      );
-
-      // Clear failed state
-      _failedRating = null;
-      _failedResponseTimeMs = null;
-
-      // Move to next item or complete
-      final nextIndex = _currentItemIndex + 1;
-
-      // If we've exhausted the current batch, fetch more before proceeding
-      if (nextIndex >= _items.length) {
-        await _maybePrefetchMore(force: true);
-        // After awaiting, check if new items arrived
-        if (nextIndex >= _items.length) {
-          // No more items available — session is done
-          await _completeSession();
-          return;
-        }
-      } else {
-        // Trigger background prefetch for upcoming items
-        unawaited(_maybePrefetchMore());
-      }
-
-      // Load distractors for next item if needed
-      final nextItem = _items[nextIndex];
-      if (nextItem.isRecognition) {
-        _currentDistractors = null;
-        await _loadDistractorsForItem(nextItem, userId);
-      }
-
-      setState(() {
-        _currentItemIndex = nextIndex;
-        _itemStartTime = DateTime.now();
-        _lastTransitionStage = null;
       });
-    } catch (_) {
+    } catch (error, stackTrace) {
+      // Layer 2: All retries failed — enqueue for later
+      debugPrint('[Session] All retries failed, enqueueing write: $error');
+      debugPrint('[Session] $stackTrace');
+
+      await queue.enqueue(
+        QueuedReviewWrite(
+          cardId: currentItem.cardId,
+          vocabularyId: currentItem.vocabularyId,
+          userId: userId,
+          sessionId: sessionId,
+          rating: rating,
+          responseTimeMs: responseTimeMs,
+          interactionMode: currentItem.interactionMode,
+          stateBefore: reviewResult.reviewLog.stateBefore,
+          stateAfter: reviewResult.reviewLog.stateAfter,
+          stabilityBefore: reviewResult.reviewLog.stabilityBefore,
+          stabilityAfter: reviewResult.reviewLog.stabilityAfter,
+          difficultyBefore: reviewResult.reviewLog.difficultyBefore,
+          difficultyAfter: reviewResult.reviewLog.difficultyAfter,
+          retrievabilityAtReview: reviewResult.reviewLog.retrievabilityAtReview,
+          cueType: currentItem.cueType?.toDbString(),
+          due: reviewResult.updatedCard.due,
+          state: reviewResult.updatedCard.state,
+          stability: reviewResult.updatedCard.stability,
+          difficulty: reviewResult.updatedCard.difficulty,
+          reps: reviewResult.updatedCard.reps,
+          lapses: reviewResult.updatedCard.lapses,
+          isLeech: reviewResult.updatedCard.isLeech,
+          progressStage: stageAfter.toDbString(),
+          timestamp: DateTime.now(),
+        ),
+      );
+      // No user-facing error during the session — graceful degradation
+    }
+  }
+
+  void _trackPendingReviewWrite(Future<void> writeFuture) {
+    _pendingReviewWrites.add(writeFuture);
+    writeFuture.whenComplete(() {
+      _pendingReviewWrites.remove(writeFuture);
+    });
+  }
+
+  Future<void> _flushPendingReviewWrites() async {
+    if (_pendingReviewWrites.isEmpty) return;
+    await Future.wait(_pendingReviewWrites.toList(), eagerError: false);
+  }
+
+  void _showStageTransitionFeedback(ProgressStage stage) {
+    _transitionFeedbackTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _lastTransitionStage = stage;
+      _transitionFeedbackNonce++;
+    });
+    _transitionFeedbackTimer = Timer(const Duration(milliseconds: 2900), () {
       if (!mounted) return;
       setState(() {
-        _failedRating = rating;
-        _failedResponseTimeMs = responseTimeMs;
-        _inlineRecoveryMessage =
-            'Could not save your response. Check connection and retry.';
+        _lastTransitionStage = null;
       });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmittingReview = false;
-        });
-      }
+    });
+  }
+
+  Future<void> _drainQueueSilently(
+    ReviewWriteQueue queue,
+    SupabaseDataService dataService,
+    String userId,
+  ) async {
+    try {
+      await queue.drain((write) async {
+        await dataService.updateLearningCard(
+          cardId: write.cardId,
+          state: write.state,
+          due: write.due,
+          stability: write.stability,
+          difficulty: write.difficulty,
+          reps: write.reps,
+          lapses: write.lapses,
+          isLeech: write.isLeech,
+          progressStage: write.progressStage,
+        );
+
+        await dataService.insertReviewLog(
+          id: _uuid.v4(),
+          userId: userId,
+          learningCardId: write.cardId,
+          rating: write.rating,
+          interactionMode: write.interactionMode,
+          stateBefore: write.stateBefore,
+          stateAfter: write.stateAfter,
+          stabilityBefore: write.stabilityBefore,
+          stabilityAfter: write.stabilityAfter,
+          difficultyBefore: write.difficultyBefore,
+          difficultyAfter: write.difficultyAfter,
+          responseTimeMs: write.responseTimeMs,
+          retrievabilityAtReview: write.retrievabilityAtReview,
+          sessionId: write.sessionId,
+          cueType: write.cueType,
+        );
+      });
+    } catch (error) {
+      debugPrint('[Session] Queue drain failed: $error');
+      // Silent failure — queue will retry on next app start
     }
   }
 
@@ -545,6 +673,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final dataService = ref.read(supabaseDataServiceProvider);
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
+
+    await _flushPendingReviewWrites();
 
     // Determine outcome — session is always item-based now,
     // but mark as "complete" if all items were exhausted
@@ -609,11 +739,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     await _saveProgress();
     if (!mounted) return;
     Navigator.of(context).pop();
-  }
-
-  Future<void> _retryFailedSubmission() async {
-    if (_failedRating == null || _failedResponseTimeMs == null) return;
-    await _processReview(_failedRating!, _failedResponseTimeMs!);
   }
 
   @override
@@ -717,7 +842,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         right: 12,
                         child: ProgressMicroFeedback(
                           key: ValueKey(
-                            '${currentItem.cardId}_$_lastTransitionStage',
+                            'stage_feedback_$_transitionFeedbackNonce',
                           ),
                           stage: _lastTransitionStage!,
                         ),
@@ -736,7 +861,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ),
                 ),
               ),
-            _buildBottomActionZone(currentItem, context),
+            _buildBottomActionZone(context),
           ],
         ),
       ),
@@ -770,7 +895,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           word: card.displayWord,
           answer: translationAnswer,
           context: null,
-          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       }
@@ -796,14 +920,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               translationAnswer,
           targetWord: cue?.answerText ?? card.displayWord,
           hintText: cue?.hintText,
-          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.synonym:
         return SynonymCueCard(
           synonymPhrase: cue?.promptText ?? _buildSynonymPrompt(meaning),
           targetWord: cue?.answerText ?? card.displayWord,
-          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.disambiguation:
@@ -828,7 +950,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           sentenceWithBlank: cue?.promptText ?? translationAnswer,
           targetWord: cue?.answerText ?? card.displayWord,
           hintText: cue?.hintText,
-          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
       case CueType.translation:
@@ -837,80 +958,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           word: card.displayWord,
           answer: translationAnswer,
           context: null, // Could load encounter context if needed
-          isSubmitting: _isSubmittingReview,
           onGrade: _handleRecallGrade,
         );
     }
   }
 
-  Widget _buildBottomActionZone(
-    PlannedItem? currentItem,
-    BuildContext context,
-  ) {
-    final colors = context.masteryColors;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-      decoration: BoxDecoration(
-        color: colors.cardBackground,
-        border: Border(top: BorderSide(color: colors.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_isSubmittingReview)
-            Row(
-              children: [
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Saving your response…',
-                  style: MasteryTextStyles.caption.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          if (_inlineRecoveryMessage != null) ...[
-            if (_isSubmittingReview) const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: colors.destructive.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colors.destructive.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _inlineRecoveryMessage!,
-                      style: MasteryTextStyles.caption,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _isSubmittingReview
-                        ? null
-                        : _retryFailedSubmission,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+  Widget _buildBottomActionZone(BuildContext context) {
+    // No longer showing inline error messages — graceful degradation with queue
+    return const SizedBox.shrink();
   }
 
   /// Build a synonym prompt from the meaning's synonyms

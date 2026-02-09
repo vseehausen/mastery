@@ -7,6 +7,7 @@ import '../../../core/theme/text_styles.dart';
 import '../../../domain/models/progress_stage.dart';
 import '../../../domain/models/session_progress_summary.dart';
 import '../../../domain/models/stage_transition.dart';
+import '../../../providers/review_write_queue_provider.dart';
 import '../../../providers/supabase_provider.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_indicator.dart';
@@ -42,6 +43,28 @@ class SessionCompleteScreen extends ConsumerStatefulWidget {
 
 class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
   bool _isAddingBonus = false;
+  int _queuedWritesCount = 0;
+
+  int get _upgradedWordsCount => widget.transitions
+      .map((transition) => transition.vocabularyId)
+      .toSet()
+      .length;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkQueuedWrites();
+  }
+
+  Future<void> _checkQueuedWrites() async {
+    final queue = ref.read(reviewWriteQueueProvider);
+    final count = await queue.getQueueSize();
+    if (mounted) {
+      setState(() {
+        _queuedWritesCount = count;
+      });
+    }
+  }
 
   Future<void> _addBonusTime() async {
     if (_isAddingBonus) return;
@@ -155,6 +178,11 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                       value: _formatTime(widget.elapsedSeconds),
                     ),
                     const SizedBox(height: 12),
+                    _StatRow(
+                      label: 'Words progressed',
+                      value: '$_upgradedWordsCount',
+                    ),
+                    const SizedBox(height: 12),
                     Divider(color: colors.border),
                     const SizedBox(height: 12),
                     // Streak
@@ -183,6 +211,37 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
                 const SizedBox(height: 16),
                 _ProgressMadeCard(
                   summary: SessionProgressSummary(widget.transitions),
+                ),
+              ],
+
+              // Subtle sync notice (only when queue has pending writes)
+              if (_queuedWritesCount > 0) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.cardBackground,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_sync,
+                        size: 16,
+                        color: colors.mutedForeground,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Some reviews will sync when connection returns',
+                          style: MasteryTextStyles.caption.copyWith(
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
 

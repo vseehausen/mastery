@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/network/connectivity.dart';
 import 'core/supabase_client.dart';
 import 'core/theme/app_theme.dart';
@@ -10,6 +11,7 @@ import 'core/theme/color_tokens.dart';
 import 'core/widgets/global_status_banner.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/home/presentation/screens/today_screen.dart';
+import 'providers/review_write_queue_provider.dart';
 import 'providers/supabase_provider.dart';
 
 void main() {
@@ -23,7 +25,15 @@ void main() {
         debugPrint('Supabase init failed: $e');
         // App can still run, will show auth screen
       }
-      runApp(const ProviderScope(child: MasteryApp()));
+      final sharedPreferences = await SharedPreferences.getInstance();
+      runApp(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+          ],
+          child: const MasteryApp(),
+        ),
+      );
     },
     (error, stack) {
       debugPrint('Uncaught error: $error');

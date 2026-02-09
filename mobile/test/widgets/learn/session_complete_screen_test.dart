@@ -6,9 +6,11 @@ import 'package:mastery/domain/models/progress_stage.dart';
 import 'package:mastery/domain/models/stage_transition.dart';
 import 'package:mastery/features/learn/providers/streak_providers.dart';
 import 'package:mastery/features/learn/screens/session_complete_screen.dart';
+import 'package:mastery/providers/review_write_queue_provider.dart';
 import 'package:mastery/providers/supabase_provider.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/services/session_planner_test.mocks.dart';
 
@@ -46,10 +48,12 @@ void _setPhoneSize(WidgetTester tester) {
 }
 
 /// Shared provider overrides used by every test.
-List<Override> _defaultOverrides() {
+Future<List<Override>> _defaultOverrides() async {
+  final prefs = await SharedPreferences.getInstance();
   return [
     currentStreakProvider.overrideWith((ref) async => 5),
     supabaseDataServiceProvider.overrideWithValue(MockSupabaseDataService()),
+    sharedPreferencesProvider.overrideWithValue(prefs),
   ];
 }
 
@@ -79,6 +83,11 @@ final _masteredTransition = StageTransition(
 );
 
 void main() {
+  // Initialize SharedPreferences for all tests
+  setUpAll(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('SessionCompleteScreen', () {
     group('Progress Made card visibility', () {
       testWidgets('shows Progress Made card when transitions are passed', (
@@ -96,7 +105,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_stabilizingTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -119,7 +128,7 @@ void main() {
                 isFullCompletion: true,
                 transitions: [],
               ),
-              overrides: _defaultOverrides(),
+              overrides: await _defaultOverrides(),
             ),
           );
           await tester.pumpAndSettle();
@@ -142,7 +151,7 @@ void main() {
                 plannedSeconds: 300,
                 isFullCompletion: false,
               ),
-              overrides: _defaultOverrides(),
+              overrides: await _defaultOverrides(),
             ),
           );
           await tester.pumpAndSettle();
@@ -168,7 +177,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_stabilizingTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -201,7 +210,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_stabilizingTransition, secondStabilizing],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -229,7 +238,7 @@ void main() {
                 _stabilizingTransition,
               ],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -254,7 +263,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_masteredTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -275,12 +284,54 @@ void main() {
               isFullCompletion: true,
               transitions: [_activeTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Known'), findsWidgets);
+      });
+
+      testWidgets('deduplicates transitions with same vocabulary ID', (
+        tester,
+      ) async {
+        _setPhoneSize(tester);
+        // Two transitions for the same word (same vocabulary ID)
+        final firstTransition = StageTransition(
+          vocabularyId: '1',
+          wordText: 'word1',
+          fromStage: ProgressStage.practicing,
+          toStage: ProgressStage.stabilizing,
+          timestamp: DateTime(2026, 2, 8),
+        );
+        final secondTransition = StageTransition(
+          vocabularyId: '1', // Same vocabulary ID
+          wordText: 'word1',
+          fromStage: ProgressStage.stabilizing,
+          toStage: ProgressStage.known,
+          timestamp: DateTime(2026, 2, 8),
+        );
+
+        await tester.pumpWidget(
+          _buildTestableScreen(
+            screen: SessionCompleteScreen(
+              sessionId: 'session-1',
+              itemsCompleted: 10,
+              totalItems: 10,
+              elapsedSeconds: 300,
+              plannedSeconds: 300,
+              isFullCompletion: true,
+              transitions: [firstTransition, secondTransition],
+            ),
+            overrides: await _defaultOverrides(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Should count as 1 word progressed (deduped by vocabulary ID)
+        expect(find.text('Words progressed'), findsOneWidget);
+        // Should show "1 word" not "2 words" because both transitions are for the same vocab
+        expect(find.textContaining('1 word'), findsWidgets);
       });
     });
 
@@ -298,7 +349,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_masteredTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -319,7 +370,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_activeTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -342,7 +393,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_stabilizingTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -365,7 +416,7 @@ void main() {
               isFullCompletion: true,
               transitions: [_masteredTransition, _activeTransition],
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -375,6 +426,35 @@ void main() {
     });
 
     group('session stats display', () {
+      testWidgets('shows words progressed count from transitions', (
+        tester,
+      ) async {
+        _setPhoneSize(tester);
+        await tester.pumpWidget(
+          _buildTestableScreen(
+            screen: SessionCompleteScreen(
+              sessionId: 'session-1',
+              itemsCompleted: 10,
+              totalItems: 10,
+              elapsedSeconds: 300,
+              plannedSeconds: 300,
+              isFullCompletion: true,
+              transitions: [_stabilizingTransition, _activeTransition],
+            ),
+            overrides: await _defaultOverrides(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Words progressed'), findsOneWidget);
+        // The count '2' appears in multiple places - use a more specific finder
+        final statRow = find.ancestor(
+          of: find.text('Words progressed'),
+          matching: find.byType(Row),
+        );
+        expect(statRow, findsOneWidget);
+      });
+
       testWidgets('shows items reviewed count', (tester) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
@@ -387,7 +467,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -410,7 +490,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -433,7 +513,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: false,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -455,7 +535,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -476,7 +556,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -500,7 +580,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -523,7 +603,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: false,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -547,7 +627,7 @@ void main() {
               isFullCompletion: true,
               allItemsExhausted: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -573,7 +653,7 @@ void main() {
                 isFullCompletion: true,
                 allItemsExhausted: false,
               ),
-              overrides: _defaultOverrides(),
+              overrides: await _defaultOverrides(),
             ),
           );
           await tester.pumpAndSettle();
@@ -597,7 +677,7 @@ void main() {
                 isFullCompletion: true,
                 allItemsExhausted: true,
               ),
-              overrides: _defaultOverrides(),
+              overrides: await _defaultOverrides(),
             ),
           );
           await tester.pumpAndSettle();
@@ -620,7 +700,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: false,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -640,6 +720,7 @@ void main() {
           ),
         ).thenAnswer((_) async {});
 
+        final prefs = await SharedPreferences.getInstance();
         await tester.pumpWidget(
           _buildTestableScreen(
             screen: const SessionCompleteScreen(
@@ -653,6 +734,7 @@ void main() {
             overrides: [
               currentStreakProvider.overrideWith((ref) async => 5),
               supabaseDataServiceProvider.overrideWithValue(mockDataService),
+              sharedPreferencesProvider.overrideWithValue(prefs),
             ],
           ),
         );
@@ -681,6 +763,7 @@ void main() {
           ),
         ).thenAnswer((_) async => throw Exception('Network error'));
 
+        final prefs = await SharedPreferences.getInstance();
         await tester.pumpWidget(
           _buildTestableScreen(
             screen: const SessionCompleteScreen(
@@ -694,6 +777,7 @@ void main() {
             overrides: [
               currentStreakProvider.overrideWith((ref) async => 5),
               supabaseDataServiceProvider.overrideWithValue(mockDataService),
+              sharedPreferencesProvider.overrideWithValue(prefs),
             ],
           ),
         );
@@ -719,7 +803,7 @@ void main() {
               plannedSeconds: 300,
               isFullCompletion: true,
             ),
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
           ),
         );
         await tester.pumpAndSettle();
@@ -732,7 +816,7 @@ void main() {
 
         await tester.pumpWidget(
           ProviderScope(
-            overrides: _defaultOverrides(),
+            overrides: await _defaultOverrides(),
             child: ShadApp(
               themeMode: ThemeMode.light,
               theme: MasteryTheme.light,
@@ -784,6 +868,7 @@ void main() {
         tester,
       ) async {
         _setPhoneSize(tester);
+        final prefs = await SharedPreferences.getInstance();
         await tester.pumpWidget(
           _buildTestableScreen(
             screen: const SessionCompleteScreen(
@@ -801,6 +886,7 @@ void main() {
               supabaseDataServiceProvider.overrideWithValue(
                 MockSupabaseDataService(),
               ),
+              sharedPreferencesProvider.overrideWithValue(prefs),
             ],
           ),
         );

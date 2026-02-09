@@ -14,7 +14,6 @@ class DefinitionCueCard extends StatefulWidget {
     required this.targetWord,
     required this.onGrade,
     this.hintText,
-    this.isSubmitting = false,
     this.isPreview = false,
   });
 
@@ -29,7 +28,6 @@ class DefinitionCueCard extends StatefulWidget {
 
   /// Callback when user grades themselves
   final void Function(int rating) onGrade;
-  final bool isSubmitting;
 
   /// Preview mode - hides grade buttons and saving message
   final bool isPreview;
@@ -155,18 +153,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 16),
-            if (!widget.isPreview) ...[
-              _buildGradeButtons(),
-              if (widget.isSubmitting || _hasGraded) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'Saving response…',
-                  style: MasteryTextStyles.caption.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ],
+            if (!widget.isPreview) ...[_buildGradeButtons()],
           ] else ...[
             Text(
               'Step 1 of 2: Recall the word',
@@ -178,9 +165,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: widget.isSubmitting
-                    ? null
-                    : () => setState(() => _isRevealed = true),
+                onPressed: () => setState(() => _isRevealed = true),
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),
@@ -216,7 +201,7 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
     final colors = context.masteryColors;
     return Expanded(
       child: InkWell(
-        onTap: (!_hasGraded && !widget.isSubmitting)
+        onTap: !_hasGraded
             ? () {
                 setState(() {
                   _hasGraded = true;

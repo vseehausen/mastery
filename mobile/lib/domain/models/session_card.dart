@@ -99,6 +99,7 @@ class SessionCard {
     required this.cues,
     required this.hasEncounterContext,
     required this.hasConfusables,
+    required this.nonTranslationSuccessCount,
   });
 
   factory SessionCard.fromJson(Map<String, dynamic> json) {
@@ -122,6 +123,7 @@ class SessionCard {
       cues: _parseCues(json['cues']),
       hasEncounterContext: json['has_encounter_context'] as bool? ?? false,
       hasConfusables: json['has_confusables'] as bool? ?? false,
+      nonTranslationSuccessCount: json['non_translation_success_count'] as int? ?? 0,
     );
   }
 
@@ -152,6 +154,9 @@ class SessionCard {
   // Eligibility flags for cue selection
   final bool hasEncounterContext;
   final bool hasConfusables;
+
+  // Progress tracking
+  final int nonTranslationSuccessCount;
 
   /// Whether this card has any meaning data
   bool get hasMeaning => meanings.isNotEmpty;

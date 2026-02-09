@@ -14,7 +14,6 @@ class RecallCard extends StatefulWidget {
     required this.answer,
     required this.onGrade,
     this.context,
-    this.isSubmitting = false,
     this.isPreview = false,
   });
 
@@ -30,7 +29,6 @@ class RecallCard extends StatefulWidget {
   /// Callback when user grades themselves
   /// Returns the rating (1=Again, 2=Hard, 3=Good, 4=Easy)
   final void Function(int rating) onGrade;
-  final bool isSubmitting;
 
   /// Preview mode - hides grade buttons and saving message
   final bool isPreview;
@@ -61,7 +59,7 @@ class _RecallCardState extends State<RecallCard> {
   }
 
   void _handleGrade(int rating) {
-    if (_hasGraded || widget.isSubmitting) return;
+    if (_hasGraded) return;
     setState(() {
       _hasGraded = true;
     });
@@ -146,7 +144,7 @@ class _RecallCardState extends State<RecallCard> {
                       description: 'Forgot',
                       color: colors.destructive,
                       onPressed: () => _handleGrade(ReviewRating.again),
-                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                      isEnabled: !_hasGraded,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -156,7 +154,7 @@ class _RecallCardState extends State<RecallCard> {
                       description: 'Difficult',
                       color: colors.warning,
                       onPressed: () => _handleGrade(ReviewRating.hard),
-                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                      isEnabled: !_hasGraded,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -166,7 +164,7 @@ class _RecallCardState extends State<RecallCard> {
                       description: 'Correct',
                       color: colors.success,
                       onPressed: () => _handleGrade(ReviewRating.good),
-                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                      isEnabled: !_hasGraded,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -176,27 +174,18 @@ class _RecallCardState extends State<RecallCard> {
                       description: 'Perfect',
                       color: colors.info,
                       onPressed: () => _handleGrade(ReviewRating.easy),
-                      isEnabled: !_hasGraded && !widget.isSubmitting,
+                      isEnabled: !_hasGraded,
                     ),
                   ),
                 ],
               ),
-              if (widget.isSubmitting || _hasGraded) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'Saving response…',
-                  style: MasteryTextStyles.caption.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
             ],
           ] else ...[
             // Show reveal button
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: widget.isSubmitting ? null : _reveal,
+                onPressed: _reveal,
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),
