@@ -11,7 +11,9 @@ import type { LookupMessage, ServiceWorkerResponse } from '@/lib/types';
 export default defineContentScript({
   matches: ['<all_urls>'],
   main() {
+    console.log('[Mastery] Content script loaded');
     attachWordDetector(async ({ rawWord, position, anchorNode }) => {
+      console.log('[Mastery] Word detected:', rawWord);
       const sentence = extractSentence(rawWord, anchorNode);
       const url = window.location.href;
       const title = document.title;

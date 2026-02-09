@@ -2,13 +2,17 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { LookupRequest, LookupResponse, StatsResponse } from './types';
 
 const SUPABASE_URL = import.meta.env.WXT_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.WXT_SUPABASE_ANON_KEY;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.WXT_SUPABASE_PUBLISHABLE_KEY;
 
 let client: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient {
+  console.log('[Mastery] Initializing Supabase client', {
+    url: SUPABASE_URL,
+    hasKey: !!SUPABASE_PUBLISHABLE_KEY,
+  });
   if (!client) {
-    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         storage: {
           getItem: async (key: string): Promise<string | null> => {

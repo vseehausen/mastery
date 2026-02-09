@@ -9,8 +9,10 @@ import type {
 } from '@/lib/types';
 
 export default defineBackground(() => {
+  console.log('[Mastery] Background script loaded');
   // Register context menu on install
   browser.runtime.onInstalled.addListener(() => {
+    console.log('[Mastery] Extension installed/updated');
     browser.contextMenus.create({
       id: 'mastery-lookup',
       title: 'Look up in Mastery',

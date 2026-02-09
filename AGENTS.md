@@ -7,7 +7,20 @@ Comprehensive development guidelines, standards, and workflows. Last updated: 20
 - **Mobile**: Flutter 3.x (Dart 3.x), Riverpod, Supabase Flutter SDK, FSRS (spaced repetition)
 - **Desktop**: Tauri 2.x (Rust), Svelte 5, nusb (USB hardware access)
 - **Backend**: Supabase (PostgreSQL, Edge Functions, Auth)
+- **Extension**: WXT (Chrome extension framework), Svelte 5, Tailwind CSS v4, @supabase/supabase-js
 - **Testing**: flutter_test, cargo test, Deno test, ios-simulator MCP
+
+## Supabase API Keys
+
+**New format (preferred):** `sb_publishable_...` for client apps, `sb_secret_...` for backend.
+**Legacy format:** JWT-based `anon` and `service_role` keys (still supported until late 2026).
+
+Extension uses new publishable key format in `.env`:
+```bash
+WXT_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Mobile/Desktop to migrate from legacy JWT `anon` key to new publishable key when ready.
 
 ## Project Structure
 
