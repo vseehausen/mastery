@@ -111,6 +111,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           BottomNavBar(
             selectedIndex: _selectedIndex,
             onTabSelected: (index) {
+              if (index == 2) {
+                ref.invalidate(vocabularyStageCountsProvider);
+              }
               setState(() => _selectedIndex = index);
             },
           ),

@@ -21,29 +21,29 @@ void main() {
         lightColors = MasteryColorScheme.light;
       });
 
-      test('captured uses mutedForeground', () {
+      test('captured uses stageCaptured', () {
         final color = ProgressStage.captured.getColor(lightColors);
-        expect(color, lightColors.mutedForeground);
+        expect(color, lightColors.stageCaptured);
       });
 
-      test('practicing uses accent', () {
+      test('practicing uses stagePracticing', () {
         final color = ProgressStage.practicing.getColor(lightColors);
-        expect(color, lightColors.accent);
+        expect(color, lightColors.stagePracticing);
       });
 
-      test('stabilizing uses accent', () {
+      test('stabilizing uses stageStabilizing', () {
         final color = ProgressStage.stabilizing.getColor(lightColors);
-        expect(color, lightColors.accent);
+        expect(color, lightColors.stageStabilizing);
       });
 
-      test('active uses success', () {
+      test('active uses stageActive', () {
         final color = ProgressStage.active.getColor(lightColors);
-        expect(color, lightColors.success);
+        expect(color, lightColors.stageActive);
       });
 
-      test('mastered uses success', () {
+      test('mastered uses stageMastered', () {
         final color = ProgressStage.mastered.getColor(lightColors);
-        expect(color, lightColors.success);
+        expect(color, lightColors.stageMastered);
       });
     });
 

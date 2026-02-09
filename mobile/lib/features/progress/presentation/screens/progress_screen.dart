@@ -5,6 +5,7 @@ import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/radius_tokens.dart';
 import '../../../../core/theme/spacing.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../domain/models/progress_stage.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../learn/providers/session_providers.dart';
 import '../../../learn/providers/streak_providers.dart';
@@ -17,12 +18,11 @@ class ProgressScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentStreak = ref.watch(currentStreakProvider);
     final longestStreak = ref.watch(longestStreakProvider);
-    final vocabularyCount = ref.watch(vocabularyCountProvider);
+    final stageCounts = ref.watch(vocabularyStageCountsProvider);
     final completedToday = ref.watch(hasCompletedTodayProvider);
 
     final streakValue = currentStreak.valueOrNull ?? 0;
     final longestValue = longestStreak.valueOrNull ?? 0;
-    final vocabularyValue = vocabularyCount.valueOrNull ?? 0;
     final completed = completedToday.valueOrNull ?? false;
 
     return Scaffold(
@@ -31,7 +31,7 @@ class ProgressScreen extends ConsumerWidget {
           onRefresh: () async {
             ref.invalidate(currentStreakProvider);
             ref.invalidate(longestStreakProvider);
-            ref.invalidate(vocabularyCountProvider);
+            ref.invalidate(vocabularyStageCountsProvider);
             ref.invalidate(hasCompletedTodayProvider);
           },
           child: ListView(
@@ -63,11 +63,7 @@ class ProgressScreen extends ConsumerWidget {
                 completedToday: completed,
               ),
               const SizedBox(height: AppSpacing.s3),
-              _DataCard(
-                label: 'Vocabulary',
-                value: '$vocabularyValue',
-                hint: 'words in your library',
-              ),
+              _VocabularyOverview(stageCounts: stageCounts),
             ],
           ),
         ),
@@ -183,49 +179,127 @@ class _StreakStat extends StatelessWidget {
   }
 }
 
-class _DataCard extends StatelessWidget {
-  const _DataCard({
-    required this.label,
-    required this.value,
-    required this.hint,
-  });
+/// Stage display order: mastered first (left) → captured last (right).
+const _stageOrder = [
+  ProgressStage.mastered,
+  ProgressStage.active,
+  ProgressStage.stabilizing,
+  ProgressStage.practicing,
+  ProgressStage.captured,
+];
 
-  final String label;
-  final String value;
-  final String hint;
+class _VocabularyOverview extends StatelessWidget {
+  const _VocabularyOverview({required this.stageCounts});
+
+  final AsyncValue<Map<ProgressStage, int>> stageCounts;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.masteryColors;
+
+    return stageCounts.when(
+      loading: () => _buildShell(colors, null),
+      error: (_, _) => _buildShell(colors, null),
+      data: (counts) => _buildShell(colors, counts),
+    );
+  }
+
+  Widget _buildShell(MasteryColorScheme colors, Map<ProgressStage, int>? counts) {
+    final total = counts?.values.fold(0, (a, b) => a + b) ?? 0;
+
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.s4),
+      padding: const EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
-        color: context.masteryColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: context.masteryColors.border),
+        color: colors.secondaryAction,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: MasteryTextStyles.caption.copyWith(
-              color: context.masteryColors.mutedForeground,
-            ),
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Vocabulary',
+                style: MasteryTextStyles.bodyBold.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+              Text(
+                '$total words',
+                style: MasteryTextStyles.caption.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s2 / 2),
-          Text(
-            value,
-            style: MasteryTextStyles.bodyBold.copyWith(
-              fontSize: 22,
-              color: context.masteryColors.foreground,
+          const SizedBox(height: AppSpacing.s3),
+
+          // Stacked bar
+          if (counts != null && total > 0)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: SizedBox(
+                height: 10,
+                child: Row(
+                  children: [
+                    for (final stage in _stageOrder)
+                      if ((counts[stage] ?? 0) > 0)
+                        Expanded(
+                          flex: counts[stage]!,
+                          child: Container(color: stage.getColor(colors)),
+                        ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: SizedBox(
+                height: 10,
+                child: Container(color: colors.muted),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.s1 / 2),
-          Text(
-            hint,
-            style: MasteryTextStyles.caption.copyWith(
-              color: context.masteryColors.mutedForeground,
-            ),
+          const SizedBox(height: AppSpacing.s3),
+
+          // Legend
+          Wrap(
+            spacing: AppSpacing.s4,
+            runSpacing: AppSpacing.s2,
+            children: [
+              for (final stage in _stageOrder)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: stage.getColor(colors),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s1),
+                    Text(
+                      stage.displayName,
+                      style: MasteryTextStyles.caption.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s1),
+                    Text(
+                      '${counts?[stage] ?? 0}',
+                      style: MasteryTextStyles.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.foreground,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ),
         ],
       ),

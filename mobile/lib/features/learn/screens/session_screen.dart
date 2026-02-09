@@ -28,7 +28,6 @@ import '../widgets/progress_micro_feedback.dart';
 import '../widgets/recall_card.dart';
 import '../widgets/recognition_card.dart';
 import '../widgets/session_progress_bar.dart';
-import '../widgets/session_timer.dart';
 import '../widgets/synonym_cue_card.dart';
 import 'session_complete_screen.dart';
 
@@ -61,7 +60,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   LearningSessionModel? _session;
   int _currentItemIndex = 0;
   int _elapsedSeconds = 0;
-  bool _isPaused = false;
+  Timer? _elapsedTimer;
   bool _isLoading = true;
   bool _isSessionComplete = false;
   bool _isSubmittingReview = false;
@@ -86,6 +85,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   void initState() {
     super.initState();
     _initializeSession();
+  }
+
+  @override
+  void dispose() {
+    _elapsedTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeSession() async {
@@ -213,7 +218,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (mounted) {
         setState(() {
           _items = initialItems;
-          _estimatedTotalItems = params.maxItems;
+          _estimatedTotalItems = params.estimatedItemCount;
           _newWordsQueued = newWords;
           _newWordCap = params.newWordCap;
           _session = activeSession;
@@ -224,6 +229,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _isLoading = false;
           _itemStartTime = DateTime.now();
         });
+        _startElapsedTimer();
       }
     } catch (e, stackTrace) {
       debugPrint('[Session] Failed to initialize session: $e');
@@ -319,20 +325,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  void _handleTimerTick(int seconds) {
-    setState(() {
-      _elapsedSeconds = seconds;
+  void _startElapsedTimer() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _elapsedSeconds++;
+      });
+      // Save progress periodically (every 5 seconds)
+      if (_elapsedSeconds % 5 == 0 && _session != null) {
+        _saveProgress();
+      }
     });
-
-    // Save progress periodically (every 5 seconds)
-    if (seconds % 5 == 0 && _session != null) {
-      _saveProgress();
-    }
-  }
-
-  void _handleTimeUp() {
-    // Allow current item to finish, then complete
-    _completeSession();
   }
 
   Future<void> _handleRecognitionAnswer(String selected, bool isCorrect) async {
@@ -396,18 +400,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         interactionMode: currentItem.interactionMode,
       );
 
-      // Save updated card to Supabase
-      await dataService.updateLearningCard(
-        cardId: currentItem.cardId,
-        state: result.updatedCard.state,
-        due: result.updatedCard.due,
-        stability: result.updatedCard.stability,
-        difficulty: result.updatedCard.difficulty,
-        reps: result.updatedCard.reps,
-        lapses: result.updatedCard.lapses,
-        isLeech: result.updatedCard.isLeech,
-      );
-
       // Calculate stage AFTER review (count may have changed if this was a success)
       final isNonTransSuccess =
           rating >= 3 &&
@@ -426,6 +418,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final stageAfter = _progressStageService.calculateStage(
         card: updatedCard,
         nonTranslationSuccessCount: nonTransSuccessAfter,
+      );
+
+      // Save updated card to Supabase (including computed progress stage)
+      await dataService.updateLearningCard(
+        cardId: currentItem.cardId,
+        state: result.updatedCard.state,
+        due: result.updatedCard.due,
+        stability: result.updatedCard.stability,
+        difficulty: result.updatedCard.difficulty,
+        reps: result.updatedCard.reps,
+        lapses: result.updatedCard.lapses,
+        isLeech: result.updatedCard.isLeech,
+        progressStage: stageAfter.toDbString(),
       );
 
       // Record transition if stage changed (and progressed forward)
@@ -484,16 +489,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Move to next item or complete
       final nextIndex = _currentItemIndex + 1;
 
-      // Check if time is up
-      final totalSeconds =
-          _session!.plannedMinutes * 60 + _session!.bonusSeconds;
-      final timeUp = _elapsedSeconds >= totalSeconds;
-
-      if (timeUp) {
-        await _completeSession();
-        return;
-      }
-
       // If we've exhausted the current batch, fetch more before proceeding
       if (nextIndex >= _items.length) {
         await _maybePrefetchMore(force: true);
@@ -539,25 +534,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   Future<void> _completeSession() async {
     if (_session == null || _isSessionComplete) return;
+    _elapsedTimer?.cancel();
 
     final dataService = ref.read(supabaseDataServiceProvider);
     final userId = ref.read(currentUserProvider).valueOrNull?.id;
     if (userId == null) return;
 
-    // Determine outcome
+    // Determine outcome — session is always item-based now,
+    // but mark as "complete" if all items were exhausted
     final totalSeconds = _session!.plannedMinutes * 60;
-    final outcome = _elapsedSeconds >= totalSeconds
+    final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
+    final outcome = allItemsExhausted
         ? SessionOutcomeEnum.complete
         : SessionOutcomeEnum.partial;
-
-    final allItemsExhausted = _currentItemIndex + 1 >= _items.length;
-    final reason = _elapsedSeconds >= totalSeconds
-        ? 'time up'
-        : 'items exhausted';
-    debugPrint(
-      '[Session] Complete: reason=$reason, total reviewed=${_currentItemIndex + 1}, '
-      'allItemsExhausted=$allItemsExhausted',
-    );
 
     await dataService.endSession(
       sessionId: _session!.id,
@@ -609,13 +598,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  void _togglePause() {
-    setState(() {
-      _isPaused = !_isPaused;
-    });
-  }
-
   Future<void> _handleClosePressed() async {
+    _elapsedTimer?.cancel();
     await _saveProgress();
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -683,7 +667,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
 
-    final totalSeconds = _session!.plannedMinutes * 60 + _session!.bonusSeconds;
     final currentItem = _currentItemIndex < _items.length
         ? _items[_currentItemIndex]
         : null;
@@ -692,83 +675,31 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header with timer and progress
+            // Header with close button and progress bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: colors.cardBackground,
                 border: Border(bottom: BorderSide(color: colors.border)),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      // Close button
-                      IconButton(
-                        onPressed: _handleClosePressed,
-                        icon: Icon(Icons.close, color: colors.mutedForeground),
-                      ),
-                      // Timer
-                      Expanded(
-                        child: SessionTimer(
-                          totalSeconds: totalSeconds,
-                          onTimeUp: _handleTimeUp,
-                          onTick: _handleTimerTick,
-                          isPaused: _isPaused,
-                          initialElapsed: _elapsedSeconds,
-                        ),
-                      ),
-                      // Pause button
-                      IconButton(
-                        onPressed: _togglePause,
-                        icon: Icon(
-                          _isPaused ? Icons.play_arrow : Icons.pause,
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
+                  IconButton(
+                    onPressed: _handleClosePressed,
+                    icon: Icon(Icons.close, color: colors.mutedForeground),
                   ),
-                  const SizedBox(height: 8),
-                  // Progress bar
-                  SessionProgressBar(
-                    completedItems: _currentItemIndex,
-                    totalItems: _estimatedTotalItems,
+                  Expanded(
+                    child: SessionProgressBar(
+                      completedItems: _currentItemIndex,
+                      totalItems: _estimatedTotalItems,
+                    ),
                   ),
+                  const SizedBox(width: 48), // Balance close button width
                 ],
               ),
             ),
 
-            // Pause overlay
-            if (_isPaused)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.pause_circle_outline,
-                        size: 64,
-                        color: colors.mutedForeground,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Session Paused',
-                        style: MasteryTextStyles.bodyBold.copyWith(
-                          color: colors.foreground,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap the play button to continue',
-                        style: MasteryTextStyles.bodySmall.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else if (currentItem != null)
+            if (currentItem != null)
               // Current item card - now uses SessionCard data directly!
               Expanded(
                 child: Stack(

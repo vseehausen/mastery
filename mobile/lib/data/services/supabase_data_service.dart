@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/app_defaults.dart';
+import '../../domain/models/progress_stage.dart';
 
 /// Service that wraps Supabase queries for direct data access.
 /// Replaces Drift/SQLite repositories with cloud-first approach.
@@ -45,7 +46,7 @@ class SupabaseDataService {
         .select()
         .eq('user_id', userId)
         .isFilter('deleted_at', null)
-        .ilike('word', '%$query%')
+        .or('word.ilike.%$query%,stem.ilike.%$query%')
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(response as List);
   }
@@ -264,8 +265,11 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
-  /// Get count of overdue cards
+  /// Get count of overdue cards (only enriched vocabulary with meanings)
   Future<int> getOverdueCount(String userId) async {
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return 0;
+
     final now = DateTime.now().toUtc().toIso8601String();
     final response = await _client
         .from('learning_cards')
@@ -274,6 +278,7 @@ class SupabaseDataService {
         .isFilter('deleted_at', null)
         .lte('due', now)
         .gt('state', 0) // Exclude new cards
+        .inFilter('vocabulary_id', enrichedIds)
         .count(CountOption.exact);
     return response.count;
   }
@@ -350,22 +355,48 @@ class SupabaseDataService {
     required int reps,
     required int lapses,
     required bool isLeech,
+    String? progressStage,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await _client
-        .from('learning_cards')
-        .update({
-          'state': state,
-          'due': due.toUtc().toIso8601String(),
-          'stability': stability,
-          'difficulty': difficulty,
-          'reps': reps,
-          'lapses': lapses,
-          'is_leech': isLeech,
-          'last_review': now,
-          'updated_at': now,
-        })
-        .eq('id', cardId);
+    final map = <String, dynamic>{
+      'state': state,
+      'due': due.toUtc().toIso8601String(),
+      'stability': stability,
+      'difficulty': difficulty,
+      'reps': reps,
+      'lapses': lapses,
+      'is_leech': isLeech,
+      'last_review': now,
+      'updated_at': now,
+    };
+    if (progressStage != null) {
+      map['progress_stage'] = progressStage;
+    }
+    await _client.from('learning_cards').update(map).eq('id', cardId);
+  }
+
+  /// Get vocabulary counts grouped by progress stage via RPC.
+  Future<Map<ProgressStage, int>> getVocabularyStageCounts(
+    String userId,
+  ) async {
+    final response = await _client.rpc<List<dynamic>>(
+      'get_vocabulary_stage_counts',
+      params: {'p_user_id': userId},
+    );
+    final rows = List<Map<String, dynamic>>.from(response);
+    final counts = {for (final s in ProgressStage.values) s: 0};
+    for (final row in rows) {
+      final stageName = row['stage'] as String;
+      final count = (row['count'] as num).toInt();
+      // Aggregate (captured may appear twice: from cards + from vocab without cards)
+      try {
+        final stage = ProgressStage.fromString(stageName);
+        counts[stage] = (counts[stage] ?? 0) + count;
+      } catch (_) {
+        // Skip unknown stages
+      }
+    }
+    return counts;
   }
 
   // ===========================================================================

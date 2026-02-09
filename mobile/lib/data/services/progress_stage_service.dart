@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:mastery/domain/models/learning_card.dart';
 import 'package:mastery/domain/models/progress_stage.dart';
 
@@ -33,7 +33,6 @@ class ProgressStageService {
     try {
       // No card yet → Captured (word exists in vocabulary but not reviewed)
       if (card == null) {
-        _logCalculation('Captured', 'No learning card exists', stopwatch);
         return ProgressStage.captured;
       }
 
@@ -43,11 +42,6 @@ class ProgressStageService {
           card.reps >= 12 &&
           card.lapses <= 1 &&
           card.state == 2) {
-        _logCalculation(
-          'Mastered',
-          'stability=${card.stability}, reps=${card.reps}, lapses=${card.lapses}, state=${card.state}',
-          stopwatch,
-        );
         return ProgressStage.mastered;
       }
 
@@ -58,12 +52,6 @@ class ProgressStageService {
           card.lapses <= 2 &&
           card.state == 2 &&
           nonTranslationSuccessCount >= 1) {
-        _logCalculation(
-          'Active',
-          'stability=${card.stability}, reps=${card.reps}, lapses=${card.lapses}, '
-              'state=${card.state}, nonTransSuccess=$nonTranslationSuccessCount',
-          stopwatch,
-        );
         return ProgressStage.active;
       }
 
@@ -73,32 +61,17 @@ class ProgressStageService {
           card.reps >= 3 &&
           card.lapses <= 2 &&
           card.state == 2) {
-        _logCalculation(
-          'Stabilizing',
-          'stability=${card.stability}, reps=${card.reps}, lapses=${card.lapses}, state=${card.state}',
-          stopwatch,
-        );
         return ProgressStage.stabilizing;
       }
 
       // Check for Practicing (at least one review completed)
       // Any card with reps >= 1 is being actively practiced
       if (card.reps >= 1) {
-        _logCalculation(
-          'Practicing',
-          'reps=${card.reps}, state=${card.state}',
-          stopwatch,
-        );
         return ProgressStage.practicing;
       }
 
       // Fallback: Card exists but no reviews yet → Captured
-      // This shouldn't normally happen (card created on first review), but handle gracefully
-      _logCalculation(
-        'Captured',
-        'Card exists but reps=0 (unusual state)',
-        stopwatch,
-      );
+      // Normal state for newly captured words before first review
       return ProgressStage.captured;
     } finally {
       stopwatch.stop();
@@ -107,15 +80,6 @@ class ProgressStageService {
           '⚠️ ProgressStageService: Stage calculation took ${stopwatch.elapsedMilliseconds}ms (>50ms threshold)',
         );
       }
-    }
-  }
-
-  /// Logs stage calculation details in debug mode.
-  void _logCalculation(String stage, String details, Stopwatch stopwatch) {
-    if (kDebugMode) {
-      debugPrint(
-        'ProgressStageService: $stage ($details) [${stopwatch.elapsedMilliseconds}ms]',
-      );
     }
   }
 }

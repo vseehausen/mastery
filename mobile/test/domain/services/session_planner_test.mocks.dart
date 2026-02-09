@@ -6,7 +6,8 @@
 import 'dart:async' as _i3;
 
 import 'package:mastery/data/services/supabase_data_service.dart' as _i2;
-import 'package:mastery/domain/services/telemetry_service.dart' as _i4;
+import 'package:mastery/domain/models/progress_stage.dart' as _i4;
+import 'package:mastery/domain/services/telemetry_service.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -72,6 +73,15 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<int>);
 
   @override
+  _i3.Future<void> deleteVocabulary(String? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteVocabulary, [id]),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
+
+  @override
   _i3.Future<List<Map<String, dynamic>>> getMeanings(String? vocabularyId) =>
       (super.noSuchMethod(
             Invocation.method(#getMeanings, [vocabularyId]),
@@ -96,6 +106,16 @@ class MockSupabaseDataService extends _i1.Mock
             returnValue: _i3.Future<List<String>>.value(<String>[]),
           )
           as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<Map<String, String>> getAllPrimaryTranslations(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllPrimaryTranslations, [userId]),
+            returnValue: _i3.Future<Map<String, String>>.value(
+              <String, String>{},
+            ),
+          )
+          as _i3.Future<Map<String, String>>);
 
   @override
   _i3.Future<void> updateMeaning({
@@ -166,6 +186,14 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<Map<String, dynamic>?>);
 
   @override
+  _i3.Future<int> getNonTranslationSuccessCount(String? learningCardId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getNonTranslationSuccessCount, [learningCardId]),
+            returnValue: _i3.Future<int>.value(0),
+          )
+          as _i3.Future<int>);
+
+  @override
   _i3.Future<List<Map<String, dynamic>>> getDueCards(
     String? userId, {
     int? limit,
@@ -227,6 +255,7 @@ class MockSupabaseDataService extends _i1.Mock
     required int? reps,
     required int? lapses,
     required bool? isLeech,
+    String? progressStage,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updateLearningCard, [], {
@@ -238,11 +267,24 @@ class MockSupabaseDataService extends _i1.Mock
               #reps: reps,
               #lapses: lapses,
               #isLeech: isLeech,
+              #progressStage: progressStage,
             }),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
           as _i3.Future<void>);
+
+  @override
+  _i3.Future<Map<_i4.ProgressStage, int>> getVocabularyStageCounts(
+    String? userId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getVocabularyStageCounts, [userId]),
+            returnValue: _i3.Future<Map<_i4.ProgressStage, int>>.value(
+              <_i4.ProgressStage, int>{},
+            ),
+          )
+          as _i3.Future<Map<_i4.ProgressStage, int>>);
 
   @override
   _i3.Future<void> insertReviewLog({
@@ -656,7 +698,7 @@ class MockSupabaseDataService extends _i1.Mock
 /// A class which mocks [TelemetryService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTelemetryService extends _i1.Mock implements _i4.TelemetryService {
+class MockTelemetryService extends _i1.Mock implements _i5.TelemetryService {
   MockTelemetryService() {
     _i1.throwOnMissingStub(this);
   }

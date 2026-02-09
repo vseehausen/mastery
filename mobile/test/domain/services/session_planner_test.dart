@@ -94,6 +94,9 @@ void main() {
         mockTelemetryService.getEstimatedSecondsPerItem(userId),
       ).thenAnswer((_) async => 15.0);
       when(mockDataService.getOverdueCount(userId)).thenAnswer((_) async => 0);
+      when(
+        mockDataService.countEnrichedNewWords(userId),
+      ).thenAnswer((_) async => 100); // Default: plenty of new words available
       when(mockDataService.getOrCreatePreferences(userId)).thenAnswer(
         (_) async => {
           'new_word_suppression_active': false,
@@ -613,10 +616,12 @@ void main() {
         expect(params.maxItems, 0);
         expect(params.newWordCap, 0);
         expect(params.estimatedSecondsPerItem, 0);
+        expect(params.estimatedItemCount, 0);
       });
 
       test('computes correct capacity and new word cap', () async {
         // 10 min * 60 / 15 sec = 40 items
+        // overdue=0, newWordCap=5, availableNewWords=100 → estimated=min(40, 0+5)=5
         final params = await planner.computeSessionParams(
           userId: userId,
           timeTargetMinutes: 10,
@@ -626,6 +631,52 @@ void main() {
         expect(params.maxItems, 40);
         expect(params.newWordCap, 5);
         expect(params.estimatedSecondsPerItem, 15.0);
+        expect(params.estimatedItemCount, 5);
+      });
+
+      test('estimatedItemCount includes overdue reviews', () async {
+        when(
+          mockDataService.getOverdueCount(userId),
+        ).thenAnswer((_) async => 10);
+
+        // overdue=10, newWordCap=5, availableNewWords=100 → estimated=min(40, 10+5)=15
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 10,
+          intensity: 1,
+        );
+
+        expect(params.estimatedItemCount, 15);
+      });
+
+      test('estimatedItemCount capped by maxItems', () async {
+        when(
+          mockDataService.getOverdueCount(userId),
+        ).thenAnswer((_) async => 50);
+
+        // overdue=50, newWordCap=5, availableNewWords=100 → estimated=min(40, 50+5)=40
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 10,
+          intensity: 1,
+        );
+
+        expect(params.estimatedItemCount, 40);
+      });
+
+      test('estimatedItemCount limited by available new words', () async {
+        when(
+          mockDataService.countEnrichedNewWords(userId),
+        ).thenAnswer((_) async => 2);
+
+        // overdue=0, newWordCap=5, availableNewWords=2 → estimated=min(40, 0+2)=2
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 10,
+          intensity: 1,
+        );
+
+        expect(params.estimatedItemCount, 2);
       });
 
       test('suppresses new words when overdue count is high', () async {
@@ -641,6 +692,7 @@ void main() {
 
         expect(params.maxItems, 40);
         expect(params.newWordCap, 0); // Suppressed
+        expect(params.estimatedItemCount, 40); // Capped at maxItems
       });
     });
 

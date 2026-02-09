@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:math' show min;
 
 import '../../data/services/supabase_data_service.dart';
 import '../models/learning_enums.dart';
@@ -23,6 +24,7 @@ class SessionParams {
     required this.maxItems,
     required this.newWordCap,
     required this.estimatedSecondsPerItem,
+    required this.estimatedItemCount,
   });
 
   /// Total session capacity (number of items that fit in the time budget)
@@ -33,6 +35,9 @@ class SessionParams {
 
   /// Estimated seconds per item from telemetry
   final double estimatedSecondsPerItem;
+
+  /// Estimated actual items available (overdue reviews + capped new words)
+  final int estimatedItemCount;
 }
 
 /// Service for building time-boxed session plans
@@ -66,6 +71,7 @@ class SessionPlanner {
         maxItems: 0,
         newWordCap: 0,
         estimatedSecondsPerItem: 0,
+        estimatedItemCount: 0,
       );
     }
 
@@ -91,10 +97,17 @@ class SessionPlanner {
         ? 0
         : Intensity.getNewWordCap(intensity, timeTargetMinutes);
 
+    final availableNewWords = await _dataService.countEnrichedNewWords(userId);
+    final estimatedItemCount = min<int>(
+      maxItems,
+      overdueCount + min<int>(newWordCap, availableNewWords),
+    );
+
     return SessionParams(
       maxItems: maxItems,
       newWordCap: newWordCap,
       estimatedSecondsPerItem: estimatedSecondsPerItem,
+      estimatedItemCount: estimatedItemCount,
     );
   }
 
@@ -153,14 +166,6 @@ class SessionPlanner {
         ),
       );
     }
-
-    final words = items.map((i) => i.word).join(', ');
-    developer.log(
-      'fetchBatch returned ${items.length} items '
-      '(fetched ${allCards.length}, excluded ${excludeCardIds.length}, '
-      'newWords=$newWordCount/$newWordCap) - words: $words',
-      name: 'SessionPlanner',
-    );
 
     return items;
   }

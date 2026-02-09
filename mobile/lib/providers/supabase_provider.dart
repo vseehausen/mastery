@@ -7,6 +7,7 @@ import '../domain/models/encounter.dart';
 import '../domain/models/learning_card.dart';
 import '../domain/models/learning_session.dart';
 import '../domain/models/meaning.dart';
+import '../domain/models/progress_stage.dart';
 import '../domain/models/source.dart';
 import '../domain/models/streak.dart';
 import '../domain/models/user_preferences.dart';
@@ -77,6 +78,15 @@ final enrichedVocabularyIdsProvider = FutureProvider.autoDispose<Set<String>>((
   final service = ref.watch(supabaseDataServiceProvider);
   final list = await service.getEnrichedVocabularyIds(userId);
   return list.toSet();
+});
+
+/// Provider for vocabulary counts grouped by progress stage
+final vocabularyStageCountsProvider =
+    FutureProvider.autoDispose<Map<ProgressStage, int>>((ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return {};
+  final service = ref.watch(supabaseDataServiceProvider);
+  return service.getVocabularyStageCounts(userId);
 });
 
 // =============================================================================
