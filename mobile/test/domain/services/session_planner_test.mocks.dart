@@ -413,6 +413,34 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<void>);
 
   @override
+  _i3.Future<int> getNewCardCount(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getNewCardCount, [userId]),
+            returnValue: _i3.Future<int>.value(0),
+          )
+          as _i3.Future<int>);
+
+  @override
+  _i3.Future<({double? accuracyPercent, int itemsReviewed})?>
+  getTodaySessionStats(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getTodaySessionStats, [userId]),
+            returnValue:
+                _i3.Future<
+                  ({double? accuracyPercent, int itemsReviewed})?
+                >.value(),
+          )
+          as _i3.Future<({double? accuracyPercent, int itemsReviewed})?>);
+
+  @override
+  _i3.Future<DateTime?> getNextDueDate(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getNextDueDate, [userId]),
+            returnValue: _i3.Future<DateTime?>.value(),
+          )
+          as _i3.Future<DateTime?>);
+
+  @override
   _i3.Future<Map<String, dynamic>> getOrCreatePreferences(String? userId) =>
       (super.noSuchMethod(
             Invocation.method(#getOrCreatePreferences, [userId]),

@@ -559,6 +559,81 @@ class SupabaseDataService {
         .eq('id', sessionId);
   }
 
+  /// Get count of new cards (only enriched vocabulary with meanings)
+  Future<int> getNewCardCount(String userId) async {
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return 0;
+
+    final response = await _client
+        .from('learning_cards')
+        .select()
+        .eq('user_id', userId)
+        .isFilter('deleted_at', null)
+        .eq('state', 0)
+        .inFilter('vocabulary_id', enrichedIds)
+        .count(CountOption.exact);
+    return response.count;
+  }
+
+  /// Get today's completed session stats (items reviewed + accuracy)
+  Future<({int itemsReviewed, double? accuracyPercent})?> getTodaySessionStats(String userId) async {
+    final today = DateTime.now().toUtc();
+    final startOfDay = DateTime.utc(today.year, today.month, today.day);
+
+    final response = await _client
+        .from('learning_sessions')
+        .select('items_completed, accuracy_rate')
+        .eq('user_id', userId)
+        .gt('outcome', 0)
+        .gte('started_at', startOfDay.toIso8601String())
+        .order('started_at', ascending: false);
+
+    final sessions = List<Map<String, dynamic>>.from(response as List);
+    if (sessions.isEmpty) return null;
+
+    var totalItems = 0;
+    var totalAccuracy = 0.0;
+    var accuracyCount = 0;
+
+    for (final session in sessions) {
+      totalItems += (session['items_completed'] as int?) ?? 0;
+      final accuracy = session['accuracy_rate'] as num?;
+      if (accuracy != null) {
+        totalAccuracy += accuracy.toDouble();
+        accuracyCount++;
+      }
+    }
+
+    return (
+      itemsReviewed: totalItems,
+      accuracyPercent: accuracyCount > 0
+          ? (totalAccuracy / accuracyCount * 100)
+          : null,
+    );
+  }
+
+  /// Get the next future due date for enriched learning cards
+  Future<DateTime?> getNextDueDate(String userId) async {
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return null;
+
+    final now = DateTime.now().toUtc().toIso8601String();
+    final response = await _client
+        .from('learning_cards')
+        .select('due')
+        .eq('user_id', userId)
+        .isFilter('deleted_at', null)
+        .gt('state', 0)
+        .gt('due', now)
+        .inFilter('vocabulary_id', enrichedIds)
+        .order('due')
+        .limit(1)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return DateTime.parse(response['due'] as String);
+  }
+
   // ===========================================================================
   // User Preferences
   // ===========================================================================

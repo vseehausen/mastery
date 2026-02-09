@@ -98,6 +98,49 @@ Future<bool> hasItemsToReview(Ref ref) async {
   return false;
 }
 
+/// Provides the count of items available for review (due + new cards)
+@riverpod
+Future<int> dueItemCount(Ref ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+  final userId = currentUser.valueOrNull?.id;
+  if (userId == null) return 0;
+
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final overdueCount = await dataService.getOverdueCount(userId);
+  final newCount = await dataService.getNewCardCount(userId);
+  return overdueCount + newCount;
+}
+
+/// Provides today's session stats (items reviewed + accuracy)
+@riverpod
+Future<({int itemsReviewed, double? accuracyPercent})?> todaySessionStats(Ref ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+  final userId = currentUser.valueOrNull?.id;
+  if (userId == null) return null;
+
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  return dataService.getTodaySessionStats(userId);
+}
+
+/// Provides the label for next review time (e.g. "Next review in 3 days")
+@riverpod
+Future<String?> nextReviewLabel(Ref ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+  final userId = currentUser.valueOrNull?.id;
+  if (userId == null) return null;
+
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final nextDue = await dataService.getNextDueDate(userId);
+  if (nextDue == null) return null;
+
+  final now = DateTime.now().toUtc();
+  final diff = nextDue.difference(now);
+
+  if (diff.inDays == 0) return 'Next review later today';
+  if (diff.inDays == 1) return 'Next review tomorrow';
+  return 'Next review in ${diff.inDays} days';
+}
+
 // =============================================================================
 // Active Session Providers
 // =============================================================================

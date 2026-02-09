@@ -6,7 +6,7 @@ part of 'session_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dailyTimeTargetHash() => r'b245bb86fcfaa0b0148a18f0834ef0de0561bea9';
+String _$dailyTimeTargetHash() => r'5dd3b6885c47b03b00dd9bb9b443a583e54ada24';
 
 /// Provides the user's daily time target in minutes
 ///
@@ -44,7 +44,7 @@ final hasCompletedTodayProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HasCompletedTodayRef = AutoDisposeFutureProviderRef<bool>;
-String _$todayProgressHash() => r'4953370ad125c677788ae056760bb12c04d9e5cb';
+String _$todayProgressHash() => r'1efef7286383b0a6cda5e950a8faa5fdd10a80a2';
 
 /// Provides today's progress (0.0 to 1.0)
 ///
@@ -82,6 +82,69 @@ final hasItemsToReviewProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HasItemsToReviewRef = AutoDisposeFutureProviderRef<bool>;
+String _$dueItemCountHash() => r'da95732caa0fbc0b3d8942fa23836e097c6b3240';
+
+/// Provides the count of items available for review (due + new cards)
+///
+/// Copied from [dueItemCount].
+@ProviderFor(dueItemCount)
+final dueItemCountProvider = AutoDisposeFutureProvider<int>.internal(
+  dueItemCount,
+  name: r'dueItemCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$dueItemCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DueItemCountRef = AutoDisposeFutureProviderRef<int>;
+String _$todaySessionStatsHash() => r'a6595556aa18e7b95d98b9a54ef38665fac1207f';
+
+/// Provides today's session stats (items reviewed + accuracy)
+///
+/// Copied from [todaySessionStats].
+@ProviderFor(todaySessionStats)
+final todaySessionStatsProvider =
+    AutoDisposeFutureProvider<
+      ({int itemsReviewed, double? accuracyPercent})?
+    >.internal(
+      todaySessionStats,
+      name: r'todaySessionStatsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$todaySessionStatsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef TodaySessionStatsRef =
+    AutoDisposeFutureProviderRef<
+      ({int itemsReviewed, double? accuracyPercent})?
+    >;
+String _$nextReviewLabelHash() => r'a7881cee9b550dd6c552dc39c2462e5e4f9d4b2a';
+
+/// Provides the label for next review time (e.g. "Next review in 3 days")
+///
+/// Copied from [nextReviewLabel].
+@ProviderFor(nextReviewLabel)
+final nextReviewLabelProvider = AutoDisposeFutureProvider<String?>.internal(
+  nextReviewLabel,
+  name: r'nextReviewLabelProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$nextReviewLabelHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef NextReviewLabelRef = AutoDisposeFutureProviderRef<String?>;
 String _$activeSessionHash() => r'9a67a4fc6f7b0026ac1b8372a03874cc33dbacea';
 
 /// Provides the currently active session, if any
@@ -102,7 +165,7 @@ final activeSessionProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ActiveSessionRef = AutoDisposeFutureProviderRef<LearningSessionModel?>;
-String _$sessionPlanHash() => r'358249e2ba2c614275d2bd4dd5587da4e33b1486';
+String _$sessionPlanHash() => r'79e9ee63e6327ecf2f7cb05c0a244615ad36dee6';
 
 /// Provides the session plan for the current/new session
 ///
@@ -122,7 +185,7 @@ final sessionPlanProvider = AutoDisposeFutureProvider<SessionPlan?>.internal(
 // ignore: unused_element
 typedef SessionPlanRef = AutoDisposeFutureProviderRef<SessionPlan?>;
 String _$activeSessionNotifierHash() =>
-    r'47eb90f05bbd08e1ad7a6b68197281faa865b839';
+    r'7c10215b9a1ac70f33302ecc4bedb41632a01ee6';
 
 /// Notifier for managing active session state
 ///

@@ -99,7 +99,8 @@ enum IntensityEnum {
 
   /// Get new word cap for a given time budget
   int getNewWordCap(int timeMinutes) {
-    return (timeMinutes ~/ 10) * newWordsPerTenMinutes;
+    if (timeMinutes <= 0) return 0;
+    return (timeMinutes * newWordsPerTenMinutes / 10).ceil();
   }
 
   static IntensityEnum fromValue(int value) {
