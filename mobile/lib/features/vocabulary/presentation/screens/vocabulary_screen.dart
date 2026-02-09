@@ -114,7 +114,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                     stageMap[card.vocabularyId] = stageService.calculateStage(
                       card: card,
                       // Conservative: without batch query, assume 0.
-                      // Active/Mastered detection happens during sessions.
+                      // Known/Mastered detection happens during sessions.
                       nonTranslationSuccessCount: 0,
                     );
                   }
@@ -154,9 +154,9 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                             (v) => stageMap[v.id] == ProgressStage.stabilizing,
                           )
                           .toList();
-                    case VocabularyFilter.active:
+                    case VocabularyFilter.known:
                       filtered = filtered
-                          .where((v) => stageMap[v.id] == ProgressStage.active)
+                          .where((v) => stageMap[v.id] == ProgressStage.known)
                           .toList();
                     case VocabularyFilter.mastered:
                       filtered = filtered
@@ -281,7 +281,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
       case VocabularyFilter.captured:
       case VocabularyFilter.practicing:
       case VocabularyFilter.stabilizing:
-      case VocabularyFilter.active:
+      case VocabularyFilter.known:
       case VocabularyFilter.mastered:
         message = 'No words at this stage';
         subMessage = 'Words will appear here as they progress';

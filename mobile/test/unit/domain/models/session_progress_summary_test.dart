@@ -29,17 +29,17 @@ void main() {
         final summary = SessionProgressSummary(transitions);
 
         expect(summary.stabilizingCount, 2);
-        expect(summary.activeCount, 0);
+        expect(summary.knownCount, 0);
         expect(summary.masteredCount, 0);
       });
 
-      test('counts active transitions correctly', () {
+      test('counts known transitions correctly', () {
         final transitions = [
           StageTransition(
             vocabularyId: '1',
             wordText: 'word1',
             fromStage: ProgressStage.stabilizing,
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
         ];
@@ -47,7 +47,7 @@ void main() {
         final summary = SessionProgressSummary(transitions);
 
         expect(summary.stabilizingCount, 0);
-        expect(summary.activeCount, 1);
+        expect(summary.knownCount, 1);
         expect(summary.masteredCount, 0);
       });
 
@@ -56,7 +56,7 @@ void main() {
           StageTransition(
             vocabularyId: '1',
             wordText: 'word1',
-            fromStage: ProgressStage.active,
+            fromStage: ProgressStage.known,
             toStage: ProgressStage.mastered,
             timestamp: timestamp,
           ),
@@ -65,7 +65,7 @@ void main() {
         final summary = SessionProgressSummary(transitions);
 
         expect(summary.stabilizingCount, 0);
-        expect(summary.activeCount, 0);
+        expect(summary.knownCount, 0);
         expect(summary.masteredCount, 1);
       });
 
@@ -82,7 +82,7 @@ void main() {
             vocabularyId: '2',
             wordText: 'word2',
             fromStage: ProgressStage.stabilizing,
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
           StageTransition(
@@ -97,7 +97,7 @@ void main() {
         final summary = SessionProgressSummary(transitions);
 
         expect(summary.stabilizingCount, 2);
-        expect(summary.activeCount, 1);
+        expect(summary.knownCount, 1);
         expect(summary.masteredCount, 0);
       });
 
@@ -122,7 +122,7 @@ void main() {
         final summary = SessionProgressSummary(transitions);
 
         expect(summary.stabilizingCount, 0);
-        expect(summary.activeCount, 0);
+        expect(summary.knownCount, 0);
         expect(summary.masteredCount, 0);
       });
     });
@@ -151,12 +151,12 @@ void main() {
     });
 
     group('hasRareAchievements', () {
-      test('returns true for active transitions', () {
+      test('returns true for known transitions', () {
         final transitions = [
           StageTransition(
             vocabularyId: '1',
             wordText: 'word1',
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
         ];
@@ -257,7 +257,7 @@ void main() {
           StageTransition(
             vocabularyId: '3',
             wordText: 'word3',
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
         ];
@@ -266,7 +266,7 @@ void main() {
 
         expect(
           summary.toDisplayString(),
-          '2 words → Stabilizing • 1 word → Active',
+          '2 words → Stabilizing • 1 word → Known',
         );
       });
 
@@ -281,7 +281,7 @@ void main() {
           StageTransition(
             vocabularyId: '2',
             wordText: 'word2',
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
           StageTransition(
@@ -296,7 +296,7 @@ void main() {
 
         expect(
           summary.toDisplayString(),
-          '1 word → Stabilizing • 1 word → Active • 1 word → Mastered',
+          '1 word → Stabilizing • 1 word → Known • 1 word → Mastered',
         );
       });
 
@@ -335,7 +335,7 @@ void main() {
         expect(summary.transitions, isEmpty);
         expect(summary.hasTransitions, false);
         expect(summary.stabilizingCount, 0);
-        expect(summary.activeCount, 0);
+        expect(summary.knownCount, 0);
         expect(summary.masteredCount, 0);
       });
     });
@@ -373,7 +373,7 @@ void main() {
             vocabularyId: '2',
             wordText: 'word2',
             fromStage: ProgressStage.stabilizing,
-            toStage: ProgressStage.active,
+            toStage: ProgressStage.known,
             timestamp: timestamp,
           ),
         ]);

@@ -7,7 +7,7 @@
 
 ## Summary
 
-Introduce competence-based progress tracking for vocabulary words through five user-driven stages (Captured → Practicing → Stabilizing → Active → Mastered). Display real-time micro-feedback during learning sessions, post-session recaps, and persistent stage indicators in the vocabulary list. Progress is determined exclusively by user-driven learning events (reviews, recalls, non-translation retrievals) using deterministic logic aligned with Self-Determination Theory for intrinsic motivation.
+Introduce competence-based progress tracking for vocabulary words through five user-driven stages (New → Practicing → Stabilizing → Known → Mastered). Display real-time micro-feedback during learning sessions, post-session recaps, and persistent stage indicators in the vocabulary list. Progress is determined exclusively by user-driven learning events (reviews, recalls, non-translation retrievals) using deterministic logic aligned with Self-Determination Theory for intrinsic motivation.
 
 ## Technical Context
 
@@ -113,7 +113,7 @@ mobile/
 ├── lib/
 │   ├── domain/
 │   │   └── models/
-│   │       └── progress_stage.dart          # Enum: Captured, Practicing, Stabilizing, Active, Mastered
+│   │       └── progress_stage.dart          # Enum: New, Practicing, Stabilizing, Known, Mastered
 │   ├── data/
 │   │   ├── models/
 │   │   │   └── learning_event.dart          # Learning event data model
@@ -122,7 +122,7 @@ mobile/
 │   ├── features/
 │   │   ├── learn/
 │   │   │   └── widgets/
-│   │   │       └── progress_micro_feedback.dart  # "Stabilizing", "Active now" toast
+│   │   │       └── progress_micro_feedback.dart  # "Stabilizing", "Known now" toast
 │   │   ├── session/
 │   │   │   └── screens/
 │   │   │       └── session_complete_screen.dart  # Updated with progress recap

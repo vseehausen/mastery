@@ -68,12 +68,12 @@ void main() {
           isLeech: false,
           createdAt: now,
           updatedAt: now,
-          progressStage: ProgressStage.active,
+          progressStage: ProgressStage.known,
         );
 
         final json = card.toJson();
 
-        expect(json['progress_stage'], 'active');
+        expect(json['progress_stage'], 'known');
       });
 
       test('toJson handles null progress_stage', () {
@@ -139,9 +139,9 @@ void main() {
           progressStage: ProgressStage.stabilizing,
         );
 
-        final updated = original.copyWith(progressStage: ProgressStage.active);
+        final updated = original.copyWith(progressStage: ProgressStage.known);
 
-        expect(updated.progressStage, ProgressStage.active);
+        expect(updated.progressStage, ProgressStage.known);
         expect(updated.id, original.id); // other fields unchanged
       });
 
@@ -159,12 +159,12 @@ void main() {
           isLeech: false,
           createdAt: now,
           updatedAt: now,
-          progressStage: ProgressStage.active,
+          progressStage: ProgressStage.known,
         );
 
         final updated = original.copyWith(reps: 4);
 
-        expect(updated.progressStage, ProgressStage.active);
+        expect(updated.progressStage, ProgressStage.known);
         expect(updated.reps, 4);
       });
     });

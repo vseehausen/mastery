@@ -6,10 +6,10 @@ void main() {
   group('ProgressStage', () {
     group('displayName', () {
       test('returns correct display names for all stages', () {
-        expect(ProgressStage.captured.displayName, 'Captured');
+        expect(ProgressStage.captured.displayName, 'New');
         expect(ProgressStage.practicing.displayName, 'Practicing');
         expect(ProgressStage.stabilizing.displayName, 'Stabilizing');
-        expect(ProgressStage.active.displayName, 'Active');
+        expect(ProgressStage.known.displayName, 'Known');
         expect(ProgressStage.mastered.displayName, 'Mastered');
       });
     });
@@ -21,9 +21,9 @@ void main() {
         lightColors = MasteryColorScheme.light;
       });
 
-      test('captured uses stageCaptured', () {
+      test('captured uses stageNew', () {
         final color = ProgressStage.captured.getColor(lightColors);
-        expect(color, lightColors.stageCaptured);
+        expect(color, lightColors.stageNew);
       });
 
       test('practicing uses stagePracticing', () {
@@ -36,9 +36,9 @@ void main() {
         expect(color, lightColors.stageStabilizing);
       });
 
-      test('active uses stageActive', () {
-        final color = ProgressStage.active.getColor(lightColors);
-        expect(color, lightColors.stageActive);
+      test('active uses stageKnown', () {
+        final color = ProgressStage.known.getColor(lightColors);
+        expect(color, lightColors.stageKnown);
       });
 
       test('mastered uses stageMastered', () {
@@ -49,6 +49,7 @@ void main() {
 
     group('fromString', () {
       test('parses all valid stage names (lowercase)', () {
+        expect(ProgressStage.fromString('new'), ProgressStage.captured);
         expect(ProgressStage.fromString('captured'), ProgressStage.captured);
         expect(
           ProgressStage.fromString('practicing'),
@@ -58,12 +59,12 @@ void main() {
           ProgressStage.fromString('stabilizing'),
           ProgressStage.stabilizing,
         );
-        expect(ProgressStage.fromString('active'), ProgressStage.active);
+        expect(ProgressStage.fromString('active'), ProgressStage.known);
         expect(ProgressStage.fromString('mastered'), ProgressStage.mastered);
       });
 
       test('parses mixed case strings', () {
-        expect(ProgressStage.fromString('Captured'), ProgressStage.captured);
+        expect(ProgressStage.fromString('New'), ProgressStage.captured);
         expect(
           ProgressStage.fromString('PRACTICING'),
           ProgressStage.practicing,
@@ -72,6 +73,7 @@ void main() {
           ProgressStage.fromString('Stabilizing'),
           ProgressStage.stabilizing,
         );
+        expect(ProgressStage.fromString('KNOWN'), ProgressStage.known);
       });
 
       test('throws ArgumentError for invalid string', () {
@@ -86,10 +88,10 @@ void main() {
 
     group('toDbString', () {
       test('returns lowercase stage name for all stages', () {
-        expect(ProgressStage.captured.toDbString(), 'captured');
+        expect(ProgressStage.captured.toDbString(), 'new');
         expect(ProgressStage.practicing.toDbString(), 'practicing');
         expect(ProgressStage.stabilizing.toDbString(), 'stabilizing');
-        expect(ProgressStage.active.toDbString(), 'active');
+        expect(ProgressStage.known.toDbString(), 'known');
         expect(ProgressStage.mastered.toDbString(), 'mastered');
       });
 

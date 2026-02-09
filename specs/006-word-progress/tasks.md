@@ -35,7 +35,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 - [X] [TASK-002] [P0] Create ProgressStage enum at `mobile/lib/domain/models/progress_stage.dart`
   - Define 5 stages: captured, practicing, stabilizing, active, mastered
   - Implement `displayName` getter returning capitalized stage names
-  - Implement `getColor(MasteryColorScheme)` method mapping stages to colors (captured→mutedForeground, practicing/stabilizing→accent, active/mastered→success)
+  - Implement `getColor(MasteryColorScheme)` method mapping stages to colors (captured→mutedForeground, practicing/stabilizing→accent, known/mastered→success)
   - Add `fromString()` factory method for database deserialization
   - **Acceptance**: Enum compiles, all getters return correct values
   - **Test**: Unit test `progress_stage_test.dart` verifying displayName, color mapping, fromString
@@ -49,8 +49,8 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 - [X] [TASK-004] [P0] Create SessionProgressSummary model at `mobile/lib/domain/models/session_progress_summary.dart`
   - Field: transitions (List<StageTransition>)
-  - Computed getters: stabilizingCount, activeCount, masteredCount, hasTransitions, hasRareAchievements
-  - Method: `toDisplayString()` returning formatted summary (e.g., "2 words → Stabilizing • 1 word → Active")
+  - Computed getters: stabilizingCount, knownCount, masteredCount, hasTransitions, hasRareAchievements
+  - Method: `toDisplayString()` returning formatted summary (e.g., "2 words → Stabilizing • 1 word → Known")
   - **Acceptance**: Model compiles, computed properties calculate correctly
   - **Test**: Unit test with various transition lists verifying count logic, display formatting
 
@@ -63,10 +63,10 @@ Tasks are organized into phases aligned with user stories from spec.md:
 - [X] [TASK-005] [P0] Create ProgressStageService at `mobile/lib/data/services/progress_stage_service.dart`
   - Implement `calculateStage(LearningCard?, int nonTranslationSuccessCount)` method
   - Stage logic:
-    - No card → Captured
+    - No card → New
     - reps >= 1 → Practicing
     - stability >= 1.0 && reps >= 3 && lapses <= 2 && state == 2 → Stabilizing
-    - Stabilizing criteria + nonTranslationSuccessCount >= 1 → Active
+    - Stabilizing criteria + nonTranslationSuccessCount >= 1 → Known
     - stability >= 90 && reps >= 12 && lapses <= 1 && state == 2 → Mastered
   - Add debug logging for stage calculations
   - **Acceptance**: Service compiles, calculateStage returns correct stages for all cases
@@ -137,7 +137,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 - [X] [TASK-011] [P1] [US1] Verify US1 acceptance scenarios
   - AS1: Review word with multiple successful recalls → see "Stabilizing" feedback
-  - AS2: First correct non-translation review → see "Active now" feedback
+  - AS2: First correct non-translation review → see "Known now" feedback
   - AS3: Review word not meeting criteria → no feedback shown
   - AS4: Answer incorrectly → no progress feedback
   - **Acceptance**: All 4 acceptance scenarios pass manual testing
@@ -152,11 +152,11 @@ Tasks are organized into phases aligned with user stories from spec.md:
 - [X] [TASK-012] [P2] [US2] Extend SessionCompleteScreen at `mobile/lib/features/session/screens/session_complete_screen.dart`
   - Add conditional "Progress Made" card (only show if transitions exist)
   - Card layout: Title + icon/count/label rows for each transition type
-  - Order: Mastered → Active → Stabilizing (by significance)
+  - Order: Mastered → Known → Stabilizing (by significance)
   - Use MasteryTextStyles.h4 for title, MasteryTextStyles.body for counts
-  - Color coding: Stabilizing (amber/accent), Active (green/success), Mastered (emerald/success with emphasis)
-  - Add subtle pulse animation for rare achievements (active/mastered)
-  - Semantics: "2 words progressed to Stabilizing, 1 word became Active" (liveRegion: true)
+  - Color coding: Stabilizing (amber/accent), Known (green/success), Mastered (emerald/success with emphasis)
+  - Add subtle pulse animation for rare achievements (known/mastered)
+  - Semantics: "2 words progressed to Stabilizing, 1 word became Known" (liveRegion: true)
   - **Acceptance**: Card displays correctly with proper styling, only shows when transitions exist
   - **Test**: Widget test `test/widgets/session/session_complete_screen_test.dart`:
     - Card not shown when no transitions
@@ -174,10 +174,10 @@ Tasks are organized into phases aligned with user stories from spec.md:
 ### Testing & Verification
 
 - [X] [TASK-014] [P2] [US2] Verify US2 acceptance scenarios
-  - AS1: Session with 2 stabilized + 1 active → see "2 words stabilized • 1 word became Active"
+  - AS1: Session with 2 stabilized + 1 known → see "2 words stabilized • 1 word became Known"
   - AS2: Session with no transitions → see standard "Done ✅" without recap
   - AS3: Session with mastered word → recap highlights rare achievement
-  - AS4: Multiple transition types → summarized in order (Mastered → Active → Stabilizing)
+  - AS4: Multiple transition types → summarized in order (Mastered → Known → Stabilizing)
   - **Acceptance**: All 4 acceptance scenarios pass manual testing
   - **Test**: Manual test checklist on simulator with various session outcomes
 
@@ -210,7 +210,7 @@ Tasks are organized into phases aligned with user stories from spec.md:
 
 - [X] [TASK-018] [P3] [US3] Add filtering/sorting by progress stage to vocabulary list
   - Update VocabularyScreen at `mobile/lib/features/vocabulary/presentation/screens/vocabulary_screen.dart`
-  - Add filter dropdown for stage (All, Captured, Practicing, Stabilizing, Active, Mastered)
+  - Add filter dropdown for stage (All, New, Practicing, Stabilizing, Known, Mastered)
   - Add sort option by stage (in addition to existing sorts)
   - **Acceptance**: Filtering and sorting work correctly, vocabulary list updates
   - **Test**: Widget test verifying filter/sort controls update displayed words
@@ -218,8 +218,8 @@ Tasks are organized into phases aligned with user stories from spec.md:
 ### Testing & Verification
 
 - [X] [TASK-019] [P3] [US3] Verify US3 acceptance scenarios
-  - AS1: Word captured but not reviewed → shows "Captured"
-  - AS2: Word being practiced → shows correct stage (Practicing/Stabilizing/Active/Mastered)
+  - AS1: Word captured but not reviewed → shows "New"
+  - AS2: Word being practiced → shows correct stage (Practicing/Stabilizing/Known/Mastered)
   - AS3: Filter/sort by stage → easily identify words at specific stages
   - **Acceptance**: All 3 acceptance scenarios pass manual testing
   - **Test**: Manual test checklist on simulator with diverse vocabulary
@@ -247,9 +247,9 @@ Tasks are organized into phases aligned with user stories from spec.md:
 ### Accessibility
 
 - [X] [TASK-022] [P2] Verify color contrast for all progress stage colors
-  - Test Captured (mutedForeground) on Stone background
+  - Test New (mutedForeground) on Stone background
   - Test Practicing/Stabilizing (accent/amber) on Stone background
-  - Test Active/Mastered (success/green) on Stone background
+  - Test Known/Mastered (success/green) on Stone background
   - Use WebAIM Contrast Checker, ensure WCAG AA compliance
   - **Acceptance**: All stage colors meet WCAG AA contrast ratio (4.5:1 for text)
   - **Test**: Automated contrast checker or manual verification

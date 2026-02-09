@@ -11,8 +11,8 @@ void main() {
       service = ProgressStageService();
     });
 
-    group('Captured stage', () {
-      test('returns Captured when no card exists', () {
+    group('New stage', () {
+      test('returns New when no card exists', () {
         final stage = service.calculateStage(
           card: null,
           nonTranslationSuccessCount: 0,
@@ -21,7 +21,7 @@ void main() {
         expect(stage, ProgressStage.captured);
       });
 
-      test('returns Captured for card with 0 reps (edge case)', () {
+      test('returns New for card with 0 reps (edge case)', () {
         final card = _createCard(reps: 0, stability: 0, lapses: 0, state: 0);
 
         final stage = service.calculateStage(
@@ -155,8 +155,8 @@ void main() {
       });
     });
 
-    group('Active stage', () {
-      test('returns Active for card with non-translation success', () {
+    group('Known stage', () {
+      test('returns Known for card with non-translation success', () {
         final card = _createCard(reps: 3, stability: 1.0, lapses: 2, state: 2);
 
         final stage = service.calculateStage(
@@ -164,10 +164,10 @@ void main() {
           nonTranslationSuccessCount: 1,
         );
 
-        expect(stage, ProgressStage.active);
+        expect(stage, ProgressStage.known);
       });
 
-      test('returns Active with multiple non-translation successes', () {
+      test('returns Known with multiple non-translation successes', () {
         final card = _createCard(reps: 5, stability: 10.0, lapses: 0, state: 2);
 
         final stage = service.calculateStage(
@@ -175,7 +175,7 @@ void main() {
           nonTranslationSuccessCount: 5,
         );
 
-        expect(stage, ProgressStage.active);
+        expect(stage, ProgressStage.known);
       });
 
       test('returns Stabilizing without non-translation success', () {
@@ -186,7 +186,7 @@ void main() {
           nonTranslationSuccessCount: 0, // no non-translation success
         );
 
-        expect(stage, ProgressStage.stabilizing); // not Active
+        expect(stage, ProgressStage.stabilizing); // not Known
       });
     });
 
@@ -239,7 +239,7 @@ void main() {
         expect(stage, ProgressStage.mastered);
       });
 
-      test('returns Active when stability too low for Mastered', () {
+      test('returns Known when stability too low for Mastered', () {
         final card = _createCard(
           reps: 12,
           stability: 89.9, // just below threshold
@@ -252,10 +252,10 @@ void main() {
           nonTranslationSuccessCount: 1,
         );
 
-        expect(stage, ProgressStage.active); // not Mastered
+        expect(stage, ProgressStage.known); // not Mastered
       });
 
-      test('returns Active when reps too low for Mastered', () {
+      test('returns Known when reps too low for Mastered', () {
         final card = _createCard(
           reps: 11, // just below threshold
           stability: 90.0,
@@ -268,10 +268,10 @@ void main() {
           nonTranslationSuccessCount: 1,
         );
 
-        expect(stage, ProgressStage.active); // not Mastered
+        expect(stage, ProgressStage.known); // not Mastered
       });
 
-      test('returns Active when too many lapses for Mastered', () {
+      test('returns Known when too many lapses for Mastered', () {
         final card = _createCard(
           reps: 12,
           stability: 90.0,
@@ -284,12 +284,12 @@ void main() {
           nonTranslationSuccessCount: 1,
         );
 
-        expect(stage, ProgressStage.active); // not Mastered
+        expect(stage, ProgressStage.known); // not Mastered
       });
     });
 
     group('Regression paths', () {
-      test('regresses from Active to Practicing with high lapses', () {
+      test('regresses from Known to Practicing with high lapses', () {
         final card = _createCard(
           reps: 5,
           stability: 2.0,

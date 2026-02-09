@@ -25,7 +25,7 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.active),
+            body: ProgressMicroFeedback(stage: ProgressStage.known),
           ),
         ),
       );
@@ -44,12 +44,12 @@ void main() {
       expect(animatedOpacity.opacity, 1.0);
     });
 
-    testWidgets('displays correct color for Active stage', (tester) async {
+    testWidgets('displays correct color for Known stage', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.active),
+            body: ProgressMicroFeedback(stage: ProgressStage.known),
           ),
         ),
       );
@@ -59,12 +59,12 @@ void main() {
       // Find the container and check its color
       final container = tester.widget<Container>(
         find
-            .ancestor(of: find.text('Active'), matching: find.byType(Container))
+            .ancestor(of: find.text('Known'), matching: find.byType(Container))
             .first,
       );
 
       final decoration = container.decoration as BoxDecoration;
-      final expectedColor = ProgressStage.active.getColor(
+      final expectedColor = ProgressStage.known.getColor(
         MasteryColorScheme.light,
       );
       expect(decoration.color, expectedColor);
@@ -75,7 +75,7 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.active),
+            body: ProgressMicroFeedback(stage: ProgressStage.known),
           ),
         ),
       );
@@ -83,7 +83,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check text style
-      final textWidget = tester.widget<Text>(find.text('Active'));
+      final textWidget = tester.widget<Text>(find.text('Known'));
       expect(textWidget.style?.color, Colors.white);
       expect(textWidget.style?.fontSize, 12);
       expect(textWidget.style?.fontWeight, FontWeight.w600);
@@ -94,7 +94,7 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.active),
+            body: ProgressMicroFeedback(stage: ProgressStage.known),
           ),
         ),
       );
@@ -104,7 +104,7 @@ void main() {
       // Check container shape
       final container = tester.widget<Container>(
         find
-            .ancestor(of: find.text('Active'), matching: find.byType(Container))
+            .ancestor(of: find.text('Known'), matching: find.byType(Container))
             .first,
       );
       final decoration = container.decoration as BoxDecoration;
@@ -149,7 +149,7 @@ void main() {
             extensions: [MasteryColorScheme.dark],
           ),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.active),
+            body: ProgressMicroFeedback(stage: ProgressStage.known),
           ),
         ),
       );
@@ -157,7 +157,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should display without errors
-      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('Known'), findsOneWidget);
     });
 
     testWidgets('badge fades out after timeout', (tester) async {

@@ -8,7 +8,7 @@ enum VocabularyFilter {
   captured,
   practicing,
   stabilizing,
-  active,
+  known,
   mastered,
 }
 
@@ -36,7 +36,7 @@ class VocabularyFilterChips extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: 'Captured',
+            label: 'New',
             isSelected: selectedFilter == VocabularyFilter.captured,
             onTap: () => onFilterChanged(VocabularyFilter.captured),
           ),
@@ -54,9 +54,9 @@ class VocabularyFilterChips extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: 'Active',
-            isSelected: selectedFilter == VocabularyFilter.active,
-            onTap: () => onFilterChanged(VocabularyFilter.active),
+            label: 'Known',
+            isSelected: selectedFilter == VocabularyFilter.known,
+            onTap: () => onFilterChanged(VocabularyFilter.known),
           ),
           const SizedBox(width: 8),
           _FilterChip(

@@ -127,11 +127,11 @@ class MasteryColors {
   // VOCABULARY STAGES (stone/lime/teal/blue/amber)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Captured (Stone) — word captured, not yet reviewed
-  static const Color stageCapturedLight = Color(0xFF78716C); // stone-500
-  static const Color stageCapturedDark = Color(0xFFA8A29E); // stone-400
-  static const Color stageCapturedBgLight = Color(0xFFF5F5F4); // stone-100
-  static const Color stageCapturedBgDark = Color(0xFF292524); // stone-800
+  // New (Stone) — word captured, not yet reviewed
+  static const Color stageNewLight = Color(0xFF78716C); // stone-500
+  static const Color stageNewDark = Color(0xFFA8A29E); // stone-400
+  static const Color stageNewBgLight = Color(0xFFF5F5F4); // stone-100
+  static const Color stageNewBgDark = Color(0xFF292524); // stone-800
 
   // Practicing (Lime) — first review completed, in SRS rotation
   static const Color stagePracticingLight = Color(0xFF84CC16); // lime-500
@@ -145,11 +145,11 @@ class MasteryColors {
   static const Color stageStabilizingBgLight = Color(0xFFF0FDFA); // teal-50
   static const Color stageStabilizingBgDark = Color(0xFF134E4A); // teal-900
 
-  // Active (Blue) — production recall from non-translation cues
-  static const Color stageActiveLight = Color(0xFF2563EB); // blue-600
-  static const Color stageActiveDark = Color(0xFF60A5FA); // blue-400
-  static const Color stageActiveBgLight = Color(0xFFDBEAFE); // blue-100
-  static const Color stageActiveBgDark = Color(0xFF1E3A5F); // blue-900
+  // Known (Blue) — production recall from non-translation cues
+  static const Color stageKnownLight = Color(0xFF2563EB); // blue-600
+  static const Color stageKnownDark = Color(0xFF60A5FA); // blue-400
+  static const Color stageKnownBgLight = Color(0xFFDBEAFE); // blue-100
+  static const Color stageKnownBgDark = Color(0xFF1E3A5F); // blue-900
 
   // Mastered (Amber) — high stability, rare reviews
   static const Color stageMasteredLight = Color(0xFFF59E0B); // amber-500
@@ -235,14 +235,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     required this.infoForeground,
     required this.cueSynonym,
     required this.cueMultipleChoice,
-    required this.stageCaptured,
-    required this.stageCapturedBg,
+    required this.stageNew,
+    required this.stageNewBg,
     required this.stagePracticing,
     required this.stagePracticingBg,
     required this.stageStabilizing,
     required this.stageStabilizingBg,
-    required this.stageActive,
-    required this.stageActiveBg,
+    required this.stageKnown,
+    required this.stageKnownBg,
     required this.stageMastered,
     required this.stageMasteredBg,
   });
@@ -290,14 +290,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
   final Color cueMultipleChoice;
 
   // Vocabulary stages
-  final Color stageCaptured;
-  final Color stageCapturedBg;
+  final Color stageNew;
+  final Color stageNewBg;
   final Color stagePracticing;
   final Color stagePracticingBg;
   final Color stageStabilizing;
   final Color stageStabilizingBg;
-  final Color stageActive;
-  final Color stageActiveBg;
+  final Color stageKnown;
+  final Color stageKnownBg;
   final Color stageMastered;
   final Color stageMasteredBg;
 
@@ -333,14 +333,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     infoForeground: MasteryColors.infoForegroundLight,
     cueSynonym: MasteryColors.cueSynonymLight,
     cueMultipleChoice: MasteryColors.cueMultipleChoiceLight,
-    stageCaptured: MasteryColors.stageCapturedLight,
-    stageCapturedBg: MasteryColors.stageCapturedBgLight,
+    stageNew: MasteryColors.stageNewLight,
+    stageNewBg: MasteryColors.stageNewBgLight,
     stagePracticing: MasteryColors.stagePracticingLight,
     stagePracticingBg: MasteryColors.stagePracticingBgLight,
     stageStabilizing: MasteryColors.stageStabilizingLight,
     stageStabilizingBg: MasteryColors.stageStabilizingBgLight,
-    stageActive: MasteryColors.stageActiveLight,
-    stageActiveBg: MasteryColors.stageActiveBgLight,
+    stageKnown: MasteryColors.stageKnownLight,
+    stageKnownBg: MasteryColors.stageKnownBgLight,
     stageMastered: MasteryColors.stageMasteredLight,
     stageMasteredBg: MasteryColors.stageMasteredBgLight,
   );
@@ -377,14 +377,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     infoForeground: MasteryColors.infoForegroundDark,
     cueSynonym: MasteryColors.cueSynonymDark,
     cueMultipleChoice: MasteryColors.cueMultipleChoiceDark,
-    stageCaptured: MasteryColors.stageCapturedDark,
-    stageCapturedBg: MasteryColors.stageCapturedBgDark,
+    stageNew: MasteryColors.stageNewDark,
+    stageNewBg: MasteryColors.stageNewBgDark,
     stagePracticing: MasteryColors.stagePracticingDark,
     stagePracticingBg: MasteryColors.stagePracticingBgDark,
     stageStabilizing: MasteryColors.stageStabilizingDark,
     stageStabilizingBg: MasteryColors.stageStabilizingBgDark,
-    stageActive: MasteryColors.stageActiveDark,
-    stageActiveBg: MasteryColors.stageActiveBgDark,
+    stageKnown: MasteryColors.stageKnownDark,
+    stageKnownBg: MasteryColors.stageKnownBgDark,
     stageMastered: MasteryColors.stageMasteredDark,
     stageMasteredBg: MasteryColors.stageMasteredBgDark,
   );
@@ -421,14 +421,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     Color? infoForeground,
     Color? cueSynonym,
     Color? cueMultipleChoice,
-    Color? stageCaptured,
-    Color? stageCapturedBg,
+    Color? stageNew,
+    Color? stageNewBg,
     Color? stagePracticing,
     Color? stagePracticingBg,
     Color? stageStabilizing,
     Color? stageStabilizingBg,
-    Color? stageActive,
-    Color? stageActiveBg,
+    Color? stageKnown,
+    Color? stageKnownBg,
     Color? stageMastered,
     Color? stageMasteredBg,
   }) {
@@ -466,14 +466,14 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
       infoForeground: infoForeground ?? this.infoForeground,
       cueSynonym: cueSynonym ?? this.cueSynonym,
       cueMultipleChoice: cueMultipleChoice ?? this.cueMultipleChoice,
-      stageCaptured: stageCaptured ?? this.stageCaptured,
-      stageCapturedBg: stageCapturedBg ?? this.stageCapturedBg,
+      stageNew: stageNew ?? this.stageNew,
+      stageNewBg: stageNewBg ?? this.stageNewBg,
       stagePracticing: stagePracticing ?? this.stagePracticing,
       stagePracticingBg: stagePracticingBg ?? this.stagePracticingBg,
       stageStabilizing: stageStabilizing ?? this.stageStabilizing,
       stageStabilizingBg: stageStabilizingBg ?? this.stageStabilizingBg,
-      stageActive: stageActive ?? this.stageActive,
-      stageActiveBg: stageActiveBg ?? this.stageActiveBg,
+      stageKnown: stageKnown ?? this.stageKnown,
+      stageKnownBg: stageKnownBg ?? this.stageKnownBg,
       stageMastered: stageMastered ?? this.stageMastered,
       stageMasteredBg: stageMasteredBg ?? this.stageMasteredBg,
     );
@@ -552,8 +552,8 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
         other.cueMultipleChoice,
         t,
       )!,
-      stageCaptured: Color.lerp(stageCaptured, other.stageCaptured, t)!,
-      stageCapturedBg: Color.lerp(stageCapturedBg, other.stageCapturedBg, t)!,
+      stageNew: Color.lerp(stageNew, other.stageNew, t)!,
+      stageNewBg: Color.lerp(stageNewBg, other.stageNewBg, t)!,
       stagePracticing: Color.lerp(stagePracticing, other.stagePracticing, t)!,
       stagePracticingBg: Color.lerp(
         stagePracticingBg,
@@ -570,8 +570,8 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
         other.stageStabilizingBg,
         t,
       )!,
-      stageActive: Color.lerp(stageActive, other.stageActive, t)!,
-      stageActiveBg: Color.lerp(stageActiveBg, other.stageActiveBg, t)!,
+      stageKnown: Color.lerp(stageKnown, other.stageKnown, t)!,
+      stageKnownBg: Color.lerp(stageKnownBg, other.stageKnownBg, t)!,
       stageMastered: Color.lerp(stageMastered, other.stageMastered, t)!,
       stageMasteredBg: Color.lerp(stageMasteredBg, other.stageMasteredBg, t)!,
     );
@@ -589,4 +589,3 @@ extension MasteryThemeContext on BuildContext {
       Theme.of(this).extension<MasteryColorScheme>() ??
       MasteryColorScheme.light;
 }
-

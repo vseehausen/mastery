@@ -8,12 +8,12 @@ import '../../helpers/test_helpers.dart';
 void main() {
   group('ProgressStageBadge', () {
     group('displays correct stage name', () {
-      testWidgets('shows "Captured" for captured stage', (tester) async {
+      testWidgets('shows "New" for captured stage', (tester) async {
         await tester.pumpTestWidget(
           const ProgressStageBadge(stage: ProgressStage.captured),
         );
 
-        expect(find.text('Captured'), findsOneWidget);
+        expect(find.text('New'), findsOneWidget);
       });
 
       testWidgets('shows "Practicing" for practicing stage', (tester) async {
@@ -32,12 +32,12 @@ void main() {
         expect(find.text('Stabilizing'), findsOneWidget);
       });
 
-      testWidgets('shows "Active" for active stage', (tester) async {
+      testWidgets('shows "Known" for known stage', (tester) async {
         await tester.pumpTestWidget(
-          const ProgressStageBadge(stage: ProgressStage.active),
+          const ProgressStageBadge(stage: ProgressStage.known),
         );
 
-        expect(find.text('Active'), findsOneWidget);
+        expect(find.text('Known'), findsOneWidget);
       });
 
       testWidgets('shows "Mastered" for mastered stage', (tester) async {

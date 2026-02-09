@@ -314,17 +314,17 @@ class _ProgressMadeCard extends StatelessWidget {
               style: MasteryTextStyles.h4.copyWith(color: colors.foreground),
             ),
             const SizedBox(height: 12),
-            // Show in order: Mastered → Active → Stabilizing (by significance)
+            // Show in order: Mastered → Known → Stabilizing (by significance)
             if (summary.masteredCount > 0)
               _TransitionRow(
                 stage: ProgressStage.mastered,
                 count: summary.masteredCount,
                 isRare: true,
               ),
-            if (summary.activeCount > 0)
+            if (summary.knownCount > 0)
               _TransitionRow(
-                stage: ProgressStage.active,
-                count: summary.activeCount,
+                stage: ProgressStage.known,
+                count: summary.knownCount,
                 isRare: true,
               ),
             if (summary.stabilizingCount > 0)

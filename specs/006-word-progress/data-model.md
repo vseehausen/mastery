@@ -18,14 +18,14 @@ This document defines the data entities, relationships, and state transitions fo
 
 **Values**:
 - `captured` - Word captured from reading, not yet reviewed
-- `practicing` - Active in SRS rotation, early learning (first review completed)
+- `practicing` - in SRS rotation, early learning (first review completed)
 - `stabilizing` - Successful recalls across time, emerging consolidation
-- `active` - Retrieved from non-translation cues (production recall)
+- `known` - Retrieved from non-translation cues (production recall)
 - `mastered` - High stability, rare reviews, low lapse rate
 
 **Properties**:
 - Deterministic (computed from learning data, not stored as independent state)
-- One-way progression with regression rules (e.g., Active → Stabilizing if lapses increase)
+- One-way progression with regression rules (e.g., Known → Stabilizing if lapses increase)
 - Mapped to UI labels, colors, and semantic meanings
 
 **Dart Implementation**:
@@ -39,10 +39,10 @@ enum ProgressStage {
 
   String get displayName {
     switch (this) {
-      case captured: return 'Captured';
+      case captured: return 'New';
       case practicing: return 'Practicing';
       case stabilizing: return 'Stabilizing';
-      case active: return 'Active';
+      case known: return 'Known';
       case mastered: return 'Mastered';
     }
   }
@@ -52,7 +52,7 @@ enum ProgressStage {
       case captured: return colors.mutedForeground;
       case practicing: return colors.warning; // Amber
       case stabilizing: return colors.accent; // Amber
-      case active: return colors.success; // Green
+      case known: return colors.success; // Green
       case mastered: return colors.success.withValues(alpha: 0.8); // Emerald
     }
   }
@@ -107,7 +107,7 @@ class StageTransition {
 **Attributes**:
 - `transitions` (List<StageTransition>): All transitions during session
 - `stabilizingCount` (int): Count of words that reached Stabilizing
-- `activeCount` (int): Count of words that reached Active
+- `knownCount` (int): Count of words that reached Known
 - `masteredCount` (int): Count of words that reached Mastered
 - `hasTransitions` (bool): True if any transitions occurred
 
@@ -123,7 +123,7 @@ class SessionProgressSummary {
   SessionProgressSummary(this.transitions);
 
   int get stabilizingCount => transitions.where((t) => t.toStage == ProgressStage.stabilizing).length;
-  int get activeCount => transitions.where((t) => t.toStage == ProgressStage.active).length;
+  int get knownCount => transitions.where((t) => t.toStage == ProgressStage.active).length;
   int get masteredCount => transitions.where((t) => t.toStage == ProgressStage.mastered).length;
 
   bool get hasTransitions => transitions.isNotEmpty;
@@ -132,7 +132,7 @@ class SessionProgressSummary {
   String toDisplayString() {
     final parts = <String>[];
     if (stabilizingCount > 0) parts.add('$stabilizingCount word${stabilizingCount > 1 ? 's' : ''} → Stabilizing');
-    if (activeCount > 0) parts.add('$activeCount word${activeCount > 1 ? 's' : ''} → Active');
+    if (knownCount > 0) parts.add('$knownCount word${knownCount > 1 ? 's' : ''} → Known');
     if (masteredCount > 0) parts.add('$masteredCount word${masteredCount > 1 ? 's' : ''} → Mastered');
     return parts.join(' • ');
   }
@@ -187,7 +187,7 @@ CREATE INDEX IF NOT EXISTS idx_learning_cards_user_stage
 - `rating` (INTEGER): Grade given (1=Again, 2=Hard, 3=Good, 4=Easy)
 - `reviewed_at` (TIMESTAMPTZ): When review occurred
 
-**Query for Active Status**:
+**Query for Known Status**:
 ```sql
 -- Detect if word has achieved non-translation success
 SELECT COUNT(*) > 0 AS has_non_translation_success
@@ -231,7 +231,7 @@ WHERE learning_card_id = ?
 ┌─────────────────────────────────────────────────────────────┐
 │ 1. Fetch learning_card row (if exists)                      │
 │    → Extract: stability, state, reps, lapses                │
-│    → If no card: stage = Captured                           │
+│    → If no card: stage = New                           │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -307,7 +307,7 @@ Display recap on SessionCompleteScreen
 ### Stage Progression Diagram
 
 ```
-[Captured] ──first review (user action)──> [Practicing]
+[New] ──first review (user action)──> [Practicing]
                                                 │
                                                 │ stability >= 1.0
                                                 │ reps >= 3
@@ -321,7 +321,7 @@ Display recap on SessionCompleteScreen
                                                 │ (user reviews with
                                                 │  definition/synonym cues)
                                                 ▼
-                                             [Active]
+                                             [Known]
                                                 │
                                                 │ stability >= 90
                                                 │ reps >= 12
@@ -336,7 +336,7 @@ Display recap on SessionCompleteScreen
 ### Regression Paths
 
 ```
-[Mastered] ──lapses > 1 OR stability < 60──> [Active]
+[Mastered] ──lapses > 1 OR stability < 60──> [Known]
                                                 │
                                                 │ lapses > 2
                                                 │ OR stability < 7
@@ -356,7 +356,7 @@ Display recap on SessionCompleteScreen
 
 ### Stage Calculation Invariants
 
-1. **Captured → Practicing**:
+1. **New → Practicing**:
    - One-way gate: First review creates learning_card, never deleted
    - `reps >= 1` OR `review_logs.count > 0`
    - User-driven: Requires user to complete first review
@@ -366,12 +366,12 @@ Display recap on SessionCompleteScreen
    - Regression if any criterion fails
    - User-driven: Requires multiple successful reviews
 
-3. **Stabilizing → Active**:
-   - One-way gate: Once achieved, never regress below Active (even if only translation reviews afterward)
+3. **Stabilizing → Known**:
+   - One-way gate: Once achieved, never regress below Known (even if only translation reviews afterward)
    - Requires: All Stabilizing criteria + `non_translation_success_count >= 1`
    - User-driven: Requires user to successfully complete non-translation cue
 
-4. **Active ↔ Mastered**:
+4. **Known ↔ Mastered**:
    - Mastered requires: `stability >= 90` AND `reps >= 12` AND `lapses <= 1` AND `state = 2`
    - Regression if any criterion fails
 
@@ -389,7 +389,7 @@ Display recap on SessionCompleteScreen
      - Ordered by `created_at` ASC
 
 3. **Review Log Integrity**:
-   - `cue_type` field MUST be populated for all reviews (required for Active detection)
+   - `cue_type` field MUST be populated for all reviews (required for Known detection)
    - Valid values: 'translation', 'definition', 'synonym', 'context_cloze', 'disambiguation'
 
 ---
@@ -407,7 +407,7 @@ Display recap on SessionCompleteScreen
    ORDER BY lc.progress_stage DESC, v.word ASC
    ```
    - Uses index: `idx_learning_cards_user_stage`
-   - Fast filter: `WHERE lc.progress_stage = 'active'`
+   - Fast filter: `WHERE lc.progress_stage = 'known'`
 
 2. **Stage Calculation Query**:
    ```sql
@@ -472,7 +472,7 @@ UPDATE learning_cards
 SET progress_stage = 'stabilizing'
 WHERE stability >= 7.0 AND stability < 21.0;
 
--- 'active' and 'mastered' computed on-demand (requires review_logs analysis)
+-- 'known' and 'mastered' computed on-demand (requires review_logs analysis)
 ```
 
 ### Phase 3: Index Creation (Low Impact)

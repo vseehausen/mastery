@@ -19,10 +19,10 @@ class ProgressStageService {
   /// Returns the appropriate [ProgressStage] based on deterministic rules.
   ///
   /// Stage logic:
-  /// - No card → Captured (word exists but not reviewed)
+  /// - No card → New (word exists but not reviewed)
   /// - reps >= 1 → Practicing (first review completed)
   /// - stability >= 1.0 && reps >= 3 && lapses <= 2 && state == 2 → Stabilizing
-  /// - Stabilizing criteria + nonTranslationSuccessCount >= 1 → Active
+  /// - Stabilizing criteria + nonTranslationSuccessCount >= 1 → Known
   /// - stability >= 90 && reps >= 12 && lapses <= 1 && state == 2 → Mastered
   ProgressStage calculateStage({
     required LearningCardModel? card,
@@ -31,7 +31,7 @@ class ProgressStageService {
     final stopwatch = Stopwatch()..start();
 
     try {
-      // No card yet → Captured (word exists in vocabulary but not reviewed)
+      // No card yet → New (word exists in vocabulary but not reviewed)
       if (card == null) {
         return ProgressStage.captured;
       }
@@ -45,14 +45,14 @@ class ProgressStageService {
         return ProgressStage.mastered;
       }
 
-      // Check for Active (requires non-translation success + stabilizing criteria)
+      // Check for Known (requires non-translation success + stabilizing criteria)
       // Non-translation success = retrieved from definition/synonym/context cues (production recall)
       if (card.stability >= 1.0 &&
           card.reps >= 3 &&
           card.lapses <= 2 &&
           card.state == 2 &&
           nonTranslationSuccessCount >= 1) {
-        return ProgressStage.active;
+        return ProgressStage.known;
       }
 
       // Check for Stabilizing (memory consolidating, graduated from initial learning)
@@ -70,7 +70,7 @@ class ProgressStageService {
         return ProgressStage.practicing;
       }
 
-      // Fallback: Card exists but no reviews yet → Captured
+      // Fallback: Card exists but no reviews yet → New
       // Normal state for newly captured words before first review
       return ProgressStage.captured;
     } finally {

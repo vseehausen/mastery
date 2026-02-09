@@ -37,7 +37,7 @@
 
 **Content Quality**: Specification is written in plain language focused on user value and motivation theory (Self-Determination Theory). No technical implementation details present. All mandatory sections (User Scenarios, Requirements, Success Criteria) are complete and well-structured.
 
-**Requirement Completeness**: All 12 functional requirements are testable and unambiguous. Success criteria include specific, measurable metrics (e.g., "60% of users see words reach Active within 3 weeks"). Edge cases comprehensively cover regression, incomplete data, and transition conflicts. Scope is clearly bounded with explicit exclusions (no backlog indicators, no pressure signals).
+**Requirement Completeness**: All 12 functional requirements are testable and unambiguous. Success criteria include specific, measurable metrics (e.g., "60% of users see words reach Known within 3 weeks"). Edge cases comprehensively cover regression, incomplete data, and transition conflicts. Scope is clearly bounded with explicit exclusions (no backlog indicators, no pressure signals).
 
 **Feature Readiness**: User stories are prioritized (P1, P2, P3) with clear acceptance scenarios. Each story is independently testable and delivers standalone value. Success criteria align with user stories and feature objectives.
 

@@ -72,10 +72,10 @@ Widget build(BuildContext context) {
 - `info` / `infoLight` / `infoDark` - Informational states
 
 ### Vocabulary Stages (8B-R4 lightness ramp)
-- `stageCaptured` / `stageCapturedBg` - Stone (word captured, not yet reviewed)
+- `stageNew` / `stageNewBg` - Stone (word captured, not yet reviewed)
 - `stagePracticing` / `stagePracticingBg` - Lime (first review, in SRS rotation)
 - `stageStabilizing` / `stageStabilizingBg` - Emerald (multiple successful recalls)
-- `stageActive` / `stageActiveBg` - Blue (production recall)
+- `stageKnown` / `stageKnownBg` - Blue (production recall)
 - `stageMastered` / `stageMasteredBg` - Amber (high stability, rare reviews)
 
 ### Form Elements

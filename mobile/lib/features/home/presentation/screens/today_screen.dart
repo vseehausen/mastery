@@ -336,7 +336,7 @@ class _VocabularyCard extends StatelessWidget {
 
   static const _stageOrder = [
     ProgressStage.mastered,
-    ProgressStage.active,
+    ProgressStage.known,
     ProgressStage.stabilizing,
     ProgressStage.practicing,
     ProgressStage.captured,

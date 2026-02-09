@@ -18,9 +18,9 @@ class SessionProgressSummary {
   int get stabilizingCount =>
       transitions.where((t) => t.toStage == ProgressStage.stabilizing).length;
 
-  /// Count of words that reached Active stage.
-  int get activeCount =>
-      transitions.where((t) => t.toStage == ProgressStage.active).length;
+  /// Count of words that reached Known stage.
+  int get knownCount =>
+      transitions.where((t) => t.toStage == ProgressStage.known).length;
 
   /// Count of words that reached Mastered stage.
   int get masteredCount =>
@@ -29,12 +29,12 @@ class SessionProgressSummary {
   /// Returns true if any transitions occurred during the session.
   bool get hasTransitions => transitions.isNotEmpty;
 
-  /// Returns true if any rare achievements (Active or Mastered) occurred.
+  /// Returns true if any rare achievements (Known or Mastered) occurred.
   bool get hasRareAchievements => transitions.any((t) => t.isRareAchievement);
 
   /// Converts the summary to a human-readable display string.
   ///
-  /// Format: "2 words → Stabilizing • 1 word → Active"
+  /// Format: "2 words → Stabilizing • 1 word → Known"
   /// Returns empty string if no transitions occurred.
   String toDisplayString() {
     if (!hasTransitions) return '';
@@ -46,9 +46,9 @@ class SessionProgressSummary {
       parts.add('$stabilizingCount $wordLabel → Stabilizing');
     }
 
-    if (activeCount > 0) {
-      final wordLabel = activeCount == 1 ? 'word' : 'words';
-      parts.add('$activeCount $wordLabel → Active');
+    if (knownCount > 0) {
+      final wordLabel = knownCount == 1 ? 'word' : 'words';
+      parts.add('$knownCount $wordLabel → Known');
     }
 
     if (masteredCount > 0) {

@@ -43,10 +43,10 @@ class StageTransition {
 
   /// Returns true if this transition represents a rare achievement.
   ///
-  /// Rare achievements are transitions to Active or Mastered stages,
+  /// Rare achievements are transitions to Known or Mastered stages,
   /// which deserve special visual emphasis in the session recap.
   bool get isRareAchievement =>
-      toStage == ProgressStage.active || toStage == ProgressStage.mastered;
+      toStage == ProgressStage.known || toStage == ProgressStage.mastered;
 
   /// Converts this StageTransition to a JSON map.
   Map<String, dynamic> toJson() {

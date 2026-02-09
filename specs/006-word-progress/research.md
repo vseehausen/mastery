@@ -22,17 +22,17 @@ This document consolidates research findings for implementing word-level progres
 
 | Stage | Min Stability | Min Reps | Max Lapses | State Required | Non-Translation Required |
 |-------|---------------|----------|------------|----------------|--------------------------|
-| Captured | N/A | N/A | N/A | No card yet | No |
+| New | N/A | N/A | N/A | No card yet | No |
 | Practicing | Any | 1+ | Any | Any | No |
 | Stabilizing | 1.0+ days | 3+ | ≤2 | 2 (review) | No |
-| Active | 1.0+ days | 3+ | ≤2 | 2 (review) | Yes (≥1 success) |
+| Known | 1.0+ days | 3+ | ≤2 | 2 (review) | Yes (≥1 success) |
 | Mastered | 90.0+ days | 12+ | ≤1 | 2 (review) | Yes (≥1 success) |
 
 **Note**: "Clarified" stage removed. Background enrichment is a system task, not a user achievement. Stage progression now only reflects user-initiated learning actions.
 
 ### Transition Rules
 
-**Captured → Practicing**
+**New → Practicing**
 - Trigger: User completes first review interaction
 - Check: `learning_cards.reps >= 1` OR exists in `review_logs`
 - User action: First review completed
@@ -45,7 +45,7 @@ This document consolidates research findings for implementing word-level progres
   - `learning_cards.reps >= 3` (at least 3 successful reviews)
   - `learning_cards.lapses <= 2` (low lapse count)
 
-**Stabilizing → Active**
+**Stabilizing → Known**
 - Trigger: First successful non-translation retrieval (production recall, not recognition)
 - Criteria:
   - All Stabilizing criteria still met
@@ -54,7 +54,7 @@ This document consolidates research findings for implementing word-level progres
     - `review_logs.cue_type IN ('definition', 'synonym', 'context_cloze', 'disambiguation')`
 - Rationale: Translation cues test recognition; non-translation cues test production/active recall
 
-**Active → Mastered**
+**Known → Mastered**
 - Trigger: Exceptional stability and minimal forgetting
 - Criteria (ALL must be true):
   - `learning_cards.stability >= 90.0` (memory lasts 90+ days at 90% retention)
@@ -66,7 +66,7 @@ This document consolidates research findings for implementing word-level progres
 
 ### Regression Rules
 
-**Active/Mastered → Stabilizing**
+**Known/Mastered → Stabilizing**
 - Trigger: `learning_cards.lapses > 2` OR (`state = 3` AND `stability < 7.0`)
 - Rationale: High lapse count or low stability after failure indicates memory breakdown
 
@@ -75,7 +75,7 @@ This document consolidates research findings for implementing word-level progres
 - Rationale: Lost graduated status or memory no longer consolidated
 
 **No regression below Practicing**
-- Once a word reaches Practicing (first review completed), it never regresses to Captured
+- Once a word reaches Practicing (first review completed), it never regresses to New
 - Learning history remains even if memory weakens
 - Rationale: Practicing is the first user-driven action; this milestone is never lost
 
@@ -118,9 +118,9 @@ COMMENT ON COLUMN learning_cards.progress_stage IS
 
 ### Data Sources for Stage Calculation
 
-1. **Captured**: No learning_card exists yet (word exists in vocabulary table only)
+1. **New**: No learning_card exists yet (word exists in vocabulary table only)
 2. **Practicing/Stabilizing/Mastered**: Use `learning_cards` fields (stability, reps, lapses, state)
-3. **Active**: Query `review_logs` for successful non-translation retrievals:
+3. **Known**: Query `review_logs` for successful non-translation retrievals:
    ```sql
    SELECT COUNT(*) FROM review_logs
    WHERE learning_card_id = ?
@@ -175,7 +175,7 @@ COMMENT ON COLUMN learning_cards.progress_stage IS
 - Style: Small pill-shaped badge (60-80px width, single-line text)
 - Colors:
   - "Stabilizing": `colors.accent` (Amber)
-  - "Active now": Success green (needs token addition)
+  - "Known now": Success green (needs token addition)
 
 **Timing**:
 - Display duration: **2.5-3 seconds**
@@ -225,12 +225,12 @@ Stack(
 │ Progress Made                   │
 │                                 │
 │ 🎯 2 words → Stabilizing        │ <- Amber icon/color
-│ ⭐ 1 word → Active               │ <- Emerald/success color
+│ ⭐ 1 word → Known               │ <- Emerald/success color
 └─────────────────────────────────┘
 ```
 
 **Emphasis for Rare Achievements**:
-- When word reaches "Active": Add subtle pulse animation (300ms, one-time)
+- When word reaches "Known": Add subtle pulse animation (300ms, one-time)
 - When word reaches "Mastered": More prominent visual treatment
 - Optional: Brief haptic feedback when screen appears
 
@@ -251,7 +251,7 @@ Stack(
 2. **Session Recap**:
    ```dart
    Semantics(
-     label: '2 words progressed to Stabilizing, 1 word became Active',
+     label: '2 words progressed to Stabilizing, 1 word became Known',
      liveRegion: true,
      child: ProgressSummaryCard(),
    );
@@ -289,12 +289,12 @@ class SessionState {
   SessionSummary getSummary() {
     final stabilizingCount = transitions.values
       .where((t) => t.to == ProgressStage.stabilizing).length;
-    final activeCount = transitions.values
+    final knownCount = transitions.values
       .where((t) => t.to == ProgressStage.active).length;
 
     return SessionSummary(
       stabilizingCount: stabilizingCount,
-      activeCount: activeCount,
+      knownCount: knownCount,
     );
   }
 }

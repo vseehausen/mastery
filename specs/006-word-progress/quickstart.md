@@ -6,7 +6,7 @@
 
 ## 30-Second Overview
 
-Add competence-based progress tracking for vocabulary words. Words progress through 5 stages (Captured → Practicing → Stabilizing → Active → Mastered) based on user-driven learning events. Display real-time micro-feedback during sessions and post-session recaps.
+Add competence-based progress tracking for vocabulary words. Words progress through 5 stages (New → Practicing → Stabilizing → Known → Mastered) based on user-driven learning events. Display real-time micro-feedback during sessions and post-session recaps.
 
 ---
 
@@ -55,10 +55,10 @@ enum ProgressStage {
 
   String get displayName {
     switch (this) {
-      case captured: return 'Captured';
+      case captured: return 'New';
       case practicing: return 'Practicing';
       case stabilizing: return 'Stabilizing';
-      case active: return 'Active';
+      case known: return 'Known';
       case mastered: return 'Mastered';
     }
   }
@@ -75,7 +75,7 @@ class ProgressStageService {
     required LearningCard? card,
     required int nonTranslationSuccessCount,
   }) {
-    // No card yet → Captured (word exists but not reviewed)
+    // No card yet → New (word exists but not reviewed)
     if (card == null) {
       return ProgressStage.captured;
     }
@@ -191,11 +191,11 @@ if (session.progressSummary.hasTransitions)
             label: 'Stabilizing',
             color: colors.accent,
           ),
-        if (summary.activeCount > 0)
+        if (summary.knownCount > 0)
           _ProgressRow(
             icon: Icons.star,
-            count: summary.activeCount,
-            label: 'Active',
+            count: summary.knownCount,
+            label: 'Known',
             color: colors.success,
             isRare: true,
           ),
@@ -216,10 +216,10 @@ flutter test test/unit/services/progress_stage_service_test.dart
 ```
 
 **Test cases**:
-- ✅ Captured: No card exists (word not reviewed yet)
+- ✅ New: No card exists (word not reviewed yet)
 - ✅ Practicing: Card with reps >= 1
 - ✅ Stabilizing: stability >= 1.0, reps >= 3, lapses <= 2
-- ✅ Active: All stabilizing + non-translation success
+- ✅ Known: All stabilizing + non-translation success
 - ✅ Mastered: stability >= 90, reps >= 12, lapses <= 1
 
 ### Widget Tests
@@ -256,7 +256,7 @@ Future<List<VocabularyWithStage>> loadVocabulary() async {
     final card = row['learning_cards'] as Map?;
     final stage = _progressService.calculateStage(
       card: card != null ? LearningCard.fromJson(card) : null,
-      nonTranslationSuccessCount: 0, // Calculated separately if needed for Active stage
+      nonTranslationSuccessCount: 0, // Calculated separately if needed for Known stage
     );
     return VocabularyWithStage(word: row, stage: stage);
   }).toList();
@@ -329,7 +329,7 @@ print('Showing micro-feedback for stage: ${stage.displayName}');
 **Debug**:
 ```dart
 print('Transitions: ${transitions.map((t) => t.toStage.displayName).join(', ')}');
-print('Stabilizing count: $stabilizingCount, Active count: $activeCount');
+print('Stabilizing count: $stabilizingCount, Known count: $knownCount');
 ```
 
 ---

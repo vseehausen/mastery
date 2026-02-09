@@ -66,14 +66,14 @@ final _activeTransition = StageTransition(
   vocabularyId: '2',
   wordText: 'word2',
   fromStage: ProgressStage.stabilizing,
-  toStage: ProgressStage.active,
+  toStage: ProgressStage.known,
   timestamp: DateTime(2026, 2, 8),
 );
 
 final _masteredTransition = StageTransition(
   vocabularyId: '3',
   wordText: 'word3',
-  fromStage: ProgressStage.active,
+  fromStage: ProgressStage.known,
   toStage: ProgressStage.mastered,
   timestamp: DateTime(2026, 2, 8),
 );
@@ -237,7 +237,7 @@ void main() {
         expect(find.text('Progress Made'), findsOneWidget);
         // Each type should show "1 word -> StageName"
         expect(find.textContaining('Mastered'), findsWidgets);
-        expect(find.textContaining('Active'), findsWidgets);
+        expect(find.textContaining('Known'), findsWidgets);
         expect(find.textContaining('Stabilizing'), findsWidgets);
       });
 
@@ -262,7 +262,7 @@ void main() {
         expect(find.textContaining('Mastered'), findsWidgets);
       });
 
-      testWidgets('shows Active row with correct text', (tester) async {
+      testWidgets('shows Known row with correct text', (tester) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -280,7 +280,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('Active'), findsWidgets);
+        expect(find.textContaining('Known'), findsWidgets);
       });
     });
 
@@ -306,7 +306,7 @@ void main() {
         expect(find.byIcon(Icons.star_rounded), findsOneWidget);
       });
 
-      testWidgets('shows star icon for Active transition', (tester) async {
+      testWidgets('shows star icon for Known transition', (tester) async {
         _setPhoneSize(tester);
         await tester.pumpWidget(
           _buildTestableScreen(
@@ -350,7 +350,7 @@ void main() {
         expect(find.byIcon(Icons.star_rounded), findsNothing);
       });
 
-      testWidgets('shows two star icons for Active + Mastered transitions', (
+      testWidgets('shows two star icons for Known + Mastered transitions', (
         tester,
       ) async {
         _setPhoneSize(tester);

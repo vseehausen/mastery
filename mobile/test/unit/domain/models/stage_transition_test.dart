@@ -7,12 +7,12 @@ void main() {
     final timestamp = DateTime(2026, 2, 8, 10, 30);
 
     group('isRareAchievement', () {
-      test('returns true for transition to Active', () {
+      test('returns true for transition to Known', () {
         final transition = StageTransition(
           vocabularyId: '123',
           wordText: 'test',
           fromStage: ProgressStage.stabilizing,
-          toStage: ProgressStage.active,
+          toStage: ProgressStage.known,
           timestamp: timestamp,
         );
 
@@ -23,7 +23,7 @@ void main() {
         final transition = StageTransition(
           vocabularyId: '123',
           wordText: 'test',
-          fromStage: ProgressStage.active,
+          fromStage: ProgressStage.known,
           toStage: ProgressStage.mastered,
           timestamp: timestamp,
         );
@@ -31,7 +31,7 @@ void main() {
         expect(transition.isRareAchievement, true);
       });
 
-      test('returns false for transition to Captured', () {
+      test('returns false for transition to New', () {
         final transition = StageTransition(
           vocabularyId: '123',
           wordText: 'test',
@@ -99,7 +99,7 @@ void main() {
         final json = transition.toJson();
 
         expect(json['fromStage'], isNull);
-        expect(json['toStage'], 'captured');
+        expect(json['toStage'], 'new');
       });
 
       test('fromJson creates instance correctly', () {
@@ -116,7 +116,7 @@ void main() {
         expect(transition.vocabularyId, 'xyz-456');
         expect(transition.wordText, 'test');
         expect(transition.fromStage, ProgressStage.stabilizing);
-        expect(transition.toStage, ProgressStage.active);
+        expect(transition.toStage, ProgressStage.known);
         expect(transition.timestamp, timestamp);
       });
 
@@ -225,7 +225,7 @@ void main() {
         final str = transition.toString();
 
         expect(str, contains('example'));
-        expect(str, contains('Captured'));
+        expect(str, contains('New'));
       });
     });
   });

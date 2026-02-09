@@ -15,10 +15,10 @@ void main() {
       );
 
       expect(find.text('All'), findsOneWidget);
-      expect(find.text('Captured'), findsOneWidget);
+      expect(find.text('New'), findsOneWidget);
       expect(find.text('Practicing'), findsOneWidget);
       expect(find.text('Stabilizing'), findsOneWidget);
-      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('Known'), findsOneWidget);
       expect(find.text('Mastered'), findsOneWidget);
     });
 
@@ -64,7 +64,7 @@ void main() {
       expect(find.text('All'), findsOneWidget);
     });
 
-    testWidgets('tapping Captured chip calls onFilterChanged', (tester) async {
+    testWidgets('tapping New chip calls onFilterChanged', (tester) async {
       VocabularyFilter? selected;
       await tester.pumpTestWidget(
         VocabularyFilterChips(
@@ -73,8 +73,8 @@ void main() {
         ),
       );
 
-      await tester.scrollUntilVisible(find.text('Captured'), 100);
-      await tester.tap(find.text('Captured'));
+      await tester.scrollUntilVisible(find.text('New'), 100);
+      await tester.tap(find.text('New'));
       await tester.pump();
       expect(selected, VocabularyFilter.captured);
     });
@@ -113,7 +113,7 @@ void main() {
       expect(selected, VocabularyFilter.stabilizing);
     });
 
-    testWidgets('tapping Active chip calls onFilterChanged', (tester) async {
+    testWidgets('tapping Known chip calls onFilterChanged', (tester) async {
       VocabularyFilter? selected;
       await tester.pumpTestWidget(
         VocabularyFilterChips(
@@ -122,10 +122,10 @@ void main() {
         ),
       );
 
-      await tester.scrollUntilVisible(find.text('Active'), 100);
-      await tester.tap(find.text('Active'));
+      await tester.scrollUntilVisible(find.text('Known'), 100);
+      await tester.tap(find.text('Known'));
       await tester.pump();
-      expect(selected, VocabularyFilter.active);
+      expect(selected, VocabularyFilter.known);
     });
 
     testWidgets('tapping Mastered chip calls onFilterChanged', (tester) async {
