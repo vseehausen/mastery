@@ -7,12 +7,9 @@ import 'core/network/connectivity.dart';
 import 'core/supabase_client.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/color_tokens.dart';
-import 'core/widgets/bottom_nav_bar.dart';
 import 'core/widgets/global_status_banner.dart';
 import 'features/auth/auth_guard.dart';
 import 'features/home/presentation/screens/today_screen.dart';
-import 'features/progress/presentation/screens/progress_screen.dart';
-import 'features/vocabulary/presentation/screens/vocabulary_screen.dart';
 import 'providers/supabase_provider.dart';
 
 void main() {
@@ -64,18 +61,11 @@ class MasteryApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _selectedIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final connectivity = ref.watch(connectivityProvider);
     final vocabularyCount = ref.watch(vocabularyCountProvider);
     final enrichedVocabularyIds = ref.watch(enrichedVocabularyIdsProvider);
@@ -83,40 +73,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       connectivity: connectivity,
       vocabularyCount: vocabularyCount,
       enrichedVocabularyIds: enrichedVocabularyIds,
-      showEnrichmentProgress:
-          false, // Never show on Home - belongs in SyncStatusScreen
+      showEnrichmentProgress: false,
     );
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          // Today
-          const TodayScreen(),
-          // Words
-          const VocabularyScreenNew(),
-          // Progress
-          const ProgressScreen(),
-        ],
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
+      body: Column(
         children: [
           if (statusBannerData != null)
             GlobalStatusBanner(
               data: statusBannerData,
               actionLabel: _statusActionLabel(statusBannerData.type),
-              onActionPressed: () => _handleStatusAction(statusBannerData.type),
+              onActionPressed: () => _handleStatusAction(ref, statusBannerData.type),
             ),
-          BottomNavBar(
-            selectedIndex: _selectedIndex,
-            onTabSelected: (index) {
-              if (index == 2) {
-                ref.invalidate(vocabularyStageCountsProvider);
-              }
-              setState(() => _selectedIndex = index);
-            },
-          ),
+          const Expanded(child: TodayScreen()),
         ],
       ),
     );
@@ -133,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _handleStatusAction(GlobalStatusType type) {
+  void _handleStatusAction(WidgetRef ref, GlobalStatusType type) {
     switch (type) {
       case GlobalStatusType.offline:
         ref.read(connectivityProvider.notifier).checkNow();
@@ -145,7 +114,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.invalidate(enrichedVocabularyIdsProvider);
         return;
       case GlobalStatusType.enrichmentProgress:
-        // This case won't occur since showEnrichmentProgress is always false on Home
         return;
     }
   }

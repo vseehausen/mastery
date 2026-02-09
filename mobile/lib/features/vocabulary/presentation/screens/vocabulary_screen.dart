@@ -46,12 +46,23 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                'Vocabulary',
-                style: MasteryTextStyles.displayLarge.copyWith(
-                  color: colors.foreground,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: colors.foreground,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Text(
+                    'Vocabulary',
+                    style: MasteryTextStyles.displayLarge.copyWith(
+                      color: colors.foreground,
+                    ),
+                  ),
+                ],
               ),
             ),
 
