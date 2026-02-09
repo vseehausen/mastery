@@ -5,21 +5,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Supabase client configuration and initialization
 class SupabaseConfig {
   static String get _supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
-  static String get _supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  static String get _supabasePublishableKey => dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ?? '';
 
   /// Initialize Supabase client
   static Future<void> initialize() async {
-    if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
+    if (_supabaseUrl.isEmpty || _supabasePublishableKey.isEmpty) {
       if (kDebugMode) {
-        print('Warning: Supabase URL or Anon Key not configured');
-        print('Add SUPABASE_URL and SUPABASE_ANON_KEY to mobile/.env file');
+        print('Warning: Supabase URL or Publishable Key not configured');
+        print('Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY to mobile/.env file');
       }
       return;
     }
 
     await Supabase.initialize(
       url: _supabaseUrl,
-      anonKey: _supabaseAnonKey,
+      anonKey: _supabasePublishableKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),

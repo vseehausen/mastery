@@ -2,14 +2,14 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabasePublishableKey) {
   console.warn('Skipping integration tests: Missing Supabase environment variables');
 }
 
-const testSupabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+const testSupabase = supabaseUrl && supabasePublishableKey
+  ? createClient(supabaseUrl, supabasePublishableKey)
   : null;
 
 const testUserEmail = process.env.TEST_USER_EMAIL;
