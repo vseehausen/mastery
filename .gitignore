@@ -56,3 +56,6 @@ build/
 # Supabase
 .supabase/
 supabase/.branches/
+
+# Scripts test data
+scripts/translations/

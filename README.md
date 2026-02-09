@@ -114,6 +114,14 @@ cd desktop && npm run tauri dev
 cd supabase && supabase functions serve
 ```
 
+## Scripts
+
+**Translation Comparison** — Compare DeepL vs Google Translate speed/quality:
+```bash
+node scripts/compare-translations.mjs developer experience
+```
+Saves timing + full responses to `scripts/translations/<word>/{deepl,google}.json`
+
 ## License
 
 Private — All rights reserved.

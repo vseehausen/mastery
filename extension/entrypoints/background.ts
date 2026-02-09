@@ -1,4 +1,4 @@
-import { lookupWord } from '@/lib/api-client';
+import { lookupWord, triggerEnrichmentIfNeeded } from '@/lib/api-client';
 import { isAuthenticated } from '@/lib/auth';
 import { getCachedWord, setCachedWord, addPageWord, clearPageWords } from '@/lib/cache';
 import type {
@@ -8,11 +8,13 @@ import type {
   LookupResponse,
 } from '@/lib/types';
 
+console.log('[Mastery] Background script file loaded (top level)');
+
 export default defineBackground(() => {
-  console.log('[Mastery] Background script loaded');
+  console.log('[Mastery] Background script defineBackground callback running');
   // Register context menu on install
   browser.runtime.onInstalled.addListener(() => {
-    console.log('[Mastery] Extension installed/updated');
+    console.log('[Mastery] Extension installed/updated - creating context menu');
     browser.contextMenus.create({
       id: 'mastery-lookup',
       title: 'Look up in Mastery',
@@ -23,7 +25,9 @@ export default defineBackground(() => {
   // Handle messages from content script
   browser.runtime.onMessage.addListener(
     (message: ContentMessage, _sender, sendResponse: (response: ServiceWorkerResponse) => void) => {
+      console.log('[Mastery] Background received message:', message.type);
       if (message.type === 'lookup') {
+        console.log('[Mastery] Handling lookup for:', message.payload.raw_word);
         handleLookup(message.payload).then(sendResponse);
         return true; // Keep the message channel open for async response
       }
@@ -32,7 +36,11 @@ export default defineBackground(() => {
 
   // Handle context menu clicks
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId !== 'mastery-lookup' || !info.selectionText || !tab?.id) return;
+    console.log('[Mastery] Context menu clicked:', info.menuItemId, info.selectionText);
+    if (info.menuItemId !== 'mastery-lookup' || !info.selectionText || !tab?.id) {
+      console.log('[Mastery] Context menu ignored - missing data');
+      return;
+    }
 
     const request: LookupRequest = {
       raw_word: info.selectionText.trim().slice(0, 100),
@@ -42,11 +50,14 @@ export default defineBackground(() => {
     };
 
     const response = await handleLookup(request);
+    console.log('[Mastery] Context menu lookup response:', response);
 
     // Send result to content script for tooltip rendering
     browser.tabs.sendMessage(tab.id, {
       ...response,
       fromContextMenu: true,
+    }).catch(err => {
+      console.error('[Mastery] Failed to send context menu result to tab:', err);
     });
   });
 
@@ -59,15 +70,20 @@ export default defineBackground(() => {
 });
 
 async function handleLookup(request: LookupRequest): Promise<ServiceWorkerResponse> {
+  console.log('[Mastery] handleLookup started for:', request.raw_word);
+
   // Check auth
   const authed = await isAuthenticated();
+  console.log('[Mastery] Auth check:', authed ? 'authenticated' : 'not authenticated');
   if (!authed) {
     return { type: 'needsAuth' };
   }
 
   // Check cache first
   const cached = await getCachedWord(request.raw_word.toLowerCase());
+  console.log('[Mastery] Cache check:', cached ? 'HIT' : 'MISS');
   if (cached) {
+    console.log('[Mastery] Returning cached result for:', request.raw_word);
     // Return cached data immediately, then update in background
     const cachedResponse: LookupResponse = {
       lemma: cached.lemma,
@@ -96,17 +112,33 @@ async function handleLookup(request: LookupRequest): Promise<ServiceWorkerRespon
 
   // Check online status
   if (!navigator.onLine) {
+    console.log('[Mastery] Offline, cannot lookup');
     return { type: 'error', message: 'Offline — translation unavailable', offline: true };
   }
 
   // API lookup
+  console.log('[Mastery] Calling API for word:', request.raw_word);
   try {
     const response = await lookupWord(request);
+    console.log('[Mastery] API response received:', response);
     await setCachedWord(response);
     await addPageWord(request.url, response.lemma);
+
+    // If this is a new word, trigger enrichment in background (fire-and-forget)
+    if (response.is_new) {
+      console.log('[Mastery] New word detected, triggering background enrichment');
+      triggerEnrichmentIfNeeded(); // No await - fire and forget
+    }
+
+    console.log('[Mastery] Returning fresh lookup result');
     return { type: 'lookupResult', payload: response, fromCache: false };
   } catch (err) {
     console.error('[Mastery] Lookup error:', err);
+    console.error('[Mastery] Error details:', {
+      name: (err as Error).name,
+      message: (err as Error).message,
+      stack: (err as Error).stack,
+    });
     return {
       type: 'error',
       message: "Couldn't translate — try again",

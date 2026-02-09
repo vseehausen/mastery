@@ -16,12 +16,13 @@
   let totalWords = $state(0);
   let pageWords: PageWord[] = $state([]);
 
+  // Use CSS custom properties for stage colors
   const STAGE_COLORS: Record<string, string> = {
-    new: '#3b82f6',
-    practicing: '#f59e0b',
-    stabilizing: '#f97316',
-    known: '#10b981',
-    mastered: '#8b5cf6',
+    new: 'var(--stage-new)',
+    practicing: 'var(--stage-practicing)',
+    stabilizing: 'var(--stage-stabilizing)',
+    known: 'var(--stage-known)',
+    mastered: 'var(--stage-mastered)',
   };
 
   onMount(async () => {
@@ -83,39 +84,39 @@
   }
 </script>
 
-<main class="w-80 min-h-[200px]">
+<main class="w-80 min-h-[200px] bg-background text-foreground">
   {#if loading}
     <div class="flex items-center justify-center p-8">
-      <span class="text-sm text-gray-400">Loading...</span>
+      <span class="text-sm text-muted-foreground">Loading...</span>
     </div>
   {:else if !session}
     <!-- Login Form -->
     <div class="p-4 space-y-3">
-      <h1 class="text-lg font-semibold text-gray-900">Mastery</h1>
-      <p class="text-xs text-gray-500">Sign in to capture vocabulary</p>
+      <h1 class="text-lg font-semibold">Mastery</h1>
+      <p class="text-xs text-muted-foreground">Sign in to capture vocabulary</p>
 
       <form onsubmit={(e) => { e.preventDefault(); handleLogin(); }} class="space-y-2">
         <input
           type="email"
           bind:value={email}
           placeholder="Email"
-          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full px-3 py-2 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
         <input
           type="password"
           bind:value={password}
           placeholder="Password"
-          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full px-3 py-2 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
         {#if loginError}
-          <p class="text-xs text-red-500">{loginError}</p>
+          <p class="text-xs text-destructive">{loginError}</p>
         {/if}
         <button
           type="submit"
           disabled={loggingIn}
-          class="w-full px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+          class="w-full px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
         >
           {loggingIn ? 'Signing in...' : 'Sign in'}
         </button>
@@ -125,25 +126,26 @@
     <!-- Stats View -->
     <div class="p-4 space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-gray-900">Mastery</h1>
-        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+        <h1 class="text-lg font-semibold">Mastery</h1>
+        <span class="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
           {totalWords} words
         </span>
       </div>
 
       {#if pageWords.length > 0}
         <div class="space-y-1">
-          <h2 class="text-xs font-medium text-gray-400 uppercase tracking-wide">This page</h2>
+          <h2 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">This page</h2>
           <ul class="space-y-1">
             {#each pageWords as word}
-              <li class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-50">
+              <li class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted">
                 <div>
-                  <span class="text-sm font-medium text-gray-900">{word.lemma}</span>
-                  <span class="text-xs text-gray-400 ml-1">{word.translation}</span>
+                  <span class="text-sm font-medium">{word.lemma}</span>
+                  <span class="text-xs text-muted-foreground ml-1">{word.translation}</span>
                 </div>
                 <span
-                  class="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white capitalize"
-                  style:background={STAGE_COLORS[word.stage] ?? '#718096'}
+                  class="text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize"
+                  style:background={STAGE_COLORS[word.stage] ?? 'var(--muted-foreground)'}
+                  style:color="white"
                 >
                   {word.stage}
                 </span>
@@ -152,18 +154,18 @@
           </ul>
         </div>
       {:else}
-        <p class="text-xs text-gray-400 text-center py-4">
+        <p class="text-xs text-muted-foreground text-center py-4">
           Double-click any word to look it up
         </p>
       {/if}
 
       <!-- Settings -->
-      <div class="border-t border-gray-100 pt-3">
+      <div class="border-t border-border pt-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500 truncate">{session.user.email}</span>
+          <span class="text-xs text-muted-foreground truncate">{session.user.email}</span>
           <button
             onclick={handleLogout}
-            class="text-xs text-gray-400 hover:text-gray-600"
+            class="text-xs text-muted-foreground hover:text-foreground"
           >
             Sign out
           </button>

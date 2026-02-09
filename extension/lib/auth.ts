@@ -21,7 +21,9 @@ export async function getSession(): Promise<Session | null> {
 
 export async function isAuthenticated(): Promise<boolean> {
   const session = await getSession();
-  return session !== null;
+  const isAuthed = session !== null;
+  console.log('[Mastery] isAuthenticated check:', isAuthed, session ? `user: ${session.user.email}` : 'no session');
+  return isAuthed;
 }
 
 export function onAuthStateChange(callback: (session: Session | null) => void): () => void {

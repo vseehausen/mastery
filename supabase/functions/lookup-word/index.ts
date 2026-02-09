@@ -5,6 +5,7 @@
 import { handleCors } from '../_shared/cors.ts';
 import { createServiceClient, getUserId } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
+import { getDeepLTranslation, getGoogleTranslation } from '../_shared/translation.ts';
 
 // =============================================================================
 // Main Handler
@@ -63,6 +64,7 @@ interface LookupResponse {
 }
 
 async function handleLookup(req: Request, userId: string): Promise<Response> {
+  const startTime = Date.now();
   const body: LookupRequest = await req.json();
 
   // Validate request body
@@ -90,106 +92,229 @@ async function handleLookup(req: Request, userId: string): Promise<Response> {
     return errorResponse('title is required', 400);
   }
 
+  console.log(JSON.stringify({ event: 'lookup_start', word: raw_word, userId }));
+
   const client = createServiceClient();
 
   try {
-    // Call OpenAI for enrichment
-    const aiResult = await callOpenAI(raw_word, sentence);
+    // OPTIMIZATION: Check if word exists BEFORE calling OpenAI
+    // This makes lookups for existing words instant (~100ms vs 5-10s)
 
-    const lemma = aiResult.lemma;
-    const translation = aiResult.translation;
-    const pronunciation = aiResult.pronunciation;
-    const englishDefinition = aiResult.english_definition;
-    const partOfSpeech = aiResult.part_of_speech;
-    const contextOriginal = aiResult.context_original;
-    const contextTranslated = aiResult.context_translated;
+    // First, get a quick lemma estimate (just normalize the word)
+    const estimatedLemma = raw_word.toLowerCase().trim();
+    const estimatedHash = await generateContentHash(estimatedLemma);
 
-    // Generate content hash
-    const contentHash = await generateContentHash(lemma);
+    // Check if we already have this word
+    const dbCheckStart = Date.now();
 
-    // Check if vocabulary exists
+    // Query 1: Get vocabulary by content_hash
     const { data: existingVocab } = await client
       .from('vocabulary')
-      .select('id')
+      .select('id, stem')
       .eq('user_id', userId)
-      .eq('content_hash', contentHash)
+      .eq('content_hash', estimatedHash)
       .is('deleted_at', null)
       .single();
 
-    let vocabularyId: string;
-    let isNew = true;
+    let foundMeaning = false;
+    let meaning: { primary_translation: string; part_of_speech: string; english_definition: string | null } | null = null;
 
     if (existingVocab) {
-      // Existing word
-      vocabularyId = existingVocab.id;
-      isNew = false;
-    } else {
-      // New word - insert vocabulary
-      vocabularyId = crypto.randomUUID();
+      // Query 2: Get meanings for this vocabulary
+      const { data: meanings } = await client
+        .from('meanings')
+        .select('primary_translation, part_of_speech, english_definition')
+        .eq('user_id', userId)
+        .eq('vocabulary_id', existingVocab.id)
+        .is('deleted_at', null)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(1);
 
-      const { error: vocabError } = await client.from('vocabulary').insert({
-        id: vocabularyId,
-        user_id: userId,
-        word: raw_word,
-        stem: lemma,
-        content_hash: contentHash,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (vocabError) {
-        console.error('Failed to insert vocabulary:', vocabError);
-        return errorResponse('Failed to create vocabulary entry', 500);
-      }
-
-      // Insert meaning (language_code hardcoded to 'de' for V1)
-      const meaningId = crypto.randomUUID();
-      const { error: meaningError } = await client.from('meanings').insert({
-        id: meaningId,
-        user_id: userId,
-        vocabulary_id: vocabularyId,
-        language_code: 'de',
-        primary_translation: translation,
-        alternative_translations: [],
-        english_definition: englishDefinition,
-        extended_definition: null,
-        part_of_speech: partOfSpeech,
-        synonyms: [],
-        confidence: 0.9,
-        is_primary: true,
-        is_active: true,
-        sort_order: 0,
-        source: 'ai',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        version: 1,
-      });
-
-      if (meaningError) {
-        console.error('Failed to insert meaning:', meaningError);
-        return errorResponse('Failed to create meaning', 500);
-      }
-
-      // Insert learning card
-      const cardId = crypto.randomUUID();
-      const { error: cardError } = await client.from('learning_cards').insert({
-        id: cardId,
-        user_id: userId,
-        vocabulary_id: vocabularyId,
-        state: 0,
-        progress_stage: 'new',
-        due: new Date().toISOString(),
-        stability: 0,
-        difficulty: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (cardError) {
-        console.error('Failed to insert learning card:', cardError);
-        return errorResponse('Failed to create learning card', 500);
+      if (meanings && meanings.length > 0) {
+        foundMeaning = true;
+        meaning = meanings[0];
       }
     }
+
+    const dbCheckDuration = Date.now() - dbCheckStart;
+    console.log(JSON.stringify({
+      event: 'db_check',
+      word: raw_word,
+      found: foundMeaning,
+      duration_ms: dbCheckDuration
+    }));
+
+    if (foundMeaning && meaning && existingVocab) {
+      // Word exists with meaning! Return immediately without calling OpenAI
+      const vocabularyId = existingVocab.id;
+
+      const meaningCheckStart = Date.now();
+      // Create new encounter for this lookup
+      await createEncounter(client, vocabularyId, userId, url, title, sentence, raw_word);
+
+      // Get current stage
+      const stage = await getVocabularyStage(client, vocabularyId, userId);
+      const meaningCheckDuration = Date.now() - meaningCheckStart;
+
+      console.log(JSON.stringify({
+        event: 'meaning_check',
+        word: raw_word,
+        found: true,
+        duration_ms: meaningCheckDuration
+      }));
+
+      const totalMs = Date.now() - startTime;
+      console.log(JSON.stringify({
+        event: 'lookup_complete',
+        word: raw_word,
+        path: 'existing',
+        total_ms: totalMs
+      }));
+
+      return jsonResponse({
+        lemma: existingVocab.stem,
+        raw_word,
+        translation: meaning.primary_translation,
+        pronunciation: '', // Not stored in meanings table
+        part_of_speech: meaning.part_of_speech,
+        english_definition: meaning.english_definition || '',
+        context_original: sentence, // Use current sentence as context
+        context_translated: '', // Not stored in meanings table
+        stage,
+        is_new: false,
+        vocabulary_id: vocabularyId,
+      });
+    }
+
+    // Word doesn't exist or has no meaning - use fast translation
+    console.log('[lookup-word] New word detected, using fast translation:', raw_word);
+    const translationStart = Date.now();
+
+    // Get API keys
+    const DEEPL_API_KEY = Deno.env.get('DEEPL_API_KEY');
+    const GOOGLE_TRANSLATE_API_KEY = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
+
+    // Try DeepL first, fallback to Google
+    let translation: string | null = null;
+    let translationSource = '';
+
+    if (DEEPL_API_KEY) {
+      try {
+        translation = await getDeepLTranslation(raw_word, 'de', DEEPL_API_KEY);
+        translationSource = 'deepl';
+      } catch (err) {
+        console.warn('[lookup-word] DeepL failed:', err);
+      }
+    }
+
+    if (!translation && GOOGLE_TRANSLATE_API_KEY) {
+      try {
+        translation = await getGoogleTranslation(raw_word, 'de', GOOGLE_TRANSLATE_API_KEY);
+        translationSource = 'google';
+      } catch (err) {
+        console.warn('[lookup-word] Google Translate failed:', err);
+      }
+    }
+
+    if (!translation) {
+      return errorResponse('Translation service unavailable', 503);
+    }
+
+    const translationDuration = Date.now() - translationStart;
+    console.log(JSON.stringify({
+      event: 'translation',
+      word: raw_word,
+      source: translationSource,
+      duration_ms: translationDuration
+    }));
+
+    // Use normalized word as lemma (will be enriched later)
+    const lemma = raw_word.toLowerCase().trim();
+    const contentHash = await generateContentHash(lemma);
+
+    // New word - insert vocabulary
+    const vocabularyId = crypto.randomUUID();
+
+    const { error: vocabError } = await client.from('vocabulary').insert({
+      id: vocabularyId,
+      user_id: userId,
+      word: raw_word,
+      stem: lemma,
+      content_hash: contentHash,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (vocabError) {
+      console.error('Failed to insert vocabulary:', vocabError);
+      return errorResponse('Failed to create vocabulary entry', 500);
+    }
+
+    // Insert minimal meaning (will be enriched later)
+    const meaningId = crypto.randomUUID();
+    const { error: meaningError } = await client.from('meanings').insert({
+      id: meaningId,
+      user_id: userId,
+      vocabulary_id: vocabularyId,
+      language_code: 'de',
+      primary_translation: translation,
+      alternative_translations: [],
+      english_definition: '(pending)',
+      extended_definition: null,
+      part_of_speech: '',
+      synonyms: [],
+      confidence: 0.7,
+      is_primary: true,
+      is_active: true,
+      sort_order: 0,
+      source: 'translation',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      version: 1,
+    });
+
+    if (meaningError) {
+      console.error('Failed to insert meaning:', meaningError);
+      return errorResponse('Failed to create meaning', 500);
+    }
+
+    // Insert learning card
+    const cardId = crypto.randomUUID();
+    const { error: cardError } = await client.from('learning_cards').insert({
+      id: cardId,
+      user_id: userId,
+      vocabulary_id: vocabularyId,
+      state: 0,
+      progress_stage: 'new',
+      due: new Date().toISOString(),
+      stability: 0,
+      difficulty: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (cardError) {
+      console.error('Failed to insert learning card:', cardError);
+      return errorResponse('Failed to create learning card', 500);
+    }
+
+    // Queue background enrichment
+    const enrichmentId = crypto.randomUUID();
+    const { error: enrichmentError } = await client.from('enrichment_queue').insert({
+      id: enrichmentId,
+      vocabulary_id: vocabularyId,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (enrichmentError) {
+      console.warn('Failed to queue enrichment (non-fatal):', enrichmentError);
+      // Don't fail the request if enrichment queue fails
+    }
+
+    const isNew = true;
 
     // Upsert source
     const domain = extractDomain(url);
@@ -241,41 +366,120 @@ async function handleLookup(req: Request, userId: string): Promise<Response> {
       return errorResponse('Failed to create encounter', 500);
     }
 
-    // Get stage for response
-    let stage = 'new';
-    if (!isNew) {
-      const { data: card } = await client
-        .from('learning_cards')
-        .select('progress_stage')
-        .eq('user_id', userId)
-        .eq('vocabulary_id', vocabularyId)
-        .is('deleted_at', null)
-        .single();
-
-      if (card) {
-        stage = card.progress_stage || 'new';
-      }
-    }
-
     const response: LookupResponse = {
       lemma,
       raw_word,
       translation,
-      pronunciation,
-      part_of_speech: partOfSpeech,
-      english_definition: englishDefinition,
-      context_original: contextOriginal,
-      context_translated: contextTranslated,
-      stage,
+      pronunciation: '',
+      part_of_speech: '',
+      english_definition: '(pending)',
+      context_original: sentence,
+      context_translated: '',
+      stage: 'new',
       is_new: isNew,
       vocabulary_id: vocabularyId,
     };
 
+    const totalMs = Date.now() - startTime;
+    console.log(JSON.stringify({
+      event: 'lookup_complete',
+      word: raw_word,
+      path: 'new',
+      total_ms: totalMs
+    }));
+
     return jsonResponse(response);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
+    const totalMs = Date.now() - startTime;
+    console.log(JSON.stringify({
+      event: 'lookup_error',
+      word: raw_word,
+      error: errorMsg,
+      total_ms: totalMs
+    }));
     console.error('lookup-word POST error:', errorMsg);
     return errorResponse(errorMsg || 'Failed to lookup word', 500);
+  }
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+async function getVocabularyStage(
+  client: any,
+  vocabularyId: string,
+  userId: string
+): Promise<string> {
+  const { data: card } = await client
+    .from('learning_cards')
+    .select('progress_stage')
+    .eq('user_id', userId)
+    .eq('vocabulary_id', vocabularyId)
+    .is('deleted_at', null)
+    .single();
+
+  return card?.progress_stage || 'new';
+}
+
+async function createEncounter(
+  client: any,
+  vocabularyId: string,
+  userId: string,
+  url: string,
+  title: string,
+  sentence: string,
+  raw_word: string
+): Promise<void> {
+  // Upsert source
+  const domain = extractDomain(url);
+  const { data: existingSource } = await client
+    .from('sources')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'website')
+    .eq('url', url)
+    .is('deleted_at', null)
+    .single();
+
+  let sourceId: string;
+  if (existingSource) {
+    sourceId = existingSource.id;
+  } else {
+    sourceId = crypto.randomUUID();
+    const { error: sourceError } = await client.from('sources').insert({
+      id: sourceId,
+      user_id: userId,
+      type: 'website',
+      title: title,
+      url: url,
+      domain: domain,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (sourceError) {
+      console.error('Failed to insert source:', sourceError);
+      throw new Error('Failed to create source');
+    }
+  }
+
+  // Insert encounter
+  const encounterId = crypto.randomUUID();
+  const { error: encounterError } = await client.from('encounters').insert({
+    id: encounterId,
+    user_id: userId,
+    vocabulary_id: vocabularyId,
+    source_id: sourceId,
+    context: sentence,
+    occurred_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  });
+
+  if (encounterError) {
+    console.error('Failed to insert encounter:', encounterError);
+    throw new Error('Failed to create encounter');
   }
 }
 
@@ -332,9 +536,9 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
 
       if (encounters) {
         for (const enc of encounters) {
-          const source = enc.source as { url: string } | null;
+          const source = Array.isArray(enc.source) ? enc.source[0] : enc.source;
           if (source && source.url === pageUrl) {
-            const vocab = enc.vocabulary as { stem: string } | null;
+            const vocab = Array.isArray(enc.vocabulary) ? enc.vocabulary[0] : enc.vocabulary;
             if (vocab && !pageVocabMap.has(enc.vocabulary_id)) {
               pageVocabMap.set(enc.vocabulary_id, {
                 lemma: vocab.stem || enc.vocabulary_id,

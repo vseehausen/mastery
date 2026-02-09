@@ -5,6 +5,7 @@ import {
   showSignInTooltip,
   showErrorTooltip,
   showOfflineTooltip,
+  showLoadingTooltip,
 } from './content/tooltip';
 import type { LookupMessage, ServiceWorkerResponse } from '@/lib/types';
 
@@ -14,6 +15,10 @@ export default defineContentScript({
     console.log('[Mastery] Content script loaded');
     attachWordDetector(async ({ rawWord, position, anchorNode }) => {
       console.log('[Mastery] Word detected:', rawWord);
+
+      // Show loading tooltip immediately
+      showLoadingTooltip(rawWord, position.x, position.y);
+
       const sentence = extractSentence(rawWord, anchorNode);
       const url = window.location.href;
       const title = document.title;
@@ -24,9 +29,14 @@ export default defineContentScript({
       };
 
       try {
+        console.log('[Mastery] Sending lookup message to background');
         const response: ServiceWorkerResponse = await browser.runtime.sendMessage(message);
+        console.log('[Mastery] Received response from background:', response);
 
-        if (!response) return;
+        if (!response) {
+          console.warn('[Mastery] No response from background');
+          return;
+        }
 
         switch (response.type) {
           case 'lookupResult':

@@ -35,11 +35,21 @@ export function getSupabaseClient(): SupabaseClient {
 }
 
 export async function lookupWord(request: LookupRequest): Promise<LookupResponse> {
+  console.log('[Mastery] lookupWord API call starting:', request.raw_word);
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.functions.invoke('lookup-word', {
+  console.log('[Mastery] Invoking Edge Function: lookup-word');
+  const response = await supabase.functions.invoke('lookup-word', {
     body: request,
   });
-  if (error) throw new Error(error.message || 'Lookup failed');
+  console.log('[Mastery] Raw Edge Function response:', response);
+
+  const { data, error } = response;
+  if (error) {
+    console.error('[Mastery] Edge Function error:', error);
+    console.error('[Mastery] Error context:', error.context);
+    throw new Error(error.message || 'Lookup failed');
+  }
+  console.log('[Mastery] Edge Function success, data:', data);
   return data as LookupResponse;
 }
 
@@ -51,4 +61,41 @@ export async function getStats(url?: string): Promise<StatsResponse> {
   });
   if (error) throw new Error(error.message || 'Failed to fetch stats');
   return data as StatsResponse;
+}
+
+export async function triggerEnrichmentIfNeeded(): Promise<void> {
+  try {
+    const supabase = getSupabaseClient();
+
+    // Check if enrichment is needed
+    const { data: status, error: statusError } = await supabase.functions.invoke(
+      'enrich-vocabulary/status',
+      { method: 'GET' }
+    );
+
+    if (statusError) {
+      console.error('[Mastery] Failed to check enrichment status:', statusError);
+      return;
+    }
+
+    // If buffer needs replenishment, trigger enrichment
+    if (status?.needs_replenishment) {
+      console.log('[Mastery] Buffer needs replenishment, triggering enrichment');
+      const { error: requestError } = await supabase.functions.invoke(
+        'enrich-vocabulary/request',
+        {
+          method: 'POST',
+          body: { native_language_code: 'de' },
+        }
+      );
+
+      if (requestError) {
+        console.error('[Mastery] Failed to trigger enrichment:', requestError);
+      } else {
+        console.log('[Mastery] Enrichment triggered successfully');
+      }
+    }
+  } catch (err) {
+    console.error('[Mastery] Error in triggerEnrichmentIfNeeded:', err);
+  }
 }

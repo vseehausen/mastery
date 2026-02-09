@@ -11,4 +11,7 @@ export default defineConfig({
     description: 'Double-click any word to translate, learn, and master it.',
     permissions: ['activeTab', 'contextMenus', 'storage'],
   },
+  runner: {
+    chromiumProfile: './.wxt/chrome-profile',
+  },
 });

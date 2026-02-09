@@ -100,6 +100,27 @@ function createStyles(): string {
       font-size: 13px;
       color: #e53e3e;
     }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-size: 13px;
+      color: #718096;
+    }
   `;
 }
 
@@ -114,16 +135,29 @@ function renderTooltipContent(data: LookupResponse): string {
     ? 'Saved'
     : 'New context saved';
 
+  // Only show IPA if non-empty
+  const ipaHtml = data.pronunciation
+    ? `<span class="ipa">${escapeHtml(data.pronunciation)}</span>`
+    : '';
+
+  // Only show context section if context_original contains *word* markup (enriched by OpenAI)
+  const hasEnrichedContext = data.context_original.includes('*');
+  const contextHtml = hasEnrichedContext
+    ? `
+      <div class="divider"></div>
+      <div class="context">${formatContext(escapeHtml(data.context_original))}</div>
+      ${data.context_translated ? `<div class="context">${formatContext(escapeHtml(data.context_translated))}</div>` : ''}
+    `
+    : '';
+
   return `
     <div class="tooltip">
       <div class="header">
         <span class="lemma">${escapeHtml(data.lemma)}</span>
-        <span class="ipa">${escapeHtml(data.pronunciation)}</span>
+        ${ipaHtml}
       </div>
       <div class="translation">${escapeHtml(data.translation)}</div>
-      <div class="divider"></div>
-      <div class="context">${formatContext(escapeHtml(data.context_original))}</div>
-      <div class="context">${formatContext(escapeHtml(data.context_translated))}</div>
+      ${contextHtml}
       <div class="status">
         <span class="stage-badge" style="background:${stageColor}">${escapeHtml(data.stage)}</span>
         <span>${statusText}</span>
@@ -147,6 +181,17 @@ function renderError(message: string): string {
   return `
     <div class="tooltip">
       <div class="error-text">${escapeHtml(message)}</div>
+    </div>
+  `;
+}
+
+function renderLoading(word: string): string {
+  return `
+    <div class="tooltip">
+      <div class="loading">
+        <div class="spinner"></div>
+        <span class="loading-text">Looking up "${escapeHtml(word)}"...</span>
+      </div>
     </div>
   `;
 }
@@ -257,6 +302,10 @@ export function showErrorTooltip(message: string, x: number, y: number): void {
 
 export function showOfflineTooltip(x: number, y: number): void {
   showTooltip(renderError('Offline — translation unavailable'), x, y);
+}
+
+export function showLoadingTooltip(word: string, x: number, y: number): void {
+  showTooltip(renderLoading(word), x, y);
 }
 
 export { removeTooltip };
