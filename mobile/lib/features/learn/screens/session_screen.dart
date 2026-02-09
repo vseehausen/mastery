@@ -216,9 +216,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       unawaited(ref.read(enrichmentServiceProvider).replenishIfNeeded(userId));
 
       if (mounted) {
+        // Self-correct estimate if initial batch is already smaller
+        final estimate = initialItems.length < _initialBatchSize
+            ? initialItems.length
+            : params.estimatedItemCount;
         setState(() {
           _items = initialItems;
-          _estimatedTotalItems = params.estimatedItemCount;
+          _estimatedTotalItems = estimate;
           _newWordsQueued = newWords;
           _newWordCap = params.newWordCap;
           _session = activeSession;
@@ -273,22 +277,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         newWordCap: _newWordCap,
       );
 
-      if (newItems.isNotEmpty && mounted) {
+      if (mounted) {
         setState(() {
-          for (final item in newItems) {
-            _fetchedCardIds.add(item.cardId);
-            if (item.isNewWord) _newWordsQueued++;
+          if (newItems.isNotEmpty) {
+            for (final item in newItems) {
+              _fetchedCardIds.add(item.cardId);
+              if (item.isNewWord) _newWordsQueued++;
+            }
+            _items = [..._items, ...newItems];
           }
-          _items = [..._items, ...newItems];
+          // Self-correct estimate: if batch returned fewer items than
+          // requested, we've exhausted the pool — true total is _items.length
+          if (newItems.length < _batchSize) {
+            _estimatedTotalItems = _items.length;
+          }
         });
-        debugPrint(
-          '[Session] Prefetched ${newItems.length} more items, '
-          'total queued: ${_items.length}, exclude set size: ${_fetchedCardIds.length}',
-        );
-        for (final item in newItems) {
-          debugPrint('[Session] New item: word=${item.word}');
-        }
+      }
 
+      if (newItems.isNotEmpty) {
         // Proactively replenish enrichment buffer after prefetch (fire-and-forget)
         unawaited(
           ref.read(enrichmentServiceProvider).replenishIfNeeded(userId),
