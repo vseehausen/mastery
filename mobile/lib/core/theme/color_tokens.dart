@@ -124,37 +124,37 @@ class MasteryColors {
   static const Color infoForegroundDark = Color(0xFF172554);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // VOCABULARY STAGES (8B-R4 lightness ramp: dark→bright)
+  // VOCABULARY STAGES (stone/lime/teal/blue/amber)
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Captured (Stone) — word captured, not yet reviewed
-  static const Color stageCapturedLight = Color(0xFF57534E); // stone-600
-  static const Color stageCapturedDark = Color(0xFF78716C); // stone-500
+  static const Color stageCapturedLight = Color(0xFF78716C); // stone-500
+  static const Color stageCapturedDark = Color(0xFFA8A29E); // stone-400
   static const Color stageCapturedBgLight = Color(0xFFF5F5F4); // stone-100
-  static const Color stageCapturedBgDark = Color(0xFF1C1917); // stone-900
+  static const Color stageCapturedBgDark = Color(0xFF292524); // stone-800
 
   // Practicing (Lime) — first review completed, in SRS rotation
-  static const Color stagePracticingLight = Color(0xFF3F6212); // lime-800
-  static const Color stagePracticingDark = Color(0xFF65A30D); // lime-600
-  static const Color stagePracticingBgLight = Color(0xFFECFCCB); // lime-100
+  static const Color stagePracticingLight = Color(0xFF84CC16); // lime-500
+  static const Color stagePracticingDark = Color(0xFFA3E635); // lime-400
+  static const Color stagePracticingBgLight = Color(0xFFF7FEE7); // lime-50
   static const Color stagePracticingBgDark = Color(0xFF1A2E05); // lime-950
 
-  // Stabilizing (Emerald) — multiple successful recalls
-  static const Color stageStabilizingLight = Color(0xFF047857); // emerald-700
-  static const Color stageStabilizingDark = Color(0xFF10B981); // emerald-500
-  static const Color stageStabilizingBgLight = Color(0xFFD1FAE5); // emerald-100
-  static const Color stageStabilizingBgDark = Color(0xFF064E3B); // emerald-800
+  // Stabilizing (Teal) — multiple successful recalls
+  static const Color stageStabilizingLight = Color(0xFF0D9488); // teal-600
+  static const Color stageStabilizingDark = Color(0xFF2DD4BF); // teal-400
+  static const Color stageStabilizingBgLight = Color(0xFFF0FDFA); // teal-50
+  static const Color stageStabilizingBgDark = Color(0xFF134E4A); // teal-900
 
   // Active (Blue) — production recall from non-translation cues
   static const Color stageActiveLight = Color(0xFF2563EB); // blue-600
-  static const Color stageActiveDark = Color(0xFF93C5FD); // blue-300
+  static const Color stageActiveDark = Color(0xFF60A5FA); // blue-400
   static const Color stageActiveBgLight = Color(0xFFDBEAFE); // blue-100
   static const Color stageActiveBgDark = Color(0xFF1E3A5F); // blue-900
 
   // Mastered (Amber) — high stability, rare reviews
   static const Color stageMasteredLight = Color(0xFFF59E0B); // amber-500
   static const Color stageMasteredDark = Color(0xFFFBBF24); // amber-400
-  static const Color stageMasteredBgLight = Color(0xFFFEF9C3); // yellow-100
+  static const Color stageMasteredBgLight = Color(0xFFFEF9C3); // amber-50
   static const Color stageMasteredBgDark = Color(0xFF451A03); // amber-950
 
   // ═══════════════════════════════════════════════════════════════════════════
