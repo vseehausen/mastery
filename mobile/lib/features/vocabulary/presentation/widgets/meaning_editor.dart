@@ -312,7 +312,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
     final colors = context.masteryColors;
 
     return DropdownButtonFormField<String>(
-      initialValue: _selectedPartOfSpeech,
+      value: _selectedPartOfSpeech,
       onChanged: (value) {
         if (value != null) {
           setState(() {
@@ -534,6 +534,10 @@ class _TagEditorState extends State<_TagEditor> {
                   color: colors.mutedForeground.withValues(alpha: 0.6),
                 ),
                 onPressed: _addItem,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  hoverBackgroundColor: colors.border.withValues(alpha: 0.2),
+                ),
               ),
             ),
           ],
