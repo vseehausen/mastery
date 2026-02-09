@@ -7,16 +7,27 @@ import 'package:mastery/domain/models/progress_stage.dart';
 
 /// Displays brief micro-feedback when a word transitions to a new progress stage.
 ///
-/// Shows an animated badge overlay for 2.5 seconds with the stage name.
+/// Shows an animated badge overlay for 2.5 seconds with the word and stage name.
 /// Fades in (300ms) → Holds (2000ms) → Fades out (400ms).
+///
+/// Format:
+/// - Standard stages: "word → Stage"
+/// - Mastered: "word — Mastered."
 ///
 /// Designed to be non-intrusive and contextual - appears near the card being reviewed.
 /// Follows the "minimal cognitive noise" design principle.
 class ProgressMicroFeedback extends StatefulWidget {
-  const ProgressMicroFeedback({required this.stage, super.key});
+  const ProgressMicroFeedback({
+    required this.stage,
+    required this.wordText,
+    super.key,
+  });
 
   /// The progress stage to display.
   final ProgressStage stage;
+
+  /// The word that progressed.
+  final String wordText;
 
   @override
   State<ProgressMicroFeedback> createState() => _ProgressMicroFeedbackState();
@@ -36,9 +47,12 @@ class _ProgressMicroFeedbackState extends State<ProgressMicroFeedback> {
       if (mounted) {
         setState(() => _visible = true);
         // Announce to screen readers
+        final announcement = widget.stage == ProgressStage.mastered
+            ? '${widget.wordText} — Mastered'
+            : '${widget.wordText} moved to ${widget.stage.displayName}';
         // ignore: deprecated_member_use
         SemanticsService.announce(
-          'Word progressing to ${widget.stage.displayName}',
+          announcement,
           TextDirection.ltr,
         );
       }
@@ -63,20 +77,25 @@ class _ProgressMicroFeedbackState extends State<ProgressMicroFeedback> {
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
 
+    // Format: "word → Stage" or "word — Mastered."
+    final text = widget.stage == ProgressStage.mastered
+        ? '${widget.wordText} — Mastered.'
+        : '${widget.wordText} → ${widget.stage.displayName}';
+
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
       opacity: _visible ? 1.0 : 0.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: widget.stage.getColor(colors),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          widget.stage.displayName,
+          text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),

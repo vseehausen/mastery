@@ -13,6 +13,41 @@ These briefs are greenfield execution specs for design and implementation handof
 
 ---
 
+## Stage Transition Language
+
+**Applies to:** Brief 2 (Session Screen), Brief 7 (Session Complete Screen)
+
+### Design Philosophy
+
+Progress speaks for itself. The word is the subject. No gamification language. The less frequent the event, the more weight the language carries.
+
+### Wording Rules
+
+| Context | Format | Example |
+|---------|--------|---------|
+| In-session badge (standard stages) | `word → Stage` | `ubiquitous → Known` |
+| In-session badge (Mastered) | `word — Mastered.` | `ubiquitous — Mastered.` |
+| Session summary (1 word) | `word moved to Stage` | `ubiquitous moved to Known` |
+| Session summary (N words) | `N words moved to Stage` | `3 words moved to Known` |
+| New → Practicing | **Invisible** | No badge, not counted in "Words progressed" |
+
+### Implementation Notes
+
+- **In-session badge**: Centered overlay, fades in/out, 2.5s visible duration
+- **Mastered badge**: Uses em dash (—) and period for special emphasis
+- **New → Practicing**: Suppressed entirely (no badge, no transition record, no count)
+- **Session summary**: Natural language "moved to" instead of arrow notation
+
+### Anti-Patterns
+
+Never use: "Congratulations," "Great job," "Well done," "Keep it up," "leveled up," "promoted," "advanced," "graduated."
+
+### Rationale
+
+Rare achievements (Known, Mastered) already carry intrinsic weight. Gamification language dilutes that signal. The word progressing is the achievement—the UI simply states the fact.
+
+---
+
 ## Design Brief 1: Auth Flow
 
 **Screens:** AuthScreen, EmailSignInScreen, EmailSignUpScreen, OAuthLoadingScreen  

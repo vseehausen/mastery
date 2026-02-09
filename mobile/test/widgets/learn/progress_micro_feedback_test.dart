@@ -6,17 +6,37 @@ import 'package:mastery/features/learn/widgets/progress_micro_feedback.dart';
 
 void main() {
   group('ProgressMicroFeedback', () {
-    testWidgets('displays stage name', (tester) async {
+    testWidgets('displays word and stage in correct format', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.stabilizing),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.stabilizing,
+              wordText: 'ubiquitous',
+            ),
           ),
         ),
       );
 
-      expect(find.text('Stabilizing'), findsOneWidget);
+      expect(find.text('ubiquitous → Stabilizing'), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('displays Mastered with special format', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: [MasteryColorScheme.light]),
+          home: const Scaffold(
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.mastered,
+              wordText: 'ubiquitous',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('ubiquitous — Mastered.'), findsOneWidget);
       await tester.pumpAndSettle();
     });
 
@@ -25,7 +45,10 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.known),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.known,
+              wordText: 'test',
+            ),
           ),
         ),
       );
@@ -49,7 +72,10 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.known),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.known,
+              wordText: 'test',
+            ),
           ),
         ),
       );
@@ -59,7 +85,10 @@ void main() {
       // Find the container and check its color
       final container = tester.widget<Container>(
         find
-            .ancestor(of: find.text('Known'), matching: find.byType(Container))
+            .ancestor(
+              of: find.textContaining('Known'),
+              matching: find.byType(Container),
+            )
             .first,
       );
 
@@ -75,7 +104,10 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.known),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.known,
+              wordText: 'test',
+            ),
           ),
         ),
       );
@@ -83,9 +115,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check text style
-      final textWidget = tester.widget<Text>(find.text('Known'));
+      final textWidget = tester.widget<Text>(find.text('test → Known'));
       expect(textWidget.style?.color, Colors.white);
-      expect(textWidget.style?.fontSize, 12);
+      expect(textWidget.style?.fontSize, 14);
       expect(textWidget.style?.fontWeight, FontWeight.w600);
     });
 
@@ -94,7 +126,10 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.known),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.known,
+              wordText: 'test',
+            ),
           ),
         ),
       );
@@ -104,7 +139,10 @@ void main() {
       // Check container shape
       final container = tester.widget<Container>(
         find
-            .ancestor(of: find.text('Known'), matching: find.byType(Container))
+            .ancestor(
+              of: find.textContaining('Known'),
+              matching: find.byType(Container),
+            )
             .first,
       );
       final decoration = container.decoration as BoxDecoration;
@@ -117,7 +155,10 @@ void main() {
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
             body: Center(
-              child: ProgressMicroFeedback(stage: ProgressStage.stabilizing),
+              child: ProgressMicroFeedback(
+                stage: ProgressStage.stabilizing,
+                wordText: 'test',
+              ),
             ),
           ),
         ),
@@ -127,7 +168,7 @@ void main() {
 
       final containerFinder = find
           .ancestor(
-            of: find.text('Stabilizing'),
+            of: find.textContaining('Stabilizing'),
             matching: find.byType(Container),
           )
           .first;
@@ -136,9 +177,9 @@ void main() {
 
       // Badge should be reasonably sized (not too big or too small)
       expect(size.width, greaterThan(60));
-      expect(size.width, lessThan(200));
+      expect(size.width, lessThan(300));
       expect(size.height, greaterThan(20));
-      expect(size.height, lessThan(50));
+      expect(size.height, lessThan(60));
     });
 
     testWidgets('works in dark mode', (tester) async {
@@ -149,7 +190,10 @@ void main() {
             extensions: [MasteryColorScheme.dark],
           ),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.known),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.known,
+              wordText: 'test',
+            ),
           ),
         ),
       );
@@ -157,7 +201,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should display without errors
-      expect(find.text('Known'), findsOneWidget);
+      expect(find.text('test → Known'), findsOneWidget);
     });
 
     testWidgets('badge fades out after timeout', (tester) async {
@@ -165,7 +209,10 @@ void main() {
         MaterialApp(
           theme: ThemeData(extensions: [MasteryColorScheme.light]),
           home: const Scaffold(
-            body: ProgressMicroFeedback(stage: ProgressStage.stabilizing),
+            body: ProgressMicroFeedback(
+              stage: ProgressStage.stabilizing,
+              wordText: 'test',
+            ),
           ),
         ),
       );

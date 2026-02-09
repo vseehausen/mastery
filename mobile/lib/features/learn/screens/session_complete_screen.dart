@@ -431,7 +431,7 @@ class _TransitionRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '$count $wordLabel → ${stage.displayName}',
+              '$count $wordLabel moved to ${stage.displayName}',
               style: MasteryTextStyles.body.copyWith(
                 color: colors.foreground,
                 fontWeight: isRare ? FontWeight.w600 : FontWeight.normal,

@@ -34,7 +34,7 @@ class SessionProgressSummary {
 
   /// Converts the summary to a human-readable display string.
   ///
-  /// Format: "2 words → Stabilizing • 1 word → Known"
+  /// Format: "2 words moved to Stabilizing • 1 word moved to Known"
   /// Returns empty string if no transitions occurred.
   String toDisplayString() {
     if (!hasTransitions) return '';
@@ -43,20 +43,30 @@ class SessionProgressSummary {
 
     if (stabilizingCount > 0) {
       final wordLabel = stabilizingCount == 1 ? 'word' : 'words';
-      parts.add('$stabilizingCount $wordLabel → Stabilizing');
+      parts.add('$stabilizingCount $wordLabel moved to Stabilizing');
     }
 
     if (knownCount > 0) {
       final wordLabel = knownCount == 1 ? 'word' : 'words';
-      parts.add('$knownCount $wordLabel → Known');
+      parts.add('$knownCount $wordLabel moved to Known');
     }
 
     if (masteredCount > 0) {
       final wordLabel = masteredCount == 1 ? 'word' : 'words';
-      parts.add('$masteredCount $wordLabel → Mastered');
+      parts.add('$masteredCount $wordLabel moved to Mastered');
     }
 
     return parts.join(' • ');
+  }
+
+  /// Gets the word text for a specific stage when count is 1.
+  /// Returns null if count is not 1 or stage has no transitions.
+  String? getWordTextForStage(ProgressStage stage) {
+    final stageTransitions = transitions.where((t) => t.toStage == stage).toList();
+    if (stageTransitions.length == 1) {
+      return stageTransitions.first.wordText;
+    }
+    return null;
   }
 
   @override

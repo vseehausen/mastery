@@ -78,6 +78,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   final _progressStageService = ProgressStageService();
   final List<StageTransition> _stageTransitions = [];
   ProgressStage? _lastTransitionStage;
+  String? _lastTransitionWord;
   Timer? _transitionFeedbackTimer;
   int _transitionFeedbackNonce = 0;
   // Track local count increments within session for accurate stage calculation
@@ -439,7 +440,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
 
     // Show transition feedback immediately if stage progressed
-    if (stageAfter != stageBefore && stageAfter.index > stageBefore.index) {
+    // Skip New → Practicing transitions (invisible per design brief)
+    if (stageAfter != stageBefore &&
+        stageAfter.index > stageBefore.index &&
+        !(stageBefore == ProgressStage.captured &&
+            stageAfter == ProgressStage.practicing)) {
       final transition = StageTransition(
         vocabularyId: currentItem.vocabularyId,
         wordText: currentItem.displayWord,
@@ -448,7 +453,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         timestamp: DateTime.now(),
       );
       _stageTransitions.add(transition);
-      _showStageTransitionFeedback(stageAfter);
+      _showStageTransitionFeedback(stageAfter, currentItem.displayWord);
       debugPrint(
         '[Session] Stage transition: ${currentItem.word} '
         '${stageBefore.displayName} → ${stageAfter.displayName}',
@@ -608,17 +613,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     await Future.wait(_pendingReviewWrites.toList(), eagerError: false);
   }
 
-  void _showStageTransitionFeedback(ProgressStage stage) {
+  void _showStageTransitionFeedback(ProgressStage stage, String wordText) {
     _transitionFeedbackTimer?.cancel();
     if (!mounted) return;
     setState(() {
       _lastTransitionStage = stage;
+      _lastTransitionWord = wordText;
       _transitionFeedbackNonce++;
     });
     _transitionFeedbackTimer = Timer(const Duration(milliseconds: 2900), () {
       if (!mounted) return;
       setState(() {
         _lastTransitionStage = null;
+        _lastTransitionWord = null;
       });
     });
   }
@@ -836,15 +843,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 child: Stack(
                   children: [
                     _buildItemCard(currentItem, context),
-                    if (_lastTransitionStage != null)
+                    if (_lastTransitionStage != null && _lastTransitionWord != null)
                       Positioned(
                         top: 12,
-                        right: 12,
-                        child: ProgressMicroFeedback(
-                          key: ValueKey(
-                            'stage_feedback_$_transitionFeedbackNonce',
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: ProgressMicroFeedback(
+                            key: ValueKey(
+                              'stage_feedback_$_transitionFeedbackNonce',
+                            ),
+                            stage: _lastTransitionStage!,
+                            wordText: _lastTransitionWord!,
                           ),
-                          stage: _lastTransitionStage!,
                         ),
                       ),
                   ],

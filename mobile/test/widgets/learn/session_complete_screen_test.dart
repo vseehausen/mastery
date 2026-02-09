@@ -182,8 +182,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // "1 word -> Stabilizing" (singular)
+        // "1 word moved to Stabilizing" (singular)
         expect(find.textContaining('1 word'), findsWidgets);
+        expect(find.textContaining('moved to'), findsWidgets);
         expect(find.textContaining('Stabilizing'), findsWidgets);
       });
 
@@ -215,8 +216,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // "2 words -> Stabilizing" (plural)
+        // "2 words moved to Stabilizing" (plural)
         expect(find.textContaining('2 words'), findsOneWidget);
+        expect(find.textContaining('moved to'), findsWidgets);
       });
 
       testWidgets('shows correct counts for mixed transition types', (
@@ -244,7 +246,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Progress Made'), findsOneWidget);
-        // Each type should show "1 word -> StageName"
+        // Each type should show "1 word moved to StageName"
+        expect(find.textContaining('moved to'), findsWidgets);
         expect(find.textContaining('Mastered'), findsWidgets);
         expect(find.textContaining('Known'), findsWidgets);
         expect(find.textContaining('Stabilizing'), findsWidgets);
