@@ -157,5 +157,22 @@ void main() {
       expect(find.text('ephemeral'), findsOneWidget);
       expect(find.byType(RecognitionCard), findsOneWidget);
     });
+
+    testWidgets('preview mode pre-selects correct answer', (tester) async {
+      await tester.pumpTestWidget(
+        RecognitionCard(
+          word: 'ephemeral',
+          correctAnswer: 'lasting a short time',
+          distractors: const ['permanent', 'significant', 'expensive'],
+          onAnswer: onAnswer,
+          isPreview: true,
+        ),
+      );
+
+      // Correct answer should show check icon (feedback state)
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      // No interaction needed — answer already selected
+      expect(selectedAnswer, isNull); // onAnswer not called in preview
+    });
   });
 }

@@ -14,6 +14,7 @@ class RecognitionCard extends StatefulWidget {
     required this.distractors,
     required this.onAnswer,
     this.context,
+    this.isPreview = false,
   });
 
   /// The word being tested
@@ -32,6 +33,9 @@ class RecognitionCard extends StatefulWidget {
   /// Returns the selected answer and whether it was correct
   final void Function(String selected, bool isCorrect) onAnswer;
 
+  /// Preview mode - pre-selects correct answer to show feedback state
+  final bool isPreview;
+
   @override
   State<RecognitionCard> createState() => _RecognitionCardState();
 }
@@ -44,6 +48,9 @@ class _RecognitionCardState extends State<RecognitionCard> {
   void initState() {
     super.initState();
     _shuffleOptions();
+    if (widget.isPreview) {
+      _selectedAnswer = widget.correctAnswer;
+    }
   }
 
   @override

@@ -116,5 +116,27 @@ void main() {
 
       expect(find.text('Show Answer'), findsOneWidget);
     });
+
+    testWidgets('preview mode shows answer immediately with no buttons',
+        (tester) async {
+      await tester.pumpTestWidget(
+        SynonymCueCard(
+          synonymPhrase: 'Productive and streamlined.',
+          targetWord: 'efficient',
+          onGrade: (_) {},
+          isPreview: true,
+        ),
+      );
+
+      // Answer visible immediately
+      expect(find.text('efficient'), findsOneWidget);
+      // No Show Answer button
+      expect(find.text('Show Answer'), findsNothing);
+      // No grade buttons
+      expect(find.text('Again'), findsNothing);
+      expect(find.text('Hard'), findsNothing);
+      expect(find.text('Good'), findsNothing);
+      expect(find.text('Easy'), findsNothing);
+    });
   });
 }

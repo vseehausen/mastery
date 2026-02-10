@@ -147,5 +147,24 @@ void main() {
       // After grade callback triggers state change, widget should reset
       expect(find.text('She sat on the ___.'), findsOneWidget);
     });
+
+    testWidgets('preview mode pre-selects correct answer and shows explanation',
+        (tester) async {
+      await tester.pumpTestWidget(
+        DisambiguationCard(
+          clozeSentence: 'The ___ was full of money.',
+          options: const ['bank', 'bench', 'blank'],
+          correctIndex: 0,
+          explanation: 'A bank stores money.',
+          onGrade: (_) {},
+          isPreview: true,
+        ),
+      );
+
+      // Explanation visible immediately
+      expect(find.text('A bank stores money.'), findsOneWidget);
+      // Correct feedback shown
+      expect(find.textContaining('Correct'), findsOneWidget);
+    });
   });
 }

@@ -42,6 +42,12 @@ class _DefinitionCueCardState extends State<DefinitionCueCard> {
   bool _hasGraded = false;
 
   @override
+  void initState() {
+    super.initState();
+    _isRevealed = widget.isPreview;
+  }
+
+  @override
   void didUpdateWidget(DefinitionCueCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.definition != widget.definition ||

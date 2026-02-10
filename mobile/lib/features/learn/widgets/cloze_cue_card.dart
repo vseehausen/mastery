@@ -42,6 +42,12 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
   bool _hasGraded = false;
 
   @override
+  void initState() {
+    super.initState();
+    _isRevealed = widget.isPreview;
+  }
+
+  @override
   void didUpdateWidget(ClozeCueCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sentenceWithBlank != widget.sentenceWithBlank ||

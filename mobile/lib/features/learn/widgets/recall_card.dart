@@ -42,6 +42,12 @@ class _RecallCardState extends State<RecallCard> {
   bool _hasGraded = false;
 
   @override
+  void initState() {
+    super.initState();
+    _isRevealed = widget.isPreview;
+  }
+
+  @override
   void didUpdateWidget(RecallCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.word != widget.word) {

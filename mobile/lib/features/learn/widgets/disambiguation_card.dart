@@ -14,6 +14,7 @@ class DisambiguationCard extends StatefulWidget {
     required this.correctIndex,
     required this.explanation,
     required this.onGrade,
+    this.isPreview = false,
   });
 
   /// The sentence with a blank (e.g., "The ___ was full of money.")
@@ -31,12 +32,23 @@ class DisambiguationCard extends StatefulWidget {
   /// Callback when user answers (ReviewRating.good for correct, .again for wrong)
   final void Function(int rating) onGrade;
 
+  /// Preview mode - pre-selects correct answer to show explanation
+  final bool isPreview;
+
   @override
   State<DisambiguationCard> createState() => _DisambiguationCardState();
 }
 
 class _DisambiguationCardState extends State<DisambiguationCard> {
   int? _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isPreview) {
+      _selectedIndex = widget.correctIndex;
+    }
+  }
 
   @override
   void didUpdateWidget(DisambiguationCard oldWidget) {

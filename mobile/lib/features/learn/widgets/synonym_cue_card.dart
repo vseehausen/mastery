@@ -37,6 +37,12 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
   bool _hasGraded = false;
 
   @override
+  void initState() {
+    super.initState();
+    _isRevealed = widget.isPreview;
+  }
+
+  @override
   void didUpdateWidget(SynonymCueCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.synonymPhrase != widget.synonymPhrase ||

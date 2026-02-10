@@ -200,5 +200,27 @@ void main() {
       expect(find.text('ephemeral'), findsOneWidget);
       expect(find.byType(RecallCard), findsOneWidget);
     });
+
+    testWidgets('preview mode shows answer immediately with no buttons',
+        (tester) async {
+      await tester.pumpTestWidget(
+        RecallCard(
+          word: 'ephemeral',
+          answer: 'lasting a short time',
+          onGrade: onGrade,
+          isPreview: true,
+        ),
+      );
+
+      // Answer visible immediately
+      expect(find.text('lasting a short time'), findsOneWidget);
+      // No Show Answer button
+      expect(find.text('Show Answer'), findsNothing);
+      // No grade buttons
+      expect(find.text('Again'), findsNothing);
+      expect(find.text('Hard'), findsNothing);
+      expect(find.text('Good'), findsNothing);
+      expect(find.text('Easy'), findsNothing);
+    });
   });
 }

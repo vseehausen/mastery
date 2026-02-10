@@ -260,6 +260,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
           correctAnswer: primaryTranslation,
           distractors: recognitionDistractors,
           onAnswer: (selected, isCorrect) {}, // No-op in preview mode
+          isPreview: true,
         ),
       ),
     );
@@ -329,6 +330,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
               correctIndex: 0,
               explanation: '',
               onGrade: (_) {}, // No-op in preview mode
+              isPreview: true,
             ),
           ),
         );
