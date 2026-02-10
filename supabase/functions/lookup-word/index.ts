@@ -10,6 +10,7 @@ import { generateContentHash, extractDomain } from '../_shared/crypto.ts';
 import { mapCardToStage } from '../_shared/stage.ts';
 
 const DEFAULT_NATIVE_LANG = 'de';
+const SUPPORTED_LANGS = new Set(['de', 'es', 'fr', 'it', 'pt', 'nl', 'pl', 'ru', 'ja', 'zh', 'ko']);
 
 // =============================================================================
 // Types
@@ -92,13 +93,21 @@ Deno.serve(async (req) => {
 // =============================================================================
 
 async function handleLookup(req: Request, userId: string): Promise<Response> {
-  const body: LookupRequest = await req.json();
+  let body: LookupRequest;
+  try {
+    body = await req.json();
+  } catch {
+    return errorResponse('Invalid JSON body', 400);
+  }
 
   const validationError = validateLookupRequest(body);
   if (validationError) return validationError;
 
   const { raw_word, sentence, url, title } = body;
   const nativeLang = body.native_lang || DEFAULT_NATIVE_LANG;
+  if (!SUPPORTED_LANGS.has(nativeLang)) {
+    return errorResponse(`Unsupported language: ${nativeLang}`, 400);
+  }
   const client = createSupabaseClient(req);
   const estimatedLemma = raw_word.toLowerCase().trim();
   const estimatedHash = await generateContentHash(estimatedLemma);
@@ -348,7 +357,7 @@ async function createEncounter(
   sentence: string,
 ): Promise<void> {
   const domain = extractDomain(url);
-  const { data: existingSource } = await client
+  const { data: existingSource, error: sourceErr } = await client
     .from('sources')
     .select('id')
     .eq('user_id', userId)
@@ -356,6 +365,10 @@ async function createEncounter(
     .eq('url', url)
     .is('deleted_at', null)
     .single();
+
+  if (sourceErr && !isNotFoundError(sourceErr)) {
+    console.error('[lookup-word] source lookup failed:', sourceErr);
+  }
 
   let sourceId: string;
   if (existingSource) {
@@ -399,13 +412,17 @@ async function createEncounter(
 // =============================================================================
 
 async function getVocabularyStage(client: SupabaseClient, vocabularyId: string, userId: string): Promise<string> {
-  const { data: card } = await client
+  const { data: card, error } = await client
     .from('learning_cards')
     .select('state, stability')
     .eq('user_id', userId)
     .eq('vocabulary_id', vocabularyId)
     .is('deleted_at', null)
     .single();
+
+  if (error && !isNotFoundError(error)) {
+    console.error('[lookup-word] getVocabularyStage failed:', error);
+  }
 
   return mapCardToStage(card);
 }
@@ -530,17 +547,21 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
   const pageUrl = url.searchParams.get('url');
   const client = createSupabaseClient(req);
 
-  const { count: totalCount } = await client
+  const { count: totalCount, error: totalErr } = await client
     .from('vocabulary')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .is('deleted_at', null);
 
+  if (totalErr) {
+    console.error('[lookup-word] batch-status total count failed:', totalErr);
+  }
+
   let pageWords: Array<{ lemma: string; translation: string; stage: string }> = [];
 
   if (pageUrl) {
     // Resolve source first, then filter encounters by source_id (avoids full table scan)
-    const { data: sources } = await client
+    const { data: sources, error: srcErr } = await client
       .from('sources')
       .select('id')
       .eq('user_id', userId)
@@ -548,15 +569,23 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
       .eq('type', 'website')
       .is('deleted_at', null);
 
+    if (srcErr) {
+      console.error('[lookup-word] batch-status source lookup failed:', srcErr);
+    }
+
     if (sources && sources.length > 0) {
       const sourceIds = sources.map((s: { id: string }) => s.id);
 
-      const { data: encounters } = await client
+      const { data: encounters, error: encErr } = await client
         .from('encounters')
         .select('vocabulary_id')
         .eq('user_id', userId)
         .in('source_id', sourceIds)
         .is('deleted_at', null);
+
+      if (encErr) {
+        console.error('[lookup-word] batch-status encounters failed:', encErr);
+      }
 
       if (encounters && encounters.length > 0) {
         const vocabIds = [...new Set(encounters.map((e: { vocabulary_id: string }) => e.vocabulary_id))];
@@ -566,6 +595,10 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
           client.from('meanings').select('vocabulary_id, primary_translation').eq('user_id', userId).in('vocabulary_id', vocabIds).is('deleted_at', null),
           client.from('learning_cards').select('vocabulary_id, state, stability').eq('user_id', userId).in('vocabulary_id', vocabIds).is('deleted_at', null),
         ]);
+
+        if (vocabResult.error) console.error('[lookup-word] batch-status vocab query failed:', vocabResult.error);
+        if (meaningResult.error) console.error('[lookup-word] batch-status meanings query failed:', meaningResult.error);
+        if (cardResult.error) console.error('[lookup-word] batch-status cards query failed:', cardResult.error);
 
         const vocabMap = new Map(
           (vocabResult.data as Array<{ id: string; stem: string }> || []).map(v => [v.id, v.stem])

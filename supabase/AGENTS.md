@@ -114,6 +114,13 @@ npx supabase secrets set KEY_NAME="value"
 - **User-scoped client by default.** Use `createSupabaseClient(req)` for user requests — RLS does the authz. Reserve `createServiceClient()` for server-to-server calls only.
 - **Shared utilities in `_shared/`.** If two functions duplicate logic, extract to `_shared/`. Keep modules small and single-purpose.
 - **Delete dead code immediately.** Unused functions add cognitive load and make refactors scary. Remove on sight.
+- **Never silently swallow query errors.** Always check the `error` field from Supabase queries. Distinguish "not found" (`PGRST116`) from real failures. Log real errors, don't just return defaults.
+- **Allowlist tables for dynamic operations.** When a function accepts a table name from the request body (e.g., sync push), validate against an explicit allowlist. Never pass user-supplied strings to `.from()` unchecked.
+- **Parallelize independent queries.** When multiple DB queries don't depend on each other's results, use `Promise.all` instead of sequential `await`s. Cuts latency proportionally.
+- **Extract shared processing loops.** When two code paths (e.g., user-JWT vs. service-role) share identical iteration logic, extract the loop body into a shared function. Keep handlers thin — they parse input, call the shared processor, and shape the response.
+- **Use `SupabaseClient` type, not `ReturnType<typeof ...>`.** Import `SupabaseClient` from `_shared/supabase.ts`. Avoid `any` for client params.
+- **Narrow `select()` to needed columns.** Prefer `select('id, stem')` over `select('*')` on shared tables like `global_dictionary`. On user-owned tables for sync, `select('*')` is acceptable when the client needs all fields.
+- **Data-driven repetition over copy-paste.** When 10+ sequential queries follow the same pattern (e.g., pull each table), define a config array and iterate. Makes adding new tables a one-line change.
 
 ## Testing Edge Functions
 

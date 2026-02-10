@@ -1,19 +1,52 @@
 // Sync edge function - handles push and pull operations
 
 import { handleCors } from '../_shared/cors.ts';
-import { createSupabaseClient, getUserId } from '../_shared/supabase.ts';
+import { createSupabaseClient, getUserId, type SupabaseClient } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
 
+// Tables allowed for push operations — reject anything not in this list
+const ALLOWED_PUSH_TABLES = new Set([
+  'sources',
+  'encounters',
+  'vocabulary',
+  'learning_cards',
+  'learning_sessions',
+  'streaks',
+  'user_learning_preferences',
+  'meanings',
+  'cues',
+  'confusable_sets',
+  'confusable_set_members',
+  'meaning_edits',
+]);
+
+// Pull table configs: each defines a table name and its timestamp field
+interface PullTableConfig {
+  table: string;
+  timeField: 'updated_at' | 'created_at';
+  filterByUserId: boolean;
+}
+
+const PULL_TABLES: PullTableConfig[] = [
+  { table: 'sources', timeField: 'updated_at', filterByUserId: true },
+  { table: 'encounters', timeField: 'updated_at', filterByUserId: true },
+  { table: 'vocabulary', timeField: 'updated_at', filterByUserId: true },
+  { table: 'learning_cards', timeField: 'updated_at', filterByUserId: true },
+  { table: 'learning_sessions', timeField: 'updated_at', filterByUserId: true },
+  { table: 'streaks', timeField: 'updated_at', filterByUserId: true },
+  { table: 'user_learning_preferences', timeField: 'updated_at', filterByUserId: true },
+  { table: 'meanings', timeField: 'updated_at', filterByUserId: true },
+  { table: 'cues', timeField: 'updated_at', filterByUserId: true },
+  { table: 'confusable_sets', timeField: 'updated_at', filterByUserId: true },
+  { table: 'meaning_edits', timeField: 'created_at', filterByUserId: true },
+];
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  // Get user ID from auth
   const userId = await getUserId(req);
-  if (!userId) {
-    return unauthorizedResponse();
-  }
+  if (!userId) return unauthorizedResponse();
 
   const url = new URL(req.url);
   const path = url.pathname.split('/').pop();
@@ -24,7 +57,6 @@ Deno.serve(async (req) => {
     } else if (req.method === 'POST' && path === 'pull') {
       return await handlePull(req, userId);
     }
-
     return errorResponse('Method not allowed', 405);
   } catch (error) {
     console.error('Sync error:', error);
@@ -42,6 +74,11 @@ async function handlePush(req: Request, userId: string): Promise<Response> {
   for (const change of changes) {
     const { table, operation, id, data, version } = change;
 
+    if (!ALLOWED_PUSH_TABLES.has(table)) {
+      console.error(`[sync/push] Rejected push to disallowed table: ${table}`);
+      continue;
+    }
+
     try {
       if (operation === 'insert') {
         const { error } = await client
@@ -50,7 +87,6 @@ async function handlePush(req: Request, userId: string): Promise<Response> {
 
         if (!error) applied++;
       } else if (operation === 'upsert') {
-        // Upsert - insert or update based on id
         const { error } = await client
           .from(table)
           .upsert({ ...data, id, user_id: userId, last_synced_at: new Date().toISOString() });
@@ -64,7 +100,6 @@ async function handlePush(req: Request, userId: string): Promise<Response> {
           .eq('user_id', userId)
           .single();
 
-        // Last-write-wins based on version
         if (existing && existing.version > version) {
           conflicts.push({
             id,
@@ -112,118 +147,24 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
   const since = lastSyncedAt || '1970-01-01T00:00:00Z';
   console.log(`[sync/pull] userId=${userId}, since=${since}`);
 
-  // Fetch sources modified since lastSyncedAt
-  const { data: sources, error: sourcesError } = await client
-    .from('sources')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
+  // Fetch all standard tables in parallel
+  const tableResults = await Promise.all(
+    PULL_TABLES.map(config => pullTable(client, userId, config, since)),
+  );
 
-  if (sourcesError) {
-    return errorResponse('Failed to fetch sources', 500);
+  // Build results map from parallel fetches
+  const results: Record<string, unknown[]> = {};
+  for (let i = 0; i < PULL_TABLES.length; i++) {
+    const { table } = PULL_TABLES[i];
+    const { data, error } = tableResults[i];
+    if (error) {
+      return errorResponse(`Failed to fetch ${table}`, 500);
+    }
+    results[table] = data || [];
   }
 
-  // Fetch encounters modified since lastSyncedAt
-  const { data: encounters, error: encountersError } = await client
-    .from('encounters')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (encountersError) {
-    return errorResponse('Failed to fetch encounters', 500);
-  }
-
-  // Fetch vocabulary modified since lastSyncedAt
-  const { data: vocabulary, error: vocabularyError } = await client
-    .from('vocabulary')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (vocabularyError) {
-    return errorResponse('Failed to fetch vocabulary', 500);
-  }
-
-  // Fetch learning_cards modified since lastSyncedAt
-  const { data: learning_cards, error: learningCardsError } = await client
-    .from('learning_cards')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (learningCardsError) {
-    return errorResponse('Failed to fetch learning cards', 500);
-  }
-
-  // Fetch learning_sessions modified since lastSyncedAt
-  const { data: learning_sessions, error: learningSessionsError } = await client
-    .from('learning_sessions')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (learningSessionsError) {
-    return errorResponse('Failed to fetch learning sessions', 500);
-  }
-
-  // Fetch streaks modified since lastSyncedAt
-  const { data: streaks, error: streaksError } = await client
-    .from('streaks')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (streaksError) {
-    return errorResponse('Failed to fetch streaks', 500);
-  }
-
-  // Fetch user_learning_preferences modified since lastSyncedAt
-  const { data: user_learning_preferences, error: prefsError } = await client
-    .from('user_learning_preferences')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (prefsError) {
-    return errorResponse('Failed to fetch user preferences', 500);
-  }
-
-  // Fetch meanings modified since lastSyncedAt
-  const { data: meanings, error: meaningsError } = await client
-    .from('meanings')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (meaningsError) {
-    return errorResponse('Failed to fetch meanings', 500);
-  }
-
-  // Fetch cues modified since lastSyncedAt
-  const { data: cues, error: cuesError } = await client
-    .from('cues')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (cuesError) {
-    return errorResponse('Failed to fetch cues', 500);
-  }
-
-  // Fetch confusable_sets modified since lastSyncedAt
-  const { data: confusable_sets, error: confusableSetsError } = await client
-    .from('confusable_sets')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('updated_at', since);
-
-  if (confusableSetsError) {
-    return errorResponse('Failed to fetch confusable sets', 500);
-  }
-
-  // Fetch confusable_set_members (join table - no updated_at, fetch all for user's sets)
-  const confusableSetIds = (confusable_sets || []).map((s: { id: string }) => s.id);
+  // Special case: confusable_set_members (join table, fetched by set IDs, no user_id)
+  const confusableSetIds = (results['confusable_sets'] as Array<{ id: string }>).map(s => s.id);
   let confusable_set_members: unknown[] = [];
   if (confusableSetIds.length > 0) {
     const { data: members, error: membersError } = await client
@@ -237,34 +178,36 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     confusable_set_members = members || [];
   }
 
-  // Fetch meaning_edits (append-only, no updated_at - fetch by created_at)
-  const { data: meaning_edits, error: meaningEditsError } = await client
-    .from('meaning_edits')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('created_at', since);
-
-  if (meaningEditsError) {
-    return errorResponse('Failed to fetch meaning edits', 500);
-  }
-
   const syncedAt = new Date().toISOString();
 
-  console.log(`[sync/pull] Returning: sources=${sources?.length || 0}, encounters=${encounters?.length || 0}, vocab=${vocabulary?.length || 0}, learning_cards=${learning_cards?.length || 0}, meanings=${meanings?.length || 0}, cues=${cues?.length || 0}`);
+  console.log(`[sync/pull] Returning: sources=${results['sources'].length}, encounters=${results['encounters'].length}, vocab=${results['vocabulary'].length}, learning_cards=${results['learning_cards'].length}, meanings=${results['meanings'].length}, cues=${results['cues'].length}`);
 
   return jsonResponse({
-    sources: sources || [],
-    encounters: encounters || [],
-    vocabulary: vocabulary || [],
-    learning_cards: learning_cards || [],
-    learning_sessions: learning_sessions || [],
-    streaks: streaks || [],
-    user_learning_preferences: user_learning_preferences || [],
-    meanings: meanings || [],
-    cues: cues || [],
-    confusable_sets: confusable_sets || [],
+    sources: results['sources'],
+    encounters: results['encounters'],
+    vocabulary: results['vocabulary'],
+    learning_cards: results['learning_cards'],
+    learning_sessions: results['learning_sessions'],
+    streaks: results['streaks'],
+    user_learning_preferences: results['user_learning_preferences'],
+    meanings: results['meanings'],
+    cues: results['cues'],
+    confusable_sets: results['confusable_sets'],
     confusable_set_members,
-    meaning_edits: meaning_edits || [],
+    meaning_edits: results['meaning_edits'],
     syncedAt,
   });
+}
+
+function pullTable(
+  client: SupabaseClient,
+  userId: string,
+  config: PullTableConfig,
+  since: string,
+) {
+  let query = client.from(config.table).select('*');
+  if (config.filterByUserId) {
+    query = query.eq('user_id', userId);
+  }
+  return query.gt(config.timeField, since);
 }
