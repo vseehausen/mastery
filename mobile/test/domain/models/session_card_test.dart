@@ -1,126 +1,95 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mastery/domain/models/cue_type.dart';
 import 'package:mastery/domain/models/session_card.dart';
 
 void main() {
-  group('SessionMeaning', () {
+  group('ClozeText', () {
     test('fromJson parses all fields correctly', () {
       final json = {
-        'id': 'meaning-123',
-        'primary_translation': 'Haus',
-        'english_definition': 'A building for human habitation',
-        'extended_definition': 'A structure serving as a dwelling',
-        'part_of_speech': 'noun',
-        'synonyms': ['home', 'dwelling', 'residence'],
-        'is_primary': true,
-        'sort_order': 0,
+        'sentence': 'Wi-Fi has become so ubiquitous.',
+        'before': 'Wi-Fi has become so ',
+        'blank': 'ubiquitous',
+        'after': '.',
       };
 
-      final meaning = SessionMeaning.fromJson(json);
+      final cloze = ClozeText.fromJson(json);
 
-      expect(meaning.id, 'meaning-123');
-      expect(meaning.primaryTranslation, 'Haus');
-      expect(meaning.englishDefinition, 'A building for human habitation');
-      expect(meaning.extendedDefinition, 'A structure serving as a dwelling');
-      expect(meaning.partOfSpeech, 'noun');
-      expect(meaning.synonyms, ['home', 'dwelling', 'residence']);
-      expect(meaning.isPrimary, true);
-      expect(meaning.sortOrder, 0);
+      expect(cloze.sentence, 'Wi-Fi has become so ubiquitous.');
+      expect(cloze.before, 'Wi-Fi has become so ');
+      expect(cloze.blank, 'ubiquitous');
+      expect(cloze.after, '.');
     });
 
-    test('fromJson handles null optional fields', () {
+    test('fromJson handles missing fields with empty strings', () {
       final json = {
-        'id': 'meaning-123',
-        'primary_translation': 'Haus',
-        'english_definition': 'A building',
-        'extended_definition': null,
-        'part_of_speech': null,
-        'synonyms': null,
-        'is_primary': null,
-        'sort_order': null,
+        'sentence': 'Test sentence',
       };
 
-      final meaning = SessionMeaning.fromJson(json);
+      final cloze = ClozeText.fromJson(json);
 
-      expect(meaning.extendedDefinition, isNull);
-      expect(meaning.partOfSpeech, isNull);
-      expect(meaning.synonyms, isEmpty);
-      expect(meaning.isPrimary, false);
-      expect(meaning.sortOrder, 0);
-    });
-
-    test('fromJson handles empty synonyms list', () {
-      final json = {
-        'id': 'meaning-123',
-        'primary_translation': 'Haus',
-        'english_definition': 'A building',
-        'synonyms': <String>[],
-      };
-
-      final meaning = SessionMeaning.fromJson(json);
-
-      expect(meaning.synonyms, isEmpty);
+      expect(cloze.sentence, 'Test sentence');
+      expect(cloze.before, '');
+      expect(cloze.blank, '');
+      expect(cloze.after, '');
     });
   });
 
-  group('SessionCue', () {
+  group('Confusable', () {
     test('fromJson parses all fields correctly', () {
       final json = {
-        'id': 'cue-123',
-        'meaning_id': 'meaning-456',
-        'cue_type': 'translation',
-        'prompt_text': 'What is the German word for house?',
-        'answer_text': 'Haus',
-        'hint_text': 'Starts with H',
+        'word': 'affect',
+        'disambiguation_sentence': {
+          'sentence': 'The decision will affect everyone.',
+          'before': 'The decision will ',
+          'blank': 'affect',
+          'after': ' everyone.',
+        },
       };
 
-      final cue = SessionCue.fromJson(json);
+      final confusable = Confusable.fromJson(json);
 
-      expect(cue.id, 'cue-123');
-      expect(cue.meaningId, 'meaning-456');
-      expect(cue.cueType, CueType.translation);
-      expect(cue.promptText, 'What is the German word for house?');
-      expect(cue.answerText, 'Haus');
-      expect(cue.hintText, 'Starts with H');
+      expect(confusable.word, 'affect');
+      expect(confusable.disambiguationSentence, isNotNull);
+      expect(confusable.disambiguationSentence!.sentence,
+          'The decision will affect everyone.');
+      expect(confusable.disambiguationSentence!.before, 'The decision will ');
+      expect(confusable.disambiguationSentence!.blank, 'affect');
+      expect(confusable.disambiguationSentence!.after, ' everyone.');
     });
 
-    test('fromJson handles null hint text', () {
+    test('fromJson handles missing disambiguation_sentence', () {
       final json = {
-        'id': 'cue-123',
-        'meaning_id': 'meaning-456',
-        'cue_type': 'definition',
-        'prompt_text': 'A building for habitation',
-        'answer_text': 'house',
-        'hint_text': null,
+        'word': 'affect',
       };
 
-      final cue = SessionCue.fromJson(json);
+      final confusable = Confusable.fromJson(json);
 
-      expect(cue.hintText, isNull);
-      expect(cue.cueType, CueType.definition);
+      expect(confusable.word, 'affect');
+      expect(confusable.disambiguationSentence, isNull);
+    });
+  });
+
+  group('LanguageTranslations', () {
+    test('fromJson parses all fields correctly', () {
+      final json = {
+        'primary': 'Haus',
+        'alternatives': ['Gebäude', 'Wohnung'],
+      };
+
+      final translations = LanguageTranslations.fromJson(json);
+
+      expect(translations.primary, 'Haus');
+      expect(translations.alternatives, ['Gebäude', 'Wohnung']);
     });
 
-    test('fromJson parses all cue types', () {
-      final cueTypes = [
-        ('translation', CueType.translation),
-        ('definition', CueType.definition),
-        ('synonym', CueType.synonym),
-        ('context_cloze', CueType.contextCloze),
-        ('disambiguation', CueType.disambiguation),
-      ];
+    test('fromJson handles missing primary', () {
+      final json = {
+        'alternatives': ['alt1'],
+      };
 
-      for (final (dbString, expectedType) in cueTypes) {
-        final json = {
-          'id': 'cue-123',
-          'meaning_id': 'meaning-456',
-          'cue_type': dbString,
-          'prompt_text': 'prompt',
-          'answer_text': 'answer',
-        };
+      final translations = LanguageTranslations.fromJson(json);
 
-        final cue = SessionCue.fromJson(json);
-        expect(cue.cueType, expectedType, reason: 'Failed for $dbString');
-      }
+      expect(translations.primary, '');
+      expect(translations.alternatives, ['alt1']);
     });
   });
 
@@ -141,43 +110,32 @@ void main() {
         'is_leech': false,
         'created_at': '2023-12-01T10:00:00.000Z',
         'word': 'house',
-        'stem': 'hous',
-        'meanings': [
+        'stem': 'house',
+        'english_definition': 'A building for human habitation',
+        'part_of_speech': 'noun',
+        'synonyms': ['home', 'dwelling'],
+        'antonyms': <String>[],
+        'confusables': <Map<String, dynamic>>[],
+        'example_sentences': [
           {
-            'id': 'meaning-1',
-            'primary_translation': 'Haus',
-            'english_definition': 'A building for habitation',
-            'synonyms': ['home'],
-            'is_primary': true,
-            'sort_order': 0,
-          },
-          {
-            'id': 'meaning-2',
-            'primary_translation': 'Zuhause',
-            'english_definition': 'A place of residence',
-            'synonyms': <String>[],
-            'is_primary': false,
-            'sort_order': 1,
+            'sentence': 'This is my house.',
+            'before': 'This is my ',
+            'blank': 'house',
+            'after': '.',
           },
         ],
-        'cues': [
-          {
-            'id': 'cue-1',
-            'meaning_id': 'meaning-1',
-            'cue_type': 'translation',
-            'prompt_text': 'What is house in German?',
-            'answer_text': 'Haus',
+        'pronunciation_ipa': '/haʊs/',
+        'translations': {
+          'de': {
+            'primary': 'Haus',
+            'alternatives': ['Gebäude'],
           },
-          {
-            'id': 'cue-2',
-            'meaning_id': 'meaning-1',
-            'cue_type': 'definition',
-            'prompt_text': 'A building for habitation',
-            'answer_text': 'house',
-          },
-        ],
-        'has_encounter_context': true,
+        },
+        'cefr_level': 'A1',
+        'overrides': <String, dynamic>{},
+        'encounter_context': 'I saw a beautiful house.',
         'has_confusables': false,
+        'non_translation_success_count': 5,
       };
     });
 
@@ -196,117 +154,98 @@ void main() {
       expect(card.isLeech, false);
       expect(card.createdAt, DateTime.utc(2023, 12, 1, 10));
       expect(card.word, 'house');
-      expect(card.stem, 'hous');
-      expect(card.meanings, hasLength(2));
-      expect(card.cues, hasLength(2));
-      expect(card.hasEncounterContext, true);
+      expect(card.stem, 'house');
+      expect(card.englishDefinition, 'A building for human habitation');
+      expect(card.partOfSpeech, 'noun');
+      expect(card.synonyms, ['home', 'dwelling']);
+      expect(card.antonyms, isEmpty);
+      expect(card.confusables, isEmpty);
+      expect(card.exampleSentences, hasLength(1));
+      expect(card.exampleSentences.first.sentence, 'This is my house.');
+      expect(card.exampleSentences.first.before, 'This is my ');
+      expect(card.exampleSentences.first.blank, 'house');
+      expect(card.exampleSentences.first.after, '.');
+      expect(card.pronunciationIpa, '/haʊs/');
+      expect(card.translations, hasLength(1));
+      expect(card.cefrLevel, 'A1');
+      expect(card.overrides, isEmpty);
+      expect(card.encounterContext, 'I saw a beautiful house.');
       expect(card.hasConfusables, false);
+      expect(card.nonTranslationSuccessCount, 5);
     });
 
     test('fromJson handles null optional fields', () {
       final json = {
         ...validJson,
         'last_review': null,
-        'stem': null,
-        'has_encounter_context': null,
+        'part_of_speech': null,
+        'pronunciation_ipa': null,
+        'cefr_level': null,
+        'encounter_context': null,
         'has_confusables': null,
+        'non_translation_success_count': null,
       };
 
       final card = SessionCard.fromJson(json);
 
       expect(card.lastReview, isNull);
-      expect(card.stem, isNull);
-      expect(card.hasEncounterContext, false);
+      expect(card.partOfSpeech, isNull);
+      expect(card.pronunciationIpa, isNull);
+      expect(card.cefrLevel, isNull);
+      expect(card.encounterContext, isNull);
       expect(card.hasConfusables, false);
+      expect(card.nonTranslationSuccessCount, 0);
     });
 
-    test('fromJson handles empty meanings and cues', () {
+    test('fromJson parses confusables correctly', () {
       final json = {
         ...validJson,
-        'meanings': <Map<String, dynamic>>[],
-        'cues': <Map<String, dynamic>>[],
-      };
-
-      final card = SessionCard.fromJson(json);
-
-      expect(card.meanings, isEmpty);
-      expect(card.cues, isEmpty);
-      expect(card.hasMeaning, false);
-    });
-
-    test('fromJson handles null meanings and cues', () {
-      final json = {...validJson, 'meanings': null, 'cues': null};
-
-      final card = SessionCard.fromJson(json);
-
-      expect(card.meanings, isEmpty);
-      expect(card.cues, isEmpty);
-    });
-
-    test('hasMeaning returns true when meanings exist', () {
-      final card = SessionCard.fromJson(validJson);
-      expect(card.hasMeaning, true);
-    });
-
-    test('primaryMeaning returns meaning with isPrimary=true', () {
-      final card = SessionCard.fromJson(validJson);
-
-      final primary = card.primaryMeaning;
-
-      expect(primary, isNotNull);
-      expect(primary!.id, 'meaning-1');
-      expect(primary.isPrimary, true);
-    });
-
-    test('primaryMeaning returns first meaning when none is primary', () {
-      final json = {
-        ...validJson,
-        'meanings': [
+        'confusables': [
           {
-            'id': 'meaning-1',
-            'primary_translation': 'Haus',
-            'english_definition': 'A building',
-            'synonyms': <String>[],
-            'is_primary': false,
-            'sort_order': 0,
-          },
-          {
-            'id': 'meaning-2',
-            'primary_translation': 'Zuhause',
-            'english_definition': 'Home',
-            'synonyms': <String>[],
-            'is_primary': false,
-            'sort_order': 1,
+            'word': 'affect',
+            'disambiguation_sentences': ['Sentence 1'],
           },
         ],
+        'has_confusables': true,
       };
 
       final card = SessionCard.fromJson(json);
 
-      expect(card.primaryMeaning, isNotNull);
-      expect(card.primaryMeaning!.id, 'meaning-1');
+      expect(card.confusables, hasLength(1));
+      expect(card.confusables.first.word, 'affect');
+      expect(card.hasConfusables, true);
     });
 
-    test('primaryMeaning returns null when no meanings', () {
-      final json = {...validJson, 'meanings': <Map<String, dynamic>>[]};
+    test('displayWord returns stem', () {
+      final card = SessionCard.fromJson(validJson);
+      expect(card.displayWord, 'house');
+    });
+
+    test('primaryTranslation returns first translation', () {
+      final card = SessionCard.fromJson(validJson);
+      expect(card.primaryTranslation, 'Haus');
+    });
+
+    test('primaryTranslation uses override when present', () {
+      final json = {
+        ...validJson,
+        'overrides': {
+          'primary_translation': 'Override Translation',
+        },
+      };
 
       final card = SessionCard.fromJson(json);
-
-      expect(card.primaryMeaning, isNull);
+      expect(card.primaryTranslation, 'Override Translation');
     });
 
-    test('getCue returns cue by type', () {
-      final card = SessionCard.fromJson(validJson);
+    test('primaryTranslation returns empty string when no translations', () {
+      final json = {
+        ...validJson,
+        'translations': <String, dynamic>{},
+      };
 
-      final translationCue = card.getCue(CueType.translation);
-      final definitionCue = card.getCue(CueType.definition);
-      final synonymCue = card.getCue(CueType.synonym);
-
-      expect(translationCue, isNotNull);
-      expect(translationCue!.id, 'cue-1');
-      expect(definitionCue, isNotNull);
-      expect(definitionCue!.id, 'cue-2');
-      expect(synonymCue, isNull);
+      final card = SessionCard.fromJson(json);
+      expect(card.primaryTranslation, '');
     });
 
     test('isNewWord returns true for state 0', () {

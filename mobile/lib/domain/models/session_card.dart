@@ -1,43 +1,71 @@
-import 'cue_type.dart';
 import 'learning_card.dart';
 
-/// A meaning returned as part of a session card.
-/// Contains the essential fields needed for learning display.
-class SessionMeaning {
-  const SessionMeaning({
-    required this.id,
-    required this.primaryTranslation,
-    required this.englishDefinition,
-    this.extendedDefinition,
-    this.partOfSpeech,
-    required this.synonyms,
-    required this.isPrimary,
-    required this.sortOrder,
+/// A cloze text with pre-split parts for UI rendering
+class ClozeText {
+  const ClozeText({
+    required this.sentence,
+    required this.before,
+    required this.blank,
+    required this.after,
   });
 
-  factory SessionMeaning.fromJson(Map<String, dynamic> json) {
-    return SessionMeaning(
-      id: json['id'] as String,
-      primaryTranslation: json['primary_translation'] as String,
-      englishDefinition: json['english_definition'] as String,
-      extendedDefinition: json['extended_definition'] as String?,
-      partOfSpeech: json['part_of_speech'] as String?,
-      synonyms: _parseSynonyms(json['synonyms']),
-      isPrimary: json['is_primary'] as bool? ?? false,
-      sortOrder: json['sort_order'] as int? ?? 0,
+  factory ClozeText.fromJson(Map<String, dynamic> json) {
+    return ClozeText(
+      sentence: json['sentence'] as String? ?? '',
+      before: json['before'] as String? ?? '',
+      blank: json['blank'] as String? ?? '',
+      after: json['after'] as String? ?? '',
     );
   }
 
-  final String id;
-  final String primaryTranslation;
-  final String englishDefinition;
-  final String? extendedDefinition;
-  final String? partOfSpeech;
-  final List<String> synonyms;
-  final bool isPrimary;
-  final int sortOrder;
+  final String sentence;
+  final String before;
+  final String blank;
+  final String after;
+}
 
-  static List<String> _parseSynonyms(dynamic value) {
+/// A confusable word with disambiguation information
+class Confusable {
+  const Confusable({
+    required this.word,
+    required this.disambiguationSentence,
+  });
+
+  factory Confusable.fromJson(Map<String, dynamic> json) {
+    final disambigJson = json['disambiguation_sentence'];
+    ClozeText? disambig;
+    if (disambigJson is Map<String, dynamic>) {
+      disambig = ClozeText.fromJson(disambigJson);
+    }
+
+    return Confusable(
+      word: json['word'] as String,
+      disambiguationSentence: disambig,
+    );
+  }
+
+  final String word;
+  final ClozeText? disambiguationSentence;
+}
+
+/// Translations for a specific language
+class LanguageTranslations {
+  const LanguageTranslations({
+    required this.primary,
+    required this.alternatives,
+  });
+
+  factory LanguageTranslations.fromJson(Map<String, dynamic> json) {
+    return LanguageTranslations(
+      primary: json['primary'] as String? ?? '',
+      alternatives: _parseStringList(json['alternatives']),
+    );
+  }
+
+  final String primary;
+  final List<String> alternatives;
+
+  static List<String> _parseStringList(dynamic value) {
     if (value == null) return [];
     if (value is List) {
       return value.map((e) => e.toString()).toList();
@@ -46,40 +74,9 @@ class SessionMeaning {
   }
 }
 
-/// A cue returned as part of a session card.
-/// Contains the prompt and answer for a specific cue type.
-class SessionCue {
-  const SessionCue({
-    required this.id,
-    required this.meaningId,
-    required this.cueType,
-    required this.promptText,
-    required this.answerText,
-    this.hintText,
-  });
-
-  factory SessionCue.fromJson(Map<String, dynamic> json) {
-    return SessionCue(
-      id: json['id'] as String,
-      meaningId: json['meaning_id'] as String,
-      cueType: CueType.fromDbString(json['cue_type'] as String),
-      promptText: json['prompt_text'] as String,
-      answerText: json['answer_text'] as String,
-      hintText: json['hint_text'] as String?,
-    );
-  }
-
-  final String id;
-  final String meaningId;
-  final CueType cueType;
-  final String promptText;
-  final String answerText;
-  final String? hintText;
-}
-
 /// A learning card with all data needed for a session.
 /// Returned by the get_session_cards RPC function, this model contains
-/// the card state, vocabulary info, meanings, and cues in a single object.
+/// the card state, vocabulary info, and global dictionary data.
 class SessionCard {
   const SessionCard({
     required this.cardId,
@@ -94,10 +91,18 @@ class SessionCard {
     required this.isLeech,
     required this.createdAt,
     required this.word,
-    this.stem,
-    required this.meanings,
-    required this.cues,
-    required this.hasEncounterContext,
+    required this.stem,
+    required this.englishDefinition,
+    this.partOfSpeech,
+    required this.synonyms,
+    required this.antonyms,
+    required this.confusables,
+    required this.exampleSentences,
+    this.pronunciationIpa,
+    required this.translations,
+    this.cefrLevel,
+    required this.overrides,
+    this.encounterContext,
     required this.hasConfusables,
     required this.nonTranslationSuccessCount,
   });
@@ -118,10 +123,18 @@ class SessionCard {
       isLeech: json['is_leech'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
       word: json['word'] as String,
-      stem: json['stem'] as String?,
-      meanings: _parseMeanings(json['meanings']),
-      cues: _parseCues(json['cues']),
-      hasEncounterContext: json['has_encounter_context'] as bool? ?? false,
+      stem: json['stem'] as String,
+      englishDefinition: json['english_definition'] as String,
+      partOfSpeech: json['part_of_speech'] as String?,
+      synonyms: _parseStringList(json['synonyms']),
+      antonyms: _parseStringList(json['antonyms']),
+      confusables: _parseConfusables(json['confusables']),
+      exampleSentences: _parseClozeTextList(json['example_sentences']),
+      pronunciationIpa: json['pronunciation_ipa'] as String?,
+      translations: _parseTranslations(json['translations']),
+      cefrLevel: json['cefr_level'] as String?,
+      overrides: _parseOverrides(json['overrides']),
+      encounterContext: json['encounter_context'] as String?,
       hasConfusables: json['has_confusables'] as bool? ?? false,
       nonTranslationSuccessCount: json['non_translation_success_count'] as int? ?? 0,
     );
@@ -142,59 +155,94 @@ class SessionCard {
 
   // Vocabulary fields
   final String word;
-  final String? stem;
+  final String stem;
 
-  /// The display form of the word: stem (base/lemma) if available, otherwise raw word.
-  String get displayWord => stem ?? word;
+  /// The display form of the word: stem (base/lemma)
+  String get displayWord => stem;
 
-  // Aggregated data
-  final List<SessionMeaning> meanings;
-  final List<SessionCue> cues;
+  // Global dictionary fields
+  final String englishDefinition;
+  final String? partOfSpeech;
+  final List<String> synonyms;
+  final List<String> antonyms;
+  final List<Confusable> confusables;
+  final List<ClozeText> exampleSentences;
+  final String? pronunciationIpa;
+  final Map<String, LanguageTranslations> translations;
+  final String? cefrLevel;
+  final Map<String, dynamic> overrides;
+
+  // Encounter data
+  final String? encounterContext;
 
   // Eligibility flags for cue selection
-  final bool hasEncounterContext;
   final bool hasConfusables;
 
   // Progress tracking
   final int nonTranslationSuccessCount;
 
-  /// Whether this card has any meaning data
-  bool get hasMeaning => meanings.isNotEmpty;
-
-  /// Get the primary meaning, or the first meaning if none is marked primary
-  SessionMeaning? get primaryMeaning {
-    if (meanings.isEmpty) return null;
-    return meanings.firstWhere(
-      (m) => m.isPrimary,
-      orElse: () => meanings.first,
-    );
-  }
-
-  /// Get a cue by type
-  SessionCue? getCue(CueType type) {
-    for (final cue in cues) {
-      if (cue.cueType == type) return cue;
+  /// Get the primary translation for the user's language
+  String get primaryTranslation {
+    // Check overrides first
+    final overriddenTranslation = overrides['primary_translation'];
+    if (overriddenTranslation != null && overriddenTranslation is String) {
+      return overriddenTranslation;
     }
-    return null;
+
+    // Fall back to first available translation
+    // In a real app, this would use the user's language preference
+    if (translations.isNotEmpty) {
+      final firstLang = translations.values.first;
+      return firstLang.primary;
+    }
+
+    return '';
   }
 
   /// Whether this is a new word (state == 0)
   bool get isNewWord => state == 0;
 
-  static List<SessionMeaning> _parseMeanings(dynamic value) {
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e.toString()).toList();
+    }
+    return [];
+  }
+
+  static List<Confusable> _parseConfusables(dynamic value) {
     if (value == null) return [];
     if (value is! List) return [];
     return value
-        .map((m) => SessionMeaning.fromJson(m as Map<String, dynamic>))
+        .map((c) => Confusable.fromJson(c as Map<String, dynamic>))
         .toList();
   }
 
-  static List<SessionCue> _parseCues(dynamic value) {
+  static List<ClozeText> _parseClozeTextList(dynamic value) {
     if (value == null) return [];
     if (value is! List) return [];
     return value
-        .map((c) => SessionCue.fromJson(c as Map<String, dynamic>))
+        .map((c) => ClozeText.fromJson(c as Map<String, dynamic>))
         .toList();
+  }
+
+  static Map<String, LanguageTranslations> _parseTranslations(dynamic value) {
+    if (value == null) return {};
+    if (value is! Map) return {};
+
+    final result = <String, LanguageTranslations>{};
+    value.forEach((key, val) {
+      if (val is Map<String, dynamic>) {
+        result[key.toString()] = LanguageTranslations.fromJson(val);
+      }
+    });
+    return result;
+  }
+
+  static Map<String, dynamic> _parseOverrides(dynamic value) {
+    if (value == null) return {};
+    if (value is Map<String, dynamic>) return value;
+    return {};
   }
 
   /// Convert to LearningCardModel for use with SrsScheduler.

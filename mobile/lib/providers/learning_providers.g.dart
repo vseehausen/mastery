@@ -152,6 +152,23 @@ class _SrsSchedulerProviderElement
       (origin as SrsSchedulerProvider).targetRetention;
 }
 
+String _$cueSelectorHash() => r'5315e3e4d32b2970091145c5195c00d9f39a98d9';
+
+/// See also [cueSelector].
+@ProviderFor(cueSelector)
+final cueSelectorProvider = Provider<CueSelector>.internal(
+  cueSelector,
+  name: r'cueSelectorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$cueSelectorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CueSelectorRef = ProviderRef<CueSelector>;
 String _$telemetryServiceHash() => r'2a8df2ee4fa895b4010ae3af77b0e96deed5b100';
 
 /// See also [telemetryService].

@@ -4,6 +4,17 @@ import 'dart:math';
 import '../models/cue_type.dart';
 import '../models/session_card.dart';
 
+/// Cue content generated at runtime
+class CueContent {
+  const CueContent({
+    required this.prompt,
+    required this.answer,
+  });
+
+  final String prompt;
+  final String answer;
+}
+
 /// Service for selecting cue types based on card maturity and available data.
 /// Implements the weighted random selection algorithm from research.md R4.
 class CueSelector {
@@ -31,20 +42,88 @@ class CueSelector {
     return MaturityStage.growing;
   }
 
+  /// Build cue content (prompt and answer) at runtime based on cue type
+  CueContent buildCueContent(SessionCard card, CueType type) {
+    switch (type) {
+      case CueType.translation:
+        return CueContent(
+          prompt: card.englishDefinition,
+          answer: card.primaryTranslation,
+        );
+
+      case CueType.definition:
+        return CueContent(
+          prompt: card.displayWord,
+          answer: card.englishDefinition,
+        );
+
+      case CueType.synonym:
+        final synonym = card.synonyms.isNotEmpty ? card.synonyms.first : '';
+        return CueContent(
+          prompt: card.displayWord,
+          answer: synonym,
+        );
+
+      case CueType.contextCloze:
+        // Use encounter context if available, otherwise use first example sentence
+        if (card.encounterContext != null && card.encounterContext!.isNotEmpty) {
+          // For encounter context, we need to create cloze manually (legacy format)
+          final clozeContext = card.encounterContext!.replaceAll(
+            RegExp(card.word, caseSensitive: false),
+            '_____',
+          );
+          return CueContent(
+            prompt: clozeContext,
+            answer: card.displayWord,
+          );
+        } else if (card.exampleSentences.isNotEmpty) {
+          // Use pre-split format from global dictionary
+          final example = card.exampleSentences.first;
+          final clozePrompt = '${example.before}_____${example.after}';
+          return CueContent(
+            prompt: clozePrompt,
+            answer: example.blank,
+          );
+        }
+        // Fallback to translation if no context available
+        return CueContent(
+          prompt: card.englishDefinition,
+          answer: card.primaryTranslation,
+        );
+
+      case CueType.disambiguation:
+        // Use the first confusable's disambiguation sentence
+        if (card.confusables.isNotEmpty) {
+          final confusable = card.confusables.first;
+          final disambig = confusable.disambiguationSentence;
+          if (disambig != null) {
+            final clozePrompt = '${disambig.before}_____${disambig.after}';
+            return CueContent(
+              prompt: clozePrompt,
+              answer: disambig.blank,
+            );
+          }
+        }
+        // Fallback to definition if no confusables
+        return CueContent(
+          prompt: card.displayWord,
+          answer: card.englishDefinition,
+        );
+    }
+  }
+
   /// Select a cue type for a given card based on maturity stage and available data.
   CueType selectCueType({
     required SessionCard card,
-    required bool hasMeaning,
-    bool hasEncounterContext = false,
-    bool hasConfusables = false,
   }) {
-    // No meaning data — can only do translation
-    if (!hasMeaning) return CueType.translation;
-
     final stage = getMaturityStage(card);
 
     // New cards always get translation cues
     if (stage == MaturityStage.newCard) return CueType.translation;
+
+    final hasEncounterContext = card.encounterContext != null &&
+        card.encounterContext!.isNotEmpty;
+    final hasConfusables = card.hasConfusables && card.confusables.isNotEmpty;
 
     final candidates = <_WeightedCue>[];
 
@@ -70,7 +149,6 @@ class CueSelector {
 
     developer.log(
       'selectCueType: stage=$stage, '
-      'hasMeaning=$hasMeaning, '
       'hasContext=$hasEncounterContext, '
       'hasConfusables=$hasConfusables, '
       'candidates=${candidates.map((c) => c.type.name).join(",")}, '

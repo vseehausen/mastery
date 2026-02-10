@@ -912,16 +912,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   /// Build the card widget for the current item using SessionCard data.
-  /// No additional queries needed - all data is already in the SessionCard!
+  /// Uses CueSelector to build cue content at runtime from global dictionary data.
   Widget _buildItemCard(PlannedItem item, BuildContext context) {
     final card = item.sessionCard;
-    final meaning = card.primaryMeaning;
+    final cueSelector = ref.read(cueSelectorProvider);
 
-    // Get translation answer (primary translation or fallback to definition)
-    final translationAnswer =
-        meaning?.primaryTranslation ??
-        meaning?.englishDefinition ??
-        'Translation not available';
+    // Build cue content for the selected cue type
+    final cueType = item.cueType ?? CueType.translation;
+    final cueContent = cueSelector.buildCueContent(card, cueType);
 
     if (item.isRecognition) {
       final distractors = _currentDistractors;
@@ -936,71 +934,67 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         return RecallCard(
           word: card.displayWord,
-          answer: translationAnswer,
-          context: null,
+          answer: cueContent.answer,
+          context: card.encounterContext,
           onGrade: _handleRecallGrade,
         );
       }
 
       return RecognitionCard(
         word: card.displayWord,
-        correctAnswer: translationAnswer,
+        correctAnswer: cueContent.answer,
         distractors: distractors,
-        context: null, // Context would need encounter data
+        context: card.encounterContext,
         onAnswer: _handleRecognitionAnswer,
       );
     }
 
-    // Dispatch based on cue type - use data from SessionCard
-    final cue = item.cueType != null ? card.getCue(item.cueType!) : null;
-
+    // Dispatch based on cue type - use runtime-built content
     switch (item.cueType) {
       case CueType.definition:
         return DefinitionCueCard(
-          definition:
-              cue?.promptText ??
-              meaning?.englishDefinition ??
-              translationAnswer,
-          targetWord: cue?.answerText ?? card.displayWord,
-          hintText: cue?.hintText,
+          definition: cueContent.prompt,
+          targetWord: cueContent.answer,
+          hintText: null,
           onGrade: _handleRecallGrade,
         );
       case CueType.synonym:
         return SynonymCueCard(
-          synonymPhrase: cue?.promptText ?? _buildSynonymPrompt(meaning),
-          targetWord: cue?.answerText ?? card.displayWord,
+          synonymPhrase: cueContent.prompt,
+          targetWord: cueContent.answer,
           onGrade: _handleRecallGrade,
         );
       case CueType.disambiguation:
-        final options = _parseDisambiguationOptions(cue);
+        // For disambiguation, we need to parse confusables into options
+        final options = _parseDisambiguationOptions(card);
         if (options.options.isEmpty) {
           return RecallCard(
             word: card.displayWord,
-            answer: translationAnswer,
-            context: null,
+            answer: cueContent.answer,
+            context: card.encounterContext,
             onGrade: _handleRecallGrade,
           );
         }
         return DisambiguationCard(
-          clozeSentence: cue?.promptText ?? translationAnswer,
+          clozeSentence: cueContent.prompt,
           options: options.options,
           correctIndex: options.correctIndex,
-          explanation: cue?.hintText ?? '',
+          explanation: '',
           onGrade: _handleRecallGrade,
         );
       case CueType.contextCloze:
         return ClozeCueCard(
-          sentenceWithBlank: cue?.promptText ?? translationAnswer,
-          targetWord: cue?.answerText ?? card.displayWord,
-          hintText: cue?.hintText,
+          sentenceWithBlank: cueContent.prompt,
+          targetWord: cueContent.answer,
+          hintText: null,
           onGrade: _handleRecallGrade,
         );
       case CueType.translation:
       case null:
         return RecallCard(
           word: card.displayWord,
-          answer: translationAnswer,
-          context: null, // Could load encounter context if needed
+          answer: cueContent.answer,
+          context: card.encounterContext,
           onGrade: _handleRecallGrade,
         );
     }
@@ -1011,21 +1005,23 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     return const SizedBox.shrink();
   }
 
-  /// Build a synonym prompt from the meaning's synonyms
-  String _buildSynonymPrompt(SessionMeaning? meaning) {
-    if (meaning == null || meaning.synonyms.isEmpty) {
-      return 'What word means the same?';
-    }
-    return 'Synonym: ${meaning.synonyms.first}';
-  }
-
-  /// Parse disambiguation options from the cue
+  /// Parse disambiguation options from confusables
   ({List<String> options, int correctIndex}) _parseDisambiguationOptions(
-    SessionCue? cue,
+    SessionCard card,
   ) {
-    // No synthetic options. Until multi-option disambiguation payloads are
-    // available in SessionCue, always fall back to recall mode.
-    if (cue == null) return (options: <String>[], correctIndex: 0);
-    return (options: <String>[], correctIndex: 0);
+    if (card.confusables.isEmpty) return (options: <String>[], correctIndex: 0);
+
+    // Build options from confusables - target word + confusable words
+    final options = <String>[card.displayWord];
+    for (final confusable in card.confusables) {
+      options.add(confusable.word);
+    }
+
+    // Shuffle and track correct index
+    final correctWord = card.displayWord;
+    options.shuffle();
+    final correctIndex = options.indexOf(correctWord);
+
+    return (options: options, correctIndex: correctIndex);
   }
 }

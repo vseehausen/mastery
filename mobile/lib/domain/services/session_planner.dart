@@ -155,9 +155,6 @@ class SessionPlanner {
 
       final cueType = _cueSelector.selectCueType(
         card: card,
-        hasMeaning: card.hasMeaning,
-        hasEncounterContext: card.hasEncounterContext,
-        hasConfusables: card.hasConfusables,
       );
 
       items.add(
@@ -259,9 +256,6 @@ class SessionPlanner {
 
       final cueType = _cueSelector.selectCueType(
         card: card,
-        hasMeaning: card.hasMeaning,
-        hasEncounterContext: card.hasEncounterContext,
-        hasConfusables: card.hasConfusables,
       );
 
       items.add(
@@ -281,9 +275,6 @@ class SessionPlanner {
 
       final cueType = _cueSelector.selectCueType(
         card: card,
-        hasMeaning: card.hasMeaning,
-        hasEncounterContext: card.hasEncounterContext,
-        hasConfusables: card.hasConfusables,
       );
 
       items.add(
@@ -304,9 +295,6 @@ class SessionPlanner {
 
       final cueType = _cueSelector.selectCueType(
         card: card,
-        hasMeaning: card.hasMeaning,
-        hasEncounterContext: card.hasEncounterContext,
-        hasConfusables: card.hasConfusables,
       );
 
       items.add(

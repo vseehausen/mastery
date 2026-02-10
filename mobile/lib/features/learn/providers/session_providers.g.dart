@@ -44,7 +44,7 @@ final hasCompletedTodayProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HasCompletedTodayRef = AutoDisposeFutureProviderRef<bool>;
-String _$todayProgressHash() => r'1efef7286383b0a6cda5e950a8faa5fdd10a80a2';
+String _$todayProgressHash() => r'951e98d49f44caf3ff34bc491b5b25b7bc8e3858';
 
 /// Provides today's progress (0.0 to 1.0)
 ///
@@ -165,7 +165,7 @@ final activeSessionProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ActiveSessionRef = AutoDisposeFutureProviderRef<LearningSessionModel?>;
-String _$sessionPlanHash() => r'12462dce13e700b129eade50f138f0be519514a7';
+String _$sessionPlanHash() => r'13d8a940a7baed4beab165f7e6faac626a0d2e28';
 
 /// Provides the session plan for the current/new session
 ///

@@ -458,7 +458,6 @@ class MockSupabaseDataService extends _i1.Mock
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
-    String? meaningDisplayMode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updatePreferences, [], {
@@ -468,7 +467,6 @@ class MockSupabaseDataService extends _i1.Mock
               #newWordsPerSession: newWordsPerSession,
               #newWordSuppressionActive: newWordSuppressionActive,
               #nativeLanguageCode: nativeLanguageCode,
-              #meaningDisplayMode: meaningDisplayMode,
             }),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),

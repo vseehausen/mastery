@@ -13,7 +13,8 @@ void main() {
     SessionCard createCard({
       int state = 2,
       double stability = 21.0,
-      bool hasMeanings = true,
+      String? encounterContext,
+      bool hasConfusables = false,
     }) {
       return SessionCard.fromJson({
         'card_id': 'card-123',
@@ -28,22 +29,44 @@ void main() {
         'is_leech': false,
         'created_at': DateTime.now().toIso8601String(),
         'word': 'house',
-        'stem': 'hous',
-        'meanings': hasMeanings
+        'stem': 'house',
+        'english_definition': 'A building for human habitation',
+        'part_of_speech': 'noun',
+        'synonyms': ['home', 'dwelling'],
+        'antonyms': <String>[],
+        'confusables': hasConfusables
             ? [
                 {
-                  'id': 'meaning-1',
-                  'primary_translation': 'Haus',
-                  'english_definition': 'A building',
-                  'synonyms': ['home'],
-                  'is_primary': true,
-                  'sort_order': 0,
+                  'word': 'horse',
+                  'disambiguation_sentence': {
+                    'sentence': 'A horse is an animal.',
+                    'before': 'A ',
+                    'blank': 'horse',
+                    'after': ' is an animal.',
+                  },
                 },
               ]
             : <Map<String, dynamic>>[],
-        'cues': <Map<String, dynamic>>[],
-        'has_encounter_context': false,
-        'has_confusables': false,
+        'example_sentences': [
+          {
+            'sentence': 'This is my house.',
+            'before': 'This is my ',
+            'blank': 'house',
+            'after': '.',
+          },
+        ],
+        'pronunciation_ipa': '/haʊs/',
+        'translations': {
+          'de': {
+            'primary': 'Haus',
+            'alternatives': ['Gebäude'],
+          },
+        },
+        'cefr_level': 'A1',
+        'overrides': <String, dynamic>{},
+        'encounter_context': encounterContext,
+        'has_confusables': hasConfusables,
+        'non_translation_success_count': 0,
       });
     }
 
@@ -85,18 +108,10 @@ void main() {
     });
 
     group('selectCueType', () {
-      test('returns translation when no meaning data', () {
-        final card = createCard(state: 2, stability: 50.0);
-
-        final result = selector.selectCueType(card: card, hasMeaning: false);
-
-        expect(result, CueType.translation);
-      });
-
       test('returns translation for new cards', () {
         final card = createCard(state: 0, stability: 0.0);
 
-        final result = selector.selectCueType(card: card, hasMeaning: true);
+        final result = selector.selectCueType(card: card);
 
         expect(result, CueType.translation);
       });
@@ -104,7 +119,7 @@ void main() {
       test('returns translation for learning cards with low stability', () {
         final card = createCard(state: 1, stability: 0.5);
 
-        final result = selector.selectCueType(card: card, hasMeaning: true);
+        final result = selector.selectCueType(card: card);
 
         expect(result, CueType.translation);
       });
@@ -123,7 +138,6 @@ void main() {
             final localSelector = CueSelector(random: Random(i));
             final result = localSelector.selectCueType(
               card: growingCard,
-              hasMeaning: true,
             );
             results.add(result);
           }
@@ -134,32 +148,11 @@ void main() {
         });
 
         test('includes contextCloze when hasEncounterContext is true', () {
-          final card = SessionCard.fromJson({
-            'card_id': 'card-123',
-            'vocabulary_id': 'vocab-456',
-            'state': 2,
-            'due': DateTime.now().toIso8601String(),
-            'stability': 10.0,
-            'difficulty': 0.3,
-            'reps': 5,
-            'lapses': 0,
-            'is_leech': false,
-            'created_at': DateTime.now().toIso8601String(),
-            'word': 'house',
-            'meanings': [
-              {
-                'id': 'm1',
-                'primary_translation': 'Haus',
-                'english_definition': 'building',
-                'synonyms': <String>[],
-                'is_primary': true,
-                'sort_order': 0,
-              },
-            ],
-            'cues': <Map<String, dynamic>>[],
-            'has_encounter_context': true,
-            'has_confusables': false,
-          });
+          final card = createCard(
+            state: 2,
+            stability: 10.0,
+            encounterContext: 'I saw a beautiful house.',
+          );
 
           // Run multiple times to potentially hit contextCloze
           final results = <CueType>{};
@@ -167,8 +160,6 @@ void main() {
             final localSelector = CueSelector(random: Random(i));
             final result = localSelector.selectCueType(
               card: card,
-              hasMeaning: true,
-              hasEncounterContext: true,
             );
             results.add(result);
           }
@@ -192,7 +183,6 @@ void main() {
             final localSelector = CueSelector(random: Random(i));
             final result = localSelector.selectCueType(
               card: matureCard,
-              hasMeaning: true,
             );
             results.add(result);
           }
@@ -203,32 +193,11 @@ void main() {
         });
 
         test('includes disambiguation when hasConfusables is true', () {
-          final card = SessionCard.fromJson({
-            'card_id': 'card-123',
-            'vocabulary_id': 'vocab-456',
-            'state': 2,
-            'due': DateTime.now().toIso8601String(),
-            'stability': 30.0,
-            'difficulty': 0.3,
-            'reps': 10,
-            'lapses': 0,
-            'is_leech': false,
-            'created_at': DateTime.now().toIso8601String(),
-            'word': 'house',
-            'meanings': [
-              {
-                'id': 'm1',
-                'primary_translation': 'Haus',
-                'english_definition': 'building',
-                'synonyms': <String>[],
-                'is_primary': true,
-                'sort_order': 0,
-              },
-            ],
-            'cues': <Map<String, dynamic>>[],
-            'has_encounter_context': false,
-            'has_confusables': true,
-          });
+          final card = createCard(
+            state: 2,
+            stability: 30.0,
+            hasConfusables: true,
+          );
 
           // Run multiple times to potentially hit disambiguation
           final results = <CueType>{};
@@ -236,8 +205,6 @@ void main() {
             final localSelector = CueSelector(random: Random(i));
             final result = localSelector.selectCueType(
               card: card,
-              hasMeaning: true,
-              hasConfusables: true,
             );
             results.add(result);
           }
@@ -247,32 +214,11 @@ void main() {
         });
 
         test('includes contextCloze when hasEncounterContext is true', () {
-          final card = SessionCard.fromJson({
-            'card_id': 'card-123',
-            'vocabulary_id': 'vocab-456',
-            'state': 2,
-            'due': DateTime.now().toIso8601String(),
-            'stability': 30.0,
-            'difficulty': 0.3,
-            'reps': 10,
-            'lapses': 0,
-            'is_leech': false,
-            'created_at': DateTime.now().toIso8601String(),
-            'word': 'house',
-            'meanings': [
-              {
-                'id': 'm1',
-                'primary_translation': 'Haus',
-                'english_definition': 'building',
-                'synonyms': <String>[],
-                'is_primary': true,
-                'sort_order': 0,
-              },
-            ],
-            'cues': <Map<String, dynamic>>[],
-            'has_encounter_context': true,
-            'has_confusables': false,
-          });
+          final card = createCard(
+            state: 2,
+            stability: 30.0,
+            encounterContext: 'I saw a beautiful house.',
+          );
 
           // Run multiple times to potentially hit contextCloze
           final results = <CueType>{};
@@ -280,8 +226,6 @@ void main() {
             final localSelector = CueSelector(random: Random(i));
             final result = localSelector.selectCueType(
               card: card,
-              hasMeaning: true,
-              hasEncounterContext: true,
             );
             results.add(result);
           }
@@ -302,7 +246,6 @@ void main() {
           final localSelector = CueSelector(random: Random(i));
           final result = localSelector.selectCueType(
             card: matureCard,
-            hasMeaning: true,
           );
           counts[result] = (counts[result] ?? 0) + 1;
         }
@@ -322,6 +265,115 @@ void main() {
         expect(definitionPct, lessThan(50));
         expect(synonymPct, greaterThan(20));
         expect(synonymPct, lessThan(45));
+      });
+    });
+
+    group('buildCueContent', () {
+      test('contextCloze uses encounter context with regex when available', () {
+        final card = createCard(encounterContext: 'I live in a beautiful house.');
+
+        final cue = selector.buildCueContent(card, CueType.contextCloze);
+
+        expect(cue.prompt, 'I live in a beautiful _____.');
+        expect(cue.answer, 'house');
+      });
+
+      test('contextCloze uses pre-split example sentence when no encounter context', () {
+        final card = createCard(encounterContext: null);
+
+        final cue = selector.buildCueContent(card, CueType.contextCloze);
+
+        // Should use the pre-split example sentence
+        expect(cue.prompt, 'This is my _____.');
+        expect(cue.answer, 'house');
+      });
+
+      test('contextCloze falls back to translation when no context available', () {
+        final cardJson = <String, dynamic>{
+          'card_id': 'card-123',
+          'vocabulary_id': 'vocab-456',
+          'state': 2,
+          'due': '2024-01-15T10:00:00.000Z',
+          'stability': 21.5,
+          'difficulty': 0.3,
+          'reps': 10,
+          'lapses': 1,
+          'last_review': '2024-01-01T10:00:00.000Z',
+          'is_leech': false,
+          'created_at': '2023-12-01T10:00:00.000Z',
+          'word': 'house',
+          'stem': 'house',
+          'english_definition': 'A building for human habitation',
+          'part_of_speech': 'noun',
+          'synonyms': ['home', 'dwelling'],
+          'antonyms': <String>[],
+          'confusables': <Map<String, dynamic>>[],
+          'example_sentences': <Map<String, dynamic>>[], // Empty!
+          'pronunciation_ipa': '/haʊs/',
+          'translations': {
+            'de': {
+              'primary': 'Haus',
+              'alternatives': ['Gebäude'],
+            },
+          },
+          'cefr_level': 'A1',
+          'overrides': <String, dynamic>{},
+          'encounter_context': null,
+          'has_confusables': false,
+          'non_translation_success_count': 0,
+        };
+
+        final card = SessionCard.fromJson(cardJson);
+        final cue = selector.buildCueContent(card, CueType.contextCloze);
+
+        // Should fall back to translation cue
+        expect(cue.prompt, 'A building for human habitation');
+        expect(cue.answer, 'Haus');
+      });
+
+      test('disambiguation uses pre-split format from confusables', () {
+        final card = createCard(hasConfusables: true);
+
+        final cue = selector.buildCueContent(card, CueType.disambiguation);
+
+        expect(cue.prompt, 'A _____ is an animal.');
+        expect(cue.answer, 'horse');
+      });
+
+      test('disambiguation falls back to definition when no confusables', () {
+        final card = createCard(hasConfusables: false);
+
+        final cue = selector.buildCueContent(card, CueType.disambiguation);
+
+        expect(cue.prompt, 'house');
+        expect(cue.answer, 'A building for human habitation');
+      });
+
+      test('translation cue uses english definition and primary translation', () {
+        final card = createCard();
+
+        final cue = selector.buildCueContent(card, CueType.translation);
+
+        expect(cue.prompt, 'A building for human habitation');
+        expect(cue.answer, 'Haus');
+      });
+
+      test('definition cue uses word and english definition', () {
+        final card = createCard();
+
+        final cue = selector.buildCueContent(card, CueType.definition);
+
+        expect(cue.prompt, 'house');
+        expect(cue.answer, 'A building for human habitation');
+      });
+
+      test('synonym cue uses word and first synonym', () {
+        final card = createCard();
+
+        final cue = selector.buildCueContent(card, CueType.synonym);
+
+        expect(cue.prompt, 'house');
+        expect(cue.answer, 'home');
       });
     });
   });

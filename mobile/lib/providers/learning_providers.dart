@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/services/cue_selector.dart';
 import '../domain/services/distractor_service.dart';
 import '../domain/services/enrichment_service.dart';
 import '../domain/services/session_planner.dart';
@@ -18,6 +19,11 @@ part 'learning_providers.g.dart';
 @riverpod
 SrsScheduler srsScheduler(Ref ref, {double targetRetention = 0.90}) {
   return SrsScheduler(targetRetention: targetRetention);
+}
+
+@Riverpod(keepAlive: true)
+CueSelector cueSelector(Ref ref) {
+  return CueSelector();
 }
 
 @Riverpod(keepAlive: true)
