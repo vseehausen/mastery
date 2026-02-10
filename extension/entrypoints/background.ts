@@ -1,4 +1,4 @@
-import { lookupWord, triggerEnrichmentIfNeeded } from '@/lib/api-client';
+import { lookupWord, triggerEnrichmentIfNeeded, getSupabaseClient } from '@/lib/api-client';
 import { isAuthenticated } from '@/lib/auth';
 import { getCachedWord, setCachedWord, addPageWord, clearPageWords } from '@/lib/cache';
 import type {
@@ -6,6 +6,7 @@ import type {
   LookupRequest,
   ServiceWorkerResponse,
   LookupResponse,
+  LookupUpdateMessage,
 } from '@/lib/types';
 
 console.log('[Mastery] Background script file loaded (top level)');
@@ -90,8 +91,8 @@ async function handleLookup(request: LookupRequest): Promise<ServiceWorkerRespon
       raw_word: request.raw_word,
       translation: cached.translation,
       pronunciation: cached.pronunciation,
-      part_of_speech: null,
-      english_definition: '',
+      part_of_speech: cached.partOfSpeech ?? null,
+      english_definition: cached.englishDefinition ?? '',
       context_original: request.sentence,
       context_translated: '',
       stage: cached.stage,
@@ -130,6 +131,12 @@ async function handleLookup(request: LookupRequest): Promise<ServiceWorkerRespon
       triggerEnrichmentIfNeeded(); // No await - fire and forget
     }
 
+    // For non-global-dict words (no english_definition), schedule progressive update
+    if (!response.english_definition) {
+      console.log('[Mastery] Non-global-dict word, scheduling enrichment check');
+      scheduleProgressiveUpdate(response.lemma, request);
+    }
+
     console.log('[Mastery] Returning fresh lookup result');
     return { type: 'lookupResult', payload: response, fromCache: false };
   } catch (err) {
@@ -144,4 +151,65 @@ async function handleLookup(request: LookupRequest): Promise<ServiceWorkerRespon
       message: "Couldn't translate — try again",
     };
   }
+}
+
+async function scheduleProgressiveUpdate(lemma: string, originalRequest: LookupRequest): Promise<void> {
+  // Wait 6 seconds for enrichment to potentially complete
+  setTimeout(async () => {
+    try {
+      console.log('[Mastery] Checking for enrichment updates for:', lemma);
+
+      // Query vocabulary table to get fresh enrichment data
+      const supabase = getSupabaseClient();
+      const { data: vocabData, error } = await supabase
+        .from('vocabulary')
+        .select('lemma, translation, pronunciation, english_definition, part_of_speech, stage')
+        .eq('lemma', lemma)
+        .single();
+
+      if (error || !vocabData) {
+        console.log('[Mastery] No enrichment update found for:', lemma);
+        return;
+      }
+
+      // Check if enrichment data is now available
+      if (vocabData.english_definition) {
+        console.log('[Mastery] Enrichment found! Updating cache and notifying tabs');
+
+        // Update cache with enrichment data
+        const enrichedResponse: LookupResponse = {
+          lemma: vocabData.lemma,
+          raw_word: originalRequest.raw_word,
+          translation: vocabData.translation,
+          pronunciation: vocabData.pronunciation,
+          part_of_speech: vocabData.part_of_speech,
+          english_definition: vocabData.english_definition,
+          context_original: originalRequest.sentence,
+          context_translated: '',
+          stage: vocabData.stage,
+          is_new: false,
+          vocabulary_id: '',
+        };
+
+        await setCachedWord(enrichedResponse);
+
+        // Notify all tabs about the update
+        const tabs = await browser.tabs.query({});
+        const updateMessage: LookupUpdateMessage = {
+          type: 'lookupUpdate',
+          payload: enrichedResponse,
+        };
+
+        for (const tab of tabs) {
+          if (tab.id) {
+            browser.tabs.sendMessage(tab.id, updateMessage).catch(() => {
+              // Tab might not have content script, ignore
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Mastery] Progressive update failed:', err);
+    }
+  }, 6000);
 }

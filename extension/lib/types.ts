@@ -47,6 +47,10 @@ export interface CacheEntry {
   stage: ProgressStage;
   lookupCount: number;
   lastAccessed: number; // Unix timestamp for LRU eviction
+  // Enrichment fields (may be populated after initial lookup)
+  englishDefinition?: string;
+  partOfSpeech?: string | null;
+  synonyms?: string[];
 }
 
 export interface ExtensionStorage {
@@ -88,6 +92,11 @@ export interface ErrorMessage {
   type: 'error';
   message: string;
   offline?: boolean;
+}
+
+export interface LookupUpdateMessage {
+  type: 'lookupUpdate';
+  payload: LookupResponse;
 }
 
 export type ServiceWorkerResponse =

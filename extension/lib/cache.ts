@@ -8,13 +8,13 @@ async function getStorageMap<T>(key: string): Promise<Record<string, T>> {
   return (result[key] as Record<string, T>) ?? ({} as Record<string, T>);
 }
 
-export async function getCachedWord(lemma: string): Promise<CacheEntry | null> {
+export async function getCachedWord(lemmaOrRawWord: string): Promise<CacheEntry | null> {
   const vocabulary = await getStorageMap<CacheEntry>('vocabulary');
-  const entry = vocabulary[lemma];
+  const entry = vocabulary[lemmaOrRawWord];
   if (!entry) return null;
   entry.lastAccessed = Date.now();
   entry.lookupCount++;
-  vocabulary[lemma] = entry;
+  vocabulary[lemmaOrRawWord] = entry;
   await browser.storage.local.set({ vocabulary });
   return entry;
 }
@@ -23,14 +23,25 @@ export async function setCachedWord(response: LookupResponse): Promise<void> {
   const vocabulary = await getStorageMap<CacheEntry>('vocabulary');
 
   const existing = vocabulary[response.lemma];
-  vocabulary[response.lemma] = {
+  const entry: CacheEntry = {
     lemma: response.lemma,
     translation: response.translation,
     pronunciation: response.pronunciation,
     stage: response.stage,
     lookupCount: (existing?.lookupCount ?? 0) + 1,
     lastAccessed: Date.now(),
+    englishDefinition: response.english_definition,
+    partOfSpeech: response.part_of_speech,
+    synonyms: existing?.synonyms, // Preserve existing synonyms if any
   };
+
+  // Store under lemma
+  vocabulary[response.lemma] = entry;
+
+  // Also create alias under raw_word if different from lemma
+  if (response.raw_word !== response.lemma) {
+    vocabulary[response.raw_word] = entry;
+  }
 
   const keys = Object.keys(vocabulary);
   if (keys.length > MAX_ENTRIES) {

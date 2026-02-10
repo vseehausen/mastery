@@ -56,6 +56,16 @@ function createStyles(): string {
       color: #2d3748;
       margin-bottom: 8px;
     }
+    .enrichment {
+      font-size: 13px;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+    .enrichment .pos {
+      font-style: italic;
+      color: #718096;
+      margin-right: 6px;
+    }
     .divider {
       height: 1px;
       background: #e2e8f0;
@@ -140,6 +150,16 @@ function renderTooltipContent(data: LookupResponse): string {
     ? `<span class="ipa">${escapeHtml(data.pronunciation)}</span>`
     : '';
 
+  // Show enrichment data if available
+  const enrichmentHtml = data.english_definition
+    ? `
+      <div class="enrichment">
+        ${data.part_of_speech ? `<span class="pos">${escapeHtml(data.part_of_speech)}</span>` : ''}
+        ${escapeHtml(data.english_definition)}
+      </div>
+    `
+    : '';
+
   // Only show context section if context_original contains *word* markup (enriched by OpenAI)
   const hasEnrichedContext = data.context_original.includes('*');
   const contextHtml = hasEnrichedContext
@@ -157,6 +177,7 @@ function renderTooltipContent(data: LookupResponse): string {
         ${ipaHtml}
       </div>
       <div class="translation">${escapeHtml(data.translation)}</div>
+      ${enrichmentHtml}
       ${contextHtml}
       <div class="status">
         <span class="stage-badge" style="background:${stageColor}">${escapeHtml(data.stage)}</span>
