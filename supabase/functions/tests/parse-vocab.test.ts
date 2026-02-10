@@ -14,21 +14,17 @@ import {
   assertExists,
   assertNotEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import { load } from "jsr:@std/dotenv";
 
-// Load test-specific .env (not the root project .env)
-const testEnvPath = new URL("./.env", import.meta.url).pathname;
-await load({ envPath: testEnvPath, export: true });
-
-// ---------------------------------------------------------------------------
-// Env
-// ---------------------------------------------------------------------------
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://localhost:54321";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+import {
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  DEV_SECRET,
+  serviceClient,
+  ensureTestUser,
+  cleanupTestData,
+  isSupabaseRunning,
+  isFunctionServed,
+} from "./helpers.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,66 +61,9 @@ async function generateContentHash(
     .join("");
 }
 
-// Service role client for setup/teardown (bypasses RLS)
-function serviceClient() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-}
-
-// Anon client for function invocation
-function anonClient() {
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-const DEV_SECRET = "test-dev-secret";
 const TEST_EMAIL = "test-parse-vocab@example.com";
 const TEST_PASSWORD = "test-password-123456";
-
-// Will be set during ensureTestUser()
 let TEST_USER_ID = "";
-
-/** Create a test user in auth.users + public.users if not already present. */
-async function ensureTestUser() {
-  const client = serviceClient();
-
-  // Check if user already exists by email
-  const { data: existingUsers } = await client.auth.admin.listUsers();
-  const existing = existingUsers?.users?.find((u) => u.email === TEST_EMAIL);
-
-  if (existing) {
-    TEST_USER_ID = existing.id;
-    return;
-  }
-
-  // Create via auth admin API (also triggers public.users insert if there's a trigger)
-  const { data, error } = await client.auth.admin.createUser({
-    email: TEST_EMAIL,
-    password: TEST_PASSWORD,
-    email_confirm: true,
-  });
-
-  if (error) throw new Error(`Failed to create test user: ${error.message}`);
-  TEST_USER_ID = data.user.id;
-
-  // Ensure public.users row exists (in case there's no trigger)
-  await client.from("users").upsert(
-    {
-      id: TEST_USER_ID,
-      email: TEST_EMAIL,
-    },
-    { onConflict: "id" },
-  );
-}
-
-/** Clean up all data for the test user (but keep the user itself). */
-async function cleanupTestData() {
-  const client = serviceClient();
-  // Delete in order respecting FK constraints
-  await client.from("encounters").delete().eq("user_id", TEST_USER_ID);
-  await client.from("learning_cards").delete().eq("user_id", TEST_USER_ID);
-  await client.from("import_sessions").delete().eq("user_id", TEST_USER_ID);
-  await client.from("vocabulary").delete().eq("user_id", TEST_USER_ID);
-  await client.from("sources").delete().eq("user_id", TEST_USER_ID);
-}
 
 /** Invoke parse-vocab via the local edge function using dev mode. */
 async function invokeParseVocab(fileBase64: string) {
@@ -355,42 +294,18 @@ Deno.test("generateContentHash: returns 64-char hex string", async () => {
 // Group 3: parse-vocab integration (requires local Supabase running)
 // =============================================================================
 
-// Check if local Supabase is reachable before running integration tests
-async function isSupabaseRunning(): Promise<boolean> {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      headers: { apikey: SUPABASE_ANON_KEY },
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-// Helper: check if parse-vocab function is being served
-async function isFunctionServed(): Promise<boolean> {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/parse-vocab`, {
-      method: "OPTIONS",
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 Deno.test({
   name: "integration: parse-vocab returns correct totalParsed count",
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status, data } = await invokeParseVocab(fileBase64);
@@ -402,7 +317,7 @@ Deno.test({
     );
     assertEquals(data.totalParsed, 265, "Should parse all 265 lookups");
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -411,13 +326,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status, data } = await invokeParseVocab(fileBase64);
@@ -450,7 +365,7 @@ Deno.test({
       assertExists(v.content_hash);
     }
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -459,13 +374,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status, data } = await invokeParseVocab(fileBase64);
@@ -489,7 +404,7 @@ Deno.test({
       "Most encounters should have context",
     );
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -498,13 +413,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status } = await invokeParseVocab(fileBase64);
@@ -538,7 +453,7 @@ Deno.test({
       "Should have Brain Rules book",
     );
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -547,13 +462,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status, data } = await invokeParseVocab(fileBase64);
@@ -586,7 +501,7 @@ Deno.test({
       assertEquals(card.difficulty, 0.0);
     }
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -595,13 +510,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
 
@@ -674,7 +589,7 @@ Deno.test({
       "Card count should not change",
     );
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });
 
@@ -683,13 +598,13 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    if (!(await isSupabaseRunning()) || !(await isFunctionServed())) {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed("parse-vocab"))) {
       console.log("  ⏭ Skipping: local Supabase or functions not running");
       return;
     }
 
-    await ensureTestUser();
-    await cleanupTestData();
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
 
     const fileBase64 = base64Encode(readFixture());
     const { status, data } = await invokeParseVocab(fileBase64);
@@ -729,6 +644,6 @@ Deno.test({
       "No duplicate content hashes",
     );
 
-    await cleanupTestData();
+    await cleanupTestData(TEST_USER_ID);
   },
 });

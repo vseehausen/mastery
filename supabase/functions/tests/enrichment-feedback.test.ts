@@ -13,181 +13,33 @@ import {
   assert,
   assertEquals,
   assertExists,
-} from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { load } from 'jsr:@std/dotenv';
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-// Load test-specific .env (not the root project .env)
-const testEnvPath = new URL('./.env', import.meta.url).pathname;
-await load({ envPath: testEnvPath, export: true });
+import {
+  serviceClient,
+  anonClient,
+  ensureTestUser,
+  cleanupTestData,
+  isSupabaseRunning,
+  createTestVocabAndMeaning,
+} from "./helpers.ts";
 
-// ---------------------------------------------------------------------------
-// Env
-// ---------------------------------------------------------------------------
+const TEST_USER_A_EMAIL = "test-feedback-a@example.com";
+const TEST_USER_A_PASSWORD = "test-password-123456";
+const TEST_USER_B_EMAIL = "test-feedback-b@example.com";
+const TEST_USER_B_PASSWORD = "test-password-123456";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? 'http://localhost:54321';
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+let TEST_USER_A_ID = "";
+let TEST_USER_B_ID = "";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-// Service role client for setup/teardown (bypasses RLS)
-function serviceClient() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-}
-
-// Anon client for RLS testing
-function anonClient() {
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-const TEST_USER_A_EMAIL = 'test-feedback-a@example.com';
-const TEST_USER_A_PASSWORD = 'test-password-123456';
-const TEST_USER_B_EMAIL = 'test-feedback-b@example.com';
-const TEST_USER_B_PASSWORD = 'test-password-123456';
-
-// Will be set during ensureTestUsers()
-let TEST_USER_A_ID = '';
-let TEST_USER_B_ID = '';
-
-/** Create test users in auth.users + public.users if not already present. */
 async function ensureTestUsers() {
-  const client = serviceClient();
-
-  // User A
-  const { data: existingUsersA } = await client.auth.admin.listUsers();
-  const existingA = existingUsersA?.users?.find(
-    (u) => u.email === TEST_USER_A_EMAIL,
-  );
-
-  if (existingA) {
-    TEST_USER_A_ID = existingA.id;
-  } else {
-    const { data, error } = await client.auth.admin.createUser({
-      email: TEST_USER_A_EMAIL,
-      password: TEST_USER_A_PASSWORD,
-      email_confirm: true,
-    });
-
-    if (error) throw new Error(`Failed to create test user A: ${error.message}`);
-    TEST_USER_A_ID = data.user.id;
-
-    await client.from('users').upsert(
-      {
-        id: TEST_USER_A_ID,
-        email: TEST_USER_A_EMAIL,
-      },
-      { onConflict: 'id' },
-    );
-  }
-
-  // User B
-  const { data: existingUsersB } = await client.auth.admin.listUsers();
-  const existingB = existingUsersB?.users?.find(
-    (u) => u.email === TEST_USER_B_EMAIL,
-  );
-
-  if (existingB) {
-    TEST_USER_B_ID = existingB.id;
-  } else {
-    const { data, error } = await client.auth.admin.createUser({
-      email: TEST_USER_B_EMAIL,
-      password: TEST_USER_B_PASSWORD,
-      email_confirm: true,
-    });
-
-    if (error) throw new Error(`Failed to create test user B: ${error.message}`);
-    TEST_USER_B_ID = data.user.id;
-
-    await client.from('users').upsert(
-      {
-        id: TEST_USER_B_ID,
-        email: TEST_USER_B_EMAIL,
-      },
-      { onConflict: 'id' },
-    );
-  }
+  TEST_USER_A_ID = await ensureTestUser(TEST_USER_A_EMAIL, TEST_USER_A_PASSWORD);
+  TEST_USER_B_ID = await ensureTestUser(TEST_USER_B_EMAIL, TEST_USER_B_PASSWORD);
 }
 
-/** Clean up all test data for both users (but keep the users themselves). */
-async function cleanupTestData() {
-  const client = serviceClient();
-
-  // Delete enrichment_feedback first (depends on meanings)
-  await client.from('enrichment_feedback').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('enrichment_feedback').delete().eq('user_id', TEST_USER_B_ID);
-
-  // Delete meanings (depends on vocabulary)
-  await client.from('meanings').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('meanings').delete().eq('user_id', TEST_USER_B_ID);
-
-  // Delete encounters, learning cards, and import sessions
-  await client.from('encounters').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('encounters').delete().eq('user_id', TEST_USER_B_ID);
-  await client.from('learning_cards').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('learning_cards').delete().eq('user_id', TEST_USER_B_ID);
-  await client.from('import_sessions').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('import_sessions').delete().eq('user_id', TEST_USER_B_ID);
-
-  // Delete vocabulary
-  await client.from('vocabulary').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('vocabulary').delete().eq('user_id', TEST_USER_B_ID);
-
-  // Delete sources
-  await client.from('sources').delete().eq('user_id', TEST_USER_A_ID);
-  await client.from('sources').delete().eq('user_id', TEST_USER_B_ID);
-}
-
-/** Create test vocabulary and meaning for a user. */
-async function createTestVocabAndMeaning(userId: string) {
-  const client = serviceClient();
-
-  // Create vocabulary
-  const { data: vocab, error: vocabError } = await client
-    .from('vocabulary')
-    .insert({
-      user_id: userId,
-      word: 'test',
-      stem: 'test',
-      content_hash: 'test-hash-' + Math.random(),
-    })
-    .select('id')
-    .single();
-
-  if (vocabError) throw new Error(`Failed to create vocab: ${vocabError.message}`);
-
-  // Create meaning with correct schema
-  const { data: meaning, error: meaningError } = await client
-    .from('meanings')
-    .insert({
-      user_id: userId,
-      vocabulary_id: vocab.id,
-      language_code: 'en',
-      primary_translation: 'test translation',
-      english_definition: 'A test definition',
-      part_of_speech: 'noun',
-    })
-    .select('id')
-    .single();
-
-  if (meaningError) throw new Error(`Failed to create meaning: ${meaningError.message}`);
-
-  return { vocabId: vocab.id, meaningId: meaning.id };
-}
-
-// Check if local Supabase is reachable before running integration tests
-async function isSupabaseRunning(): Promise<boolean> {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      headers: { apikey: SUPABASE_ANON_KEY },
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+async function cleanupAllTestData() {
+  await cleanupTestData(TEST_USER_A_ID);
+  await cleanupTestData(TEST_USER_B_ID);
 }
 
 // =============================================================================
@@ -205,7 +57,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
 
@@ -244,7 +96,7 @@ Deno.test({
     assertEquals(readFeedback.id, feedback.id);
     assertEquals(readFeedback.rating, 'up');
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });
 
@@ -263,7 +115,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
 
@@ -285,7 +137,7 @@ Deno.test({
       `Expected CHECK constraint error, got: ${error.message}`,
     );
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });
 
@@ -304,7 +156,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
 
@@ -347,7 +199,7 @@ Deno.test({
     assertEquals(readFeedback.flag_category, 'wrong_translation');
     assertEquals(readFeedback.comment, 'Not accurate');
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });
 
@@ -366,7 +218,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     // Create feedback for user A
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
@@ -416,7 +268,7 @@ Deno.test({
       'User B should not see any feedback',
     );
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });
 
@@ -435,7 +287,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
 
@@ -456,7 +308,7 @@ Deno.test({
     assertExists(feedback);
     assertEquals(feedback.flag_category, 'wrong_translation');
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });
 
@@ -475,7 +327,7 @@ Deno.test({
     }
 
     await ensureTestUsers();
-    await cleanupTestData();
+    await cleanupAllTestData();
 
     const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
 
@@ -524,6 +376,6 @@ Deno.test({
       'Feedback should be cascade deleted',
     );
 
-    await cleanupTestData();
+    await cleanupAllTestData();
   },
 });

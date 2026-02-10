@@ -1,10 +1,12 @@
 // Edge function: enrich-vocabulary
-// Enriches vocabulary words with meanings using a 2-phase approach:
-// Phase 1: DeepL/Google for reliable translation
-// Phase 2: OpenAI for english_definition, synonyms, confusables only
+// Enriches vocabulary words and writes to global_dictionary table
+// Phase 1: Check if word exists in global_dictionary by content_hash
+// Phase 2: If not, call OpenAI to generate full enrichment data
+// Phase 3: Write to global_dictionary with ON CONFLICT DO NOTHING
+// Phase 4: Link vocabulary to global_dictionary_id
 //
 // Key features:
-// - ONE meaning per vocabulary word (enforced by unique constraint)
+// - Shared global dictionary for all users (deduplication by content_hash)
 // - Stale processing timeout to prevent stuck items
 // - Duplicate check before API calls to save costs
 
@@ -23,24 +25,149 @@ Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  const userId = await getUserId(req);
-  if (!userId) return unauthorizedResponse();
+  // Check if using service role key (for server-side calls)
+  const authHeader = req.headers.get("Authorization");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const isServiceRoleKey = authHeader === `Bearer ${serviceRoleKey}`;
 
-  const url = new URL(req.url);
-  const path = url.pathname.split('/').pop();
+  let userId: string | null = null;
 
-  try {
-    if (req.method === 'POST' && path === 'request') {
-      return await handleEnrichRequest(req, userId);
-    } else if (req.method === 'GET' && path === 'status') {
-      return await handleStatus(userId);
+  if (isServiceRoleKey) {
+    // Service role key - userId will be extracted from request body
+    const body = await req.json();
+    const url = new URL(req.url);
+    const path = url.pathname.split('/').pop();
+
+    try {
+      if (req.method === 'POST' && path === 'request') {
+        // For batch enrichment, get userId from the request (will be validated in handleEnrichRequest)
+        return await handleEnrichRequestServerSide(body);
+      }
+      return errorResponse('Method not allowed', 405);
+    } catch (error) {
+      console.error('[enrich-vocabulary] Error:', error);
+      return errorResponse('Internal server error', 500);
     }
-    return errorResponse('Method not allowed', 405);
-  } catch (error) {
-    console.error('[enrich-vocabulary] Error:', error);
-    return errorResponse('Internal server error', 500);
+  } else {
+    // User JWT authentication
+    userId = await getUserId(req);
+    if (!userId) return unauthorizedResponse();
+
+    const url = new URL(req.url);
+    const path = url.pathname.split('/').pop();
+
+    try {
+      if (req.method === 'POST' && path === 'request') {
+        return await handleEnrichRequest(req, userId);
+      } else if (req.method === 'GET' && path === 'status') {
+        return await handleStatus(userId);
+      }
+      return errorResponse('Method not allowed', 405);
+    } catch (error) {
+      console.error('[enrich-vocabulary] Error:', error);
+      return errorResponse('Internal server error', 500);
+    }
   }
 });
+
+// =============================================================================
+// POST /enrich-vocabulary/request (server-side with service role key)
+// =============================================================================
+
+async function handleEnrichRequestServerSide(body: any): Promise<Response> {
+  const vocabularyIds: string[] = body.vocabulary_ids;
+
+  if (!vocabularyIds || vocabularyIds.length === 0) {
+    return errorResponse('vocabulary_ids is required', 400);
+  }
+
+  const client = createServiceClient();
+
+  // Get the userId from the first vocabulary entry
+  const { data: vocab, error: vocabError } = await client
+    .from('vocabulary')
+    .select('user_id')
+    .eq('id', vocabularyIds[0])
+    .single();
+
+  if (vocabError || !vocab) {
+    return errorResponse('Vocabulary entry not found', 404);
+  }
+
+  const userId = vocab.user_id;
+  const nativeLanguageCode = body.native_language_code || 'de';
+  const batchSize = Math.min(body.batch_size || 1, vocabularyIds.length);
+
+  // Fetch vocabulary words
+  const { data: wordsData, error: wordsError } = await client
+    .from('vocabulary')
+    .select('id, word, stem')
+    .eq('user_id', userId)
+    .in('id', vocabularyIds.slice(0, batchSize))
+    .is('deleted_at', null);
+
+  if (wordsError) {
+    console.error('[enrich-vocabulary] Failed to fetch vocabulary:', wordsError);
+    return errorResponse('Failed to fetch vocabulary', 500);
+  }
+
+  const wordsToEnrich: VocabWord[] = wordsData || [];
+  console.log(`[enrich-vocabulary] Server-side enriching ${wordsToEnrich.length} words for user=${userId}, language=${nativeLanguageCode}`);
+
+  // Get encounter contexts
+  const wordContexts = await getEncounterContexts(client, userId, wordsToEnrich);
+
+  // Process each word
+  const enriched: EnrichedWord[] = [];
+  const failed: FailedWord[] = [];
+  const skipped: string[] = [];
+
+  for (const word of wordsToEnrich) {
+    try {
+      // Check if already enriched
+      const existingMeaning = await checkExistingMeaning(client, userId, word.id);
+      if (existingMeaning) {
+        console.log(`[enrich-vocabulary] Skipping "${word.word}" - already has meaning`);
+        skipped.push(word.id);
+        await updateQueueStatus(client, userId, word.id, 'completed');
+        continue;
+      }
+
+      // Try to claim the word
+      const claimed = await tryClaimWord(client, userId, word.id);
+      if (!claimed) {
+        console.log(`[enrich-vocabulary] Skipping "${word.word}" - already being processed`);
+        skipped.push(word.id);
+        continue;
+      }
+
+      // Enrich the word
+      const context = wordContexts[word.id] || null;
+      const result = await enrichWord(word, nativeLanguageCode, context, client, userId);
+
+      if (result) {
+        enriched.push(result);
+        await updateQueueStatus(client, userId, word.id, 'completed');
+        console.log(`[enrich-vocabulary] ✓ Enriched "${word.word}"`);
+      } else {
+        failed.push({ vocabulary_id: word.id, error: 'All enrichment services failed', will_retry: true });
+        await incrementQueueAttempt(client, userId, word.id, 'All enrichment services failed');
+        console.error(`[enrich-vocabulary] ✗ Failed "${word.word}": All enrichment services failed`);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      failed.push({ vocabulary_id: word.id, error: errorMsg });
+      await incrementQueueAttempt(client, userId, word.id, errorMsg);
+      console.error(`[enrich-vocabulary] ✗ Exception for "${word.word}":`, err);
+    }
+  }
+
+  return jsonResponse({
+    enriched,
+    failed,
+    skipped,
+  });
+}
 
 // =============================================================================
 // POST /enrich-vocabulary/request
@@ -179,7 +306,38 @@ async function enrichWord(
   client: ReturnType<typeof createServiceClient>,
   userId: string,
 ): Promise<EnrichedWord | null> {
-  // Phase 1: Get translation from DeepL or Google (reliable, cheap)
+  // Get stem (use existing or the word itself for now, will be refined by AI)
+  const stemForLookup = word.stem || word.word.toLowerCase().trim();
+  const contentHash = await generateContentHash(stemForLookup);
+
+  // Phase 1: Check if this word already exists in global_dictionary
+  const { data: existingEntry } = await client
+    .from('global_dictionary')
+    .select('*')
+    .eq('content_hash', contentHash)
+    .single();
+
+  if (existingEntry) {
+    console.log(`[enrich-vocabulary] Found existing global_dictionary entry for "${word.word}"`);
+
+    // Link vocabulary to this global_dictionary entry
+    await client
+      .from('vocabulary')
+      .update({
+        global_dictionary_id: existingEntry.id,
+        stem: existingEntry.stem,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', word.id);
+
+    return {
+      vocabulary_id: word.id,
+      word: word.word,
+      global_dictionary_id: existingEntry.id,
+    };
+  }
+
+  // Phase 2: Get translation from DeepL or Google
   let translation: string | null = null;
   let translationSource: string = 'none';
 
@@ -188,7 +346,7 @@ async function enrichWord(
     try {
       translation = await getDeepLTranslation(word.word, nativeLanguageCode, deeplKey);
       translationSource = 'deepl';
-      console.log(`[enrich-vocabulary] Phase 1 (DeepL) translation for "${word.word}": ${translation}`);
+      console.log(`[enrich-vocabulary] Translation (DeepL) for "${word.word}": ${translation}`);
     } catch (err) {
       console.warn(`[enrich-vocabulary] DeepL failed for "${word.word}":`, err);
     }
@@ -200,48 +358,136 @@ async function enrichWord(
       try {
         translation = await getGoogleTranslation(word.word, nativeLanguageCode, googleKey);
         translationSource = 'google';
-        console.log(`[enrich-vocabulary] Phase 1 (Google) translation for "${word.word}": ${translation}`);
+        console.log(`[enrich-vocabulary] Translation (Google) for "${word.word}": ${translation}`);
       } catch (err) {
         console.warn(`[enrich-vocabulary] Google Translate failed for "${word.word}":`, err);
       }
     }
   }
 
-  // If no translation service available, use the word itself
   if (!translation) {
     translation = word.word;
     translationSource = 'none';
     console.log(`[enrich-vocabulary] No translation service available for "${word.word}"`);
   }
 
-  // Phase 2: Get AI enhancement (definition, synonyms, confusables, native alternatives) from OpenAI
+  // Phase 3: Get AI enhancement from OpenAI
   let aiEnhancement: AIEnhancement | null = null;
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
-  if (openaiKey) {
-    try {
-      aiEnhancement = await getOpenAIEnhancement(word, context, openaiKey, translation, nativeLanguageCode);
-      console.log(`[enrich-vocabulary] Phase 2 (OpenAI) enhancement for "${word.word}"`);
-    } catch (err) {
-      console.warn(`[enrich-vocabulary] OpenAI enhancement failed for "${word.word}":`, err);
+  if (!openaiKey) {
+    console.error('[enrich-vocabulary] OpenAI API key not configured');
+    return null;
+  }
+
+  try {
+    aiEnhancement = await getOpenAIEnhancement(word, context, openaiKey, translation, nativeLanguageCode);
+    console.log(`[enrich-vocabulary] AI enhancement complete for "${word.word}"`);
+  } catch (err) {
+    console.error(`[enrich-vocabulary] OpenAI enhancement failed for "${word.word}":`, err);
+    return null;
+  }
+
+  if (!aiEnhancement) {
+    console.error(`[enrich-vocabulary] AI enhancement returned null for "${word.word}"`);
+    return null;
+  }
+
+  // Phase 4: Write to global_dictionary with the AI-provided stem
+  const finalStem = aiEnhancement.stem;
+  const finalContentHash = await generateContentHash(finalStem);
+
+  const globalDictId = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  // Build translations JSONB (keyed by language code)
+  const translations: Record<string, any> = {
+    [nativeLanguageCode]: {
+      primary: translation,
+      alternatives: aiEnhancement.native_alternatives || [],
+      source: translationSource,
     }
+  };
+
+  // Build confusables JSONB
+  const confusables = aiEnhancement.confusables.map(c => ({
+    word: c.word,
+    explanation: c.explanation,
+    disambiguation_sentence: c.disambiguation_sentence,
+  }));
+
+  // Insert into global_dictionary with ON CONFLICT DO NOTHING
+  const { data: insertedEntry, error: insertError } = await client
+    .from('global_dictionary')
+    .insert({
+      id: globalDictId,
+      word: finalStem,
+      content_hash: finalContentHash,
+      stem: finalStem,
+      part_of_speech: aiEnhancement.part_of_speech,
+      english_definition: aiEnhancement.english_definition,
+      synonyms: aiEnhancement.synonyms,
+      antonyms: aiEnhancement.antonyms,
+      confusables,
+      example_sentences: aiEnhancement.example_sentences,
+      pronunciation_ipa: aiEnhancement.pronunciation_ipa,
+      translations,
+      cefr_level: aiEnhancement.cefr_level,
+      confidence: aiEnhancement.confidence,
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single();
+
+  // Handle conflict: another request may have inserted this word
+  if (insertError) {
+    if (insertError.code === '23505') { // Unique constraint violation
+      console.log(`[enrich-vocabulary] Race condition detected, fetching existing entry for "${finalStem}"`);
+      const { data: existingEntry } = await client
+        .from('global_dictionary')
+        .select('id')
+        .eq('content_hash', finalContentHash)
+        .single();
+
+      if (existingEntry) {
+        // Link vocabulary to this entry
+        await client
+          .from('vocabulary')
+          .update({
+            global_dictionary_id: existingEntry.id,
+            stem: finalStem,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', word.id);
+
+        return {
+          vocabulary_id: word.id,
+          word: word.word,
+          global_dictionary_id: existingEntry.id,
+        };
+      }
+    }
+    console.error(`[enrich-vocabulary] Failed to insert global_dictionary entry:`, insertError);
+    return null;
   }
 
-  // Update vocabulary stem if missing and AI provided one
-  if (!word.stem && aiEnhancement?.stem) {
-    await client.from('vocabulary')
-      .update({ stem: aiEnhancement.stem, updated_at: new Date().toISOString() })
-      .eq('id', word.id);
-    console.log(`[enrich-vocabulary] Updated stem for "${word.word}" → "${aiEnhancement.stem}"`);
-  }
+  // Phase 5: Link vocabulary to global_dictionary
+  await client
+    .from('vocabulary')
+    .update({
+      global_dictionary_id: globalDictId,
+      stem: finalStem,
+      updated_at: now
+    })
+    .eq('id', word.id);
 
-  // Build the single meaning record
-  const displayWord = word.stem || aiEnhancement?.stem || word.word;
-  const result = buildEnrichedWord(word, translation, translationSource, aiEnhancement, nativeLanguageCode, displayWord);
+  console.log(`[enrich-vocabulary] Successfully enriched "${word.word}" → global_dictionary ${globalDictId}`);
 
-  // Store the result (single meaning, upsert to handle unique constraint)
-  await storeEnrichmentResult(client, userId, word.id, result, nativeLanguageCode);
-
-  return result;
+  return {
+    vocabulary_id: word.id,
+    word: word.word,
+    global_dictionary_id: globalDictId,
+  };
 }
 
 // =============================================================================
@@ -253,20 +499,29 @@ async function enrichWord(
 // Phase 2: OpenAI Enhancement (definition, synonyms, confusables ONLY)
 // =============================================================================
 
+interface ClozeText {
+  sentence: string;
+  before: string;
+  blank: string;
+  after: string;
+}
+
 interface AIEnhancement {
+  stem: string;
   english_definition: string;
   synonyms: string[];
+  antonyms: string[];
   part_of_speech: string | null;
   confusables: Array<{
     word: string;
     explanation: string;
-    example_sentence?: string;
+    disambiguation_sentence: ClozeText;
   }>;
+  example_sentences: ClozeText[];
+  pronunciation_ipa: string;
+  cefr_level: string | null;
   confidence: number;
-  // Native language alternatives (2-4, no duplicates, no trivial variants)
   native_alternatives: string[];
-  // Base/dictionary form (lemma) of the word
-  stem: string | null;
 }
 
 async function getOpenAIEnhancement(
@@ -290,13 +545,23 @@ Given an English word and optional context sentence, return a JSON object with:
 - stem: the base/dictionary form (lemma) of the word. For verbs, the infinitive. For nouns, nominative singular. If the word is already in base form, return it unchanged.
 - english_definition: one-sentence plain English definition
 - synonyms: up to 3 English synonyms (array of strings)
-- part_of_speech: noun/verb/adjective/adverb/other (string)
+- antonyms: up to 2 English antonyms (array of strings, empty array if none)
+- part_of_speech: noun/verb/adjective/adverb/preposition/conjunction/determiner/pronoun/interjection/other (string)
 - confusables: array of commonly confused words (max 3), each with:
   - word: the confusable English word
   - explanation: one-sentence distinction in English
-  - example_sentence: English sentence demonstrating correct usage
+  - disambiguation_sentence: object with { "sentence": "full sentence", "before": "text before blank", "blank": "the target word", "after": "text after blank" }
+- example_sentences: array of 2-3 objects, each with { "sentence": "full sentence", "before": "text before blank", "blank": "word form used", "after": "text after blank" }
+- pronunciation_ipa: IPA pronunciation (e.g., /ˈwɜːrd/)
+- cefr_level: A1/A2/B1/B2/C1/C2 or null if uncertain
 - confidence: 0.0-1.0 indicating overall confidence
 - native_alternatives: 2-4 alternative ${langName} translations (synonyms/near-synonyms in ${langName}, NOT "${primaryTranslation}", no trivial inflections like plural forms, no duplicates). If no good alternatives exist, return empty array [].
+
+IMPORTANT for example_sentences and disambiguation_sentence:
+- Each sentence should demonstrate the target word in context
+- Split the sentence into "before", "blank" (the word), and "after" parts
+- The "sentence" field should contain the complete sentence for reference
+- Example: For "ubiquitous" → { "sentence": "Wi-Fi has become so ubiquitous.", "before": "Wi-Fi has become so ", "blank": "ubiquitous", "after": "." }
 
 Word: ${word.word}
 Stem: ${word.stem || word.word}
@@ -328,283 +593,32 @@ Primary ${langName} translation: ${primaryTranslation}`;
 
   const parsed = JSON.parse(content);
   return {
+    stem: parsed.stem || word.word,
     english_definition: parsed.english_definition || '',
     synonyms: parsed.synonyms || [],
+    antonyms: parsed.antonyms || [],
     part_of_speech: parsed.part_of_speech || null,
     confusables: parsed.confusables || [],
+    example_sentences: parsed.example_sentences || [],
+    pronunciation_ipa: parsed.pronunciation_ipa || '',
+    cefr_level: parsed.cefr_level || null,
     confidence: parsed.confidence || 0.9,
     native_alternatives: Array.isArray(parsed.native_alternatives)
       ? parsed.native_alternatives.filter((a: string) => a && typeof a === 'string')
       : [],
-    stem: parsed.stem || null,
   };
 }
 
 // =============================================================================
-// Build enriched word result
+// Utilities
 // =============================================================================
 
-function buildEnrichedWord(
-  word: VocabWord,
-  translation: string,
-  translationSource: string,
-  aiEnhancement: AIEnhancement | null,
-  _nativeLanguageCode: string,
-  displayWord?: string,
-): EnrichedWord {
-  // The display form: stem (base/lemma) if available, otherwise raw word
-  const answerWord = displayWord || word.stem || word.word;
-
-  // Generate deterministic ID based on user context (will be set during storage)
-  const meaningId = crypto.randomUUID();
-
-  // Build cues
-  const cues: EnrichedCue[] = [];
-
-  // Translation cue (from DeepL/Google)
-  cues.push({
-    id: crypto.randomUUID(),
-    cue_type: 'translation',
-    prompt_text: translation,
-    answer_text: answerWord,
-    hint_text: null,
-    metadata: { source: translationSource },
-  });
-
-  // Definition cue (from OpenAI)
-  if (aiEnhancement?.english_definition) {
-    cues.push({
-      id: crypto.randomUUID(),
-      cue_type: 'definition',
-      prompt_text: aiEnhancement.english_definition,
-      answer_text: answerWord,
-      hint_text: null,
-      metadata: {},
-    });
-  }
-
-  // Synonym cue (from OpenAI)
-  if (aiEnhancement?.synonyms && aiEnhancement.synonyms.length > 0) {
-    cues.push({
-      id: crypto.randomUUID(),
-      cue_type: 'synonym',
-      prompt_text: aiEnhancement.synonyms.join(', '),
-      answer_text: answerWord,
-      hint_text: null,
-      metadata: {},
-    });
-  }
-
-  // Build confusable set (from OpenAI)
-  let confusableSet: EnrichedConfusableSet | null = null;
-  if (aiEnhancement?.confusables && aiEnhancement.confusables.length > 0) {
-    const explanations: Record<string, string> = {};
-    const exampleSentences: Record<string, string> = {};
-    const confusableWords = aiEnhancement.confusables.map((c) => {
-      explanations[c.word] = c.explanation;
-      if (c.example_sentence) exampleSentences[c.word] = c.example_sentence;
-      return c.word;
-    });
-    // Include the word itself
-    if (!confusableWords.includes(word.word)) {
-      confusableWords.unshift(word.word);
-    }
-
-    confusableSet = {
-      id: crypto.randomUUID(),
-      words: confusableWords,
-      explanations,
-      example_sentences: exampleSentences,
-    };
-
-    // Add disambiguation cue if we have confusables
-    if (aiEnhancement.confusables.length >= 2 && aiEnhancement.english_definition) {
-      const disambigOptions = confusableWords.slice(0, 4);
-      cues.push({
-        id: crypto.randomUUID(),
-        cue_type: 'disambiguation',
-        prompt_text: `Choose the word that means: ${aiEnhancement.english_definition}`,
-        answer_text: answerWord,
-        hint_text: null,
-        metadata: {
-          options: disambigOptions,
-          explanations,
-        },
-      });
-    }
-  }
-
-  // Determine confidence and source
-  const confidence = aiEnhancement?.confidence || (translationSource !== 'none' ? 0.7 : 0.3);
-  const source = aiEnhancement ? `${translationSource}+ai` : translationSource;
-
-  return {
-    vocabulary_id: word.id,
-    word: word.word,
-    meaning: {
-      id: meaningId,
-      primary_translation: translation,
-      alternative_translations: aiEnhancement?.native_alternatives || [],
-      english_definition: aiEnhancement?.english_definition || `${word.word} (${translationSource} translation)`,
-      extended_definition: null,
-      part_of_speech: aiEnhancement?.part_of_speech || null,
-      synonyms: aiEnhancement?.synonyms || [],
-      confidence,
-      is_primary: true,
-      sort_order: 0,
-      source,
-      cues,
-    },
-    confusable_set: confusableSet,
-  };
-}
-
-// =============================================================================
-// Storage: Single meaning with upsert
-// =============================================================================
-
-async function storeEnrichmentResult(
-  client: ReturnType<typeof createServiceClient>,
-  userId: string,
-  vocabularyId: string,
-  result: EnrichedWord,
-  nativeLanguageCode: string,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const meaning = result.meaning;
-
-  // Check if meaning already exists for this vocabulary
-  const { data: existingMeaning } = await client
-    .from('meanings')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('vocabulary_id', vocabularyId)
-    .is('deleted_at', null)
-    .single();
-
-  let actualMeaningId: string;
-
-  if (existingMeaning) {
-    // Update existing meaning
-    actualMeaningId = existingMeaning.id;
-
-    // Check if user has edited this meaning - preserve user customizations
-    const { count: editCount } = await client
-      .from('meaning_edits')
-      .select('id', { count: 'exact', head: true })
-      .eq('meaning_id', actualMeaningId);
-
-    if (editCount && editCount > 0) {
-      console.log(`[enrich-vocabulary] Skipping update for meaning ${actualMeaningId} - user has edits`);
-      return;
-    }
-
-    const { error: updateError } = await client
-      .from('meanings')
-      .update({
-        language_code: nativeLanguageCode,
-        primary_translation: meaning.primary_translation,
-        alternative_translations: meaning.alternative_translations,
-        english_definition: meaning.english_definition,
-        extended_definition: meaning.extended_definition,
-        part_of_speech: meaning.part_of_speech,
-        synonyms: meaning.synonyms,
-        confidence: meaning.confidence,
-        is_primary: meaning.is_primary,
-        is_active: true,
-        sort_order: meaning.sort_order,
-        source: meaning.source,
-        updated_at: now,
-      })
-      .eq('id', actualMeaningId);
-
-    if (updateError) {
-      console.error(`[enrich-vocabulary] Failed to update meaning:`, updateError);
-      throw new Error(`Failed to update meaning: ${updateError.message}`);
-    }
-    console.log(`[enrich-vocabulary] Updated existing meaning ${actualMeaningId}`);
-  } else {
-    // Insert new meaning
-    actualMeaningId = meaning.id;
-    const { error: insertError } = await client.from('meanings').insert({
-      id: actualMeaningId,
-      user_id: userId,
-      vocabulary_id: vocabularyId,
-      language_code: nativeLanguageCode,
-      primary_translation: meaning.primary_translation,
-      alternative_translations: meaning.alternative_translations,
-      english_definition: meaning.english_definition,
-      extended_definition: meaning.extended_definition,
-      part_of_speech: meaning.part_of_speech,
-      synonyms: meaning.synonyms,
-      confidence: meaning.confidence,
-      is_primary: meaning.is_primary,
-      is_active: true,
-      sort_order: meaning.sort_order,
-      source: meaning.source,
-      created_at: now,
-      updated_at: now,
-      version: 1,
-    });
-
-    if (insertError) {
-      console.error(`[enrich-vocabulary] Failed to insert meaning:`, insertError);
-      throw new Error(`Failed to insert meaning: ${insertError.message}`);
-    }
-    console.log(`[enrich-vocabulary] Inserted new meaning ${actualMeaningId}`);
-  }
-
-  // Delete old cues for this meaning and insert new ones
-  await client.from('cues')
-    .delete()
-    .eq('meaning_id', actualMeaningId);
-
-  // Insert cues
-  for (const cue of meaning.cues) {
-    await client.from('cues').insert({
-      id: cue.id,
-      user_id: userId,
-      meaning_id: actualMeaningId,
-      cue_type: cue.cue_type,
-      prompt_text: cue.prompt_text,
-      answer_text: cue.answer_text,
-      hint_text: cue.hint_text,
-      metadata: cue.metadata,
-      created_at: now,
-      updated_at: now,
-      version: 1,
-    });
-  }
-
-  // Insert confusable set if present
-  if (result.confusable_set) {
-    const cs = result.confusable_set;
-
-    // Delete old confusable set members for this vocabulary
-    await client.from('confusable_set_members')
-      .delete()
-      .eq('vocabulary_id', vocabularyId);
-
-    await client.from('confusable_sets').upsert({
-      id: cs.id,
-      user_id: userId,
-      language_code: nativeLanguageCode,
-      words: cs.words,
-      explanations: cs.explanations,
-      example_sentences: cs.example_sentences,
-      created_at: now,
-      updated_at: now,
-      version: 1,
-    });
-
-    // Link vocabulary to confusable set
-    await client.from('confusable_set_members').upsert({
-      id: `${cs.id}_${vocabularyId}`,
-      confusable_set_id: cs.id,
-      vocabulary_id: vocabularyId,
-      created_at: now,
-    });
-  }
+async function generateContentHash(stem: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(stem.toLowerCase().trim());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // =============================================================================
@@ -617,15 +631,12 @@ async function checkExistingMeaning(
   vocabularyId: string,
 ): Promise<boolean> {
   const { data } = await client
-    .from('meanings')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('vocabulary_id', vocabularyId)
-    .is('deleted_at', null)
-    .limit(1)
+    .from('vocabulary')
+    .select('global_dictionary_id')
+    .eq('id', vocabularyId)
     .single();
 
-  return data !== null;
+  return data?.global_dictionary_id !== null;
 }
 
 async function tryClaimWord(
@@ -725,29 +736,19 @@ async function getUnEnrichedWords(
   userId: string,
   limit: number,
 ): Promise<VocabWord[]> {
-  // Get vocabulary IDs that already have meanings
-  const { data: enrichedIds } = await client
-    .from('meanings')
-    .select('vocabulary_id')
-    .eq('user_id', userId)
-    .is('deleted_at', null);
-
-  const enrichedSet = new Set((enrichedIds || []).map((r: { vocabulary_id: string }) => r.vocabulary_id));
-
-  // Get all vocabulary, filter out enriched ones
+  // Get vocabulary that doesn't have global_dictionary_id set
   const { data: allVocab, error } = await client
     .from('vocabulary')
     .select('id, word, stem')
     .eq('user_id', userId)
+    .is('global_dictionary_id', null)
     .is('deleted_at', null)
     .order('created_at', { ascending: true })
-    .limit(limit + enrichedSet.size);
+    .limit(limit);
 
   if (error || !allVocab) return [];
 
-  return allVocab
-    .filter((v: VocabWord) => !enrichedSet.has(v.id))
-    .slice(0, limit);
+  return allVocab;
 }
 
 async function getEncounterContexts(
@@ -780,14 +781,13 @@ async function getBufferStatus(
   client: ReturnType<typeof createServiceClient>,
   userId: string,
 ): Promise<{ enriched_count: number; un_enriched_count: number; buffer_target: number; pending_in_queue: number }> {
-  // Count vocabulary with meanings (distinct vocabulary_id)
-  const { data: enrichedData } = await client
-    .from('meanings')
-    .select('vocabulary_id')
+  // Count vocabulary with global_dictionary_id
+  const { count: enrichedCount } = await client
+    .from('vocabulary')
+    .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
+    .not('global_dictionary_id', 'is', null)
     .is('deleted_at', null);
-
-  const enrichedCount = new Set((enrichedData || []).map((r: { vocabulary_id: string }) => r.vocabulary_id)).size;
 
   // Count total vocab
   const { count: totalCount } = await client
@@ -804,8 +804,8 @@ async function getBufferStatus(
     .in('status', ['pending', 'processing']);
 
   return {
-    enriched_count: enrichedCount,
-    un_enriched_count: (totalCount || 0) - enrichedCount,
+    enriched_count: enrichedCount || 0,
+    un_enriched_count: (totalCount || 0) - (enrichedCount || 0),
     buffer_target: BUFFER_TARGET,
     pending_in_queue: pendingCount || 0,
   };
@@ -821,42 +821,10 @@ interface VocabWord {
   stem: string | null;
 }
 
-interface EnrichedCue {
-  id: string;
-  cue_type: string;
-  prompt_text: string;
-  answer_text: string;
-  hint_text: string | null;
-  metadata: Record<string, unknown>;
-}
-
-interface EnrichedMeaning {
-  id: string;
-  primary_translation: string;
-  alternative_translations: string[];
-  english_definition: string;
-  extended_definition: string | null;
-  part_of_speech: string | null;
-  synonyms: string[];
-  confidence: number;
-  is_primary: boolean;
-  sort_order: number;
-  source: string;
-  cues: EnrichedCue[];
-}
-
-interface EnrichedConfusableSet {
-  id: string;
-  words: string[];
-  explanations: Record<string, string>;
-  example_sentences: Record<string, string>;
-}
-
 interface EnrichedWord {
   vocabulary_id: string;
   word: string;
-  meaning: EnrichedMeaning; // Changed from meanings[] to single meaning
-  confusable_set: EnrichedConfusableSet | null;
+  global_dictionary_id: string;
 }
 
 interface FailedWord {
