@@ -30,6 +30,7 @@ export async function setCachedWord(response: LookupResponse): Promise<void> {
     stage: response.stage,
     lookupCount: (existing?.lookupCount ?? 0) + 1,
     lastAccessed: Date.now(),
+    provisional: response.provisional ?? false,
     englishDefinition: response.english_definition,
     partOfSpeech: response.part_of_speech,
     synonyms: existing?.synonyms, // Preserve existing synonyms if any

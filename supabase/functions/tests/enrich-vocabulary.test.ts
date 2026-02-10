@@ -194,6 +194,100 @@ Deno.test({
 });
 
 Deno.test({
+  name: "enrich-vocabulary: polysemous word with context gets correct translation",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed(FN_NAME))) {
+      console.log("  ⏭ Skipping: local Supabase or functions not running");
+      return;
+    }
+
+    // Skip if API keys are not configured
+    const deeplKey = Deno.env.get("DEEPL_API_KEY");
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!deeplKey || !openaiKey) {
+      console.log("  ⏭ Skipping: DEEPL_API_KEY or OPENAI_API_KEY not set");
+      return;
+    }
+
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+
+    // Create vocab "mercurial" without global dict link
+    const vocabId = await createVocab("mercurial");
+
+    // Create encounter with figurative context
+    const client = serviceClient();
+    const sourceId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await client.from("sources").insert({
+      id: sourceId,
+      user_id: TEST_USER_ID,
+      type: "website",
+      title: "Hermes Article",
+      url: "https://example.com/hermes",
+      domain: "example.com",
+      created_at: now,
+      updated_at: now,
+    });
+    await client.from("encounters").insert({
+      id: crypto.randomUUID(),
+      user_id: TEST_USER_ID,
+      vocabulary_id: vocabId,
+      source_id: sourceId,
+      context: "As a mercurial figure, he signifies negotiation and changeability.",
+      occurred_at: now,
+      created_at: now,
+    });
+
+    // Sign in and invoke enrichment
+    const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);
+    const { status, data } = await invokeFunction(FN_NAME, {
+      path: "request",
+      body: {
+        native_language_code: "de",
+        vocabulary_ids: [vocabId],
+        batch_size: 1,
+      },
+      authToken: accessToken,
+    });
+
+    assertEquals(
+      status,
+      200,
+      `Expected 200, got ${status}: ${JSON.stringify(data)}`,
+    );
+    assertEquals(data.enriched.length, 1, "Should have 1 enriched word");
+
+    // Check global_dictionary for correct translation
+    const gdId = data.enriched[0].global_dictionary_id;
+    globalDictIds.push(gdId);
+    const { data: gd } = await client
+      .from("global_dictionary")
+      .select("translations, part_of_speech")
+      .eq("id", gdId)
+      .single();
+
+    assert(gd, "Global dictionary entry should exist");
+
+    // Primary translation should NOT be "Quecksilber"
+    const primaryTranslation = gd.translations?.de?.primary;
+    assert(
+      primaryTranslation && primaryTranslation.toLowerCase() !== "quecksilber",
+      `Expected context-aware translation, got "${primaryTranslation}"`,
+    );
+
+    // Part of speech should be adjective (mercurial used as adjective)
+    assertEquals(gd.part_of_speech, "adjective");
+
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+  },
+});
+
+Deno.test({
   name: "enrich-vocabulary: no auth → 401",
   sanitizeOps: false,
   sanitizeResources: false,

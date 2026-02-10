@@ -230,6 +230,97 @@ Deno.test({
 });
 
 Deno.test({
+  name: "lookup-word: returns context-aware translation for polysemous word",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed(FN_NAME))) {
+      console.log("  ⏭ Skipping: local Supabase or functions not running");
+      return;
+    }
+
+    // Skip if DeepL API key is not configured
+    const deeplKey = Deno.env.get("DEEPL_API_KEY");
+    if (!deeplKey) {
+      console.log("  ⏭ Skipping: DEEPL_API_KEY not set");
+      return;
+    }
+
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+
+    // No global dict entry for "mercurial" — forces fallback translation path
+    const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);
+    const { status, data } = await invokeFunction(FN_NAME, {
+      body: {
+        raw_word: "mercurial",
+        sentence: "As a mercurial figure, he signifies negotiation and changeability.",
+        url: "https://example.com/hermes",
+        title: "Hermes Article",
+      },
+      authToken: accessToken,
+    });
+
+    assertEquals(
+      status,
+      200,
+      `Expected 200, got ${status}: ${JSON.stringify(data)}`,
+    );
+
+    // The translation should NOT be "Quecksilber" (mercury the element)
+    // with sentence context, DeepL should pick the figurative sense
+    assert(
+      data.translation.toLowerCase() !== "quecksilber",
+      `Expected context-aware translation, got "${data.translation}" (Quecksilber = wrong sense)`,
+    );
+
+    // Should be marked as provisional (no global dict match)
+    assertEquals(data.provisional, true, "New word without global dict should be provisional");
+
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+  },
+});
+
+Deno.test({
+  name: "lookup-word: global dict hit returns provisional=false",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    if (!(await isSupabaseRunning()) || !(await isFunctionServed(FN_NAME))) {
+      console.log("  ⏭ Skipping: local Supabase or functions not running");
+      return;
+    }
+
+    TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+
+    const gdId = await createTestGlobalDictEntry("ephemeral");
+    await createTestWordVariant("ephemeral", gdId);
+    globalDictIds.push(gdId);
+
+    const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);
+    const { status, data } = await invokeFunction(FN_NAME, {
+      body: {
+        raw_word: "ephemeral",
+        sentence: "The ephemeral beauty of cherry blossoms.",
+        url: "https://example.com/nature",
+        title: "Nature Article",
+      },
+      authToken: accessToken,
+    });
+
+    assertEquals(status, 200);
+    assertEquals(data.provisional, false, "Global dict hit should not be provisional");
+
+    await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
+  },
+});
+
+Deno.test({
   name: "lookup-word: missing raw_word → 400",
   sanitizeOps: false,
   sanitizeResources: false,

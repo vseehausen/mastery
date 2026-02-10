@@ -6,15 +6,19 @@ export async function getDeepLTranslation(
   word: string,
   targetLang: string,
   apiKey: string,
+  context?: string,
 ): Promise<string | null> {
+  const body: Record<string, unknown> = {
+    text: [word],
+    source_lang: 'EN',
+    target_lang: targetLang.toUpperCase(),
+  };
+  if (context) body.context = context;
+
   const response = await fetch('https://api-free.deepl.com/v2/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `DeepL-Auth-Key ${apiKey}` },
-    body: JSON.stringify({
-      text: [word],
-      source_lang: 'EN',
-      target_lang: targetLang.toUpperCase(),
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) throw new Error(`DeepL API error: ${response.status}`);
@@ -43,6 +47,7 @@ export async function getGoogleTranslation(
   word: string,
   targetLang: string,
   apiKey: string,
+  _context?: string,
 ): Promise<string | null> {
   const response = await fetch(
     `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
@@ -81,11 +86,12 @@ export async function getGoogleTranslation(
 export async function translateWord(
   word: string,
   targetLang: string,
+  context?: string,
 ): Promise<{ translation: string; source: string }> {
   const deeplKey = Deno.env.get('DEEPL_API_KEY');
   if (deeplKey) {
     try {
-      const t = await getDeepLTranslation(word, targetLang, deeplKey);
+      const t = await getDeepLTranslation(word, targetLang, deeplKey, context);
       if (t) return { translation: t, source: 'deepl' };
     } catch (err) {
       console.warn('[translation] DeepL failed:', err);
@@ -95,7 +101,7 @@ export async function translateWord(
   const googleKey = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
   if (googleKey) {
     try {
-      const t = await getGoogleTranslation(word, targetLang, googleKey);
+      const t = await getGoogleTranslation(word, targetLang, googleKey, context);
       if (t) return { translation: t, source: 'google' };
     } catch (err) {
       console.warn('[translation] Google Translate failed:', err);
@@ -103,4 +109,32 @@ export async function translateWord(
   }
 
   return { translation: word, source: 'none' };
+}
+
+/**
+ * Resolve the best primary translation given machine translation and AI enhancement.
+ * Extracted for testability.
+ */
+export function resolveTranslation(
+  machineTranslation: string,
+  machineSource: string,
+  aiEnhancement: { best_native_translation?: string | null; confidence?: number } | null,
+): { primary: string; alternatives: string[]; source: string } {
+  if (!aiEnhancement) {
+    return { primary: machineTranslation, alternatives: [], source: machineSource };
+  }
+
+  const aiTranslation = aiEnhancement.best_native_translation;
+  const aiConfidence = aiEnhancement.confidence ?? 0;
+  const useAiTranslation = !!aiTranslation && aiConfidence >= 0.6;
+
+  if (useAiTranslation) {
+    // AI translation becomes primary; demote machine translation to alternatives (if different)
+    const alternatives = aiTranslation!.toLowerCase() !== machineTranslation.toLowerCase()
+      ? [machineTranslation]
+      : [];
+    return { primary: aiTranslation!, alternatives, source: 'openai' };
+  }
+
+  return { primary: machineTranslation, alternatives: [], source: machineSource };
 }

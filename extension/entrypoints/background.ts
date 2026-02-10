@@ -80,10 +80,11 @@ async function handleLookup(request: LookupRequest): Promise<ServiceWorkerRespon
     return { type: 'needsAuth' };
   }
 
-  // Check cache first
+  // Check cache first (bypass provisional entries — they have unverified translations)
   const cached = await getCachedWord(request.raw_word.toLowerCase());
-  console.log('[Mastery] Cache check:', cached ? 'HIT' : 'MISS');
-  if (cached) {
+  const cacheUsable = cached && !cached.provisional;
+  console.log('[Mastery] Cache check:', cached ? (cacheUsable ? 'HIT' : 'HIT (provisional, bypassing)') : 'MISS');
+  if (cacheUsable) {
     console.log('[Mastery] Returning cached result for:', request.raw_word);
     // Return cached data immediately, then update in background
     const cachedResponse: LookupResponse = {
