@@ -2,6 +2,7 @@
 // See: https://supabase.com/docs/guides/functions/auth
 
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
+export type { SupabaseClient };
 
 let supabaseAdmin: SupabaseClient | null = null;
 

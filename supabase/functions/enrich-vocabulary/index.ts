@@ -14,6 +14,7 @@ import { handleCors } from '../_shared/cors.ts';
 import { createServiceClient, getUserId } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
 import { getDeepLTranslation, getGoogleTranslation } from '../_shared/translation.ts';
+import { generateContentHash } from '../_shared/crypto.ts';
 
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
@@ -613,13 +614,6 @@ Primary ${langName} translation: ${primaryTranslation}`;
 // Utilities
 // =============================================================================
 
-async function generateContentHash(stem: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(stem.toLowerCase().trim());
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 // =============================================================================
 // Safeguards: Prevent duplicate API calls

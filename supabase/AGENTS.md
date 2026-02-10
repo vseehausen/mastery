@@ -107,6 +107,14 @@ Edge Functions on the deployed Supabase project access secrets set via `npx supa
 npx supabase secrets set KEY_NAME="value"
 ```
 
+## Edge Function Code Patterns
+
+- **One write path per business action.** If the same DB write exists as a function AND inline elsewhere, the copies will drift. Consolidate to one function, call it everywhere.
+- **Typed outcomes over branch soup.** When resolution has multiple paths, return a discriminated union, then map once to response. Avoids duplicated response-building blocks.
+- **User-scoped client by default.** Use `createSupabaseClient(req)` for user requests — RLS does the authz. Reserve `createServiceClient()` for server-to-server calls only.
+- **Shared utilities in `_shared/`.** If two functions duplicate logic, extract to `_shared/`. Keep modules small and single-purpose.
+- **Delete dead code immediately.** Unused functions add cognitive load and make refactors scary. Remove on sight.
+
 ## Testing Edge Functions
 
 ### Quick Start

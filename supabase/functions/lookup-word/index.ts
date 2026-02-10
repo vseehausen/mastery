@@ -1,50 +1,18 @@
 // Edge function: lookup-word
-// Handles word lookups from browser extension with OpenAI enrichment
 // Two routes: POST /lookup-word for word lookups, GET /lookup-word/batch-status for statistics
 
 import { handleCors } from '../_shared/cors.ts';
-import { createServiceClient, getUserId } from '../_shared/supabase.ts';
+import { createSupabaseClient, getUserId } from '../_shared/supabase.ts';
+import type { SupabaseClient } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
 import { getDeepLTranslation, getGoogleTranslation } from '../_shared/translation.ts';
+import { generateContentHash, extractDomain } from '../_shared/crypto.ts';
+import { mapCardToStage } from '../_shared/stage.ts';
+
+const DEFAULT_NATIVE_LANG = 'de';
 
 // =============================================================================
-// Main Handler
-// =============================================================================
-
-Deno.serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
-
-  const userId = await getUserId(req);
-  if (!userId) return unauthorizedResponse();
-
-  const url = new URL(req.url);
-  const pathSegments = url.pathname.split('/').filter(Boolean);
-
-  // Determine which handler based on path and method
-  // POST /lookup-word or POST / routes to handleLookup
-  // GET /lookup-word/batch-status routes to handleBatchStatus
-
-  try {
-    if (req.method === 'POST') {
-      return await handleLookup(req, userId);
-    } else if (req.method === 'GET' && pathSegments[pathSegments.length - 1] === 'batch-status') {
-      return await handleBatchStatus(req, userId);
-    }
-    return errorResponse('Not found', 404);
-  } catch (err) {
-    console.error('lookup-word error:', err);
-    console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
-    console.error('Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-    return errorResponse(
-      err instanceof Error ? `${err.message} (${err.name})` : 'Internal server error',
-      500
-    );
-  }
-});
-
-// =============================================================================
-// POST /lookup-word — Word Lookup
+// Types
 // =============================================================================
 
 interface LookupRequest {
@@ -52,6 +20,7 @@ interface LookupRequest {
   sentence: string;
   url: string;
   title: string;
+  native_lang?: string;
 }
 
 interface LookupResponse {
@@ -68,633 +37,316 @@ interface LookupResponse {
   vocabulary_id: string;
 }
 
-async function handleLookup(req: Request, userId: string): Promise<Response> {
-  const startTime = Date.now();
-  const body: LookupRequest = await req.json();
-
-  // Validate request body
-  const { raw_word, sentence, url, title } = body;
-
-  if (!raw_word || typeof raw_word !== 'string' || raw_word.length === 0) {
-    return errorResponse('raw_word is required', 400);
-  }
-  if (raw_word.length > 100) {
-    return errorResponse('raw_word must be max 100 characters', 400);
-  }
-
-  if (!sentence || typeof sentence !== 'string' || sentence.length === 0) {
-    return errorResponse('sentence is required', 400);
-  }
-  if (sentence.length > 500) {
-    return errorResponse('sentence must be max 500 characters', 400);
-  }
-
-  if (!url || typeof url !== 'string') {
-    return errorResponse('url is required', 400);
-  }
-
-  if (!title || typeof title !== 'string') {
-    return errorResponse('title is required', 400);
-  }
-
-  console.log(JSON.stringify({ event: 'lookup_start', word: raw_word, userId }));
-
-  const client = createServiceClient();
-
-  try {
-    // OPTIMIZATION: Check if word exists BEFORE calling translation API
-    // This makes lookups instant (~100ms)
-
-    // Step 1: Check user's vocabulary by content_hash
-    const estimatedLemma = raw_word.toLowerCase().trim();
-    const estimatedHash = await generateContentHash(estimatedLemma);
-
-    const dbCheckStart = Date.now();
-
-    const { data: existingVocab } = await client
-      .from('vocabulary')
-      .select('id, stem, global_dictionary_id')
-      .eq('user_id', userId)
-      .eq('content_hash', estimatedHash)
-      .is('deleted_at', null)
-      .single();
-
-    const dbCheckDuration = Date.now() - dbCheckStart;
-    console.log(JSON.stringify({
-      event: 'vocab_check',
-      word: raw_word,
-      found: !!existingVocab,
-      duration_ms: dbCheckDuration
-    }));
-
-    if (existingVocab && existingVocab.global_dictionary_id) {
-      // User has this word with enrichment - return immediately
-      const globalDictStart = Date.now();
-
-      try {
-        const { data: globalDict, error: gdError } = await client
-          .from('global_dictionary')
-          .select('*')
-          .eq('id', existingVocab.global_dictionary_id)
-          .single();
-
-        if (gdError) {
-          console.error('global_dictionary query error:', gdError);
-          throw new Error(`Failed to fetch global_dictionary: ${gdError.message}`);
-        }
-
-        if (globalDict) {
-          // Create encounter
-          try {
-            await createEncounter(client, existingVocab.id, userId, url, title, sentence, raw_word);
-          } catch (encErr) {
-            console.error('createEncounter error:', encErr);
-            throw new Error(`Failed to create encounter: ${encErr instanceof Error ? encErr.message : String(encErr)}`);
-          }
-
-          // Get current stage
-          const stage = await getVocabularyStage(client, existingVocab.id, userId);
-
-        const globalDictDuration = Date.now() - globalDictStart;
-        const totalMs = Date.now() - startTime;
-
-        console.log(JSON.stringify({
-          event: 'lookup_complete',
-          word: raw_word,
-          path: 'existing_user_vocab',
-          global_dict_ms: globalDictDuration,
-          total_ms: totalMs
-        }));
-
-        // Extract translation for user's native language (assume 'de' for now)
-        const nativeLangCode = 'de';
-        const translations = globalDict.translations?.[nativeLangCode];
-        const translation = translations?.primary || raw_word;
-
-        return jsonResponse({
-          lemma: globalDict.stem,
-          raw_word,
-          translation,
-          pronunciation: globalDict.pronunciation_ipa || '',
-          part_of_speech: globalDict.part_of_speech || '',
-          english_definition: globalDict.english_definition || '',
-          context_original: sentence,
-          context_translated: '',
-          stage,
-          is_new: false,
-          vocabulary_id: existingVocab.id,
-        });
-        }
-      } catch (pathError) {
-        console.error('Error in existing_user_vocab path:', pathError);
-        throw pathError;
-      }
-    }
-
-    // Step 2: Check global_dictionary by normalized word
-    const globalDictCheckStart = Date.now();
-
-    const { data: globalDictEntry } = await client
-      .from('global_dictionary')
-      .select('*')
-      .eq('content_hash', estimatedHash)
-      .single();
-
-    const globalDictCheckDuration = Date.now() - globalDictCheckStart;
-    console.log(JSON.stringify({
-      event: 'global_dict_check',
-      word: raw_word,
-      found: !!globalDictEntry,
-      duration_ms: globalDictCheckDuration
-    }));
-
-    if (globalDictEntry) {
-      // Global dictionary hit! Check if user has any vocabulary linked to this entry
-      // (handles lemma dedup: "developers" → "developer")
-      const { data: userVocabForDict } = await client
-        .from('vocabulary')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('global_dictionary_id', globalDictEntry.id)
-        .is('deleted_at', null)
-        .single();
-
-      if (userVocabForDict) {
-        // User already has this word (different form)
-        const vocabularyId = userVocabForDict.id;
-
-        await createEncounter(client, vocabularyId, userId, url, title, sentence, raw_word);
-        const stage = await getVocabularyStage(client, vocabularyId, userId);
-
-        const totalMs = Date.now() - startTime;
-        console.log(JSON.stringify({
-          event: 'lookup_complete',
-          word: raw_word,
-          path: 'existing_dict_different_form',
-          total_ms: totalMs
-        }));
-
-        const nativeLangCode = 'de';
-        const translations = globalDictEntry.translations?.[nativeLangCode];
-        const translation = translations?.primary || raw_word;
-
-        return jsonResponse({
-          lemma: globalDictEntry.stem,
-          raw_word,
-          translation,
-          pronunciation: globalDictEntry.pronunciation_ipa || '',
-          part_of_speech: globalDictEntry.part_of_speech || '',
-          english_definition: globalDictEntry.english_definition || '',
-          context_original: sentence,
-          context_translated: '',
-          stage,
-          is_new: false,
-          vocabulary_id: vocabularyId,
-        });
-      }
-
-      // New word for user but exists in global_dictionary
-      // Insert vocabulary + learning_card + encounter
-      const vocabularyId = crypto.randomUUID();
-      const contentHash = await generateContentHash(globalDictEntry.stem);
-
-      const { error: vocabError } = await client.from('vocabulary').insert({
-        id: vocabularyId,
-        user_id: userId,
-        word: raw_word,
-        stem: globalDictEntry.stem,
-        content_hash: contentHash,
-        global_dictionary_id: globalDictEntry.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (vocabError) {
-        // Handle unique constraint violations
-        if (vocabError.code === '23505') { // Unique constraint violation
-          console.log(`[lookup-word] Duplicate vocabulary for "${raw_word}", updating existing entry`);
-
-          // User already has this word (by content_hash), update it to link to global_dictionary
-          const { data: existingVocabUpdate, error: updateError } = await client
-            .from('vocabulary')
-            .update({
-              global_dictionary_id: globalDictEntry.id,
-              stem: globalDictEntry.stem,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId)
-            .eq('content_hash', contentHash)
-            .is('deleted_at', null)
-            .select('id')
-            .single();
-
-          if (updateError || !existingVocabUpdate) {
-            console.error(`[lookup-word] Failed to update existing vocabulary:`, updateError);
-            throw new Error(`Failed to link vocabulary to global_dictionary: ${updateError?.message || 'not found'}`);
-          }
-
-          const retryVocabId = existingVocabUpdate.id;
-          await createEncounter(client, retryVocabId, userId, url, title, sentence, raw_word);
-          const stage = await getVocabularyStage(client, retryVocabId, userId);
-
-          const nativeLangCode = 'de';
-          const translations = globalDictEntry.translations?.[nativeLangCode];
-          const translation = translations?.primary || raw_word;
-
-          return jsonResponse({
-            lemma: globalDictEntry.stem,
-            raw_word,
-            translation,
-            pronunciation: globalDictEntry.pronunciation_ipa || '',
-            part_of_speech: globalDictEntry.part_of_speech || '',
-            english_definition: globalDictEntry.english_definition || '',
-            context_original: sentence,
-            context_translated: '',
-            stage,
-            is_new: false,
-            vocabulary_id: retryVocabId,
-          });
-        }
-        console.error('Failed to insert vocabulary:', vocabError);
-        return errorResponse('Failed to create vocabulary entry', 500);
-      }
-
-      // Insert learning card
-      const cardId = crypto.randomUUID();
-      const { error: cardError } = await client.from('learning_cards').insert({
-        id: cardId,
-        user_id: userId,
-        vocabulary_id: vocabularyId,
-        state: 0,
-        due: new Date().toISOString(),
-        stability: 0,
-        difficulty: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (cardError) {
-        console.error('Failed to insert learning card:', cardError);
-        return errorResponse('Failed to create learning card', 500);
-      }
-
-      // Upsert source and insert encounter
-      const domain = extractDomain(url);
-      const { data: existingSource } = await client
-        .from('sources')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('type', 'website')
-        .eq('url', url)
-        .is('deleted_at', null)
-        .single();
-
-      let sourceId: string;
-      if (existingSource) {
-        sourceId = existingSource.id;
-      } else {
-        sourceId = crypto.randomUUID();
-        const { error: sourceError } = await client.from('sources').insert({
-          id: sourceId,
-          user_id: userId,
-          type: 'website',
-          title: title,
-          url: url,
-          domain: domain,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-        if (sourceError) {
-          console.error('Failed to insert source:', sourceError);
-          return errorResponse('Failed to create source', 500);
-        }
-      }
-
-      const encounterId = crypto.randomUUID();
-      const { error: encounterError } = await client.from('encounters').insert({
-        id: encounterId,
-        user_id: userId,
-        vocabulary_id: vocabularyId,
-        source_id: sourceId,
-        context: sentence,
-        occurred_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      });
-
-      if (encounterError) {
-        console.error('Failed to insert encounter:', encounterError);
-        return errorResponse('Failed to create encounter', 500);
-      }
-
-      const totalMs = Date.now() - startTime;
-      console.log(JSON.stringify({
-        event: 'lookup_complete',
-        word: raw_word,
-        path: 'new_from_global_dict',
-        total_ms: totalMs
-      }));
-
-      const nativeLangCode = 'de';
-      const translations = globalDictEntry.translations?.[nativeLangCode];
-      const translation = translations?.primary || raw_word;
-
-      return jsonResponse({
-        lemma: globalDictEntry.stem,
-        raw_word,
-        translation,
-        pronunciation: globalDictEntry.pronunciation_ipa || '',
-        part_of_speech: globalDictEntry.part_of_speech || '',
-        english_definition: globalDictEntry.english_definition || '',
-        context_original: sentence,
-        context_translated: '',
-        stage: 'new',
-        is_new: true,
-        vocabulary_id: vocabularyId,
-      });
-    }
-
-    // Word doesn't exist in global_dictionary - use fast translation and queue enrichment
-    console.log('[lookup-word] New word not in global_dictionary, using fast translation:', raw_word);
-    const translationStart = Date.now();
-
-    // Get API keys
-    const DEEPL_API_KEY = Deno.env.get('DEEPL_API_KEY');
-    const GOOGLE_TRANSLATE_API_KEY = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
-
-    // Try DeepL first, fallback to Google
-    let translation: string | null = null;
-    let translationSource = '';
-
-    if (DEEPL_API_KEY) {
-      try {
-        translation = await getDeepLTranslation(raw_word, 'de', DEEPL_API_KEY);
-        translationSource = 'deepl';
-      } catch (err) {
-        console.warn('[lookup-word] DeepL failed:', err);
-      }
-    }
-
-    if (!translation && GOOGLE_TRANSLATE_API_KEY) {
-      try {
-        translation = await getGoogleTranslation(raw_word, 'de', GOOGLE_TRANSLATE_API_KEY);
-        translationSource = 'google';
-      } catch (err) {
-        console.warn('[lookup-word] Google Translate failed:', err);
-      }
-    }
-
-    if (!translation) {
-      return errorResponse('Translation service unavailable', 503);
-    }
-
-    const translationDuration = Date.now() - translationStart;
-    console.log(JSON.stringify({
-      event: 'translation',
-      word: raw_word,
-      source: translationSource,
-      duration_ms: translationDuration
-    }));
-
-    // Use normalized word as lemma (will be refined by enrichment)
-    const lemma = raw_word.toLowerCase().trim();
-    const contentHash = await generateContentHash(lemma);
-
-    // Insert vocabulary without global_dictionary_id (will be set by enrichment)
-    const vocabularyId = crypto.randomUUID();
-
-    const { error: vocabError } = await client.from('vocabulary').insert({
-      id: vocabularyId,
-      user_id: userId,
-      word: raw_word,
-      stem: lemma,
-      content_hash: contentHash,
-      global_dictionary_id: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    if (vocabError) {
-      // Handle duplicate - user looked up this word before
-      if (vocabError.code === '23505') {
-        console.log(`[lookup-word] Duplicate vocabulary for "${raw_word}" (fast path), fetching existing`);
-
-        const { data: existingVocab, error: fetchError } = await client
-          .from('vocabulary')
-          .select('id, global_dictionary_id')
-          .eq('user_id', userId)
-          .eq('content_hash', contentHash)
-          .is('deleted_at', null)
-          .single();
-
-        if (fetchError || !existingVocab) {
-          console.error(`[lookup-word] Failed to fetch existing vocabulary:`, fetchError);
-          return errorResponse('Failed to retrieve vocabulary entry', 500);
-        }
-
-        // Add encounter
-        await createEncounter(client, existingVocab.id, userId, url, title, sentence, raw_word);
-
-        // Get stage
-        const stage = await getVocabularyStage(client, existingVocab.id, userId);
-
-        // Return response with whatever data we have
-        return jsonResponse({
-          lemma,
-          raw_word,
-          translation,
-          pronunciation: '',
-          part_of_speech: '',
-          english_definition: '',
-          context_original: sentence,
-          context_translated: '',
-          stage,
-          is_new: false,
-          vocabulary_id: existingVocab.id,
-        });
-      }
-
-      console.error('Failed to insert vocabulary:', vocabError);
-      return errorResponse('Failed to create vocabulary entry', 500);
-    }
-
-    // Insert learning card
-    const cardId = crypto.randomUUID();
-    const { error: cardError } = await client.from('learning_cards').insert({
-      id: cardId,
-      user_id: userId,
-      vocabulary_id: vocabularyId,
-      state: 0,
-      due: new Date().toISOString(),
-      stability: 0,
-      difficulty: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    if (cardError) {
-      console.error('Failed to insert learning card:', cardError);
-      return errorResponse('Failed to create learning card', 500);
-    }
-
-    // Queue background enrichment (will create global_dictionary entry)
-    const { error: enrichmentError } = await client.from('enrichment_queue').upsert({
-      user_id: userId,
-      vocabulary_id: vocabularyId,
-      status: 'pending',
-    }, { onConflict: 'user_id,vocabulary_id' });
-
-    if (enrichmentError) {
-      console.warn('Failed to queue enrichment (non-fatal):', enrichmentError);
-    }
-
-    // Trigger enrichment asynchronously (fire-and-forget)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (supabaseUrl && serviceRoleKey) {
-      fetch(`${supabaseUrl}/functions/v1/enrich-vocabulary/request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-          native_language_code: 'de',
-          vocabulary_ids: [vocabularyId],
-          batch_size: 1,
-        }),
-      }).catch(err => console.warn('[lookup-word] Failed to trigger enrichment:', err.message));
-    }
-
-    // Upsert source
-    const domain = extractDomain(url);
-    const { data: existingSource } = await client
-      .from('sources')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('type', 'website')
-      .eq('url', url)
-      .is('deleted_at', null)
-      .single();
-
-    let sourceId: string;
-    if (existingSource) {
-      sourceId = existingSource.id;
-    } else {
-      sourceId = crypto.randomUUID();
-      const { error: sourceError } = await client.from('sources').insert({
-        id: sourceId,
-        user_id: userId,
-        type: 'website',
-        title: title,
-        url: url,
-        domain: domain,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (sourceError) {
-        console.error('Failed to insert source:', sourceError);
-        return errorResponse('Failed to create source', 500);
-      }
-    }
-
-    // Insert encounter
-    const encounterId = crypto.randomUUID();
-    const { error: encounterError } = await client.from('encounters').insert({
-      id: encounterId,
-      user_id: userId,
-      vocabulary_id: vocabularyId,
-      source_id: sourceId,
-      context: sentence,
-      occurred_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    });
-
-    if (encounterError) {
-      console.error('Failed to insert encounter:', encounterError);
-      return errorResponse('Failed to create encounter', 500);
-    }
-
-    const response: LookupResponse = {
-      lemma,
-      raw_word,
-      translation,
-      pronunciation: '',
-      part_of_speech: '',
-      english_definition: '',
-      context_original: sentence,
-      context_translated: '',
-      stage: 'new',
-      is_new: true,
-      vocabulary_id: vocabularyId,
-    };
-
-    const totalMs = Date.now() - startTime;
-    console.log(JSON.stringify({
-      event: 'lookup_complete',
-      word: raw_word,
-      path: 'new_queued_for_enrichment',
-      total_ms: totalMs
-    }));
-
-    return jsonResponse(response);
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const totalMs = Date.now() - startTime;
-    console.log(JSON.stringify({
-      event: 'lookup_error',
-      word: raw_word,
-      error: errorMsg,
-      total_ms: totalMs
-    }));
-    console.error('lookup-word POST error:', errorMsg);
-    return errorResponse(errorMsg || 'Failed to lookup word', 500);
-  }
+interface GlobalDictRow {
+  id: string;
+  stem: string;
+  translations: Record<string, { primary?: string }> | null;
+  pronunciation_ipa: string | null;
+  part_of_speech: string | null;
+  english_definition: string | null;
+}
+
+type ResolveResult =
+  | { type: 'existing_user_vocab'; vocabularyId: string; globalDict: GlobalDictRow }
+  | { type: 'existing_different_form'; vocabularyId: string; globalDict: GlobalDictRow }
+  | { type: 'new_from_global_dict'; globalDict: GlobalDictRow }
+  | { type: 'new_unknown' };
+
+/** PGRST116 = "The result contains 0 rows" — expected for .single() with no match. */
+function isNotFoundError(error: { code?: string } | null): boolean {
+  return error?.code === 'PGRST116';
 }
 
 // =============================================================================
-// Helper Functions
+// Main Handler
 // =============================================================================
 
-async function getVocabularyStage(
-  client: any,
-  vocabularyId: string,
-  userId: string
-): Promise<string> {
-  const { data: card } = await client
-    .from('learning_cards')
-    .select('state, stability, reps')
+Deno.serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const userId = await getUserId(req);
+  if (!userId) return unauthorizedResponse();
+
+  const url = new URL(req.url);
+  const pathSegments = url.pathname.split('/').filter(Boolean);
+
+  try {
+    if (req.method === 'POST') {
+      return await handleLookup(req, userId);
+    } else if (req.method === 'GET' && pathSegments[pathSegments.length - 1] === 'batch-status') {
+      return await handleBatchStatus(req, userId);
+    }
+    return errorResponse('Not found', 404);
+  } catch (err) {
+    console.error('lookup-word error:', err);
+    return errorResponse(
+      err instanceof Error ? `${err.message} (${err.name})` : 'Internal server error',
+      500
+    );
+  }
+});
+
+// =============================================================================
+// POST /lookup-word — Word Lookup
+// =============================================================================
+
+async function handleLookup(req: Request, userId: string): Promise<Response> {
+  const body: LookupRequest = await req.json();
+
+  const validationError = validateLookupRequest(body);
+  if (validationError) return validationError;
+
+  const { raw_word, sentence, url, title } = body;
+  const nativeLang = body.native_lang || DEFAULT_NATIVE_LANG;
+  const client = createSupabaseClient(req);
+  const estimatedLemma = raw_word.toLowerCase().trim();
+  const estimatedHash = await generateContentHash(estimatedLemma);
+
+  const resolved = await resolveWord(client, userId, estimatedHash);
+
+  // Existing word — record encounter and return
+  if (resolved.type === 'existing_user_vocab' || resolved.type === 'existing_different_form') {
+    await createEncounter(client, resolved.vocabularyId, userId, url, title, sentence);
+    const stage = await getVocabularyStage(client, resolved.vocabularyId, userId);
+    return jsonResponse(buildLookupResponse({
+      globalDict: resolved.globalDict, raw_word, sentence, stage, nativeLang,
+      is_new: false, vocabulary_id: resolved.vocabularyId,
+    }));
+  }
+
+  // New word — create vocab + card + encounter (non-atomic; each step is idempotent for retries)
+  const globalDict = resolved.type === 'new_from_global_dict' ? resolved.globalDict : null;
+  let translation: string | null = null;
+  let lemma = estimatedLemma;
+  let contentHash = estimatedHash;
+
+  if (globalDict) {
+    lemma = globalDict.stem;
+    contentHash = await generateContentHash(lemma);
+  } else {
+    translation = await getTranslation(raw_word, nativeLang);
+    if (!translation) return errorResponse('Translation service unavailable', 503);
+  }
+
+  const { outcome, vocabularyId } = await findOrCreateVocabulary(
+    client, userId, raw_word, lemma, contentHash, globalDict?.id ?? null
+  );
+
+  if (outcome === 'created') {
+    await createLearningCard(client, userId, vocabularyId);
+  }
+
+  await createEncounter(client, vocabularyId, userId, url, title, sentence);
+
+  if (!globalDict) {
+    await queueEnrichment(client, userId, vocabularyId, nativeLang);
+  }
+
+  const stage = outcome === 'created' ? 'new' : await getVocabularyStage(client, vocabularyId, userId);
+
+  return jsonResponse(buildLookupResponse({
+    globalDict, raw_word, sentence, stage, nativeLang,
+    is_new: outcome === 'created',
+    vocabulary_id: vocabularyId,
+    fallbackLemma: lemma,
+    fallbackTranslation: translation,
+  }));
+}
+
+// =============================================================================
+// Validation
+// =============================================================================
+
+function validateLookupRequest(body: LookupRequest): Response | null {
+  const { raw_word, sentence, url, title } = body;
+
+  if (!raw_word || typeof raw_word !== 'string' || raw_word.length === 0)
+    return errorResponse('raw_word is required', 400);
+  if (raw_word.length > 100)
+    return errorResponse('raw_word must be max 100 characters', 400);
+  if (!sentence || typeof sentence !== 'string' || sentence.length === 0)
+    return errorResponse('sentence is required', 400);
+  if (sentence.length > 500)
+    return errorResponse('sentence must be max 500 characters', 400);
+  if (!url || typeof url !== 'string')
+    return errorResponse('url is required', 400);
+  if (!title || typeof title !== 'string')
+    return errorResponse('title is required', 400);
+
+  return null;
+}
+
+// =============================================================================
+// Word Resolution
+// =============================================================================
+
+async function resolveWord(client: SupabaseClient, userId: string, contentHash: string): Promise<ResolveResult> {
+  // Check user's vocabulary by content_hash
+  const { data: existingVocab, error: vocabErr } = await client
+    .from('vocabulary')
+    .select('id, stem, global_dictionary_id')
     .eq('user_id', userId)
-    .eq('vocabulary_id', vocabularyId)
+    .eq('content_hash', contentHash)
     .is('deleted_at', null)
     .single();
 
-  if (!card) return 'new';
-
-  // Map FSRS state to progress stage
-  // state: 0=new, 1=learning, 2=review, 3=relearning
-  if (card.state === 0) return 'new';
-  if (card.state === 1 || card.state === 3) return 'practicing';
-  if (card.state === 2) {
-    if (card.stability < 7) return 'practicing';
-    if (card.stability < 21) return 'stabilizing';
-    if (card.stability < 60) return 'known';
-    return 'mastered';
+  if (vocabErr && !isNotFoundError(vocabErr)) {
+    throw new Error(`Failed to check vocabulary: ${vocabErr.message}`);
   }
-  return 'new';
+
+  if (existingVocab?.global_dictionary_id) {
+    const { data: globalDict, error: gdErr } = await client
+      .from('global_dictionary')
+      .select('id, stem, translations, pronunciation_ipa, part_of_speech, english_definition')
+      .eq('id', existingVocab.global_dictionary_id)
+      .single();
+
+    if (gdErr && !isNotFoundError(gdErr)) {
+      throw new Error(`Failed to fetch global dictionary: ${gdErr.message}`);
+    }
+
+    if (globalDict) {
+      return { type: 'existing_user_vocab', vocabularyId: existingVocab.id, globalDict };
+    }
+  }
+
+  // Check global_dictionary by content_hash
+  const { data: globalDictEntry, error: gdCheckErr } = await client
+    .from('global_dictionary')
+    .select('id, stem, translations, pronunciation_ipa, part_of_speech, english_definition')
+    .eq('content_hash', contentHash)
+    .single();
+
+  if (gdCheckErr && !isNotFoundError(gdCheckErr)) {
+    throw new Error(`Failed to check global dictionary: ${gdCheckErr.message}`);
+  }
+
+  if (globalDictEntry) {
+    const { data: userVocabForDict, error: uvErr } = await client
+      .from('vocabulary')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('global_dictionary_id', globalDictEntry.id)
+      .is('deleted_at', null)
+      .single();
+
+    if (uvErr && !isNotFoundError(uvErr)) {
+      throw new Error(`Failed to check user vocabulary: ${uvErr.message}`);
+    }
+
+    if (userVocabForDict) {
+      return { type: 'existing_different_form', vocabularyId: userVocabForDict.id, globalDict: globalDictEntry };
+    }
+    return { type: 'new_from_global_dict', globalDict: globalDictEntry };
+  }
+
+  return { type: 'new_unknown' };
 }
 
+// =============================================================================
+// Vocabulary Creation
+// =============================================================================
+
+async function findOrCreateVocabulary(
+  client: SupabaseClient,
+  userId: string,
+  raw_word: string,
+  stem: string,
+  contentHash: string,
+  globalDictionaryId: string | null,
+): Promise<{ outcome: 'created' | 'existing'; vocabularyId: string }> {
+  const vocabularyId = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  const { error } = await client.from('vocabulary').insert({
+    id: vocabularyId,
+    user_id: userId,
+    word: raw_word,
+    stem,
+    content_hash: contentHash,
+    global_dictionary_id: globalDictionaryId,
+    created_at: now,
+    updated_at: now,
+  });
+
+  if (!error) return { outcome: 'created', vocabularyId };
+
+  if (error.code !== '23505') {
+    throw new Error(`Failed to create vocabulary entry: ${error.message}`);
+  }
+
+  // Duplicate — resolve existing entry
+  console.log(`[lookup-word] Duplicate vocabulary for "${raw_word}", resolving existing entry`);
+
+  if (globalDictionaryId) {
+    const { data: existing, error: updateError } = await client
+      .from('vocabulary')
+      .update({
+        global_dictionary_id: globalDictionaryId,
+        stem,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('content_hash', contentHash)
+      .is('deleted_at', null)
+      .select('id')
+      .single();
+
+    if (updateError || !existing) {
+      throw new Error(`Failed to link vocabulary to global_dictionary: ${updateError?.message || 'not found'}`);
+    }
+    return { outcome: 'existing', vocabularyId: existing.id };
+  }
+
+  const { data: existing, error: fetchError } = await client
+    .from('vocabulary')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('content_hash', contentHash)
+    .is('deleted_at', null)
+    .single();
+
+  if (fetchError || !existing) {
+    throw new Error(`Failed to retrieve vocabulary entry: ${fetchError?.message || 'not found'}`);
+  }
+  return { outcome: 'existing', vocabularyId: existing.id };
+}
+
+// =============================================================================
+// Learning Card Creation
+// =============================================================================
+
+async function createLearningCard(client: SupabaseClient, userId: string, vocabularyId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await client.from('learning_cards').insert({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    vocabulary_id: vocabularyId,
+    state: 0,
+    due: now,
+    stability: 0,
+    difficulty: 0,
+    created_at: now,
+    updated_at: now,
+  });
+
+  if (!error || error.code === '23505') return; // idempotent: ignore duplicate
+  throw new Error(`Failed to create learning card: ${error.message}`);
+}
+
+// =============================================================================
+// Encounter Creation
+// =============================================================================
+
 async function createEncounter(
-  client: any,
+  client: SupabaseClient,
   vocabularyId: string,
   userId: string,
   url: string,
   title: string,
   sentence: string,
-  raw_word: string
 ): Promise<void> {
-  // Upsert source
   const domain = extractDomain(url);
   const { data: existingSource } = await client
     .from('sources')
@@ -710,27 +362,25 @@ async function createEncounter(
     sourceId = existingSource.id;
   } else {
     sourceId = crypto.randomUUID();
+    const now = new Date().toISOString();
     const { error: sourceError } = await client.from('sources').insert({
       id: sourceId,
       user_id: userId,
       type: 'website',
-      title: title,
-      url: url,
-      domain: domain,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      title,
+      url,
+      domain,
+      created_at: now,
+      updated_at: now,
     });
 
     if (sourceError) {
-      console.error('Failed to insert source:', sourceError);
       throw new Error('Failed to create source');
     }
   }
 
-  // Insert encounter
-  const encounterId = crypto.randomUUID();
   const { error: encounterError } = await client.from('encounters').insert({
-    id: encounterId,
+    id: crypto.randomUUID(),
     user_id: userId,
     vocabulary_id: vocabularyId,
     source_id: sourceId,
@@ -740,229 +390,206 @@ async function createEncounter(
   });
 
   if (encounterError) {
-    console.error('Failed to insert encounter:', encounterError);
     throw new Error('Failed to create encounter');
   }
+}
+
+// =============================================================================
+// Stage Mapping
+// =============================================================================
+
+async function getVocabularyStage(client: SupabaseClient, vocabularyId: string, userId: string): Promise<string> {
+  const { data: card } = await client
+    .from('learning_cards')
+    .select('state, stability')
+    .eq('user_id', userId)
+    .eq('vocabulary_id', vocabularyId)
+    .is('deleted_at', null)
+    .single();
+
+  return mapCardToStage(card);
+}
+
+// =============================================================================
+// Translation
+// =============================================================================
+
+async function getTranslation(word: string, nativeLang: string): Promise<string | null> {
+  const DEEPL_API_KEY = Deno.env.get('DEEPL_API_KEY');
+  const GOOGLE_TRANSLATE_API_KEY = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
+
+  if (DEEPL_API_KEY) {
+    try {
+      return await getDeepLTranslation(word, nativeLang, DEEPL_API_KEY);
+    } catch (err) {
+      console.warn('[lookup-word] DeepL failed:', err);
+    }
+  }
+
+  if (GOOGLE_TRANSLATE_API_KEY) {
+    try {
+      return await getGoogleTranslation(word, nativeLang, GOOGLE_TRANSLATE_API_KEY);
+    } catch (err) {
+      console.warn('[lookup-word] Google Translate failed:', err);
+    }
+  }
+
+  return null;
+}
+
+// =============================================================================
+// Enrichment Queue
+// =============================================================================
+
+async function queueEnrichment(
+  client: SupabaseClient, userId: string, vocabularyId: string, nativeLang: string,
+): Promise<void> {
+  const { error } = await client.from('enrichment_queue').upsert({
+    user_id: userId,
+    vocabulary_id: vocabularyId,
+    status: 'pending',
+  }, { onConflict: 'user_id,vocabulary_id' });
+
+  if (error) {
+    console.warn('Failed to queue enrichment (non-fatal):', error);
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (supabaseUrl && serviceRoleKey) {
+    fetch(`${supabaseUrl}/functions/v1/enrich-vocabulary/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        native_language_code: nativeLang,
+        vocabulary_ids: [vocabularyId],
+        batch_size: 1,
+      }),
+    }).catch(err => console.warn('[lookup-word] Failed to trigger enrichment:', err.message));
+  }
+}
+
+// =============================================================================
+// Response Building
+// =============================================================================
+
+function buildLookupResponse(params: {
+  globalDict: GlobalDictRow | null;
+  raw_word: string;
+  sentence: string;
+  stage: string;
+  is_new: boolean;
+  vocabulary_id: string;
+  nativeLang: string;
+  fallbackLemma?: string;
+  fallbackTranslation?: string | null;
+}): LookupResponse {
+  const { globalDict, raw_word, sentence, stage, is_new, vocabulary_id, nativeLang } = params;
+
+  if (globalDict) {
+    const translations = globalDict.translations?.[nativeLang];
+    return {
+      lemma: globalDict.stem,
+      raw_word,
+      translation: translations?.primary || raw_word,
+      pronunciation: globalDict.pronunciation_ipa || '',
+      part_of_speech: globalDict.part_of_speech || '',
+      english_definition: globalDict.english_definition || '',
+      context_original: sentence,
+      context_translated: '',
+      stage,
+      is_new,
+      vocabulary_id,
+    };
+  }
+
+  return {
+    lemma: params.fallbackLemma || raw_word,
+    raw_word,
+    translation: params.fallbackTranslation || raw_word,
+    pronunciation: '',
+    part_of_speech: '',
+    english_definition: '',
+    context_original: sentence,
+    context_translated: '',
+    stage,
+    is_new,
+    vocabulary_id,
+  };
 }
 
 // =============================================================================
 // GET /lookup-word/batch-status — Statistics
 // =============================================================================
 
-interface BatchStatusResponse {
-  total_words: number;
-  page_words: Array<{
-    lemma: string;
-    translation: string;
-    stage: string;
-  }>;
-}
-
 async function handleBatchStatus(req: Request, userId: string): Promise<Response> {
   const url = new URL(req.url);
   const pageUrl = url.searchParams.get('url');
+  const client = createSupabaseClient(req);
 
-  const client = createServiceClient();
+  const { count: totalCount } = await client
+    .from('vocabulary')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .is('deleted_at', null);
 
-  try {
-    // Get total vocabulary count for user
-    const { count: totalCount } = await client
-      .from('vocabulary')
-      .select('id', { count: 'exact', head: true })
+  let pageWords: Array<{ lemma: string; translation: string; stage: string }> = [];
+
+  if (pageUrl) {
+    // Resolve source first, then filter encounters by source_id (avoids full table scan)
+    const { data: sources } = await client
+      .from('sources')
+      .select('id')
       .eq('user_id', userId)
+      .eq('url', pageUrl)
+      .eq('type', 'website')
       .is('deleted_at', null);
 
-    const totalWords = totalCount || 0;
+    if (sources && sources.length > 0) {
+      const sourceIds = sources.map((s: { id: string }) => s.id);
 
-    // If URL provided, get words looked up on that page
-    let pageWords: Array<{ lemma: string; translation: string; stage: string }> = [];
-
-    if (pageUrl) {
-      // Get encounters for this page
       const { data: encounters } = await client
         .from('encounters')
-        .select(`
-          vocabulary_id,
-          vocabulary:vocabulary_id (
-            stem
-          ),
-          source:source_id (
-            url
-          )
-        `)
+        .select('vocabulary_id')
         .eq('user_id', userId)
+        .in('source_id', sourceIds)
         .is('deleted_at', null);
 
-      // Filter by URL and get unique vocabulary
-      const pageVocabMap = new Map<string, { lemma: string; sourceId: string }>();
+      if (encounters && encounters.length > 0) {
+        const vocabIds = [...new Set(encounters.map((e: { vocabulary_id: string }) => e.vocabulary_id))];
 
-      if (encounters) {
-        for (const enc of encounters) {
-          const source = Array.isArray(enc.source) ? enc.source[0] : enc.source;
-          if (source && source.url === pageUrl) {
-            const vocab = Array.isArray(enc.vocabulary) ? enc.vocabulary[0] : enc.vocabulary;
-            if (vocab && !pageVocabMap.has(enc.vocabulary_id)) {
-              pageVocabMap.set(enc.vocabulary_id, {
-                lemma: vocab.stem || enc.vocabulary_id,
-                sourceId: ''
-              });
-            }
-          }
-        }
-      }
+        const [vocabResult, meaningResult, cardResult] = await Promise.all([
+          client.from('vocabulary').select('id, stem').in('id', vocabIds).is('deleted_at', null),
+          client.from('meanings').select('vocabulary_id, primary_translation').eq('user_id', userId).in('vocabulary_id', vocabIds).is('deleted_at', null),
+          client.from('learning_cards').select('vocabulary_id, state, stability').eq('user_id', userId).in('vocabulary_id', vocabIds).is('deleted_at', null),
+        ]);
 
-      // Get meanings and learning cards for page words
-      if (pageVocabMap.size > 0) {
-        const vocabIds = Array.from(pageVocabMap.keys());
+        const vocabMap = new Map(
+          (vocabResult.data as Array<{ id: string; stem: string }> || []).map(v => [v.id, v.stem])
+        );
+        const meaningMap = new Map(
+          (meaningResult.data as Array<{ vocabulary_id: string; primary_translation: string }> || []).map(m => [m.vocabulary_id, m.primary_translation])
+        );
+        const cardMap = new Map(
+          (cardResult.data as Array<{ vocabulary_id: string; state: number; stability: number }> || []).map(c => [c.vocabulary_id, mapCardToStage(c)])
+        );
 
-        const { data: meanings } = await client
-          .from('meanings')
-          .select('vocabulary_id, primary_translation')
-          .eq('user_id', userId)
-          .in('vocabulary_id', vocabIds)
-          .is('deleted_at', null);
-
-        const { data: cards } = await client
-          .from('learning_cards')
-          .select('vocabulary_id, state, stability, reps')
-          .eq('user_id', userId)
-          .in('vocabulary_id', vocabIds)
-          .is('deleted_at', null);
-
-        // Build response
-        const meaningMap = new Map(meanings?.map(m => [m.vocabulary_id, m.primary_translation]) || []);
-
-        // Map cards to stages
-        const cardMap = new Map(cards?.map(c => {
-          let stage = 'new';
-          if (c.state === 0) stage = 'new';
-          else if (c.state === 1 || c.state === 3) stage = 'practicing';
-          else if (c.state === 2) {
-            if (c.stability < 7) stage = 'practicing';
-            else if (c.stability < 21) stage = 'stabilizing';
-            else if (c.stability < 60) stage = 'known';
-            else stage = 'mastered';
-          }
-          return [c.vocabulary_id, stage];
-        }) || []);
-
-        pageWords = Array.from(pageVocabMap.entries()).map(([vocabId, info]) => ({
-          lemma: info.lemma,
-          translation: meaningMap.get(vocabId) || '',
-          stage: cardMap.get(vocabId) || 'new',
-        }));
+        pageWords = vocabIds
+          .filter(id => vocabMap.has(id))
+          .map(vocabId => ({
+            lemma: vocabMap.get(vocabId) || vocabId,
+            translation: meaningMap.get(vocabId) || '',
+            stage: cardMap.get(vocabId) || 'new',
+          }));
       }
     }
-
-    const response: BatchStatusResponse = {
-      total_words: totalWords,
-      page_words: pageWords,
-    };
-
-    return jsonResponse(response);
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error('lookup-word batch-status error:', errorMsg);
-    return errorResponse(errorMsg || 'Failed to get batch status', 500);
-  }
-}
-
-// =============================================================================
-// OpenAI Integration
-// =============================================================================
-
-interface AIResult {
-  lemma: string;
-  translation: string;
-  pronunciation: string;
-  english_definition: string;
-  part_of_speech: string;
-  context_original: string;
-  context_translated: string;
-}
-
-async function callOpenAI(rawWord: string, sentence: string): Promise<AIResult> {
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-
-  if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable not set');
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `You are a language learning assistant. Given an English word and its context sentence, provide:
-1. lemma: the dictionary/base form of the word
-2. translation: German translation of the lemma
-3. pronunciation: IPA pronunciation of the lemma
-4. english_definition: concise English definition
-5. part_of_speech: noun, verb, adjective, adverb, etc.
-6. context_original: the original sentence with the target word wrapped in *asterisks*
-7. context_translated: the full sentence translated to German, with the corresponding translated word wrapped in *asterisks*
-
-Respond as JSON with exactly these keys.`,
-        },
-        {
-          role: 'user',
-          content: `Word: "${rawWord}"\nSentence: "${sentence}"`,
-        },
-      ],
-    }),
+  return jsonResponse({
+    total_words: totalCount || 0,
+    page_words: pageWords,
   });
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error('OpenAI API error response:', errorData);
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error('No content in OpenAI response');
-  }
-
-  const parsed = JSON.parse(content);
-
-  return {
-    lemma: parsed.lemma || rawWord,
-    translation: parsed.translation || '',
-    pronunciation: parsed.pronunciation || '',
-    english_definition: parsed.english_definition || '',
-    part_of_speech: parsed.part_of_speech || '',
-    context_original: parsed.context_original || sentence,
-    context_translated: parsed.context_translated || sentence,
-  };
-}
-
-// =============================================================================
-// Utilities
-// =============================================================================
-
-async function generateContentHash(lemma: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(lemma.toLowerCase());
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function extractDomain(urlStr: string): string {
-  try {
-    const url = new URL(urlStr);
-    return url.hostname.replace(/^www\./, '');
-  } catch {
-    return '';
-  }
 }
