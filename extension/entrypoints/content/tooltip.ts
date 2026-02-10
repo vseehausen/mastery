@@ -77,7 +77,7 @@ function createStyles(): string {
     }
 
     .tooltip-body {
-      padding: 12px 14px 14px;
+      padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4) calc(var(--spacing) * 4);
     }
 
     /* ---- Header: raw word + badge ---- */
@@ -87,12 +87,12 @@ function createStyles(): string {
       justify-content: space-between;
     }
 
-    .header--no-ipa { margin-bottom: 4px; }
+    .header--no-ipa { margin-bottom: var(--spacing); }
 
     .raw-word {
       font-family: var(--font-serif);
-      font-size: 14px;
-      font-weight: 400;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--muted-foreground);
     }
@@ -101,12 +101,12 @@ function createStyles(): string {
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: var(--spacing);
       font-family: var(--font-sans);
-      font-size: 10px;
-      font-weight: 600;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-semibold);
       line-height: 1;
-      padding: 3px 8px 3px 6px;
+      padding: var(--spacing) calc(var(--spacing) * 2) var(--spacing) 6px;
       border-radius: var(--radius-badge);
       background: var(--sbg);
       color: var(--sc);
@@ -116,8 +116,8 @@ function createStyles(): string {
     .badge-dots { display: flex; gap: 2px; }
 
     .badge-dot {
-      width: 4px;
-      height: 4px;
+      width: var(--spacing);
+      height: var(--spacing);
       border-radius: 50%;
     }
 
@@ -127,12 +127,12 @@ function createStyles(): string {
     /* ---- IPA ---- */
     .ipa {
       font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 400;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--dim);
       margin-top: 1px;
-      margin-bottom: 4px;
+      margin-bottom: var(--spacing);
     }
 
     /* ---- Translation + part-of-speech ---- */
@@ -144,16 +144,16 @@ function createStyles(): string {
 
     .translation {
       font-family: var(--font-sans);
-      font-size: 19px;
-      font-weight: 600;
-      line-height: 1.2;
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-semibold);
+      line-height: var(--leading-tight);
       color: var(--card-foreground);
     }
 
     .pos {
       font-family: var(--font-sans);
-      font-size: 10px;
-      font-weight: 400;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--dim);
     }
@@ -162,21 +162,21 @@ function createStyles(): string {
     .divider {
       height: 1px;
       background: var(--muted);
-      margin: 10px 0 8px;
+      margin: calc(var(--spacing) * 3) 0 calc(var(--spacing) * 2);
     }
 
     .definition {
       font-family: var(--font-serif);
-      font-size: 12px;
+      font-size: var(--text-xs);
       font-style: italic;
-      font-weight: 400;
+      font-weight: var(--font-weight-normal);
       line-height: 1.6;
       color: var(--muted-foreground);
     }
 
     /* ---- Footer ---- */
     .footer {
-      margin-top: 10px;
+      margin-top: calc(var(--spacing) * 3);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -185,38 +185,38 @@ function createStyles(): string {
     .footer-left {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: var(--spacing);
       color: var(--sc);
     }
 
     .footer-text {
       font-family: var(--font-sans);
-      font-size: 11px;
-      font-weight: 400;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--muted-foreground);
     }
 
     .footer-review {
       font-family: var(--font-sans);
-      font-size: 10px;
-      font-weight: 400;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--dim);
     }
 
     /* ---- Loading state ---- */
-    .state-body { padding: 14px 16px; }
+    .state-body { padding: calc(var(--spacing) * 4); }
 
     .loading {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: calc(var(--spacing) * 2);
     }
 
     .spinner {
-      width: 16px;
-      height: 16px;
+      width: calc(var(--spacing) * 4);
+      height: calc(var(--spacing) * 4);
       border: 2px solid var(--border);
       border-top-color: var(--muted-foreground);
       border-radius: 50%;
@@ -227,8 +227,8 @@ function createStyles(): string {
 
     .loading-text {
       font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 400;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
       line-height: 1;
       color: var(--muted-foreground);
     }
@@ -236,26 +236,26 @@ function createStyles(): string {
     /* ---- Error / sign-in states ---- */
     .error-text {
       font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 400;
-      line-height: 1.4;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
+      line-height: var(--leading-normal);
       color: var(--destructive);
     }
 
     .sign-in-title {
       font-family: var(--font-sans);
-      font-size: 16px;
-      font-weight: 600;
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-semibold);
       line-height: 1;
       color: var(--card-foreground);
-      margin-bottom: 8px;
+      margin-bottom: calc(var(--spacing) * 2);
     }
 
     .sign-in-text {
       font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 400;
-      line-height: 1.4;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
+      line-height: var(--leading-normal);
       color: var(--muted-foreground);
     }
   `;
