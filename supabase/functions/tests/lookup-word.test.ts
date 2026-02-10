@@ -25,6 +25,7 @@ import {
   invokeFunction,
   signInAsUser,
   createTestGlobalDictEntry,
+  createTestWordVariant,
   cleanupGlobalDictionary,
 } from "./helpers.ts";
 
@@ -34,15 +35,6 @@ const FN_NAME = "lookup-word";
 
 let TEST_USER_ID = "";
 const globalDictIds: string[] = [];
-
-/** Generate the same content hash as lookup-word. */
-async function generateContentHash(stem: string): Promise<string> {
-  const data = new TextEncoder().encode(stem.toLowerCase().trim());
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 // =============================================================================
 // Tests
@@ -60,10 +52,11 @@ Deno.test({
 
     TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
     await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
 
-    // Pre-seed global dictionary
-    const hash = await generateContentHash("developer");
-    const gdId = await createTestGlobalDictEntry("developer", hash);
+    // Pre-seed global dictionary + word_variants mapping
+    const gdId = await createTestGlobalDictEntry("developer");
+    await createTestWordVariant("developer", gdId);
     globalDictIds.push(gdId);
 
     const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);
@@ -136,10 +129,11 @@ Deno.test({
 
     TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
     await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
 
-    // Pre-seed global dictionary
-    const hash = await generateContentHash("resilient");
-    const gdId = await createTestGlobalDictEntry("resilient", hash);
+    // Pre-seed global dictionary + word_variants mapping
+    const gdId = await createTestGlobalDictEntry("resilient");
+    await createTestWordVariant("resilient", gdId);
     globalDictIds.push(gdId);
 
     const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);
@@ -200,10 +194,11 @@ Deno.test({
 
     TEST_USER_ID = await ensureTestUser(TEST_EMAIL, TEST_PASSWORD);
     await cleanupTestData(TEST_USER_ID);
+    await cleanupGlobalDictionary(globalDictIds.splice(0));
 
     // Pre-seed and look up a word
-    const hash = await generateContentHash("algorithm");
-    const gdId = await createTestGlobalDictEntry("algorithm", hash);
+    const gdId = await createTestGlobalDictEntry("algorithm");
+    await createTestWordVariant("algorithm", gdId);
     globalDictIds.push(gdId);
 
     const { accessToken } = await signInAsUser(TEST_EMAIL, TEST_PASSWORD);

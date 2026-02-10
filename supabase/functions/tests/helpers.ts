@@ -78,8 +78,6 @@ export async function ensureTestUser(
 
 const DEFAULT_CLEANUP_TABLES = [
   "enrichment_feedback",
-  "enrichment_queue",
-  "meanings",
   "encounters",
   "learning_cards",
   "import_sessions",
@@ -210,13 +208,13 @@ export async function createTestVocabulary(
   stem?: string,
 ): Promise<string> {
   const client = serviceClient();
+  const normalized = word.trim().toLowerCase();
   const { data, error } = await client
     .from("vocabulary")
     .insert({
       user_id: userId,
-      word,
-      stem: stem ?? word,
-      content_hash: `test-hash-${crypto.randomUUID()}`,
+      word: normalized,
+      stem: stem ?? normalized,
     })
     .select("id")
     .single();
@@ -256,18 +254,20 @@ export async function createTestVocabWithCard(
 /** Create a global_dictionary entry. Returns its id. */
 export async function createTestGlobalDictEntry(
   word: string,
-  contentHash: string,
+  lemma?: string,
   overrides: Record<string, unknown> = {},
 ): Promise<string> {
   const client = serviceClient();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  const resolvedLemma = lemma ?? word.trim().toLowerCase();
 
   const { error } = await client.from("global_dictionary").insert({
     id,
     word,
     stem: word,
-    content_hash: contentHash,
+    lemma: resolvedLemma,
+    language_code: "en",
     part_of_speech: "noun",
     english_definition: `A test definition for ${word}`,
     synonyms: [],
@@ -292,48 +292,31 @@ export async function createTestGlobalDictEntry(
   return id;
 }
 
+/** Create a word_variants mapping. */
+export async function createTestWordVariant(
+  variant: string,
+  globalDictId: string,
+  languageCode: string = "en",
+): Promise<string> {
+  const client = serviceClient();
+  const id = crypto.randomUUID();
+
+  const { error } = await client.from("word_variants").insert({
+    id,
+    language_code: languageCode,
+    variant: variant.trim().toLowerCase(),
+    global_dictionary_id: globalDictId,
+    method: "test",
+  });
+
+  if (error)
+    throw new Error(`Failed to create word_variant: ${error.message}`);
+  return id;
+}
+
 /** Clean up global_dictionary entries by id. */
 export async function cleanupGlobalDictionary(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const client = serviceClient();
   await client.from("global_dictionary").delete().in("id", ids);
-}
-
-/** Create a test vocabulary + meaning. Returns { vocabId, meaningId }. */
-export async function createTestVocabAndMeaning(
-  userId: string,
-): Promise<{ vocabId: string; meaningId: string }> {
-  const client = serviceClient();
-
-  const { data: vocab, error: vocabError } = await client
-    .from("vocabulary")
-    .insert({
-      user_id: userId,
-      word: "test",
-      stem: "test",
-      content_hash: "test-hash-" + Math.random(),
-    })
-    .select("id")
-    .single();
-
-  if (vocabError)
-    throw new Error(`Failed to create vocab: ${vocabError.message}`);
-
-  const { data: meaning, error: meaningError } = await client
-    .from("meanings")
-    .insert({
-      user_id: userId,
-      vocabulary_id: vocab.id,
-      language_code: "en",
-      primary_translation: "test translation",
-      english_definition: "A test definition",
-      part_of_speech: "noun",
-    })
-    .select("id")
-    .single();
-
-  if (meaningError)
-    throw new Error(`Failed to create meaning: ${meaningError.message}`);
-
-  return { vocabId: vocab.id, meaningId: meaning.id };
 }

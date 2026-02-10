@@ -76,3 +76,31 @@ export async function getGoogleTranslation(
 
   return translation;
 }
+
+/** Full translation fallback chain: DeepL → Google → word itself. */
+export async function translateWord(
+  word: string,
+  targetLang: string,
+): Promise<{ translation: string; source: string }> {
+  const deeplKey = Deno.env.get('DEEPL_API_KEY');
+  if (deeplKey) {
+    try {
+      const t = await getDeepLTranslation(word, targetLang, deeplKey);
+      if (t) return { translation: t, source: 'deepl' };
+    } catch (err) {
+      console.warn('[translation] DeepL failed:', err);
+    }
+  }
+
+  const googleKey = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
+  if (googleKey) {
+    try {
+      const t = await getGoogleTranslation(word, targetLang, googleKey);
+      if (t) return { translation: t, source: 'google' };
+    } catch (err) {
+      console.warn('[translation] Google Translate failed:', err);
+    }
+  }
+
+  return { translation: word, source: 'none' };
+}

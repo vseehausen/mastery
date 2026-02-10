@@ -2,8 +2,7 @@
 //
 // Test groups:
 //   1. Fixture validation (pure — no Supabase needed)
-//   2. generateContentHash (pure — unit tests for the hash function)
-//   3. parse-vocab integration (requires local Supabase running)
+//   2. parse-vocab integration (requires local Supabase running)
 //
 // Run:
 //   deno test --allow-all supabase/functions/tests/parse-vocab-test.ts
@@ -12,7 +11,6 @@ import {
   assert,
   assertEquals,
   assertExists,
-  assertNotEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
 import {
@@ -42,23 +40,6 @@ function base64Encode(bytes: Uint8Array): string {
     binary += String.fromCharCode(byte);
   }
   return btoa(binary);
-}
-
-/** Re-implementation of generateContentHash from parse-vocab/index.ts */
-async function generateContentHash(
-  word: string,
-  stem: string | null,
-): Promise<string> {
-  const normalized = [
-    word.toLowerCase().trim(),
-    (stem || "").toLowerCase().trim(),
-  ].join("|");
-
-  const data = new TextEncoder().encode(normalized);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 const TEST_EMAIL = "test-parse-vocab@example.com";
@@ -244,54 +225,7 @@ Deno.test("fixture: all lookups reference valid words", async () => {
 });
 
 // =============================================================================
-// Group 2: generateContentHash (pure unit tests)
-// =============================================================================
-
-Deno.test("generateContentHash: deterministic output", async () => {
-  const hash1 = await generateContentHash("hello", "hell");
-  const hash2 = await generateContentHash("hello", "hell");
-  assertEquals(hash1, hash2);
-});
-
-Deno.test("generateContentHash: case-insensitive", async () => {
-  const hash1 = await generateContentHash("Hello", "Hell");
-  const hash2 = await generateContentHash("hello", "hell");
-  assertEquals(hash1, hash2);
-});
-
-Deno.test("generateContentHash: handles null stem", async () => {
-  const hash1 = await generateContentHash("hello", null);
-  const hash2 = await generateContentHash("hello", null);
-  assertEquals(hash1, hash2);
-
-  // null stem should differ from non-null stem
-  const hash3 = await generateContentHash("hello", "hell");
-  assertNotEquals(hash1, hash3);
-});
-
-Deno.test("generateContentHash: trims whitespace", async () => {
-  const hash1 = await generateContentHash("  hello  ", "  hell  ");
-  const hash2 = await generateContentHash("hello", "hell");
-  assertEquals(hash1, hash2);
-});
-
-Deno.test(
-  "generateContentHash: different words produce different hashes",
-  async () => {
-    const hash1 = await generateContentHash("hello", null);
-    const hash2 = await generateContentHash("world", null);
-    assertNotEquals(hash1, hash2);
-  },
-);
-
-Deno.test("generateContentHash: returns 64-char hex string", async () => {
-  const hash = await generateContentHash("test", "test");
-  assertEquals(hash.length, 64);
-  assert(/^[0-9a-f]{64}$/.test(hash), "Should be lowercase hex");
-});
-
-// =============================================================================
-// Group 3: parse-vocab integration (requires local Supabase running)
+// Group 2: parse-vocab integration (requires local Supabase running)
 // =============================================================================
 
 Deno.test({
@@ -342,7 +276,7 @@ Deno.test({
     const client = serviceClient();
     const { data: vocab, error } = await client
       .from("vocabulary")
-      .select("id, word, stem, content_hash")
+      .select("id, word, stem")
       .eq("user_id", TEST_USER_ID);
 
     assertEquals(error, null);
@@ -362,7 +296,6 @@ Deno.test({
     for (const v of vocab!) {
       assertExists(v.id);
       assertExists(v.word);
-      assertExists(v.content_hash);
     }
 
     await cleanupTestData(TEST_USER_ID);
@@ -616,7 +549,7 @@ Deno.test({
     const client = serviceClient();
     const { data: vocab } = await client
       .from("vocabulary")
-      .select("content_hash")
+      .select("word")
       .eq("user_id", TEST_USER_ID);
 
     // Actual unique vocab should be less than total lookups (265)
@@ -635,13 +568,13 @@ Deno.test({
       "Encounters should be >= unique vocab entries",
     );
 
-    // Verify no duplicate content_hash values in vocabulary
-    const hashes = vocab!.map((v) => v.content_hash);
-    const uniqueHashes = new Set(hashes);
+    // Verify no duplicate word values in vocabulary
+    const words = vocab!.map((v) => v.word);
+    const uniqueWords = new Set(words);
     assertEquals(
-      hashes.length,
-      uniqueHashes.size,
-      "No duplicate content hashes",
+      words.length,
+      uniqueWords.size,
+      "No duplicate words",
     );
 
     await cleanupTestData(TEST_USER_ID);

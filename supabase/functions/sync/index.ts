@@ -13,11 +13,8 @@ const ALLOWED_PUSH_TABLES = new Set([
   'learning_sessions',
   'streaks',
   'user_learning_preferences',
-  'meanings',
-  'cues',
   'confusable_sets',
   'confusable_set_members',
-  'meaning_edits',
 ]);
 
 // Pull table configs: each defines a table name and its timestamp field
@@ -35,10 +32,7 @@ const PULL_TABLES: PullTableConfig[] = [
   { table: 'learning_sessions', timeField: 'updated_at', filterByUserId: true },
   { table: 'streaks', timeField: 'updated_at', filterByUserId: true },
   { table: 'user_learning_preferences', timeField: 'updated_at', filterByUserId: true },
-  { table: 'meanings', timeField: 'updated_at', filterByUserId: true },
-  { table: 'cues', timeField: 'updated_at', filterByUserId: true },
   { table: 'confusable_sets', timeField: 'updated_at', filterByUserId: true },
-  { table: 'meaning_edits', timeField: 'created_at', filterByUserId: true },
 ];
 
 Deno.serve(async (req) => {
@@ -180,7 +174,7 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
 
   const syncedAt = new Date().toISOString();
 
-  console.log(`[sync/pull] Returning: sources=${results['sources'].length}, encounters=${results['encounters'].length}, vocab=${results['vocabulary'].length}, learning_cards=${results['learning_cards'].length}, meanings=${results['meanings'].length}, cues=${results['cues'].length}`);
+  console.log(`[sync/pull] Returning: sources=${results['sources'].length}, encounters=${results['encounters'].length}, vocab=${results['vocabulary'].length}, learning_cards=${results['learning_cards'].length}`);
 
   return jsonResponse({
     sources: results['sources'],
@@ -190,11 +184,8 @@ async function handlePull(req: Request, userId: string): Promise<Response> {
     learning_sessions: results['learning_sessions'],
     streaks: results['streaks'],
     user_learning_preferences: results['user_learning_preferences'],
-    meanings: results['meanings'],
-    cues: results['cues'],
     confusable_sets: results['confusable_sets'],
     confusable_set_members,
-    meaning_edits: results['meaning_edits'],
     syncedAt,
   });
 }

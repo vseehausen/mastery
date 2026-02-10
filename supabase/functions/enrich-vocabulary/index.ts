@@ -1,21 +1,21 @@
 // Edge function: enrich-vocabulary
 // Enriches vocabulary words and writes to global_dictionary table
-// Phase 1: Check if word exists in global_dictionary by content_hash
-// Phase 2: If not, call OpenAI to generate full enrichment data
-// Phase 3: Write to global_dictionary with ON CONFLICT DO NOTHING
-// Phase 4: Link vocabulary to global_dictionary_id
+// Phase 1: Check if word has a word_variants mapping → global_dictionary
+// Phase 2: If not, call OpenAI to generate full enrichment data with lemma
+// Phase 3: Write to global_dictionary, create word_variants mappings
+// Phase 4: Link vocabulary to global_dictionary_id, merge duplicates
 
 import { handleCors } from '../_shared/cors.ts';
 import { createServiceClient, getUserId, type SupabaseClient } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
-import { getDeepLTranslation, getGoogleTranslation } from '../_shared/translation.ts';
-import { generateContentHash } from '../_shared/crypto.ts';
+import { normalize } from '../_shared/normalize.ts';
+import { resolveGlobalEntry, resolveByLemma, linkVocabulary, upsertVariant } from '../_shared/global-dictionary.ts';
+import { mergeIfDuplicate } from '../_shared/vocabulary-lifecycle.ts';
+import { translateWord } from '../_shared/translation.ts';
 
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
-const MAX_RETRY_ATTEMPTS = 3;
 const BUFFER_TARGET = 10;
-const STALE_PROCESSING_TIMEOUT_MINUTES = 5;
 
 // =============================================================================
 // Types
@@ -25,6 +25,8 @@ interface VocabWord {
   id: string;
   word: string;
   stem: string | null;
+  user_id: string;
+  global_dictionary_id: string | null;
 }
 
 interface EnrichedWord {
@@ -36,7 +38,6 @@ interface EnrichedWord {
 interface FailedWord {
   vocabulary_id: string;
   error: string;
-  will_retry?: boolean;
 }
 
 interface EnrichRequestBody {
@@ -149,7 +150,7 @@ async function handleEnrichRequestServerSide(body: EnrichRequestBody): Promise<R
 
   const { data: wordsData, error: wordsError } = await client
     .from('vocabulary')
-    .select('id, word, stem')
+    .select('id, word, stem, user_id, global_dictionary_id')
     .eq('user_id', userId)
     .in('id', vocabularyIds.slice(0, batchSize))
     .is('deleted_at', null);
@@ -163,7 +164,7 @@ async function handleEnrichRequestServerSide(body: EnrichRequestBody): Promise<R
   console.log(`[enrich-vocabulary] Server-side enriching ${wordsToEnrich.length} words for user=${userId}, language=${nativeLanguageCode}`);
 
   const wordContexts = await getEncounterContexts(client, userId, wordsToEnrich);
-  const result = await processWords(client, userId, wordsToEnrich, nativeLanguageCode, wordContexts, false);
+  const result = await processWords(client, wordsToEnrich, nativeLanguageCode, wordContexts, false);
 
   return jsonResponse(result);
 }
@@ -185,14 +186,12 @@ async function handleEnrichRequest(req: Request, userId: string): Promise<Respon
 
   const client = createServiceClient();
 
-  await resetStaleProcessingEntries(client, userId);
-
   let wordsToEnrich: VocabWord[];
 
   if (vocabularyIds && vocabularyIds.length > 0) {
     const { data, error } = await client
       .from('vocabulary')
-      .select('id, word, stem')
+      .select('id, word, stem, user_id, global_dictionary_id')
       .eq('user_id', userId)
       .in('id', vocabularyIds.slice(0, batchSize))
       .is('deleted_at', null);
@@ -209,7 +208,7 @@ async function handleEnrichRequest(req: Request, userId: string): Promise<Respon
   console.log(`[enrich-vocabulary] Enriching ${wordsToEnrich.length} words for user=${userId}, language=${nativeLanguageCode}`);
 
   const wordContexts = await getEncounterContexts(client, userId, wordsToEnrich);
-  const result = await processWords(client, userId, wordsToEnrich, nativeLanguageCode, wordContexts, forceReEnrich);
+  const result = await processWords(client, wordsToEnrich, nativeLanguageCode, wordContexts, forceReEnrich);
 
   const bufferStatus = await getBufferStatus(client, userId);
 
@@ -239,7 +238,6 @@ async function handleStatus(userId: string): Promise<Response> {
 
 async function processWords(
   client: SupabaseClient,
-  userId: string,
   words: VocabWord[],
   nativeLanguageCode: string,
   wordContexts: Record<string, string>,
@@ -251,26 +249,8 @@ async function processWords(
 
   for (const word of words) {
     try {
-      if (!forceReEnrich) {
-        const alreadyEnriched = await checkExistingMeaning(client, word.id);
-        if (alreadyEnriched) {
-          console.log(`[enrich-vocabulary] Skipping "${word.word}" - already has meaning`);
-          skipped.push(word.id);
-          await updateQueueStatus(client, userId, word.id, 'completed');
-          continue;
-        }
-      }
-
-      if (forceReEnrich) {
-        await client.from('enrichment_queue')
-          .delete()
-          .eq('user_id', userId)
-          .eq('vocabulary_id', word.id);
-      }
-
-      const claimed = await tryClaimWord(client, userId, word.id);
-      if (!claimed) {
-        console.log(`[enrich-vocabulary] Skipping "${word.word}" - already being processed`);
+      if (!forceReEnrich && word.global_dictionary_id) {
+        console.log(`[enrich-vocabulary] Skipping "${word.word}" - already enriched`);
         skipped.push(word.id);
         continue;
       }
@@ -280,18 +260,15 @@ async function processWords(
 
       if (result) {
         enriched.push(result);
-        await updateQueueStatus(client, userId, word.id, 'completed');
         console.log(`[enrich-vocabulary] ✓ Enriched "${word.word}"`);
       } else {
-        failed.push({ vocabulary_id: word.id, error: 'All enrichment services failed', will_retry: true });
-        await incrementQueueAttempt(client, userId, word.id, 'All enrichment services failed');
-        console.error(`[enrich-vocabulary] ✗ Failed "${word.word}": All enrichment services failed`);
+        failed.push({ vocabulary_id: word.id, error: 'All enrichment services failed' });
+        console.error(`[enrich-vocabulary] ✗ Failed "${word.word}"`);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error(`[enrich-vocabulary] ✗ Exception for "${word.word}":`, err);
-      failed.push({ vocabulary_id: word.id, error: errorMsg, will_retry: true });
-      await incrementQueueAttempt(client, userId, word.id, errorMsg);
+      failed.push({ vocabulary_id: word.id, error: errorMsg });
     }
   }
 
@@ -299,9 +276,11 @@ async function processWords(
 }
 
 // =============================================================================
-// Enrichment: 2-phase approach
-// Phase 1: Translation (DeepL → Google → skip)
-// Phase 2: AI enhancement (OpenAI for definition/synonyms/confusables)
+// Enrichment: variant-mapping approach
+// Phase 1: Check word_variants for existing mapping
+// Phase 2: Translation (DeepL → Google → skip)
+// Phase 3: AI enhancement (OpenAI for definition/synonyms/confusables + lemma)
+// Phase 4: Upsert global_dictionary + word_variants, link + merge
 // =============================================================================
 
 async function enrichWord(
@@ -310,29 +289,17 @@ async function enrichWord(
   context: string | null,
   client: SupabaseClient,
 ): Promise<EnrichedWord | null> {
-  const stemForLookup = word.stem || word.word.toLowerCase().trim();
-  const contentHash = await generateContentHash(stemForLookup);
-
-  // Check global_dictionary for existing entry
-  const { data: existingEntry, error: lookupError } = await client
-    .from('global_dictionary')
-    .select('id, stem')
-    .eq('content_hash', contentHash)
-    .single();
-
-  if (lookupError && lookupError.code !== 'PGRST116') {
-    console.error('[enrich-vocabulary] global_dictionary lookup failed:', lookupError);
-    return null;
-  }
-
+  // Check word_variants → global_dictionary for existing entry
+  const existingEntry = await resolveGlobalEntry(client, word.word, 'en');
   if (existingEntry) {
     console.log(`[enrich-vocabulary] Found existing global_dictionary entry for "${word.word}"`);
-    await linkVocabularyToGlobalDict(client, word.id, existingEntry.id, existingEntry.stem);
+    await linkVocabulary(client, word.id, existingEntry.id);
+    await mergeIfDuplicate(client, word.user_id, word.id, existingEntry.id);
     return { vocabulary_id: word.id, word: word.word, global_dictionary_id: existingEntry.id };
   }
 
-  // Translation: DeepL → Google → fallback
-  const { translation, source: translationSource } = await getTranslation(word.word, nativeLanguageCode);
+  // Translation
+  const { translation, source: translationSource } = await translateWord(word.word, nativeLanguageCode);
 
   // AI enhancement from OpenAI
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
@@ -355,111 +322,86 @@ async function enrichWord(
     return null;
   }
 
-  // Write to global_dictionary
-  const finalStem = aiEnhancement.stem;
-  const finalContentHash = await generateContentHash(finalStem);
-  const globalDictId = crypto.randomUUID();
-  const now = new Date().toISOString();
+  // Resolve lemma from AI response
+  const lemma = normalize(aiEnhancement.stem);
+  const normalizedWord = normalize(word.word);
 
-  const translations: Record<string, TranslationEntry> = {
-    [nativeLanguageCode]: {
-      primary: translation,
-      alternatives: aiEnhancement.native_alternatives || [],
-      source: translationSource,
-    }
-  };
+  // Check if lemma already exists in global_dictionary
+  let globalDictId: string;
+  const existingLemma = await resolveByLemma(client, lemma, 'en');
 
-  const { error: insertError } = await client
-    .from('global_dictionary')
-    .insert({
-      id: globalDictId,
-      word: finalStem,
-      content_hash: finalContentHash,
-      stem: finalStem,
-      part_of_speech: aiEnhancement.part_of_speech,
-      english_definition: aiEnhancement.english_definition,
-      synonyms: aiEnhancement.synonyms,
-      antonyms: aiEnhancement.antonyms,
-      confusables: aiEnhancement.confusables.map(c => ({
-        word: c.word,
-        explanation: c.explanation,
-        disambiguation_sentence: c.disambiguation_sentence,
-      })),
-      example_sentences: aiEnhancement.example_sentences,
-      pronunciation_ipa: aiEnhancement.pronunciation_ipa,
-      translations,
-      cefr_level: aiEnhancement.cefr_level,
-      confidence: aiEnhancement.confidence,
-      created_at: now,
-      updated_at: now,
-    })
-    .select('id')
-    .single();
+  if (existingLemma) {
+    globalDictId = existingLemma.id;
+    console.log(`[enrich-vocabulary] Reusing existing global_dictionary for lemma "${lemma}"`);
+  } else {
+    // Insert new global_dictionary entry
+    globalDictId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  if (insertError) {
-    if (insertError.code === '23505') {
-      // Race condition: another request inserted this word concurrently
-      console.log(`[enrich-vocabulary] Race condition detected, fetching existing entry for "${finalStem}"`);
-      const { data: raceEntry, error: raceError } = await client
-        .from('global_dictionary')
-        .select('id')
-        .eq('content_hash', finalContentHash)
-        .single();
+    const translations: Record<string, TranslationEntry> = {
+      [nativeLanguageCode]: {
+        primary: translation,
+        alternatives: aiEnhancement.native_alternatives || [],
+        source: translationSource,
+      }
+    };
 
-      if (raceError || !raceEntry) {
-        console.error('[enrich-vocabulary] Failed to fetch race-condition entry:', raceError);
+    const { error: insertError } = await client
+      .from('global_dictionary')
+      .insert({
+        id: globalDictId,
+        word: aiEnhancement.stem,
+        stem: aiEnhancement.stem,
+        lemma,
+        language_code: 'en',
+        part_of_speech: aiEnhancement.part_of_speech,
+        english_definition: aiEnhancement.english_definition,
+        synonyms: aiEnhancement.synonyms,
+        antonyms: aiEnhancement.antonyms,
+        confusables: aiEnhancement.confusables.map(c => ({
+          word: c.word,
+          explanation: c.explanation,
+          disambiguation_sentence: c.disambiguation_sentence,
+        })),
+        example_sentences: aiEnhancement.example_sentences,
+        pronunciation_ipa: aiEnhancement.pronunciation_ipa,
+        translations,
+        cefr_level: aiEnhancement.cefr_level,
+        confidence: aiEnhancement.confidence,
+        created_at: now,
+        updated_at: now,
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      if (insertError.code === '23505') {
+        console.log(`[enrich-vocabulary] Race condition, fetching existing entry for lemma "${lemma}"`);
+        const raceEntry = await resolveByLemma(client, lemma, 'en');
+        if (!raceEntry) {
+          console.error('[enrich-vocabulary] Failed to fetch race-condition entry');
+          return null;
+        }
+        globalDictId = raceEntry.id;
+      } else {
+        console.error('[enrich-vocabulary] Failed to insert global_dictionary entry:', insertError);
         return null;
       }
-
-      await linkVocabularyToGlobalDict(client, word.id, raceEntry.id, finalStem);
-      return { vocabulary_id: word.id, word: word.word, global_dictionary_id: raceEntry.id };
     }
-    console.error('[enrich-vocabulary] Failed to insert global_dictionary entry:', insertError);
-    return null;
   }
 
-  await linkVocabularyToGlobalDict(client, word.id, globalDictId, finalStem);
-  console.log(`[enrich-vocabulary] Successfully enriched "${word.word}" → global_dictionary ${globalDictId}`);
+  // Create word_variants mappings
+  await upsertVariant(client, 'en', normalizedWord, globalDictId);
+  if (lemma !== normalizedWord) {
+    await upsertVariant(client, 'en', lemma, globalDictId);
+  }
 
+  // Link vocabulary and merge duplicates
+  await linkVocabulary(client, word.id, globalDictId);
+  await mergeIfDuplicate(client, word.user_id, word.id, globalDictId);
+
+  console.log(`[enrich-vocabulary] Successfully enriched "${word.word}" → lemma "${lemma}" → global_dictionary ${globalDictId}`);
   return { vocabulary_id: word.id, word: word.word, global_dictionary_id: globalDictId };
-}
-
-// =============================================================================
-// Translation: DeepL → Google → fallback
-// =============================================================================
-
-async function getTranslation(
-  word: string,
-  nativeLanguageCode: string,
-): Promise<{ translation: string; source: string }> {
-  const deeplKey = Deno.env.get('DEEPL_API_KEY');
-  if (deeplKey) {
-    try {
-      const t = await getDeepLTranslation(word, nativeLanguageCode, deeplKey);
-      if (t) {
-        console.log(`[enrich-vocabulary] Translation (DeepL) for "${word}": ${t}`);
-        return { translation: t, source: 'deepl' };
-      }
-    } catch (err) {
-      console.warn(`[enrich-vocabulary] DeepL failed for "${word}":`, err);
-    }
-  }
-
-  const googleKey = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
-  if (googleKey) {
-    try {
-      const t = await getGoogleTranslation(word, nativeLanguageCode, googleKey);
-      if (t) {
-        console.log(`[enrich-vocabulary] Translation (Google) for "${word}": ${t}`);
-        return { translation: t, source: 'google' };
-      }
-    } catch (err) {
-      console.warn(`[enrich-vocabulary] Google Translate failed for "${word}":`, err);
-    }
-  }
-
-  console.log(`[enrich-vocabulary] No translation service available for "${word}"`);
-  return { translation: word, source: 'none' };
 }
 
 // =============================================================================
@@ -554,154 +496,6 @@ Primary ${langName} translation: ${primaryTranslation}`;
 // Shared DB helpers
 // =============================================================================
 
-async function linkVocabularyToGlobalDict(
-  client: SupabaseClient,
-  vocabularyId: string,
-  globalDictId: string,
-  stem: string,
-): Promise<void> {
-  const { error } = await client
-    .from('vocabulary')
-    .update({
-      global_dictionary_id: globalDictId,
-      stem,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', vocabularyId);
-
-  if (error) {
-    console.error(`[enrich-vocabulary] Failed to link vocabulary ${vocabularyId}:`, error);
-  }
-}
-
-async function checkExistingMeaning(
-  client: SupabaseClient,
-  vocabularyId: string,
-): Promise<boolean> {
-  const { data, error } = await client
-    .from('vocabulary')
-    .select('global_dictionary_id')
-    .eq('id', vocabularyId)
-    .single();
-
-  if (error) {
-    console.error(`[enrich-vocabulary] checkExistingMeaning query failed:`, error);
-    return false;
-  }
-
-  return data?.global_dictionary_id !== null;
-}
-
-async function tryClaimWord(
-  client: SupabaseClient,
-  userId: string,
-  vocabularyId: string,
-): Promise<boolean> {
-  const { data: existing, error: selectError } = await client
-    .from('enrichment_queue')
-    .select('status')
-    .eq('user_id', userId)
-    .eq('vocabulary_id', vocabularyId)
-    .single();
-
-  if (selectError && selectError.code !== 'PGRST116') {
-    console.error('[enrich-vocabulary] tryClaimWord select failed:', selectError);
-    return false;
-  }
-
-  if (existing?.status === 'completed' || existing?.status === 'processing') {
-    return false;
-  }
-
-  const { error } = await client.from('enrichment_queue').upsert({
-    user_id: userId,
-    vocabulary_id: vocabularyId,
-    status: 'processing',
-    last_attempted_at: new Date().toISOString(),
-  }, { onConflict: 'user_id,vocabulary_id' });
-
-  if (error) {
-    console.error('[enrich-vocabulary] tryClaimWord upsert failed:', error);
-    return false;
-  }
-
-  return true;
-}
-
-async function resetStaleProcessingEntries(
-  client: SupabaseClient,
-  userId: string,
-): Promise<void> {
-  const staleThreshold = new Date(Date.now() - STALE_PROCESSING_TIMEOUT_MINUTES * 60 * 1000).toISOString();
-
-  const { error } = await client
-    .from('enrichment_queue')
-    .update({
-      status: 'pending',
-      last_error: 'Processing timeout - will retry',
-    })
-    .eq('user_id', userId)
-    .eq('status', 'processing')
-    .lt('last_attempted_at', staleThreshold);
-
-  if (error) {
-    console.error('[enrich-vocabulary] Failed to reset stale entries:', error);
-  }
-}
-
-async function updateQueueStatus(
-  client: SupabaseClient,
-  userId: string,
-  vocabularyId: string,
-  status: string,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const { error } = await client.from('enrichment_queue').upsert({
-    user_id: userId,
-    vocabulary_id: vocabularyId,
-    status,
-    ...(status === 'completed' ? { completed_at: now } : {}),
-  }, { onConflict: 'user_id,vocabulary_id' });
-
-  if (error) {
-    console.error('[enrich-vocabulary] updateQueueStatus failed:', error);
-  }
-}
-
-async function incrementQueueAttempt(
-  client: SupabaseClient,
-  userId: string,
-  vocabularyId: string,
-  errorMsg: string,
-): Promise<void> {
-  const { data: existing, error: selectError } = await client
-    .from('enrichment_queue')
-    .select('id, attempts')
-    .eq('user_id', userId)
-    .eq('vocabulary_id', vocabularyId)
-    .single();
-
-  if (selectError && selectError.code !== 'PGRST116') {
-    console.error('[enrich-vocabulary] incrementQueueAttempt select failed:', selectError);
-  }
-
-  const attempts = (existing?.attempts || 0) + 1;
-  const status = attempts >= MAX_RETRY_ATTEMPTS ? 'failed' : 'pending';
-
-  const { error } = await client.from('enrichment_queue').upsert({
-    user_id: userId,
-    vocabulary_id: vocabularyId,
-    status,
-    attempts,
-    last_error: errorMsg,
-    last_attempted_at: new Date().toISOString(),
-  }, { onConflict: 'user_id,vocabulary_id' });
-
-  if (error) {
-    console.error('[enrich-vocabulary] incrementQueueAttempt upsert failed:', error);
-  }
-}
-
 async function getUnEnrichedWords(
   client: SupabaseClient,
   userId: string,
@@ -709,7 +503,7 @@ async function getUnEnrichedWords(
 ): Promise<VocabWord[]> {
   const { data, error } = await client
     .from('vocabulary')
-    .select('id, word, stem')
+    .select('id, word, stem, user_id, global_dictionary_id')
     .eq('user_id', userId)
     .is('global_dictionary_id', null)
     .is('deleted_at', null)
@@ -758,7 +552,7 @@ async function getBufferStatus(
   client: SupabaseClient,
   userId: string,
 ): Promise<{ enriched_count: number; un_enriched_count: number; buffer_target: number; pending_in_queue: number }> {
-  const [enrichedRes, totalRes, pendingRes] = await Promise.all([
+  const [enrichedRes, totalRes] = await Promise.all([
     client
       .from('vocabulary')
       .select('id', { count: 'exact', head: true })
@@ -770,17 +564,12 @@ async function getBufferStatus(
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .is('deleted_at', null),
-    client
-      .from('enrichment_queue')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .in('status', ['pending', 'processing']),
   ]);
 
   return {
     enriched_count: enrichedRes.count || 0,
     un_enriched_count: (totalRes.count || 0) - (enrichedRes.count || 0),
     buffer_target: BUFFER_TARGET,
-    pending_in_queue: pendingRes.count || 0,
+    pending_in_queue: 0,
   };
 }

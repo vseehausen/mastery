@@ -21,7 +21,8 @@ import {
   ensureTestUser,
   cleanupTestData,
   isSupabaseRunning,
-  createTestVocabAndMeaning,
+  createTestGlobalDictEntry,
+  cleanupGlobalDictionary,
 } from "./helpers.ts";
 
 const TEST_USER_A_EMAIL = "test-feedback-a@example.com";
@@ -31,6 +32,15 @@ const TEST_USER_B_PASSWORD = "test-password-123456";
 
 let TEST_USER_A_ID = "";
 let TEST_USER_B_ID = "";
+const globalDictIds: string[] = [];
+
+/** Create a global_dictionary entry for use in feedback tests. */
+async function createTestGlobalDict(): Promise<string> {
+  const word = `test-${crypto.randomUUID().slice(0, 8)}`;
+  const id = await createTestGlobalDictEntry(word);
+  globalDictIds.push(id);
+  return id;
+}
 
 async function ensureTestUsers() {
   TEST_USER_A_ID = await ensureTestUser(TEST_USER_A_EMAIL, TEST_USER_A_PASSWORD);
@@ -40,6 +50,7 @@ async function ensureTestUsers() {
 async function cleanupAllTestData() {
   await cleanupTestData(TEST_USER_A_ID);
   await cleanupTestData(TEST_USER_B_ID);
+  await cleanupGlobalDictionary(globalDictIds.splice(0));
 }
 
 // =============================================================================
@@ -59,7 +70,7 @@ Deno.test({
     await ensureTestUsers();
     await cleanupAllTestData();
 
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
 
     // Insert feedback via service role
     const client = serviceClient();
@@ -67,17 +78,17 @@ Deno.test({
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'definition',
         rating: 'up',
       })
-      .select('id, user_id, meaning_id, field_name, rating, flag_category, comment, created_at')
+      .select('id, user_id, global_dictionary_id, field_name, rating, flag_category, comment, created_at')
       .single();
 
     assertEquals(insertError, null, 'Should insert without error');
     assertExists(feedback);
     assertEquals(feedback.user_id, TEST_USER_A_ID);
-    assertEquals(feedback.meaning_id, meaningId);
+    assertEquals(feedback.global_dictionary_id, globalDictId);
     assertEquals(feedback.field_name, 'definition');
     assertEquals(feedback.rating, 'up');
     assertEquals(feedback.flag_category, null);
@@ -117,14 +128,14 @@ Deno.test({
     await ensureTestUsers();
     await cleanupAllTestData();
 
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
 
     const client = serviceClient();
     const { error } = await client
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'definition',
         rating: 'invalid', // Should fail CHECK constraint
       });
@@ -158,7 +169,7 @@ Deno.test({
     await ensureTestUsers();
     await cleanupAllTestData();
 
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
 
     // Insert feedback via service role
     const serviceRoleClient = serviceClient();
@@ -166,7 +177,7 @@ Deno.test({
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'synonym',
         rating: 'down',
         flag_category: 'wrong_translation',
@@ -221,13 +232,13 @@ Deno.test({
     await cleanupAllTestData();
 
     // Create feedback for user A
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
     const serviceRoleClient = serviceClient();
     const { data: feedback } = await serviceRoleClient
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'definition',
         rating: 'up',
       })
@@ -289,14 +300,14 @@ Deno.test({
     await ensureTestUsers();
     await cleanupAllTestData();
 
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
 
     const client = serviceClient();
     const { data: feedback, error } = await client
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'translation',
         rating: 'down',
         flag_category: 'wrong_translation',
@@ -317,7 +328,7 @@ Deno.test({
 // =============================================================================
 
 Deno.test({
-  name: 'integration: CASCADE delete removes feedback when meaning is deleted',
+  name: 'integration: CASCADE delete removes feedback when global_dictionary entry is deleted',
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
@@ -329,7 +340,7 @@ Deno.test({
     await ensureTestUsers();
     await cleanupAllTestData();
 
-    const { meaningId } = await createTestVocabAndMeaning(TEST_USER_A_ID);
+    const globalDictId = await createTestGlobalDict();
 
     const client = serviceClient();
 
@@ -338,7 +349,7 @@ Deno.test({
       .from('enrichment_feedback')
       .insert({
         user_id: TEST_USER_A_ID,
-        meaning_id: meaningId,
+        global_dictionary_id: globalDictId,
         field_name: 'definition',
         rating: 'up',
       })
@@ -356,13 +367,13 @@ Deno.test({
 
     assertEquals(beforeDelete?.length, 1, 'Feedback should exist before delete');
 
-    // Delete the meaning (should cascade to feedback)
+    // Delete the global_dictionary entry (should cascade to feedback)
     const { error: deleteError } = await client
-      .from('meanings')
+      .from('global_dictionary')
       .delete()
-      .eq('id', meaningId);
+      .eq('id', globalDictId);
 
-    assertEquals(deleteError, null, 'Should delete meaning without error');
+    assertEquals(deleteError, null, 'Should delete global_dictionary entry without error');
 
     // Verify feedback was cascade deleted
     const { data: afterDelete } = await client

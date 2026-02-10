@@ -4,6 +4,8 @@
 import { handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient, createServiceClient, getUserId } from '../_shared/supabase.ts';
 import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/response.ts';
+import { normalize } from '../_shared/normalize.ts';
+import { triggerEnrichment } from '../_shared/vocabulary-lifecycle.ts';
 import initSqlJs, { type Database } from 'npm:sql.js@1.10.3';
 
 interface ParsedVocabularyEntry {
@@ -14,7 +16,7 @@ interface ParsedVocabularyEntry {
   bookTitle: string | null;
   bookAuthor: string | null;
   bookAsin: string | null;
-  contentHash: string;
+  normalized: string;
 }
 
 interface ParsedSource {
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
   const client = isDevMode ? createServiceClient() : createSupabaseClient(req);
 
   try {
-    const { file } = await req.json();
+    const { file, native_language_code } = await req.json();
 
     if (!file) {
       return errorResponse('Missing file parameter', 400);
@@ -170,12 +172,6 @@ Deno.serve(async (req) => {
           const cleanedWord = sanitizeKindleWord(word as string);
           const cleanedStem = stem ? sanitizeKindleWord(stem as string) : null;
 
-          // Generate content hash for deduplication: hash(word|stem)
-          const contentHash = await generateContentHash(
-            cleanedWord,
-            cleanedStem,
-          );
-
           entries.push({
             word: cleanedWord,
             stem: cleanedStem,
@@ -184,7 +180,7 @@ Deno.serve(async (req) => {
             bookTitle: (bookTitle as string) || null,
             bookAuthor: (bookAuthor as string) || null,
             bookAsin: (bookAsin as string) || null,
-            contentHash,
+            normalized: normalize(cleanedWord),
           });
         }
       }
@@ -260,47 +256,73 @@ Deno.serve(async (req) => {
       console.error('Failed to create import session:', sessionError);
     }
 
-    // Get existing vocabulary hashes for deduplication
-    const { data: existingVocab } = await client
+    // Get existing vocabulary words for deduplication (include soft-deleted for reactivation)
+    const { data: allVocab } = await client
       .from('vocabulary')
-      .select('id, content_hash')
+      .select('id, word, deleted_at')
       .eq('user_id', userId);
 
-    const existingHashMap = new Map<string, string>();
-    for (const v of existingVocab || []) {
-      existingHashMap.set(v.content_hash, v.id);
+    const activeWordMap = new Map<string, string>();   // word → id (active)
+    const deletedWordMap = new Map<string, string>();  // word → id (soft-deleted, oldest first)
+    for (const v of allVocab || []) {
+      if (v.deleted_at) {
+        if (!deletedWordMap.has(v.word)) deletedWordMap.set(v.word, v.id);
+      } else {
+        activeWordMap.set(v.word, v.id);
+      }
     }
 
-    // Separate new vocab entries from existing ones
-    const newEntries = entries.filter(e => !existingHashMap.has(e.contentHash));
-    const existingEntries = entries.filter(e => existingHashMap.has(e.contentHash));
-    const skipped = existingEntries.length; // Existing vocab - encounters still created
+    // Classify entries: active (encounter only), to-reactivate, truly new
+    const seenNormalized = new Set<string>();
+    const newEntries: ParsedVocabularyEntry[] = [];
+    const reactivateEntries: ParsedVocabularyEntry[] = [];
+    const existingEntries: ParsedVocabularyEntry[] = [];
 
-    // Insert new vocabulary entries (word identity only)
+    for (const e of entries) {
+      if (activeWordMap.has(e.normalized)) {
+        existingEntries.push(e);
+      } else if (!seenNormalized.has(e.normalized)) {
+        seenNormalized.add(e.normalized);
+        if (deletedWordMap.has(e.normalized)) {
+          reactivateEntries.push(e);
+        } else {
+          newEntries.push(e);
+        }
+      } else {
+        existingEntries.push(e); // duplicate within import → encounter only
+      }
+    }
+    const skipped = existingEntries.length;
+
     let imported = 0;
     let encountersCreated = 0;
     const errors: string[] = [];
-
-    // Process new vocabulary in batches of 100
     const batchSize = 100;
+
+    // Reactivate soft-deleted vocabulary + learning cards
+    for (const entry of reactivateEntries) {
+      const vocabId = deletedWordMap.get(entry.normalized)!;
+      const now = new Date().toISOString();
+      await client.from('vocabulary').update({ deleted_at: null, updated_at: now }).eq('id', vocabId);
+      await client.from('learning_cards').update({ deleted_at: null, updated_at: now })
+        .eq('vocabulary_id', vocabId).eq('user_id', userId);
+      activeWordMap.set(entry.normalized, vocabId);
+      imported++;
+    }
+
+    // Insert truly new vocabulary in batches
     for (let i = 0; i < newEntries.length; i += batchSize) {
       const batch = newEntries.slice(i, i + batchSize);
 
       const vocabRecords = batch.map(entry => ({
         user_id: userId,
-        word: entry.word,
-        stem: entry.stem,
-        content_hash: entry.contentHash,
+        word: entry.normalized,
+        stem: entry.stem ? normalize(entry.stem) : entry.normalized,
         is_pending_sync: false,
         version: 1,
       }));
 
-      const { error } = await client
-        .from('vocabulary')
-        .upsert(vocabRecords, {
-          onConflict: 'user_id,content_hash',
-          ignoreDuplicates: true
-        });
+      const { error } = await client.from('vocabulary').insert(vocabRecords);
 
       if (error) {
         console.error('Insert error:', error);
@@ -309,17 +331,17 @@ Deno.serve(async (req) => {
         imported += batch.length;
 
         // Fetch inserted vocab IDs
-        const contentHashes = batch.map(e => e.contentHash);
+        const normalizedWords = batch.map(e => e.normalized);
         const { data: insertedVocab } = await client
           .from('vocabulary')
-          .select('id, content_hash')
+          .select('id, word')
           .eq('user_id', userId)
-          .in('content_hash', contentHashes);
+          .in('word', normalizedWords)
+          .is('deleted_at', null);
 
-        // Update hash map with newly inserted vocab
         if (insertedVocab) {
           for (const v of insertedVocab) {
-            existingHashMap.set(v.content_hash, v.id);
+            activeWordMap.set(v.word, v.id);
           }
         }
 
@@ -341,10 +363,7 @@ Deno.serve(async (req) => {
 
           const { error: cardError } = await client
             .from('learning_cards')
-            .upsert(learningCards, {
-              onConflict: 'user_id,vocabulary_id',
-              ignoreDuplicates: true
-            });
+            .insert(learningCards);
 
           if (cardError) {
             console.error('Learning card creation error:', cardError);
@@ -353,8 +372,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create encounters for ALL entries (both new and existing vocab)
-    const allEntries = [...newEntries, ...existingEntries];
+    // Create encounters for ALL entries (new, reactivated, and existing vocab)
+    const allEntries = [...newEntries, ...reactivateEntries, ...existingEntries];
     for (let i = 0; i < allEntries.length; i += batchSize) {
       const batch = allEntries.slice(i, i + batchSize);
 
@@ -370,7 +389,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        const vocabularyId = existingHashMap.get(entry.contentHash);
+        const vocabularyId = activeWordMap.get(entry.normalized);
 
         return {
           user_id: userId,
@@ -412,6 +431,17 @@ Deno.serve(async (req) => {
         .eq('id', importSession.id);
     }
 
+    // Trigger enrichment for newly imported and reactivated words
+    const nativeLang = native_language_code || 'de';
+    const newVocabIds: string[] = [];
+    for (const entry of [...newEntries, ...reactivateEntries]) {
+      const vocabId = activeWordMap.get(entry.normalized);
+      if (vocabId) newVocabIds.push(vocabId);
+    }
+    if (newVocabIds.length > 0) {
+      triggerEnrichment(userId, newVocabIds, nativeLang);
+    }
+
     return jsonResponse({
       totalParsed: entries.length,
       imported,
@@ -430,20 +460,4 @@ function sanitizeKindleWord(raw: string): string {
   return raw
     .replace(/\s*\(\s*\)\s*$/, '') // strip trailing empty parens like "wee ()"
     .trim();
-}
-
-async function generateContentHash(
-  word: string,
-  stem: string | null,
-): Promise<string> {
-  const normalized = [
-    word.toLowerCase().trim(),
-    (stem || '').toLowerCase().trim(),
-  ].join('|');
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(normalized);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }

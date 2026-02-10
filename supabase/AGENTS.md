@@ -1,3 +1,7 @@
+## Development Stage
+- **No users yet** — still in development. No migration concerns, no backward compatibility needed.
+  We can drop columns, delete tables, rewrite schemas freely.
+
 # Supabase API Keys for Agents
 
 ## Key Format Changes (June 2025+)
@@ -119,8 +123,11 @@ npx supabase secrets set KEY_NAME="value"
 - **Parallelize independent queries.** When multiple DB queries don't depend on each other's results, use `Promise.all` instead of sequential `await`s. Cuts latency proportionally.
 - **Extract shared processing loops.** When two code paths (e.g., user-JWT vs. service-role) share identical iteration logic, extract the loop body into a shared function. Keep handlers thin — they parse input, call the shared processor, and shape the response.
 - **Use `SupabaseClient` type, not `ReturnType<typeof ...>`.** Import `SupabaseClient` from `_shared/supabase.ts`. Avoid `any` for client params.
-- **Narrow `select()` to needed columns.** Prefer `select('id, stem')` over `select('*')` on shared tables like `global_dictionary`. On user-owned tables for sync, `select('*')` is acceptable when the client needs all fields.
+- **Narrow `select()` to needed columns.** Prefer `select('id, lemma')` over `select('*')` on shared tables like `global_dictionary`. On user-owned tables for sync, `select('*')` is acceptable when the client needs all fields.
 - **Data-driven repetition over copy-paste.** When 10+ sequential queries follow the same pattern (e.g., pull each table), define a config array and iterate. Makes adding new tables a one-line change.
+- **Don't do linguistics in the fast path.** Stemming, lemmatization, and other NLP operations don't belong in hot-path code. Keep the write/lookup path dumb (`trim().toLowerCase()`), defer complex resolution to async pipelines where better tools (AI) are available.
+- **Match INSERT defaults to SELECT filters.** If a column defaults to `'de'` on insert but queries filter by `'en'`, data silently becomes invisible. Always verify that schema defaults, explicit inserts, and query filters agree.
+- **Schema-level dedup over application-level checks.** Use partial unique indexes (`WHERE deleted_at IS NULL`) for soft-delete-aware uniqueness. The DB is the single source of truth for uniqueness — application-level SELECT-then-INSERT is racy.
 
 ## Testing Edge Functions
 
