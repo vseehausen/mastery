@@ -158,6 +158,22 @@ function createStyles(): string {
       color: var(--dim);
     }
 
+    /* ---- Divider + definition (Variant B: serif italic) ---- */
+    .divider {
+      height: 1px;
+      background: var(--muted);
+      margin: 10px 0 var(--tt-spacing-2);
+    }
+
+    .definition {
+      font-family: var(--tt-font-serif);
+      font-size: 12px;
+      font-style: italic;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1.6;
+      color: var(--muted-foreground);
+    }
+
     /* ---- Footer ---- */
     .footer {
       margin-top: 10px;
@@ -262,9 +278,10 @@ const CHECK_SVG =
   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
 function renderTooltipContent(data: LookupResponse): string {
-  const { stage, pronunciation, part_of_speech, is_new } = data;
+  const { stage, pronunciation, part_of_speech, english_definition, is_new } = data;
   const hasIPA = !!pronunciation;
   const hasPOS = !!part_of_speech;
+  const hasDef = !!english_definition;
   const review = REVIEW_TEXT[stage];
 
   return `
@@ -281,6 +298,10 @@ function renderTooltipContent(data: LookupResponse): string {
             <span class="translation">${escapeHtml(data.translation)}</span>
             ${hasPOS ? `<span class="pos">${escapeHtml(part_of_speech!)}</span>` : ''}
           </div>
+          ${hasDef ? `
+          <div class="divider"></div>
+          <div class="definition">${escapeHtml(english_definition)}</div>
+          ` : ''}
           <div class="footer">
             <div class="footer-left">
               ${CHECK_SVG}
