@@ -52,6 +52,24 @@ ALTER TABLE vocabulary DROP CONSTRAINT IF EXISTS vocabulary_user_id_content_hash
 ALTER TABLE vocabulary DROP COLUMN IF EXISTS canonical_key;
 ALTER TABLE vocabulary DROP COLUMN IF EXISTS content_hash;
 
+-- Soft-delete duplicate active vocabulary entries before adding unique constraint.
+-- Keep the "best" row: prefer one with global_dictionary_id, then most recent.
+UPDATE vocabulary SET deleted_at = NOW()
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+      ROW_NUMBER() OVER (
+        PARTITION BY user_id, word
+        ORDER BY
+          CASE WHEN global_dictionary_id IS NOT NULL THEN 0 ELSE 1 END,
+          created_at DESC
+      ) AS rn
+    FROM vocabulary
+    WHERE deleted_at IS NULL
+  ) ranked
+  WHERE rn > 1
+);
+
 -- New vocabulary dedup: unique on (user_id, word) for active (non-deleted) entries
 CREATE UNIQUE INDEX idx_vocabulary_user_word
   ON vocabulary(user_id, word) WHERE deleted_at IS NULL;
@@ -63,6 +81,7 @@ DROP TABLE IF EXISTS enrichment_queue;
 ALTER TABLE enrichment_feedback DROP CONSTRAINT IF EXISTS enrichment_feedback_reference_check;
 ALTER TABLE enrichment_feedback DROP CONSTRAINT IF EXISTS enrichment_feedback_meaning_id_fkey;
 ALTER TABLE enrichment_feedback DROP COLUMN IF EXISTS meaning_id;
+DELETE FROM enrichment_feedback WHERE global_dictionary_id IS NULL;
 ALTER TABLE enrichment_feedback ALTER COLUMN global_dictionary_id SET NOT NULL;
 DROP TABLE IF EXISTS meaning_edits;
 DROP TABLE IF EXISTS cues;

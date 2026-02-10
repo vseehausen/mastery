@@ -31,6 +31,7 @@ class VocabularyDetailScreen extends ConsumerStatefulWidget {
 class _VocabularyDetailScreenState
     extends ConsumerState<VocabularyDetailScreen> {
   bool _enrichmentTriggered = false;
+  bool _isReEnriching = false;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +101,14 @@ class _VocabularyDetailScreenState
                   const SizedBox(height: AppSpacing.s10), // 40
 
                   // MEANING AREA (sectioned)
+                  if (_isReEnriching)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: const LinearProgressIndicator(minHeight: 2),
+                      ),
+                    ),
                   globalDictAsync.when(
                     loading: () => _buildLoadingIndicator(),
                     error: (_, _) => _buildErrorMessage(
@@ -295,6 +304,7 @@ class _VocabularyDetailScreenState
     final colors = context.masteryColors;
 
     return Column(
+      key: ValueKey(globalDict.englishDefinition),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Definition text
@@ -354,7 +364,10 @@ class _VocabularyDetailScreenState
         const SizedBox(height: AppSpacing.s12), // 48
 
         // Definition section
-        _buildDefinitionSection(globalDict),
+        AnimatedSwitcher(
+          duration: AppAnimation.duration300,
+          child: _buildDefinitionSection(globalDict),
+        ),
       ],
     );
   }
@@ -897,6 +910,8 @@ class _VocabularyDetailScreenState
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
+    setState(() => _isReEnriching = true);
+
     try {
       final enrichmentService = ref.read(enrichmentServiceProvider);
       await enrichmentService.reEnrich(
@@ -910,8 +925,8 @@ class _VocabularyDetailScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Re-enrichment started'),
-            duration: Duration(seconds: 3),
+            content: Text('Enrichment updated'),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -923,6 +938,10 @@ class _VocabularyDetailScreenState
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isReEnriching = false);
       }
     }
   }

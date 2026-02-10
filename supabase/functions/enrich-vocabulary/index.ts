@@ -11,7 +11,7 @@ import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/re
 import { normalize } from '../_shared/normalize.ts';
 import { resolveGlobalEntry, resolveByLemma, linkVocabulary, upsertVariant } from '../_shared/global-dictionary.ts';
 import { mergeIfDuplicate } from '../_shared/vocabulary-lifecycle.ts';
-import { translateWord } from '../_shared/translation.ts';
+import { translateWord, resolveTranslation } from '../_shared/translation.ts';
 
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
@@ -76,6 +76,7 @@ interface AIEnhancement {
   cefr_level: string | null;
   confidence: number;
   native_alternatives: string[];
+  best_native_translation: string | null;
 }
 
 interface TranslationEntry {
@@ -256,7 +257,7 @@ async function processWords(
       }
 
       const context = wordContexts[word.id] || null;
-      const result = await enrichWord(word, nativeLanguageCode, context, client);
+      const result = await enrichWord(word, nativeLanguageCode, context, client, forceReEnrich);
 
       if (result) {
         enriched.push(result);
@@ -288,18 +289,19 @@ async function enrichWord(
   nativeLanguageCode: string,
   context: string | null,
   client: SupabaseClient,
+  forceReEnrich = false,
 ): Promise<EnrichedWord | null> {
   // Check word_variants → global_dictionary for existing entry
   const existingEntry = await resolveGlobalEntry(client, word.word, 'en');
-  if (existingEntry) {
+  if (existingEntry && !forceReEnrich) {
     console.log(`[enrich-vocabulary] Found existing global_dictionary entry for "${word.word}"`);
     await linkVocabulary(client, word.id, existingEntry.id);
     await mergeIfDuplicate(client, word.user_id, existingEntry.id);
     return { vocabulary_id: word.id, word: word.word, global_dictionary_id: existingEntry.id };
   }
 
-  // Translation
-  const { translation, source: translationSource } = await translateWord(word.word, nativeLanguageCode);
+  // Translation (with sentence context for polysemous word disambiguation)
+  const { translation, source: translationSource } = await translateWord(word.word, nativeLanguageCode, context ?? undefined);
 
   // AI enhancement from OpenAI
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
@@ -326,51 +328,69 @@ async function enrichWord(
   const lemma = normalize(aiEnhancement.stem);
   const normalizedWord = normalize(word.word);
 
+  // Build enrichment payload
+  const resolved = resolveTranslation(translation, translationSource, aiEnhancement);
+  const aiAlternatives = aiEnhancement.native_alternatives || [];
+  const allAlternatives = [...new Set([...resolved.alternatives, ...aiAlternatives])]
+    .filter(a => a.toLowerCase() !== resolved.primary.toLowerCase());
+
+  const translations: Record<string, TranslationEntry> = {
+    [nativeLanguageCode]: {
+      primary: resolved.primary,
+      alternatives: allAlternatives,
+      source: resolved.source,
+    }
+  };
+
+  const enrichmentPayload = {
+    word: aiEnhancement.stem,
+    stem: aiEnhancement.stem,
+    lemma,
+    language_code: 'en',
+    part_of_speech: aiEnhancement.part_of_speech,
+    english_definition: aiEnhancement.english_definition,
+    synonyms: aiEnhancement.synonyms,
+    antonyms: aiEnhancement.antonyms,
+    confusables: aiEnhancement.confusables.map(c => ({
+      word: c.word,
+      explanation: c.explanation,
+      disambiguation_sentence: c.disambiguation_sentence,
+    })),
+    example_sentences: aiEnhancement.example_sentences,
+    pronunciation_ipa: aiEnhancement.pronunciation_ipa,
+    translations,
+    cefr_level: aiEnhancement.cefr_level,
+    confidence: aiEnhancement.confidence,
+  };
+
   // Check if lemma already exists in global_dictionary
   let globalDictId: string;
   const existingLemma = await resolveByLemma(client, lemma, 'en');
 
-  if (existingLemma) {
+  if (existingLemma && !forceReEnrich) {
     globalDictId = existingLemma.id;
     console.log(`[enrich-vocabulary] Reusing existing global_dictionary for lemma "${lemma}"`);
+  } else if (existingLemma) {
+    // Force re-enrich: update existing entry with fresh data
+    globalDictId = existingLemma.id;
+    const { error: updateError } = await client
+      .from('global_dictionary')
+      .update({ ...enrichmentPayload, updated_at: new Date().toISOString() })
+      .eq('id', globalDictId);
+
+    if (updateError) {
+      console.error('[enrich-vocabulary] Failed to update global_dictionary entry:', updateError);
+      return null;
+    }
+    console.log(`[enrich-vocabulary] Updated global_dictionary for lemma "${lemma}"`);
   } else {
     // Insert new global_dictionary entry
     globalDictId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const translations: Record<string, TranslationEntry> = {
-      [nativeLanguageCode]: {
-        primary: translation,
-        alternatives: aiEnhancement.native_alternatives || [],
-        source: translationSource,
-      }
-    };
-
     const { error: insertError } = await client
       .from('global_dictionary')
-      .insert({
-        id: globalDictId,
-        word: aiEnhancement.stem,
-        stem: aiEnhancement.stem,
-        lemma,
-        language_code: 'en',
-        part_of_speech: aiEnhancement.part_of_speech,
-        english_definition: aiEnhancement.english_definition,
-        synonyms: aiEnhancement.synonyms,
-        antonyms: aiEnhancement.antonyms,
-        confusables: aiEnhancement.confusables.map(c => ({
-          word: c.word,
-          explanation: c.explanation,
-          disambiguation_sentence: c.disambiguation_sentence,
-        })),
-        example_sentences: aiEnhancement.example_sentences,
-        pronunciation_ipa: aiEnhancement.pronunciation_ipa,
-        translations,
-        cefr_level: aiEnhancement.cefr_level,
-        confidence: aiEnhancement.confidence,
-        created_at: now,
-        updated_at: now,
-      })
+      .insert({ id: globalDictId, ...enrichmentPayload, created_at: now, updated_at: now })
       .select('id')
       .single();
 
@@ -438,7 +458,8 @@ Given an English word and optional context sentence, return a JSON object with:
 - pronunciation_ipa: IPA pronunciation (e.g., /ˈwɜːrd/)
 - cefr_level: A1/A2/B1/B2/C1/C2 or null if uncertain
 - confidence: 0.0-1.0 indicating overall confidence
-- native_alternatives: 2-4 alternative ${langName} translations (synonyms/near-synonyms in ${langName}, NOT "${primaryTranslation}", no trivial inflections like plural forms, no duplicates). If no good alternatives exist, return empty array [].
+- best_native_translation: the single best ${langName} translation for this word as used in the given context. Consider the context carefully — for polysemous words, pick the sense that matches. Return null if uncertain.
+- native_alternatives: 2-4 other valid ${langName} translations (not the best_native_translation, no trivial inflections like plural forms, no duplicates). If no good alternatives exist, return empty array [].
 
 IMPORTANT for example_sentences and disambiguation_sentence:
 - Each sentence should demonstrate the target word in context
@@ -449,7 +470,7 @@ IMPORTANT for example_sentences and disambiguation_sentence:
 Word: ${word.word}
 Stem: ${word.stem || word.word}
 Context: ${context || 'none'}
-Primary ${langName} translation: ${primaryTranslation}`;
+Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -489,6 +510,9 @@ Primary ${langName} translation: ${primaryTranslation}`;
     native_alternatives: Array.isArray(parsed.native_alternatives)
       ? parsed.native_alternatives.filter((a: string) => a && typeof a === 'string')
       : [],
+    best_native_translation: (parsed.best_native_translation && typeof parsed.best_native_translation === 'string')
+      ? parsed.best_native_translation
+      : null,
   };
 }
 
