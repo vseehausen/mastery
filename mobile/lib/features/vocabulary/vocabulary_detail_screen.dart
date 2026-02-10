@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/progress_stage_badge.dart';
 import '../../data/services/progress_stage_service.dart';
 import '../../domain/models/encounter.dart';
+import '../../domain/models/global_dictionary.dart';
 import '../../domain/models/learning_card.dart';
-import '../../domain/models/meaning.dart';
 import '../../domain/models/vocabulary.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dev_mode_provider.dart';
@@ -17,14 +16,6 @@ import '../../providers/supabase_provider.dart';
 import 'presentation/widgets/card_preview_sheet.dart';
 import 'presentation/widgets/dev_info_panel.dart';
 import 'presentation/widgets/meaning_editor.dart';
-
-/// Provider for enrichment queue status
-final enrichmentQueueStatusProvider = FutureProvider.autoDispose
-    .family<Map<String, dynamic>?, (String, String)>((ref, params) async {
-      final (userId, vocabularyId) = params;
-      final service = ref.watch(supabaseDataServiceProvider);
-      return service.getEnrichmentQueueStatus(userId, vocabularyId);
-    });
 
 /// Detail screen for a single vocabulary entry
 class VocabularyDetailScreen extends ConsumerStatefulWidget {
@@ -44,7 +35,7 @@ class _VocabularyDetailScreenState
   @override
   Widget build(BuildContext context) {
     final vocabAsync = ref.watch(vocabularyByIdProvider(widget.vocabularyId));
-    final meaningsAsync = ref.watch(meaningsProvider(widget.vocabularyId));
+    final globalDictAsync = ref.watch(globalDictionaryProvider(widget.vocabularyId));
 
     return Scaffold(
       appBar: AppBar(
@@ -55,14 +46,14 @@ class _VocabularyDetailScreenState
         ),
         actions: [
           // Edit icon in header
-          meaningsAsync.when(
+          globalDictAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (_, _) => const SizedBox.shrink(),
-            data: (meanings) {
-              if (meanings.isEmpty) return const SizedBox.shrink();
+            data: (globalDict) {
+              if (globalDict == null) return const SizedBox.shrink();
               return IconButton(
                 icon: const Icon(Icons.edit_outlined),
-                onPressed: () => _openMeaningEditor(meanings.first),
+                onPressed: () => _openMeaningEditor(globalDict),
               );
             },
           ),
@@ -83,14 +74,14 @@ class _VocabularyDetailScreenState
 
   Widget _buildContent(BuildContext context, VocabularyModel vocab) {
     final encounterAsync = ref.watch(mostRecentEncounterProvider(vocab.id));
-    final meaningsAsync = ref.watch(meaningsProvider(vocab.id));
+    final globalDictAsync = ref.watch(globalDictionaryProvider(vocab.id));
     final learningCardAsync = ref.watch(
       learningCardByVocabularyIdProvider(vocab.id),
     );
     final learningCard = learningCardAsync.valueOrNull;
 
     // Trigger enrichment check for un-enriched words
-    _triggerEnrichmentIfNeeded(meaningsAsync, vocab.id);
+    _triggerEnrichmentIfNeeded(globalDictAsync, vocab.id);
 
     return SafeArea(
       child: Column(
@@ -109,13 +100,13 @@ class _VocabularyDetailScreenState
                   const SizedBox(height: AppSpacing.s10), // 40
 
                   // MEANING AREA (sectioned)
-                  meaningsAsync.when(
+                  globalDictAsync.when(
                     loading: () => _buildLoadingIndicator(),
                     error: (_, _) => _buildErrorMessage(
                       'Couldn\'t load meaning. Please try again.',
-                      onRetry: () => ref.invalidate(meaningsProvider(vocab.id)),
+                      onRetry: () => ref.invalidate(globalDictionaryProvider(vocab.id)),
                     ),
-                    data: (meanings) => _buildMeaningContent(meanings),
+                    data: (globalDict) => _buildMeaningContent(globalDict),
                   ),
 
                   // Show context only if available
@@ -139,14 +130,14 @@ class _VocabularyDetailScreenState
                   ),
 
                   // Dev info
-                  meaningsAsync.when(
+                  globalDictAsync.when(
                     loading: () => const SizedBox.shrink(),
                     error: (_, _) => const SizedBox.shrink(),
-                    data: (meanings) {
-                      if (meanings.isEmpty) return const SizedBox.shrink();
+                    data: (globalDict) {
+                      if (globalDict == null) return const SizedBox.shrink();
                       return Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.s8),
-                        child: _buildDevInfoSection(meanings.first, vocab.id, ref),
+                        child: _buildDevInfoSection(globalDict, ref),
                       );
                     },
                   ),
@@ -156,7 +147,7 @@ class _VocabularyDetailScreenState
           ),
 
           // Fixed bottom bar
-          _buildBottomBar(meaningsAsync, vocab.id),
+          _buildBottomBar(globalDictAsync, vocab),
         ],
       ),
     );
@@ -223,17 +214,24 @@ class _VocabularyDetailScreenState
   }
 
   /// Translation section — translation + alternatives + suggest edit
-  Widget _buildTranslationSection(MeaningModel meaning) {
+  Widget _buildTranslationSection(GlobalDictionaryModel globalDict) {
     final colors = context.masteryColors;
 
+    // Get first available language translations
+    final langTranslations = globalDict.translations.isNotEmpty
+        ? globalDict.translations.values.first
+        : null;
+    final primaryTranslation = langTranslations?.primary ?? '';
+    final alternatives = langTranslations?.alternatives ?? [];
+
     return Column(
-      key: ValueKey(meaning.id),
+      key: ValueKey(globalDict.id),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Part of speech as uppercase label
-        if (meaning.partOfSpeech != null) ...[
+        if (globalDict.partOfSpeech != null) ...[
           Text(
-            meaning.partOfSpeech!.toUpperCase(),
+            globalDict.partOfSpeech!.toUpperCase(),
             style: TextStyle(
               fontSize: AppTypography.fontSizeXs,
               fontWeight: AppTypography.fontWeightMedium,
@@ -246,7 +244,7 @@ class _VocabularyDetailScreenState
 
         // Primary translation
         Text(
-          meaning.primaryTranslation,
+          primaryTranslation,
           style: const TextStyle(
             fontSize: AppTypography.fontSize2xl, // 28
             fontWeight: AppTypography.fontWeightSemibold,
@@ -256,10 +254,10 @@ class _VocabularyDetailScreenState
         ),
 
         // Alternative translations
-        if (meaning.alternativeTranslations.isNotEmpty) ...[
+        if (alternatives.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s1), // 4
           Text(
-            meaning.alternativeTranslations.join(' · '),
+            alternatives.join(' · '),
             style: TextStyle(
               fontSize: AppTypography.fontSizeBase, // 16
               color: colors.mutedForeground,
@@ -271,7 +269,7 @@ class _VocabularyDetailScreenState
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.s1),
           child: TextButton(
-            onPressed: () => _openMeaningEditor(meaning),
+            onPressed: () => _openMeaningEditor(globalDict),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
@@ -293,25 +291,26 @@ class _VocabularyDetailScreenState
   }
 
   /// Definition section — label + definition + synonyms
-  Widget _buildDefinitionSection(MeaningModel meaning) {
+  Widget _buildDefinitionSection(GlobalDictionaryModel globalDict) {
     final colors = context.masteryColors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Definition text
-        Text(
-          meaning.englishDefinition,
-          style: TextStyle(
-            fontSize: AppTypography.fontSizeLg,
-            fontWeight: AppTypography.fontWeightMedium,
-            height: AppTypography.lineHeightRelaxed,
-            color: colors.foreground,
+        if (globalDict.englishDefinition != null)
+          Text(
+            globalDict.englishDefinition!,
+            style: TextStyle(
+              fontSize: AppTypography.fontSizeLg,
+              fontWeight: AppTypography.fontWeightMedium,
+              height: AppTypography.lineHeightRelaxed,
+              color: colors.foreground,
+            ),
           ),
-        ),
 
         // Synonyms with "Similar:" label
-        if (meaning.synonyms.isNotEmpty) ...[
+        if (globalDict.synonyms.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s4), // 16
           Text.rich(
             TextSpan(
@@ -324,7 +323,7 @@ class _VocabularyDetailScreenState
                   ),
                 ),
                 TextSpan(
-                  text: meaning.synonyms.join(', '),
+                  text: globalDict.synonyms.join(', '),
                   style: TextStyle(
                     fontSize: AppTypography.fontSizeSm, // 14
                     color: colors.mutedForeground,
@@ -339,12 +338,10 @@ class _VocabularyDetailScreenState
   }
 
   /// Meaning content (no card wrapper)
-  Widget _buildMeaningContent(List<MeaningModel> meanings) {
-    if (meanings.isEmpty) {
+  Widget _buildMeaningContent(GlobalDictionaryModel? globalDict) {
+    if (globalDict == null) {
       return _buildEnrichmentPlaceholder();
     }
-
-    final meaning = meanings.first;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,12 +349,12 @@ class _VocabularyDetailScreenState
         // Translation section
         AnimatedSwitcher(
           duration: AppAnimation.duration300,
-          child: _buildTranslationSection(meaning),
+          child: _buildTranslationSection(globalDict),
         ),
         const SizedBox(height: AppSpacing.s12), // 48
 
         // Definition section
-        _buildDefinitionSection(meaning),
+        _buildDefinitionSection(globalDict),
       ],
     );
   }
@@ -451,18 +448,17 @@ class _VocabularyDetailScreenState
 
   /// Fixed bottom bar with action buttons
   Widget _buildBottomBar(
-    AsyncValue<List<MeaningModel>> meaningsAsync,
-    String vocabularyId,
+    AsyncValue<GlobalDictionaryModel?> globalDictAsync,
+    VocabularyModel vocab,
   ) {
     final colors = context.masteryColors;
     return BottomAppBar(
       elevation: 0,
-      child: meaningsAsync.when(
+      child: globalDictAsync.when(
         loading: () => const SizedBox.shrink(),
         error: (_, _) => const SizedBox.shrink(),
-        data: (meanings) {
-          final hasMeaning = meanings.isNotEmpty;
-          final meaning = hasMeaning ? meanings.first : null;
+        data: (globalDict) {
+          final hasDict = globalDict != null;
           final userId = ref.watch(currentUserIdProvider);
 
           return Row(
@@ -470,20 +466,15 @@ class _VocabularyDetailScreenState
             children: [
               // Preview Cards - outlined button
               OutlinedButton(
-                  onPressed: hasMeaning
+                  onPressed: hasDict
                       ? () {
                           showModalBottomSheet<void>(
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
                             builder: (context) => CardPreviewSheet(
-                              vocabularyId: vocabularyId,
-                              word:
-                                  ref
-                                      .read(vocabularyByIdProvider(vocabularyId))
-                                      .valueOrNull
-                                      ?.displayWord ??
-                                  '',
+                              vocabularyId: vocab.id,
+                              word: vocab.displayWord,
                             ),
                           );
                         }
@@ -510,10 +501,10 @@ class _VocabularyDetailScreenState
               const SizedBox(width: AppSpacing.s3),
 
               // Actions menu (feedback + re-generate)
-              if (hasMeaning && userId != null)
+              if (hasDict && userId != null)
                 IconButton(
                   onPressed: () =>
-                      _showActionMenu(vocabularyId, meaning!.id, userId),
+                      _showActionMenu(vocab.id, globalDict.id, userId),
                   icon: const Icon(Icons.more_vert, size: AppSpacing.s5),
                   style: IconButton.styleFrom(
                     side: BorderSide(color: colors.border),
@@ -600,7 +591,7 @@ class _VocabularyDetailScreenState
 
   /// Submit feedback (thumbs up/down)
   Future<void> _submitFeedback(
-    String meaningId,
+    String globalDictionaryId,
     String userId,
     String rating,
   ) async {
@@ -608,7 +599,7 @@ class _VocabularyDetailScreenState
     try {
       await service.createEnrichmentFeedback(
         userId: userId,
-        meaningId: meaningId,
+        globalDictionaryId: globalDictionaryId,
         fieldName: 'translation',
         rating: rating,
       );
@@ -633,9 +624,7 @@ class _VocabularyDetailScreenState
   }
 
   /// Show flag sheet
-  Future<void> _showFlagSheet(String meaningId, String userId) async {
-    // Reuse existing FieldFeedback bottom sheet logic
-    // For now, just show a simple dialog
+  Future<void> _showFlagSheet(String globalDictionaryId, String userId) async {
     final category = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -683,7 +672,7 @@ class _VocabularyDetailScreenState
       try {
         await service.createEnrichmentFeedback(
           userId: userId,
-          meaningId: meaningId,
+          globalDictionaryId: globalDictionaryId,
           fieldName: 'translation',
           rating: 'flag',
           flagCategory: category,
@@ -712,7 +701,7 @@ class _VocabularyDetailScreenState
   /// Show actions menu (feedback + re-generate)
   Future<void> _showActionMenu(
     String vocabularyId,
-    String meaningId,
+    String globalDictionaryId,
     String userId,
   ) async {
     final action = await showModalBottomSheet<String>(
@@ -751,10 +740,10 @@ class _VocabularyDetailScreenState
     if (action == null) return;
 
     if (action == 'positive' || action == 'negative') {
-      await _submitFeedback(meaningId, userId, action);
+      await _submitFeedback(globalDictionaryId, userId, action);
     } else if (action == 'flag') {
       if (mounted) {
-        await _showFlagSheet(meaningId, userId);
+        await _showFlagSheet(globalDictionaryId, userId);
       }
     } else if (action == 're-generate') {
       await _showReEnrichDialog(vocabularyId);
@@ -762,13 +751,13 @@ class _VocabularyDetailScreenState
   }
 
   void _triggerEnrichmentIfNeeded(
-    AsyncValue<List<MeaningModel>> meaningsAsync,
+    AsyncValue<GlobalDictionaryModel?> globalDictAsync,
     String vocabularyId,
   ) {
     if (_enrichmentTriggered) return;
 
-    meaningsAsync.whenData((meanings) {
-      if (meanings.isEmpty) {
+    globalDictAsync.whenData((globalDict) {
+      if (globalDict == null) {
         _enrichmentTriggered = true;
         debugPrint(
           '[VocabularyDetail] Triggering enrichment for $vocabularyId',
@@ -794,21 +783,21 @@ class _VocabularyDetailScreenState
         '[VocabularyDetail] Enrichment result: ${result.enrichedCount} enriched, ${result.failedCount} failed',
       );
 
-      // Refresh the meanings after enrichment
+      // Refresh the global dictionary data after enrichment
       if (result.enrichedCount > 0) {
-        ref.invalidate(meaningsProvider(vocabularyId));
+        ref.invalidate(globalDictionaryProvider(vocabularyId));
       }
     } catch (e) {
       debugPrint('[VocabularyDetail] Enrichment error: $e');
     }
   }
 
-  void _openMeaningEditor(MeaningModel meaning) {
+  void _openMeaningEditor(GlobalDictionaryModel globalDict) {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave: ({
             required String translation,
             required String definition,
@@ -817,8 +806,7 @@ class _VocabularyDetailScreenState
             required List<String> alternativeTranslations,
           }) {
             Navigator.of(context).pop();
-            _handleMeaningSave(
-              meaning,
+            _handleOverrideSave(
               translation: translation,
               definition: definition,
               partOfSpeech: partOfSpeech,
@@ -832,155 +820,46 @@ class _VocabularyDetailScreenState
     );
   }
 
-  Future<void> _handleMeaningSave(
-    MeaningModel meaning, {
+  Future<void> _handleOverrideSave({
     required String translation,
     required String definition,
     required String partOfSpeech,
     required List<String> synonyms,
     required List<String> alternativeTranslations,
   }) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
     final service = ref.read(supabaseDataServiceProvider);
 
-    // Record edits for changed fields
-    if (translation != meaning.primaryTranslation) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'primary_translation',
-        originalValue: meaning.primaryTranslation,
-        userValue: translation,
-      );
-    }
-    if (definition != meaning.englishDefinition) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'english_definition',
-        originalValue: meaning.englishDefinition,
-        userValue: definition,
-      );
-    }
-    if (partOfSpeech != (meaning.partOfSpeech ?? 'other')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'part_of_speech',
-        originalValue: meaning.partOfSpeech ?? 'other',
-        userValue: partOfSpeech,
-      );
-    }
-    if (synonyms.join(',') != meaning.synonyms.join(',')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'synonyms',
-        originalValue: meaning.synonyms.join(','),
-        userValue: synonyms.join(','),
-      );
-    }
-    if (alternativeTranslations.join(',') !=
-        meaning.alternativeTranslations.join(',')) {
-      await service.createMeaningEdit(
-        id: const Uuid().v4(),
-        userId: userId,
-        meaningId: meaning.id,
-        fieldName: 'alternative_translations',
-        originalValue: meaning.alternativeTranslations.join(','),
-        userValue: alternativeTranslations.join(','),
-      );
-    }
+    // Build overrides map with only changed fields
+    final overrides = <String, dynamic>{
+      'primary_translation': translation,
+      'english_definition': definition,
+      'part_of_speech': partOfSpeech,
+      'synonyms': synonyms,
+      'alternative_translations': alternativeTranslations,
+    };
 
-    // Apply the update
-    await service.updateMeaning(
-      id: meaning.id,
-      primaryTranslation: translation,
-      englishDefinition: definition,
-      partOfSpeech: partOfSpeech != (meaning.partOfSpeech ?? 'other')
-          ? partOfSpeech
-          : meaning.partOfSpeech,
-      synonyms: synonyms,
-      alternativeTranslations: alternativeTranslations,
-    );
+    await service.updateVocabularyOverrides(widget.vocabularyId, overrides);
 
-    // Auto-update related cues
-    await _autoUpdateCues(
-      meaningId: meaning.id,
-      translationChanged: translation != meaning.primaryTranslation,
-      newTranslation: translation,
-      definitionChanged: definition != meaning.englishDefinition,
-      newDefinition: definition,
-      synonymsChanged: synonyms.join(',') != meaning.synonyms.join(','),
-      newSynonyms: synonyms,
-    );
-
-    // Refresh meanings and cues
-    ref.invalidate(meaningsProvider(widget.vocabularyId));
-    ref.invalidate(cuesForVocabularyProvider(widget.vocabularyId));
-  }
-
-  Future<void> _autoUpdateCues({
-    required String meaningId,
-    required bool translationChanged,
-    required String newTranslation,
-    required bool definitionChanged,
-    required String newDefinition,
-    required bool synonymsChanged,
-    required List<String> newSynonyms,
-  }) async {
-    final service = ref.read(supabaseDataServiceProvider);
-    final cues = await service.getCuesForMeaning(meaningId);
-
-    for (final cue in cues) {
-      final cueType = cue['cue_type'] as String?;
-      final cueId = cue['id'] as String;
-
-      if (translationChanged && cueType == 'translation') {
-        await service.updateCue(cueId, promptText: newTranslation);
-      } else if (definitionChanged && cueType == 'definition') {
-        await service.updateCue(cueId, promptText: newDefinition);
-      } else if (synonymsChanged && cueType == 'synonym') {
-        final synonymsText = newSynonyms.join(', ');
-        await service.updateCue(cueId, promptText: synonymsText);
-      }
-    }
+    // Refresh data
+    ref.invalidate(globalDictionaryProvider(widget.vocabularyId));
+    ref.invalidate(primaryTranslationsMapProvider);
   }
 
   Widget _buildDevInfoSection(
-    MeaningModel meaning,
-    String vocabularyId,
+    GlobalDictionaryModel globalDict,
     WidgetRef ref,
   ) {
-    final userId = ref.watch(currentUserIdProvider);
     final devMode = ref.watch(devModeProvider);
 
-    if (!devMode || userId == null) {
+    if (!devMode) {
       return const SizedBox.shrink();
     }
 
-    final queueStatusAsync = ref.watch(
-      enrichmentQueueStatusProvider((userId, vocabularyId)),
-    );
-
-    return queueStatusAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (queueStatus) => DevInfoPanel(
-        meaning: {
-          'confidence': meaning.confidence,
-          'source': meaning.source,
-          'created_at': meaning.createdAt.toIso8601String(),
-          'updated_at': meaning.updatedAt.toIso8601String(),
-        },
-        queueStatus: queueStatus,
-      ),
+    return DevInfoPanel(
+      meaning: {
+        'confidence': globalDict.confidence,
+        'source': 'global_dictionary',
+      },
     );
   }
 
@@ -1025,9 +904,8 @@ class _VocabularyDetailScreenState
         vocabularyId: vocabularyId,
       );
 
-      // Refresh meanings and cues
-      ref.invalidate(meaningsProvider(vocabularyId));
-      ref.invalidate(cuesForVocabularyProvider(vocabularyId));
+      // Refresh data
+      ref.invalidate(globalDictionaryProvider(vocabularyId));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

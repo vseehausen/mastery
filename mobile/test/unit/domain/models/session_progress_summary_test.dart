@@ -216,7 +216,7 @@ void main() {
 
         final summary = SessionProgressSummary(transitions);
 
-        expect(summary.toDisplayString(), '1 word → Stabilizing');
+        expect(summary.toDisplayString(), '1 word moved to Stabilizing');
       });
 
       test('formats multiple stabilizing transitions with plural', () {
@@ -237,7 +237,7 @@ void main() {
 
         final summary = SessionProgressSummary(transitions);
 
-        expect(summary.toDisplayString(), '2 words → Stabilizing');
+        expect(summary.toDisplayString(), '2 words moved to Stabilizing');
       });
 
       test('formats mixed transitions with separator', () {
@@ -266,7 +266,7 @@ void main() {
 
         expect(
           summary.toDisplayString(),
-          '2 words → Stabilizing • 1 word → Known',
+          '2 words moved to Stabilizing • 1 word moved to Known',
         );
       });
 
@@ -296,7 +296,7 @@ void main() {
 
         expect(
           summary.toDisplayString(),
-          '1 word → Stabilizing • 1 word → Known • 1 word → Mastered',
+          '1 word moved to Stabilizing • 1 word moved to Known • 1 word moved to Mastered',
         );
       });
 

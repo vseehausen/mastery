@@ -82,24 +82,6 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<void>);
 
   @override
-  _i3.Future<List<Map<String, dynamic>>> getMeanings(String? vocabularyId) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMeanings, [vocabularyId]),
-            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-              <Map<String, dynamic>>[],
-            ),
-          )
-          as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<Map<String, dynamic>?> getPrimaryMeaning(String? vocabularyId) =>
-      (super.noSuchMethod(
-            Invocation.method(#getPrimaryMeaning, [vocabularyId]),
-            returnValue: _i3.Future<Map<String, dynamic>?>.value(),
-          )
-          as _i3.Future<Map<String, dynamic>?>);
-
-  @override
   _i3.Future<List<String>> getEnrichedVocabularyIds(String? userId) =>
       (super.noSuchMethod(
             Invocation.method(#getEnrichedVocabularyIds, [userId]),
@@ -108,9 +90,16 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<List<String>>);
 
   @override
-  _i3.Future<Map<String, String>> getAllPrimaryTranslations(String? userId) =>
+  _i3.Future<Map<String, String>> getAllPrimaryTranslations(
+    String? userId, {
+    String? nativeLanguageCode = 'de',
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#getAllPrimaryTranslations, [userId]),
+            Invocation.method(
+              #getAllPrimaryTranslations,
+              [userId],
+              {#nativeLanguageCode: nativeLanguageCode},
+            ),
             returnValue: _i3.Future<Map<String, String>>.value(
               <String, String>{},
             ),
@@ -118,23 +107,27 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<Map<String, String>>);
 
   @override
-  _i3.Future<void> updateMeaning({
-    required String? id,
-    String? primaryTranslation,
-    String? englishDefinition,
-    String? partOfSpeech,
-    List<String>? synonyms,
-    List<String>? alternativeTranslations,
-  }) =>
+  _i3.Future<Map<String, dynamic>?> getGlobalDictionaryForVocabulary(
+    String? vocabularyId,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#updateMeaning, [], {
-              #id: id,
-              #primaryTranslation: primaryTranslation,
-              #englishDefinition: englishDefinition,
-              #partOfSpeech: partOfSpeech,
-              #synonyms: synonyms,
-              #alternativeTranslations: alternativeTranslations,
-            }),
+            Invocation.method(#getGlobalDictionaryForVocabulary, [
+              vocabularyId,
+            ]),
+            returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+          )
+          as _i3.Future<Map<String, dynamic>?>);
+
+  @override
+  _i3.Future<void> updateVocabularyOverrides(
+    String? vocabularyId,
+    Map<String, dynamic>? overrides,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateVocabularyOverrides, [
+              vocabularyId,
+              overrides,
+            ]),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
@@ -531,50 +524,6 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<Map<String, dynamic>?>);
 
   @override
-  _i3.Future<List<Map<String, dynamic>>> getCuesForVocabulary(
-    String? vocabularyId,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getCuesForVocabulary, [vocabularyId]),
-            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-              <Map<String, dynamic>>[],
-            ),
-          )
-          as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> getCuesForMeaning(String? meaningId) =>
-      (super.noSuchMethod(
-            Invocation.method(#getCuesForMeaning, [meaningId]),
-            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-              <Map<String, dynamic>>[],
-            ),
-          )
-          as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<void> updateCue(
-    String? cueId, {
-    String? promptText,
-    String? answerText,
-    String? hintText,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #updateCue,
-              [cueId],
-              {
-                #promptText: promptText,
-                #answerText: answerText,
-                #hintText: hintText,
-              },
-            ),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
-          )
-          as _i3.Future<void>);
-
-  @override
   _i3.Future<List<Map<String, dynamic>>> getConfusableSetsForVocabulary(
     String? vocabularyId,
   ) =>
@@ -587,32 +536,9 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i3.Future<void> createMeaningEdit({
-    required String? id,
-    required String? userId,
-    required String? meaningId,
-    required String? fieldName,
-    required String? originalValue,
-    required String? userValue,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#createMeaningEdit, [], {
-              #id: id,
-              #userId: userId,
-              #meaningId: meaningId,
-              #fieldName: fieldName,
-              #originalValue: originalValue,
-              #userValue: userValue,
-            }),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
-          )
-          as _i3.Future<void>);
-
-  @override
   _i3.Future<void> createEnrichmentFeedback({
     required String? userId,
-    required String? meaningId,
+    required String? globalDictionaryId,
     required String? fieldName,
     required String? rating,
     String? flagCategory,
@@ -621,7 +547,7 @@ class MockSupabaseDataService extends _i1.Mock
       (super.noSuchMethod(
             Invocation.method(#createEnrichmentFeedback, [], {
               #userId: userId,
-              #meaningId: meaningId,
+              #globalDictionaryId: globalDictionaryId,
               #fieldName: fieldName,
               #rating: rating,
               #flagCategory: flagCategory,
@@ -634,29 +560,15 @@ class MockSupabaseDataService extends _i1.Mock
 
   @override
   _i3.Future<List<Map<String, dynamic>>> getEnrichmentFeedback(
-    String? meaningId,
+    String? globalDictionaryId,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#getEnrichmentFeedback, [meaningId]),
+            Invocation.method(#getEnrichmentFeedback, [globalDictionaryId]),
             returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
               <Map<String, dynamic>>[],
             ),
           )
           as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<Map<String, dynamic>?> getEnrichmentQueueStatus(
-    String? userId,
-    String? vocabularyId,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getEnrichmentQueueStatus, [
-              userId,
-              vocabularyId,
-            ]),
-            returnValue: _i3.Future<Map<String, dynamic>?>.value(),
-          )
-          as _i3.Future<Map<String, dynamic>?>);
 
   @override
   _i3.Future<int> getReviewCount(String? userId) =>

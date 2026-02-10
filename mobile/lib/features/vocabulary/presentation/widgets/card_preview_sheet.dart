@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../domain/models/cue.dart';
-import '../../../../domain/models/meaning.dart';
+import '../../../../domain/models/global_dictionary.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../learn/widgets/cloze_cue_card.dart';
 import '../../../learn/widgets/definition_cue_card.dart';
@@ -42,7 +41,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
-    final meaningsAsync = ref.watch(meaningsProvider(widget.vocabularyId));
+    final globalDictAsync = ref.watch(globalDictionaryProvider(widget.vocabularyId));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.92,
@@ -113,7 +112,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
 
           // Card content
           Expanded(
-            child: meaningsAsync.when(
+            child: globalDictAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Text(
@@ -123,8 +122,8 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                   ),
                 ),
               ),
-              data: (meanings) {
-                if (meanings.isEmpty) {
+              data: (globalDict) {
+                if (globalDict == null) {
                   return Center(
                     child: Text(
                       'No meaning data available',
@@ -135,134 +134,88 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                   );
                 }
 
-                final meaning = meanings.first;
-                final cuesAsync = ref.watch(cuesForMeaningProvider(meaning.id));
+                final cards = _buildCardList(globalDict);
 
-                return cuesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(
-                    child: Text(
-                      'Failed to load cues',
-                      style: MasteryTextStyles.body.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                  data: (cues) {
-                    final cards = _buildCardList(meaning, cues);
-
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            onPageChanged: (index) {
-                              setState(() => _currentPage = index);
-                            },
-                            itemCount: cards.length,
-                            itemBuilder: (context, index) {
-                              final cardData = cards[index];
-                              return Column(
-                                children: [
-                                  // Card type label chip
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 8,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: cardData.color.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: cardData.color.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            cardData.label,
-                                            style: MasteryTextStyles.bodySmall
-                                                .copyWith(
-                                                  color: cardData.color,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                          if (cardData.isSample) ...[
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: colors.muted,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                'sample',
-                                                style: MasteryTextStyles.caption
-                                                    .copyWith(
-                                                      fontSize: 10,
-                                                      color: colors
-                                                          .mutedForeground,
-                                                    ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Card widget
-                                  Expanded(
-                                    child: ClipRect(child: cardData.widget),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Dot indicator
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 24, top: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              cards.length,
-                              (index) => Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
+                return Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() => _currentPage = index);
+                        },
+                        itemCount: cards.length,
+                        itemBuilder: (context, index) {
+                          final cardData = cards[index];
+                          return Column(
+                            children: [
+                              // Card type label chip
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
                                 ),
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: index == _currentPage
-                                      ? colors.primaryAction
-                                      : colors.border,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cardData.color.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: cardData.color.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    cardData.label,
+                                    style: MasteryTextStyles.bodySmall
+                                        .copyWith(
+                                          color: cardData.color,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
                                 ),
                               ),
+
+                              // Card widget
+                              Expanded(
+                                child: ClipRect(child: cardData.widget),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Dot indicator
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24, top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          cards.length,
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: index == _currentPage
+                                  ? colors.primaryAction
+                                  : colors.border,
                             ),
                           ),
                         ),
-                      ],
-                    );
-                  },
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -272,30 +225,24 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     );
   }
 
-  List<_CardData> _buildCardList(MeaningModel meaning, List<dynamic> cues) {
+  List<_CardData> _buildCardList(GlobalDictionaryModel globalDict) {
     final cards = <_CardData>[];
 
-    // Convert maps to CueModel objects
-    final cueModels = cues
-        .map(
-          (c) =>
-              c is CueModel ? c : CueModel.fromJson(c as Map<String, dynamic>),
-        )
-        .toList();
+    // Get translation data
+    final langTranslations = globalDict.translations.isNotEmpty
+        ? globalDict.translations.values.first
+        : null;
+    final primaryTranslation = langTranslations?.primary ?? '';
+    final alternatives = langTranslations?.alternatives ?? [];
 
-    // 1. Recall Card (translation cue)
-    final translationCue = cueModels
-        .where((c) => c.cueType == 'translation')
-        .firstOrNull;
+    // 1. Recall Card (translation)
     cards.add(
       _CardData(
         label: 'Recall',
         color: MasteryColors.getCueColor(context, 'translation'),
-        isSample: translationCue == null,
         widget: RecallCard(
           word: widget.word,
-          answer: translationCue?.answerText ?? meaning.primaryTranslation,
-          context: translationCue?.metadata['context_sentence'] as String?,
+          answer: primaryTranslation,
           onGrade: (_) {}, // No-op in preview mode
           isPreview: true,
         ),
@@ -303,39 +250,28 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     );
 
     // 2. Recognition Card (translation + distractors)
-    final distractors = translationCue?.metadata['distractors'] as List?;
-    final recognitionDistractors =
-        distractors?.cast<String>() ??
-        _generateFallbackDistractors(meaning.alternativeTranslations);
+    final recognitionDistractors = _generateFallbackDistractors(alternatives);
     cards.add(
       _CardData(
         label: 'Recognition',
         color: MasteryColors.getCueColor(context, 'multiple_choice'),
-        isSample: translationCue == null || distractors == null,
         widget: RecognitionCard(
           word: widget.word,
-          correctAnswer:
-              translationCue?.answerText ?? meaning.primaryTranslation,
+          correctAnswer: primaryTranslation,
           distractors: recognitionDistractors,
-          context: translationCue?.metadata['context_sentence'] as String?,
           onAnswer: (selected, isCorrect) {}, // No-op in preview mode
         ),
       ),
     );
 
     // 3. Definition Cue Card
-    final definitionCue = cueModels
-        .where((c) => c.cueType == 'definition')
-        .firstOrNull;
     cards.add(
       _CardData(
         label: 'Definition',
         color: MasteryColors.getCueColor(context, 'definition'),
-        isSample: definitionCue == null,
         widget: DefinitionCueCard(
-          definition: definitionCue?.promptText ?? meaning.englishDefinition,
+          definition: globalDict.englishDefinition ?? '',
           targetWord: widget.word,
-          hintText: definitionCue?.hintText,
           onGrade: (_) {}, // No-op in preview mode
           isPreview: true,
         ),
@@ -343,19 +279,13 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     );
 
     // 4. Synonym Cue Card
-    final synonymCue = cueModels
-        .where((c) => c.cueType == 'synonym')
-        .firstOrNull;
-    final synonymPhrase =
-        synonymCue?.promptText ??
-        (meaning.synonyms.isNotEmpty
-            ? meaning.synonyms.join(', ')
-            : 'Similar word or phrase');
+    final synonymPhrase = globalDict.synonyms.isNotEmpty
+        ? globalDict.synonyms.join(', ')
+        : 'Similar word or phrase';
     cards.add(
       _CardData(
         label: 'Synonym',
         color: MasteryColors.getCueColor(context, 'synonym'),
-        isSample: synonymCue == null,
         widget: SynonymCueCard(
           synonymPhrase: synonymPhrase,
           targetWord: widget.word,
@@ -366,51 +296,44 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     );
 
     // 5. Cloze Cue Card
-    final clozeCue = cueModels
-        .where((c) => c.cueType == 'context_cloze')
-        .firstOrNull;
-    final clozeSentence =
-        clozeCue?.promptText ?? 'The _______ was used in a sentence.';
-    cards.add(
-      _CardData(
-        label: 'Context Cloze',
-        color: MasteryColors.getCueColor(context, 'cloze'),
-        isSample: clozeCue == null,
-        widget: ClozeCueCard(
-          sentenceWithBlank: clozeSentence,
-          targetWord: widget.word,
-          hintText: clozeCue?.hintText ?? meaning.primaryTranslation,
-          onGrade: (_) {}, // No-op in preview mode
-          isPreview: true,
+    if (globalDict.exampleSentences.isNotEmpty) {
+      final example = globalDict.exampleSentences.first;
+      final clozeSentence = '${example.before}_____${example.after}';
+      cards.add(
+        _CardData(
+          label: 'Context Cloze',
+          color: MasteryColors.getCueColor(context, 'cloze'),
+          widget: ClozeCueCard(
+            sentenceWithBlank: clozeSentence,
+            targetWord: widget.word,
+            hintText: primaryTranslation,
+            onGrade: (_) {}, // No-op in preview mode
+            isPreview: true,
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     // 6. Disambiguation Card
-    final disambiguationCue = cueModels
-        .where((c) => c.cueType == 'disambiguation')
-        .firstOrNull;
-    final disambiguationOptions =
-        disambiguationCue?.metadata['options'] as List? ??
-        [widget.word, meaning.synonyms.firstOrNull ?? 'alternative'];
-    final correctIndex =
-        disambiguationCue?.metadata['correct_index'] as int? ?? 0;
-
-    cards.add(
-      _CardData(
-        label: 'Disambiguation',
-        color: MasteryColors.getCueColor(context, 'disambiguation'),
-        isSample: disambiguationCue == null,
-        widget: DisambiguationCard(
-          clozeSentence:
-              disambiguationCue?.promptText ?? 'The ___ was in the text.',
-          options: disambiguationOptions.cast<String>(),
-          correctIndex: correctIndex,
-          explanation: '', // No explanation in preview mode
-          onGrade: (_) {}, // No-op in preview mode
-        ),
-      ),
-    );
+    if (globalDict.confusables.isNotEmpty) {
+      final confusable = globalDict.confusables.first;
+      final disambig = confusable.disambiguationSentence;
+      if (disambig != null) {
+        cards.add(
+          _CardData(
+            label: 'Disambiguation',
+            color: MasteryColors.getCueColor(context, 'disambiguation'),
+            widget: DisambiguationCard(
+              clozeSentence: '${disambig.before}_____${disambig.after}',
+              options: [widget.word, confusable.word],
+              correctIndex: 0,
+              explanation: '',
+              onGrade: (_) {}, // No-op in preview mode
+            ),
+          ),
+        );
+      }
+    }
 
     return cards;
   }
@@ -430,12 +353,10 @@ class _CardData {
   const _CardData({
     required this.label,
     required this.color,
-    required this.isSample,
     required this.widget,
   });
 
   final String label;
   final Color color;
-  final bool isSample; // True if using fallback/placeholder data
   final Widget widget;
 }

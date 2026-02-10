@@ -9,13 +9,13 @@ import '../../../../core/theme/color_tokens.dart';
 class FieldFeedback extends ConsumerStatefulWidget {
   const FieldFeedback({
     super.key,
-    required this.meaningId,
+    required this.globalDictionaryId,
     required this.fieldName,
     required this.userId,
     this.existingFeedback,
   });
 
-  final String meaningId;
+  final String globalDictionaryId;
   final String fieldName;
   final String userId;
   final Map<String, dynamic>? existingFeedback;
@@ -45,7 +45,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
       final service = ref.read(supabaseDataServiceProvider);
       await service.createEnrichmentFeedback(
         userId: widget.userId,
-        meaningId: widget.meaningId,
+        globalDictionaryId: widget.globalDictionaryId,
         fieldName: widget.fieldName,
         rating: rating,
       );
@@ -95,7 +95,7 @@ class _FieldFeedbackState extends ConsumerState<FieldFeedback> {
         final service = ref.read(supabaseDataServiceProvider);
         await service.createEnrichmentFeedback(
           userId: widget.userId,
-          meaningId: widget.meaningId,
+          globalDictionaryId: widget.globalDictionaryId,
           fieldName: widget.fieldName,
           rating: 'down',
           flagCategory: result,

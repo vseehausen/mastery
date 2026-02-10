@@ -2,11 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/services/supabase_data_service.dart';
-import '../domain/models/cue.dart';
 import '../domain/models/encounter.dart';
+import '../domain/models/global_dictionary.dart';
 import '../domain/models/learning_card.dart';
 import '../domain/models/learning_session.dart';
-import '../domain/models/meaning.dart';
 import '../domain/models/progress_stage.dart';
 import '../domain/models/source.dart';
 import '../domain/models/streak.dart';
@@ -68,7 +67,7 @@ final vocabularySearchProvider = FutureProvider.autoDispose
       return data.map(VocabularyModel.fromJson).toList();
     });
 
-/// Provider for set of vocabulary IDs that have meanings (are enriched)
+/// Provider for set of vocabulary IDs that are enriched (have global dictionary data)
 final enrichedVocabularyIdsProvider = FutureProvider.autoDispose<Set<String>>((
   ref,
 ) async {
@@ -90,24 +89,16 @@ final vocabularyStageCountsProvider =
 });
 
 // =============================================================================
-// Meaning Providers
+// Global Dictionary Providers
 // =============================================================================
 
-/// Provider for meanings of a vocabulary item
-final meaningsProvider = FutureProvider.autoDispose
-    .family<List<MeaningModel>, String>((ref, vocabularyId) async {
+/// Provider for global dictionary data for a vocabulary item
+final globalDictionaryProvider = FutureProvider.autoDispose
+    .family<GlobalDictionaryModel?, String>((ref, vocabularyId) async {
       final service = ref.watch(supabaseDataServiceProvider);
-      final data = await service.getMeanings(vocabularyId);
-      return data.map(MeaningModel.fromJson).toList();
-    });
-
-/// Provider for primary meaning of a vocabulary item
-final primaryMeaningProvider = FutureProvider.autoDispose
-    .family<MeaningModel?, String>((ref, vocabularyId) async {
-      final service = ref.watch(supabaseDataServiceProvider);
-      final data = await service.getPrimaryMeaning(vocabularyId);
+      final data = await service.getGlobalDictionaryForVocabulary(vocabularyId);
       if (data == null) return null;
-      return MeaningModel.fromJson(data);
+      return GlobalDictionaryModel.fromJson(data);
     });
 
 /// Provider for map of all primary translations (vocabularyId -> translation)
@@ -249,23 +240,4 @@ final sourceByIdProvider = FutureProvider.autoDispose
       final data = await service.getSourceById(sourceId);
       if (data == null) return null;
       return SourceModel.fromJson(data);
-    });
-
-// =============================================================================
-// Cue Providers
-// =============================================================================
-
-/// Provider for cues for a vocabulary item
-final cuesForVocabularyProvider = FutureProvider.autoDispose
-    .family<List<CueModel>, String>((ref, vocabularyId) async {
-      final service = ref.watch(supabaseDataServiceProvider);
-      final data = await service.getCuesForVocabulary(vocabularyId);
-      return data.map(CueModel.fromJson).toList();
-    });
-
-/// Provider for cues for a specific meaning
-final cuesForMeaningProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, String>((ref, meaningId) async {
-      final service = ref.watch(supabaseDataServiceProvider);
-      return service.getCuesForMeaning(meaningId);
     });

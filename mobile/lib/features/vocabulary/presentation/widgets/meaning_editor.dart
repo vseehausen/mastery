@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/theme/color_tokens.dart';
-import '../../../../domain/models/meaning.dart';
+import '../../../../domain/models/global_dictionary.dart';
 
 /// Full-screen modal editor for meaning translations and definitions.
 /// Allows editing all meaning fields including part of speech, synonyms, and alternative translations.
+/// Edits are saved as vocabulary overrides (not direct edits to global dictionary).
 class MeaningEditor extends StatefulWidget {
   const MeaningEditor({
     super.key,
-    required this.meaning,
+    required this.globalDict,
     required this.onSave,
     required this.onCancel,
   });
 
-  final MeaningModel meaning;
+  final GlobalDictionaryModel globalDict;
   final void Function({
     required String translation,
     required String definition,
@@ -34,12 +35,27 @@ class _MeaningEditorState extends State<MeaningEditor> {
   late List<String> _synonyms;
   late List<String> _alternativeTranslations;
 
-  String get _currentTranslation => widget.meaning.primaryTranslation;
-  String get _currentDefinition => widget.meaning.englishDefinition;
-  String get _currentPartOfSpeech => widget.meaning.partOfSpeech ?? 'other';
-  List<String> get _currentSynonyms => widget.meaning.synonyms;
-  List<String> get _currentAlternativeTranslations =>
-      widget.meaning.alternativeTranslations;
+  String get _currentTranslation {
+    final lang = widget.globalDict.translations.isNotEmpty
+        ? widget.globalDict.translations.values.first
+        : null;
+    return lang?.primary ?? '';
+  }
+
+  String get _currentDefinition =>
+      widget.globalDict.englishDefinition ?? '';
+
+  String get _currentPartOfSpeech =>
+      widget.globalDict.partOfSpeech ?? 'other';
+
+  List<String> get _currentSynonyms => widget.globalDict.synonyms;
+
+  List<String> get _currentAlternativeTranslations {
+    final lang = widget.globalDict.translations.isNotEmpty
+        ? widget.globalDict.translations.values.first
+        : null;
+    return lang?.alternatives ?? [];
+  }
 
   static const List<String> _partsOfSpeech = [
     'noun',

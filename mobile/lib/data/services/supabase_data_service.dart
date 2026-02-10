@@ -71,92 +71,114 @@ class SupabaseDataService {
   }
 
   // ===========================================================================
-  // Meanings
+  // Global Dictionary
   // ===========================================================================
 
-  /// Get all meanings for a vocabulary word
-  Future<List<Map<String, dynamic>>> getMeanings(String vocabularyId) async {
-    final response = await _client
-        .from('meanings')
-        .select()
-        .eq('vocabulary_id', vocabularyId)
-        .isFilter('deleted_at', null)
-        .order('sort_order');
-    return List<Map<String, dynamic>>.from(response as List);
-  }
-
-  /// Get the primary meaning for a vocabulary word
-  Future<Map<String, dynamic>?> getPrimaryMeaning(String vocabularyId) async {
-    final response = await _client
-        .from('meanings')
-        .select()
-        .eq('vocabulary_id', vocabularyId)
-        .eq('is_primary', true)
-        .isFilter('deleted_at', null)
-        .maybeSingle();
-    return response;
-  }
-
-  /// Get all vocabulary IDs that have meanings (are enriched)
+  /// Get all vocabulary IDs that have global dictionary data (are enriched)
   Future<List<String>> getEnrichedVocabularyIds(String userId) async {
     final response = await _client
-        .from('meanings')
-        .select('vocabulary_id')
+        .from('vocabulary')
+        .select('id')
         .eq('user_id', userId)
-        .isFilter('deleted_at', null);
+        .isFilter('deleted_at', null)
+        .not('global_dictionary_id', 'is', null);
     final list = List<Map<String, dynamic>>.from(response as List);
-    // Use toSet().toList() to deduplicate
-    return list.map((m) => m['vocabulary_id'] as String).toSet().toList();
+    return list.map((m) => m['id'] as String).toList();
   }
 
-  /// Get all primary translations for the current user's vocabulary
-  /// Returns a map of vocabularyId -> primaryTranslation
-  Future<Map<String, String>> getAllPrimaryTranslations(String userId) async {
-    final response = await _client
-        .from('meanings')
-        .select('vocabulary_id, primary_translation')
-        .eq('user_id', userId)
-        .eq('is_primary', true)
-        .isFilter('deleted_at', null);
-    final list = List<Map<String, dynamic>>.from(response as List);
-    return Map.fromEntries(
-      list.map(
-        (m) => MapEntry(
-          m['vocabulary_id'] as String,
-          m['primary_translation'] as String? ?? '',
-        ),
-      ),
-    );
-  }
-
-  /// Update a meaning
-  Future<void> updateMeaning({
-    required String id,
-    String? primaryTranslation,
-    String? englishDefinition,
-    String? partOfSpeech,
-    List<String>? synonyms,
-    List<String>? alternativeTranslations,
+  /// Get all primary translations for the current user's vocabulary.
+  /// Queries vocabulary JOIN global_dictionary, extracting translations.
+  /// Returns a map of vocabularyId -> primaryTranslation.
+  Future<Map<String, String>> getAllPrimaryTranslations(
+    String userId, {
+    String nativeLanguageCode = 'de',
   }) async {
-    final updates = <String, dynamic>{
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    };
-    if (primaryTranslation != null) {
-      updates['primary_translation'] = primaryTranslation;
+    final response = await _client
+        .from('vocabulary')
+        .select('id, overrides, global_dictionary!inner(translations)')
+        .eq('user_id', userId)
+        .isFilter('deleted_at', null)
+        .not('global_dictionary_id', 'is', null);
+    final list = List<Map<String, dynamic>>.from(response as List);
+
+    final result = <String, String>{};
+    for (final row in list) {
+      final vocabId = row['id'] as String;
+
+      // Check overrides first
+      final overrides = row['overrides'];
+      if (overrides is Map && overrides['primary_translation'] is String) {
+        result[vocabId] = overrides['primary_translation'] as String;
+        continue;
+      }
+
+      // Extract from global_dictionary translations
+      final gd = row['global_dictionary'];
+      if (gd is Map<String, dynamic>) {
+        final translations = gd['translations'];
+        if (translations is Map) {
+          final langData = translations[nativeLanguageCode];
+          if (langData is Map && langData['primary'] is String) {
+            result[vocabId] = langData['primary'] as String;
+            continue;
+          }
+          // Fall back to first available language
+          for (final entry in translations.entries) {
+            final val = entry.value;
+            if (val is Map && val['primary'] is String) {
+              result[vocabId] = val['primary'] as String;
+              break;
+            }
+          }
+        }
+      }
     }
-    if (englishDefinition != null) {
-      updates['english_definition'] = englishDefinition;
-    }
-    if (partOfSpeech != null) {
-      updates['part_of_speech'] = partOfSpeech;
-    }
-    if (synonyms != null) {
-      updates['synonyms'] = synonyms;
-    }
-    if (alternativeTranslations != null) {
-      updates['alternative_translations'] = alternativeTranslations;
-    }
-    await _client.from('meanings').update(updates).eq('id', id);
+    return result;
+  }
+
+  /// Get global dictionary data for a vocabulary item.
+  /// Returns the global_dictionary row joined via vocabulary.global_dictionary_id.
+  Future<Map<String, dynamic>?> getGlobalDictionaryForVocabulary(
+    String vocabularyId,
+  ) async {
+    final response = await _client
+        .from('vocabulary')
+        .select('global_dictionary_id, global_dictionary!inner(*)')
+        .eq('id', vocabularyId)
+        .not('global_dictionary_id', 'is', null)
+        .maybeSingle();
+
+    if (response == null) return null;
+    final gd = response['global_dictionary'];
+    if (gd is Map<String, dynamic>) return gd;
+    return null;
+  }
+
+  /// Update vocabulary overrides (replaces meaning edits).
+  /// Merges the given overrides into the existing overrides JSONB.
+  Future<void> updateVocabularyOverrides(
+    String vocabularyId,
+    Map<String, dynamic> overrides,
+  ) async {
+    // Fetch current overrides, merge, then update
+    final current = await _client
+        .from('vocabulary')
+        .select('overrides')
+        .eq('id', vocabularyId)
+        .single();
+
+    final existing = current['overrides'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(current['overrides'] as Map)
+        : <String, dynamic>{};
+    existing.addAll(overrides);
+
+    await _client
+        .from('vocabulary')
+        .update({
+          'overrides': existing,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', vocabularyId);
   }
 
   // ===========================================================================
@@ -212,14 +234,6 @@ class SupabaseDataService {
   }
 
   /// Get count of successful non-translation reviews for a learning card.
-  ///
-  /// Non-translation reviews are those where the cue type is NOT 'translation',
-  /// meaning the user had to produce the word from definition, synonym, or context.
-  /// This indicates active recall capability (not just recognition).
-  ///
-  /// Returns count of reviews with:
-  /// - rating >= 3 (Good or Easy)
-  /// - cue_type IN ('definition', 'synonym', 'context_cloze', 'disambiguation')
   Future<int> getNonTranslationSuccessCount(String learningCardId) async {
     final response = await _client
         .from('review_logs')
@@ -237,12 +251,11 @@ class SupabaseDataService {
     return response.count;
   }
 
-  /// Get due cards (where due <= now) - only returns cards with meanings
+  /// Get due cards (where due <= now) - only returns cards with enriched vocabulary
   Future<List<Map<String, dynamic>>> getDueCards(
     String userId, {
     int? limit,
   }) async {
-    // First get vocabulary IDs that have meanings
     final enrichedIds = await getEnrichedVocabularyIds(userId);
     if (enrichedIds.isEmpty) return [];
 
@@ -265,7 +278,7 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
-  /// Get count of overdue cards (only enriched vocabulary with meanings)
+  /// Get count of overdue cards (only enriched vocabulary)
   Future<int> getOverdueCount(String userId) async {
     final enrichedIds = await getEnrichedVocabularyIds(userId);
     if (enrichedIds.isEmpty) return 0;
@@ -283,12 +296,11 @@ class SupabaseDataService {
     return response.count;
   }
 
-  /// Get new cards (state = 0) - only returns cards with meanings
+  /// Get new cards (state = 0) - only returns cards with enriched vocabulary
   Future<List<Map<String, dynamic>>> getNewCards(
     String userId, {
     int? limit,
   }) async {
-    // First get vocabulary IDs that have meanings
     final enrichedIds = await getEnrichedVocabularyIds(userId);
     if (enrichedIds.isEmpty) return [];
 
@@ -309,9 +321,8 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
-  /// Get leech cards - only returns cards with meanings
+  /// Get leech cards - only returns cards with enriched vocabulary
   Future<List<Map<String, dynamic>>> getLeechCards(String userId) async {
-    // First get vocabulary IDs that have meanings
     final enrichedIds = await getEnrichedVocabularyIds(userId);
     if (enrichedIds.isEmpty) return [];
 
@@ -328,7 +339,7 @@ class SupabaseDataService {
     return List<Map<String, dynamic>>.from(response as List);
   }
 
-  /// Count enriched new words available (state=0 + has meanings)
+  /// Count enriched new words available (state=0 + has global dictionary data)
   /// This is the "server buffer" — words ready for introduction.
   Future<int> countEnrichedNewWords(String userId) async {
     final enrichedIds = await getEnrichedVocabularyIds(userId);
@@ -559,7 +570,7 @@ class SupabaseDataService {
         .eq('id', sessionId);
   }
 
-  /// Get count of new cards (only enriched vocabulary with meanings)
+  /// Get count of new cards (only enriched vocabulary)
   Future<int> getNewCardCount(String userId) async {
     final enrichedIds = await getEnrichedVocabularyIds(userId);
     if (enrichedIds.isEmpty) return 0;
@@ -796,59 +807,6 @@ class SupabaseDataService {
   }
 
   // ===========================================================================
-  // Cues
-  // ===========================================================================
-
-  /// Get cues for a vocabulary item (via meanings)
-  Future<List<Map<String, dynamic>>> getCuesForVocabulary(
-    String vocabularyId,
-  ) async {
-    // First get meaning IDs for this vocabulary
-    final meanings = await getMeanings(vocabularyId);
-    if (meanings.isEmpty) return [];
-
-    final meaningIds = meanings.map((m) => m['id'] as String).toList();
-    final response = await _client
-        .from('cues')
-        .select()
-        .inFilter('meaning_id', meaningIds)
-        .isFilter('deleted_at', null);
-    return List<Map<String, dynamic>>.from(response as List);
-  }
-
-  /// Get cues for a specific meaning
-  Future<List<Map<String, dynamic>>> getCuesForMeaning(String meaningId) async {
-    final response = await _client
-        .from('cues')
-        .select()
-        .eq('meaning_id', meaningId)
-        .isFilter('deleted_at', null);
-    return List<Map<String, dynamic>>.from(response as List);
-  }
-
-  /// Update a cue
-  Future<void> updateCue(
-    String cueId, {
-    String? promptText,
-    String? answerText,
-    String? hintText,
-  }) async {
-    final updates = <String, dynamic>{
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    };
-    if (promptText != null) {
-      updates['prompt_text'] = promptText;
-    }
-    if (answerText != null) {
-      updates['answer_text'] = answerText;
-    }
-    if (hintText != null) {
-      updates['hint_text'] = hintText;
-    }
-    await _client.from('cues').update(updates).eq('id', cueId);
-  }
-
-  // ===========================================================================
   // Confusable Sets
   // ===========================================================================
 
@@ -876,38 +834,13 @@ class SupabaseDataService {
   }
 
   // ===========================================================================
-  // Meaning Edits
-  // ===========================================================================
-
-  /// Create a meaning edit record
-  Future<void> createMeaningEdit({
-    required String id,
-    required String userId,
-    required String meaningId,
-    required String fieldName,
-    required String originalValue,
-    required String userValue,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('meaning_edits').insert({
-      'id': id,
-      'user_id': userId,
-      'meaning_id': meaningId,
-      'field_name': fieldName,
-      'original_value': originalValue,
-      'user_value': userValue,
-      'created_at': now,
-    });
-  }
-
-  // ===========================================================================
   // Enrichment Feedback
   // ===========================================================================
 
   /// Create enrichment feedback
   Future<void> createEnrichmentFeedback({
     required String userId,
-    required String meaningId,
+    required String globalDictionaryId,
     required String fieldName,
     required String rating,
     String? flagCategory,
@@ -917,7 +850,7 @@ class SupabaseDataService {
     await _client.from('enrichment_feedback').insert({
       'id': const Uuid().v4(),
       'user_id': userId,
-      'meaning_id': meaningId,
+      'global_dictionary_id': globalDictionaryId,
       'field_name': fieldName,
       'rating': rating,
       'flag_category': flagCategory,
@@ -926,30 +859,16 @@ class SupabaseDataService {
     });
   }
 
-  /// Get enrichment feedback for a meaning
+  /// Get enrichment feedback for a global dictionary entry
   Future<List<Map<String, dynamic>>> getEnrichmentFeedback(
-    String meaningId,
+    String globalDictionaryId,
   ) async {
     final response = await _client
         .from('enrichment_feedback')
         .select()
-        .eq('meaning_id', meaningId)
+        .eq('global_dictionary_id', globalDictionaryId)
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(response as List);
-  }
-
-  /// Get enrichment queue status for a vocabulary word (dev mode)
-  Future<Map<String, dynamic>?> getEnrichmentQueueStatus(
-    String userId,
-    String vocabularyId,
-  ) async {
-    final response = await _client
-        .from('enrichment_queue')
-        .select()
-        .eq('user_id', userId)
-        .eq('vocabulary_id', vocabularyId)
-        .maybeSingle();
-    return response;
   }
 
   // ===========================================================================

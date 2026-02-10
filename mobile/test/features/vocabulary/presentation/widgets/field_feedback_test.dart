@@ -17,7 +17,7 @@ void main() {
       when(
         mockDataService.createEnrichmentFeedback(
           userId: anyNamed('userId'),
-          meaningId: anyNamed('meaningId'),
+          globalDictionaryId: anyNamed('globalDictionaryId'),
           fieldName: anyNamed('fieldName'),
           rating: anyNamed('rating'),
           flagCategory: anyNamed('flagCategory'),
@@ -30,7 +30,7 @@ void main() {
     ) async {
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
         ),
@@ -44,7 +44,7 @@ void main() {
     testWidgets('shows filled thumb up when rated up', (tester) async {
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
           existingFeedback: {'rating': 'up'},
@@ -58,7 +58,7 @@ void main() {
     testWidgets('shows filled thumb down when rated down', (tester) async {
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
           existingFeedback: {'rating': 'down'},
@@ -78,7 +78,7 @@ void main() {
 
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
         ),
@@ -113,7 +113,7 @@ void main() {
 
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
         ),
@@ -144,7 +144,7 @@ void main() {
 
       await tester.pumpTestWidget(
         const FieldFeedback(
-          meaningId: 'meaning-1',
+          globalDictionaryId: 'meaning-1',
           fieldName: 'translation',
           userId: 'user-1',
         ),

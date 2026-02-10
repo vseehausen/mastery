@@ -1,47 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:mastery/domain/models/meaning.dart';
+import 'package:mastery/domain/models/global_dictionary.dart';
 import 'package:mastery/features/vocabulary/presentation/widgets/meaning_editor.dart';
 
 import '../../../../helpers/test_helpers.dart';
 
-MeaningModel _createMeaning({
+GlobalDictionaryModel _createGlobalDict({
   String primaryTranslation = 'effizient',
   String englishDefinition = 'Achieving results with minimal waste.',
   String? partOfSpeech,
   List<String> synonyms = const [],
   List<String> alternativeTranslations = const [],
 }) {
-  final now = DateTime.now();
-  return MeaningModel(
-    id: 'meaning-1',
-    userId: 'user-1',
-    vocabularyId: 'vocab-1',
-    languageCode: 'de',
-    primaryTranslation: primaryTranslation,
-    alternativeTranslations: alternativeTranslations,
-    englishDefinition: englishDefinition,
-    synonyms: synonyms,
+  return GlobalDictionaryModel(
+    id: 'gd-1',
+    lemma: 'effizient',
     partOfSpeech: partOfSpeech,
-    confidence: 0.9,
-    isPrimary: true,
-    isActive: true,
-    sortOrder: 0,
-    source: 'openai',
-    createdAt: now,
-    updatedAt: now,
+    englishDefinition: englishDefinition,
+    translations: {
+      'en': LanguageTranslations(
+        primary: primaryTranslation,
+        alternatives: alternativeTranslations,
+      ),
+    },
+    synonyms: synonyms,
+    antonyms: const [],
+    confusables: const [],
+    exampleSentences: const [],
   );
 }
 
 void main() {
   group('MeaningEditor', () {
     testWidgets('displays initial values in text fields', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -62,11 +59,11 @@ void main() {
     });
 
     testWidgets('shows Edit Meaning header', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -83,11 +80,11 @@ void main() {
     });
 
     testWidgets('Save button disabled when no changes', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -107,11 +104,11 @@ void main() {
     testWidgets('Save button enabled after editing translation', (
       tester,
     ) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -133,11 +130,11 @@ void main() {
     });
 
     testWidgets('Save button enabled after editing definition', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -161,12 +158,12 @@ void main() {
     });
 
     testWidgets('onSave called with changed translation', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
       String? savedTranslation;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -191,12 +188,12 @@ void main() {
     });
 
     testWidgets('onSave called with changed definition', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
       String? savedDefinition;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -221,13 +218,13 @@ void main() {
     });
 
     testWidgets('onSave called with all fields', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
       String? savedTranslation;
       String? savedDefinition;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -255,12 +252,12 @@ void main() {
     });
 
     testWidgets('onCancel called when Cancel tapped', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
       var cancelCalled = false;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -278,12 +275,12 @@ void main() {
     });
 
     testWidgets('trims whitespace on save', (tester) async {
-      final meaning = _createMeaning();
+      final globalDict = _createGlobalDict();
       String? savedTranslation;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -308,11 +305,11 @@ void main() {
     });
 
     testWidgets('displays part of speech label', (tester) async {
-      final meaning = _createMeaning(partOfSpeech: 'noun');
+      final globalDict = _createGlobalDict(partOfSpeech: 'noun');
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -329,11 +326,11 @@ void main() {
     });
 
     testWidgets('displays synonyms when provided', (tester) async {
-      final meaning = _createMeaning(synonyms: ['schnell', 'rasch']);
+      final globalDict = _createGlobalDict(synonyms: ['schnell', 'rasch']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -353,13 +350,13 @@ void main() {
     testWidgets('displays alternative translations when provided', (
       tester,
     ) async {
-      final meaning = _createMeaning(
+      final globalDict = _createGlobalDict(
         alternativeTranslations: ['powerful', 'capable'],
       );
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -379,11 +376,11 @@ void main() {
     testWidgets('adding synonym via tag editor enables save button', (
       tester,
     ) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+      final globalDict = _createGlobalDict(synonyms: ['fast']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -408,11 +405,11 @@ void main() {
     });
 
     testWidgets('adding synonym via IconButton', (tester) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+      final globalDict = _createGlobalDict(synonyms: ['fast']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -441,11 +438,11 @@ void main() {
     });
 
     testWidgets('removing synonym chip via delete icon', (tester) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+      final globalDict = _createGlobalDict(synonyms: ['fast']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -477,11 +474,11 @@ void main() {
     });
 
     testWidgets('adding alternative translation chip', (tester) async {
-      final meaning = _createMeaning(alternativeTranslations: ['capable']);
+      final globalDict = _createGlobalDict(alternativeTranslations: ['capable']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -509,11 +506,11 @@ void main() {
     });
 
     testWidgets('removing alternative translation chip', (tester) async {
-      final meaning = _createMeaning(alternativeTranslations: ['capable']);
+      final globalDict = _createGlobalDict(alternativeTranslations: ['capable']);
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -545,12 +542,12 @@ void main() {
     });
 
     testWidgets('onSave receives updated synonyms list', (tester) async {
-      final meaning = _createMeaning(synonyms: ['fast']);
+      final globalDict = _createGlobalDict(synonyms: ['fast']);
       List<String>? savedSynonyms;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -582,12 +579,12 @@ void main() {
     testWidgets('onSave receives updated alternative translations list', (
       tester,
     ) async {
-      final meaning = _createMeaning(alternativeTranslations: ['capable']);
+      final globalDict = _createGlobalDict(alternativeTranslations: ['capable']);
       List<String>? savedAlternatives;
 
       await tester.pumpTestWidget(
         MeaningEditor(
-          meaning: meaning,
+          globalDict: globalDict,
           onSave:
               ({
                 required String translation,
@@ -619,11 +616,11 @@ void main() {
     testWidgets(
       'save button disabled when removing and re-adding same synonym',
       (tester) async {
-        final meaning = _createMeaning(synonyms: ['fast']);
+        final globalDict = _createGlobalDict(synonyms: ['fast']);
 
         await tester.pumpTestWidget(
           MeaningEditor(
-            meaning: meaning,
+            globalDict: globalDict,
             onSave:
                 ({
                   required String translation,

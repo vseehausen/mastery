@@ -5,7 +5,7 @@ class VocabularyModel {
     required this.userId,
     required this.word,
     this.stem,
-    required this.contentHash,
+    this.globalDictionaryId,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -17,7 +17,7 @@ class VocabularyModel {
       userId: json['user_id'] as String,
       word: json['word'] as String,
       stem: json['stem'] as String?,
-      contentHash: json['content_hash'] as String? ?? '',
+      globalDictionaryId: json['global_dictionary_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       deletedAt: json['deleted_at'] != null
@@ -30,10 +30,13 @@ class VocabularyModel {
   final String userId;
   final String word;
   final String? stem;
-  final String contentHash;
+  final String? globalDictionaryId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
+
+  /// Whether this vocabulary item has been enriched (has global dictionary data)
+  bool get isEnriched => globalDictionaryId != null;
 
   /// The display form of the word: stem (base/lemma) if available, otherwise raw word.
   String get displayWord => stem ?? word;
@@ -44,7 +47,7 @@ class VocabularyModel {
       'user_id': userId,
       'word': word,
       'stem': stem,
-      'content_hash': contentHash,
+      'global_dictionary_id': globalDictionaryId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'deleted_at': deletedAt?.toIso8601String(),
@@ -56,7 +59,7 @@ class VocabularyModel {
     String? userId,
     String? word,
     String? stem,
-    String? contentHash,
+    String? globalDictionaryId,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -66,7 +69,7 @@ class VocabularyModel {
       userId: userId ?? this.userId,
       word: word ?? this.word,
       stem: stem ?? this.stem,
-      contentHash: contentHash ?? this.contentHash,
+      globalDictionaryId: globalDictionaryId ?? this.globalDictionaryId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,

@@ -54,27 +54,22 @@ void main() {
             .toIso8601String(),
         'word': word,
         'stem': word.substring(0, word.length - 1),
-        'meanings': [
-          {
-            'id': 'meaning-$cardId',
-            'primary_translation': '${word}Translation',
-            'english_definition': 'Definition of $word',
-            'synonyms': ['synonym1'],
-            'is_primary': true,
-            'sort_order': 0,
+        'english_definition': 'Definition of $word',
+        'part_of_speech': 'noun',
+        'synonyms': ['synonym1'],
+        'antonyms': <String>[],
+        'confusables': <Map<String, dynamic>>[],
+        'example_sentences': <Map<String, dynamic>>[],
+        'translations': {
+          'en': {
+            'primary': '${word}Translation',
+            'alternatives': <String>[],
           },
-        ],
-        'cues': [
-          {
-            'id': 'cue-$cardId',
-            'meaning_id': 'meaning-$cardId',
-            'cue_type': 'translation',
-            'prompt_text': 'What is $word?',
-            'answer_text': '${word}Translation',
-          },
-        ],
+        },
+        'overrides': <String, dynamic>{},
         'has_encounter_context': hasEncounterContext,
         'has_confusables': hasConfusables,
+        'non_translation_success_count': 0,
       };
     }
 
@@ -503,19 +498,22 @@ void main() {
                   .toIso8601String(),
               'word': 'normal',
               'stem': 'norma',
-              'meanings': [
-                {
-                  'id': 'meaning-normal',
-                  'primary_translation': 'normalTranslation',
-                  'english_definition': 'Definition of normal',
-                  'synonyms': <String>[],
-                  'is_primary': true,
-                  'sort_order': 0,
+              'english_definition': 'Definition of normal',
+              'part_of_speech': 'noun',
+              'synonyms': <String>[],
+              'antonyms': <String>[],
+              'confusables': <Map<String, dynamic>>[],
+              'example_sentences': <Map<String, dynamic>>[],
+              'translations': {
+                'en': {
+                  'primary': 'normalTranslation',
+                  'alternatives': <String>[],
                 },
-              ],
-              'cues': <Map<String, dynamic>>[],
+              },
+              'overrides': <String, dynamic>{},
               'has_encounter_context': false,
               'has_confusables': false,
+              'non_translation_success_count': 0,
             },
             {
               'card_id': 'card-leech',
@@ -533,19 +531,22 @@ void main() {
                   .toIso8601String(),
               'word': 'leech',
               'stem': 'leec',
-              'meanings': [
-                {
-                  'id': 'meaning-leech',
-                  'primary_translation': 'leechTranslation',
-                  'english_definition': 'Definition of leech',
-                  'synonyms': <String>[],
-                  'is_primary': true,
-                  'sort_order': 0,
+              'english_definition': 'Definition of leech',
+              'part_of_speech': 'noun',
+              'synonyms': <String>[],
+              'antonyms': <String>[],
+              'confusables': <Map<String, dynamic>>[],
+              'example_sentences': <Map<String, dynamic>>[],
+              'translations': {
+                'en': {
+                  'primary': 'leechTranslation',
+                  'alternatives': <String>[],
                 },
-              ],
-              'cues': <Map<String, dynamic>>[],
+              },
+              'overrides': <String, dynamic>{},
               'has_encounter_context': false,
               'has_confusables': false,
+              'non_translation_success_count': 0,
             },
           ],
         );
