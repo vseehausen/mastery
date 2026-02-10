@@ -25,11 +25,9 @@ export async function ensureVocabularyIdentity(
 
   if (deleted) {
     console.log(`[vocabulary] Reactivating soft-deleted "${word}"`);
-    await client.from('vocabulary').update({
-      deleted_at: null,
-      global_dictionary_id: globalDictId ?? null,
-      updated_at: now,
-    }).eq('id', deleted.id);
+    const update: Record<string, unknown> = { deleted_at: null, updated_at: now };
+    if (globalDictId) update.global_dictionary_id = globalDictId;
+    await client.from('vocabulary').update(update).eq('id', deleted.id);
     return { vocabularyId: deleted.id, isNew: false };
   }
 
@@ -131,7 +129,6 @@ export async function ensureLearningCard(
 
 /** Fire-and-forget enrichment trigger for unresolved vocabulary. */
 export function triggerEnrichment(
-  userId: string,
   vocabularyIds: string[],
   nativeLang: string,
 ): void {
@@ -161,7 +158,6 @@ export function triggerEnrichment(
 export async function mergeIfDuplicate(
   client: SupabaseClient,
   userId: string,
-  vocabId: string,
   globalDictId: string,
 ): Promise<void> {
   // Find all active vocab entries for this user pointing to the same global_dictionary_id

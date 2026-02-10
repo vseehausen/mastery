@@ -137,7 +137,7 @@ async function handleLookup(req: Request, userId: string): Promise<Response> {
 
   if (!globalEntry) {
     const { translation } = await translateWord(raw_word, nativeLang);
-    triggerEnrichment(userId, [vocabularyId], nativeLang);
+    triggerEnrichment([vocabularyId], nativeLang);
     const stage = isNew ? 'new' : await getVocabularyStage(client, vocabularyId, userId);
     return jsonResponse(buildLookupResponse({
       globalDict: null, raw_word, sentence, stage, nativeLang,
@@ -316,6 +316,7 @@ function buildLookupResponse(params: {
 async function handleBatchStatus(req: Request, userId: string): Promise<Response> {
   const url = new URL(req.url);
   const pageUrl = url.searchParams.get('url');
+  const nativeLang = url.searchParams.get('native_lang') || DEFAULT_NATIVE_LANG;
   const client = createSupabaseClient(req);
 
   const { count: totalCount, error: totalErr } = await client
@@ -389,7 +390,7 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
             .in('id', globalDictIds);
 
           for (const gd of (gdEntries || [])) {
-            const primary = gd.translations?.de?.primary;
+            const primary = gd.translations?.[nativeLang]?.primary;
             translationMap.set(gd.id, { lemma: gd.lemma, translation: primary || '' });
           }
         }

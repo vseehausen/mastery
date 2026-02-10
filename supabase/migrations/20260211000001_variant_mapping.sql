@@ -42,7 +42,8 @@ SELECT language_code, lower(trim(word)), id, 'backfill'
 FROM global_dictionary WHERE lower(trim(word)) != lower(trim(lemma))
 ON CONFLICT DO NOTHING;
 
--- Drop canonical_key + content_hash (never deployed, but clean up local DB)
+-- Drop old indexes that conflict with variant-mapping flow
+DROP INDEX IF EXISTS idx_vocabulary_user_global_dict;
 DROP INDEX IF EXISTS idx_global_dictionary_content_hash;
 ALTER TABLE global_dictionary DROP COLUMN IF EXISTS canonical_key;
 ALTER TABLE global_dictionary DROP COLUMN IF EXISTS content_hash;

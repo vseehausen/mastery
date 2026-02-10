@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       .map(e => activeWordMap.get(e.normalized))
       .filter((id): id is string => !!id);
     if (vocabIdsToEnrich.length > 0) {
-      triggerEnrichment(userId, vocabIdsToEnrich, native_language_code || 'de');
+      triggerEnrichment(vocabIdsToEnrich, native_language_code || 'de');
     }
 
     return jsonResponse({
@@ -342,25 +342,33 @@ async function insertNewVocabulary(
 
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batch = entries.slice(i, i + BATCH_SIZE);
+    const toVocabRecord = (e: KindleLookup) => ({
+      user_id: userId,
+      word: e.normalized,
+      stem: e.stem ? normalize(e.stem) : e.normalized,
+      is_pending_sync: false,
+      version: 1,
+    });
 
-    const { error } = await client.from('vocabulary').insert(
-      batch.map(e => ({
-        user_id: userId,
-        word: e.normalized,
-        stem: e.stem ? normalize(e.stem) : e.normalized,
-        is_pending_sync: false,
-        version: 1,
-      })),
-    );
+    const { error } = await client.from('vocabulary').insert(batch.map(toVocabRecord));
 
     if (error) {
-      console.error('Insert error:', error);
-      errors.push(`Vocab batch ${i / BATCH_SIZE + 1}: ${error.message}`);
-      continue;
+      // Batch failed (likely a conflict) — fall back to row-by-row to salvage what we can
+      console.error('Batch insert failed, retrying individually:', error.message);
+      for (const entry of batch) {
+        const { error: rowErr } = await client.from('vocabulary').insert(toVocabRecord(entry));
+        if (rowErr) {
+          if (rowErr.code === '23505') continue; // duplicate, skip silently
+          errors.push(`"${entry.word}": ${rowErr.message}`);
+        } else {
+          imported++;
+        }
+      }
+    } else {
+      imported += batch.length;
     }
 
-    imported += batch.length;
-
+    // Fetch all inserted vocab IDs (works for both batch and row-by-row path)
     const words = batch.map(e => e.normalized);
     const { data: inserted } = await client.from('vocabulary')
       .select('id, word').eq('user_id', userId).in('word', words).is('deleted_at', null);

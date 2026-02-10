@@ -70,7 +70,7 @@ export async function linkVocabulary(
     .eq('id', vocabularyId);
 
   if (error) {
-    console.error(`[global-dictionary] Failed to link vocabulary ${vocabularyId}:`, error);
+    throw new Error(`Failed to link vocabulary ${vocabularyId}: ${error.message}`);
   }
 }
 

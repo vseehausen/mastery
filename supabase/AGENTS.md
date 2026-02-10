@@ -128,6 +128,9 @@ npx supabase secrets set KEY_NAME="value"
 - **Don't do linguistics in the fast path.** Stemming, lemmatization, and other NLP operations don't belong in hot-path code. Keep the write/lookup path dumb (`trim().toLowerCase()`), defer complex resolution to async pipelines where better tools (AI) are available.
 - **Match INSERT defaults to SELECT filters.** If a column defaults to `'de'` on insert but queries filter by `'en'`, data silently becomes invisible. Always verify that schema defaults, explicit inserts, and query filters agree.
 - **Schema-level dedup over application-level checks.** Use partial unique indexes (`WHERE deleted_at IS NULL`) for soft-delete-aware uniqueness. The DB is the single source of truth for uniqueness — application-level SELECT-then-INSERT is racy.
+- **Partial unique indexes break `ON CONFLICT`.** PostgreSQL's `ON CONFLICT (col1, col2)` requires an exact constraint match. A partial index (`WHERE deleted_at IS NULL`) won't match — upsert silently fails. Use plain INSERT + app-level dedup, or catch error code 23505.
+- **Reactivate soft-deleted rows, don't recreate.** When a deleted entity is re-encountered, clear `deleted_at` instead of inserting a new row. Avoids orphans and preserves history (encounters, learning progress).
+- **Test cleanup must run at start, not just end.** If a test fails mid-run, end-of-test cleanup never executes. Next run hits stale data (e.g., unique constraint violations). Always clean up shared resources (global_dictionary, word_variants) at the START of each test.
 
 ## Testing Edge Functions
 

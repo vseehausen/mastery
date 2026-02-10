@@ -294,7 +294,7 @@ async function enrichWord(
   if (existingEntry) {
     console.log(`[enrich-vocabulary] Found existing global_dictionary entry for "${word.word}"`);
     await linkVocabulary(client, word.id, existingEntry.id);
-    await mergeIfDuplicate(client, word.user_id, word.id, existingEntry.id);
+    await mergeIfDuplicate(client, word.user_id, existingEntry.id);
     return { vocabulary_id: word.id, word: word.word, global_dictionary_id: existingEntry.id };
   }
 
@@ -398,7 +398,7 @@ async function enrichWord(
 
   // Link vocabulary and merge duplicates
   await linkVocabulary(client, word.id, globalDictId);
-  await mergeIfDuplicate(client, word.user_id, word.id, globalDictId);
+  await mergeIfDuplicate(client, word.user_id, globalDictId);
 
   console.log(`[enrich-vocabulary] Successfully enriched "${word.word}" → lemma "${lemma}" → global_dictionary ${globalDictId}`);
   return { vocabulary_id: word.id, word: word.word, global_dictionary_id: globalDictId };
