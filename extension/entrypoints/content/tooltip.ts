@@ -1,227 +1,348 @@
-import type { LookupResponse } from '@/lib/types';
+import type { LookupResponse, ProgressStage } from '@/lib/types';
+import appCss from '@/entrypoints/app.css?inline';
 
 const TOOLTIP_ID = 'mastery-tooltip-host';
+const FONT_LINK_ID = 'mastery-fonts';
 
-const STAGE_COLORS: Record<string, string> = {
-  new: '#3b82f6',
-  practicing: '#f59e0b',
-  stabilizing: '#f97316',
-  known: '#10b981',
-  mastered: '#8b5cf6',
+const STAGE_NAMES: Record<ProgressStage, string> = {
+  new: 'New',
+  practicing: 'Practicing',
+  stabilizing: 'Stabilizing',
+  known: 'Known',
+  mastered: 'Mastered',
 };
+
+const STAGE_ORDER: ProgressStage[] = ['new', 'practicing', 'stabilizing', 'known', 'mastered'];
+
+const REVIEW_TEXT: Record<ProgressStage, string | null> = {
+  new: null,
+  practicing: 'Next review tomorrow',
+  stabilizing: 'Next in 5d',
+  known: 'Next in 14d',
+  mastered: 'Next in 42d',
+};
+
+function ensureFonts(): void {
+  if (document.getElementById(FONT_LINK_ID)) return;
+  const link = document.createElement('link');
+  link.id = FONT_LINK_ID;
+  link.rel = 'stylesheet';
+  link.href =
+    'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Literata:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap';
+  document.head.appendChild(link);
+}
+
+// ---------------------------------------------------------------------------
+// Styles — tokens from app.css, layout/component CSS here
+// ---------------------------------------------------------------------------
 
 function createStyles(): string {
   return `
+    ${appCss}
+
     :host {
       all: initial;
       position: fixed;
       z-index: 2147483647;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
+
+    /* Override Tailwind preflight: SVGs must stay inline in our layout */
+    svg {
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* ---- Card shell ---- */
     .tooltip {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      padding: 14px 16px;
-      max-width: 380px;
-      min-width: 260px;
-      color: #1a202c;
-      font-size: 14px;
-      line-height: 1.5;
+      background: var(--card);
+      border-radius: var(--radius-card);
+      width: 270px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, var(--shadow-alpha));
+      border: 1px solid var(--border);
+      overflow: hidden;
       animation: mastery-fade-in 0.15s ease-out;
     }
+
     @keyframes mastery-fade-in {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ---- Accent bar (stage colour) ---- */
+    .accent-bar {
+      display: block;
+      width: 100%;
+      height: 3px;
+      background: var(--sc);
+    }
+
+    .tooltip-body {
+      padding: var(--tt-spacing-3) 14px 14px;
+    }
+
+    /* ---- Header: raw word + badge ---- */
     .header {
       display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 4px;
+      align-items: center;
+      justify-content: space-between;
     }
-    .lemma {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1a202c;
+
+    .header--no-ipa { margin-bottom: var(--tt-spacing-1); }
+
+    .raw-word {
+      font-family: var(--tt-font-serif);
+      font-size: var(--tt-font-size-sm);
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--muted-foreground);
     }
+
+    /* ---- Stage badge (dots + label) ---- */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--tt-font-ui);
+      font-size: 10px;
+      font-weight: var(--tt-font-weight-semibold);
+      line-height: 1;
+      padding: 3px var(--tt-spacing-2) 3px 6px;
+      border-radius: var(--radius-badge);
+      background: var(--sbg);
+      color: var(--sc);
+      border: 1px solid color-mix(in srgb, var(--sc) 15%, transparent);
+    }
+
+    .badge-dots { display: flex; gap: 2px; }
+
+    .badge-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+    }
+
+    .badge-dot--filled  { background: var(--sc); }
+    .badge-dot--empty   { background: var(--border); }
+
+    /* ---- IPA ---- */
     .ipa {
-      font-size: 13px;
-      color: #718096;
+      font-family: var(--tt-font-mono);
+      font-size: var(--tt-font-size-xs);
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--dim);
+      margin-top: 1px;
+      margin-bottom: var(--tt-spacing-1);
     }
+
+    /* ---- Translation + part-of-speech ---- */
+    .translation-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
     .translation {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 8px;
+      font-family: var(--tt-font-ui);
+      font-size: 19px;
+      font-weight: var(--tt-font-weight-semibold);
+      line-height: var(--tt-line-height-tight);
+      color: var(--card-foreground);
     }
-    .enrichment {
-      font-size: 13px;
-      color: #4a5568;
-      margin-bottom: 8px;
+
+    .pos {
+      font-family: var(--tt-font-ui);
+      font-size: 10px;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--dim);
     }
-    .enrichment .pos {
-      font-style: italic;
-      color: #718096;
-      margin-right: 6px;
-    }
-    .divider {
-      height: 1px;
-      background: #e2e8f0;
-      margin: 8px 0;
-    }
-    .context {
-      font-size: 13px;
-      color: #4a5568;
-      margin: 4px 0;
-    }
-    .context em {
-      font-style: italic;
-      font-weight: 600;
-      color: #1a202c;
-    }
-    .status {
+
+    /* ---- Footer ---- */
+    .footer {
+      margin-top: 10px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-      font-size: 12px;
-      color: #718096;
+      justify-content: space-between;
     }
-    .stage-badge {
-      display: inline-block;
-      padding: 1px 8px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #fff;
-      text-transform: capitalize;
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--sc);
     }
-    .sign-in {
-      text-align: center;
-      padding: 8px 0;
+
+    .footer-text {
+      font-family: var(--tt-font-ui);
+      font-size: var(--tt-font-size-xs);
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--muted-foreground);
     }
-    .sign-in-text {
-      font-size: 13px;
-      color: #718096;
+
+    .footer-review {
+      font-family: var(--tt-font-ui);
+      font-size: 10px;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--dim);
     }
-    .error-text {
-      font-size: 13px;
-      color: #e53e3e;
-    }
+
+    /* ---- Loading state ---- */
+    .state-body { padding: 14px var(--tt-spacing-4); }
+
     .loading {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 0;
+      gap: var(--tt-spacing-2);
     }
+
     .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid #e2e8f0;
-      border-top-color: #3b82f6;
+      width: var(--tt-spacing-4);
+      height: var(--tt-spacing-4);
+      border: 2px solid var(--border);
+      border-top-color: var(--muted-foreground);
       border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      animation: mastery-spin 0.6s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+
+    @keyframes mastery-spin { to { transform: rotate(360deg); } }
+
     .loading-text {
+      font-family: var(--tt-font-ui);
       font-size: 13px;
-      color: #718096;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: 1;
+      color: var(--muted-foreground);
+    }
+
+    /* ---- Error / sign-in states ---- */
+    .error-text {
+      font-family: var(--tt-font-ui);
+      font-size: 13px;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: var(--tt-line-height-normal);
+      color: var(--destructive);
+    }
+
+    .sign-in-title {
+      font-family: var(--tt-font-ui);
+      font-size: var(--tt-font-size-base);
+      font-weight: var(--tt-font-weight-semibold);
+      line-height: 1;
+      color: var(--card-foreground);
+      margin-bottom: var(--tt-spacing-2);
+    }
+
+    .sign-in-text {
+      font-family: var(--tt-font-ui);
+      font-size: 13px;
+      font-weight: var(--tt-font-weight-normal);
+      line-height: var(--tt-line-height-normal);
+      color: var(--muted-foreground);
     }
   `;
 }
 
-function formatContext(text: string): string {
-  // Replace *word* with <em>word</em>
-  return text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+// ---------------------------------------------------------------------------
+// HTML renderers
+// ---------------------------------------------------------------------------
+
+function renderBadge(stage: ProgressStage): string {
+  const idx = STAGE_ORDER.indexOf(stage);
+  const dots = STAGE_ORDER.map(
+    (_, i) => `<span class="badge-dot ${i <= idx ? 'badge-dot--filled' : 'badge-dot--empty'}"></span>`,
+  ).join('');
+
+  return `<span class="badge"><span class="badge-dots">${dots}</span>${STAGE_NAMES[stage]}</span>`;
 }
+
+const CHECK_SVG =
+  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
 function renderTooltipContent(data: LookupResponse): string {
-  const stageColor = STAGE_COLORS[data.stage] ?? '#718096';
-  const statusText = data.is_new
-    ? 'Saved'
-    : 'New context saved';
-
-  // Only show IPA if non-empty
-  const ipaHtml = data.pronunciation
-    ? `<span class="ipa">${escapeHtml(data.pronunciation)}</span>`
-    : '';
-
-  // Show enrichment data if available
-  const enrichmentHtml = data.english_definition
-    ? `
-      <div class="enrichment">
-        ${data.part_of_speech ? `<span class="pos">${escapeHtml(data.part_of_speech)}</span>` : ''}
-        ${escapeHtml(data.english_definition)}
-      </div>
-    `
-    : '';
-
-  // Only show context section if context_original contains *word* markup (enriched by OpenAI)
-  const hasEnrichedContext = data.context_original.includes('*');
-  const contextHtml = hasEnrichedContext
-    ? `
-      <div class="divider"></div>
-      <div class="context">${formatContext(escapeHtml(data.context_original))}</div>
-      ${data.context_translated ? `<div class="context">${formatContext(escapeHtml(data.context_translated))}</div>` : ''}
-    `
-    : '';
+  const { stage, pronunciation, part_of_speech, is_new } = data;
+  const hasIPA = !!pronunciation;
+  const hasPOS = !!part_of_speech;
+  const review = REVIEW_TEXT[stage];
 
   return `
-    <div class="tooltip">
-      <div class="header">
-        <span class="lemma">${escapeHtml(data.lemma)}</span>
-        ${ipaHtml}
+    <div class="tooltip-root">
+      <div class="tooltip" style="--sc:var(--stage-${stage});--sbg:var(--stage-${stage}-bg)">
+        <div class="accent-bar"></div>
+        <div class="tooltip-body">
+          <div class="header${hasIPA ? '' : ' header--no-ipa'}">
+            <span class="raw-word">${escapeHtml(data.raw_word)}</span>
+            ${renderBadge(stage)}
+          </div>
+          ${hasIPA ? `<div class="ipa">${escapeHtml(pronunciation)}</div>` : ''}
+          <div class="translation-row">
+            <span class="translation">${escapeHtml(data.translation)}</span>
+            ${hasPOS ? `<span class="pos">${escapeHtml(part_of_speech!)}</span>` : ''}
+          </div>
+          <div class="footer">
+            <div class="footer-left">
+              ${CHECK_SVG}
+              <span class="footer-text">${is_new ? 'Saved to vocabulary' : 'In your vocabulary'}</span>
+            </div>
+            ${review ? `<span class="footer-review">${review}</span>` : ''}
+          </div>
+        </div>
       </div>
-      <div class="translation">${escapeHtml(data.translation)}</div>
-      ${enrichmentHtml}
-      ${contextHtml}
-      <div class="status">
-        <span class="stage-badge" style="background:${stageColor}">${escapeHtml(data.stage)}</span>
-        <span>${statusText}</span>
-      </div>
-    </div>
-  `;
-}
-
-function renderSignInPrompt(): string {
-  return `
-    <div class="tooltip">
-      <div class="sign-in">
-        <div class="lemma" style="margin-bottom:8px">Mastery</div>
-        <div class="sign-in-text">Sign in via the extension popup to look up words.</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderError(message: string): string {
-  return `
-    <div class="tooltip">
-      <div class="error-text">${escapeHtml(message)}</div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderLoading(word: string): string {
   return `
-    <div class="tooltip">
-      <div class="loading">
-        <div class="spinner"></div>
-        <span class="loading-text">Looking up "${escapeHtml(word)}"...</span>
+    <div class="tooltip-root">
+      <div class="tooltip">
+        <div class="state-body">
+          <div class="loading">
+            <div class="spinner"></div>
+            <span class="loading-text">Looking up "${escapeHtml(word)}"…</span>
+          </div>
+        </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
+
+function renderSignInPrompt(): string {
+  return `
+    <div class="tooltip-root">
+      <div class="tooltip">
+        <div class="state-body">
+          <div class="sign-in-title">Mastery</div>
+          <div class="sign-in-text">Sign in via the extension popup to look up words.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderError(message: string): string {
+  return `
+    <div class="tooltip-root">
+      <div class="tooltip">
+        <div class="state-body">
+          <div class="error-text">${escapeHtml(message)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
+
+// ---------------------------------------------------------------------------
+// Tooltip lifecycle (show / position / dismiss)
+// ---------------------------------------------------------------------------
 
 let currentHost: HTMLElement | null = null;
 let dismissListeners: (() => void)[] = [];
@@ -231,31 +352,25 @@ function removeTooltip(): void {
     currentHost.remove();
     currentHost = null;
   }
-  for (const cleanup of dismissListeners) {
-    cleanup();
-  }
+  for (const cleanup of dismissListeners) cleanup();
   dismissListeners = [];
 }
 
 function positionTooltip(host: HTMLElement, x: number, y: number): void {
   const padding = 8;
-  const tooltipRect = host.getBoundingClientRect();
-  const viewportH = window.innerHeight;
+  const rect = host.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const w = rect.width || 290;
 
   let top = y + padding;
-  // Flip above if near bottom
-  if (top + tooltipRect.height > viewportH - padding) {
-    top = y - tooltipRect.height - padding;
+  if (top + rect.height > vh - padding) {
+    top = y - rect.height - padding;
   }
 
   let left = x - 20;
-  const viewportW = window.innerWidth;
-  if (left + 400 > viewportW) {
-    left = viewportW - 400 - padding;
-  }
-  if (left < padding) {
-    left = padding;
-  }
+  if (left + w > vw - padding) left = vw - w - padding;
+  if (left < padding) left = padding;
 
   host.style.top = `${top}px`;
   host.style.left = `${left}px`;
@@ -263,6 +378,7 @@ function positionTooltip(host: HTMLElement, x: number, y: number): void {
 
 function showTooltip(html: string, x: number, y: number): void {
   removeTooltip();
+  ensureFonts();
 
   const host = document.createElement('div');
   host.id = TOOLTIP_ID;
@@ -279,26 +395,18 @@ function showTooltip(html: string, x: number, y: number): void {
   document.body.appendChild(host);
   currentHost = host;
 
-  // Position after rendering so we can measure
-  requestAnimationFrame(() => {
-    positionTooltip(host, x, y);
-  });
+  requestAnimationFrame(() => positionTooltip(host, x, y));
 
-  // Auto-dismiss on click outside or scroll
+  // Auto-dismiss
   const onClickOutside = (e: MouseEvent) => {
-    if (e.target instanceof Node && !host.contains(e.target)) {
-      removeTooltip();
-    }
+    if (e.target instanceof Node && !host.contains(e.target)) removeTooltip();
   };
   const onScroll = () => removeTooltip();
   const onKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') removeTooltip();
   };
 
-  // Delay adding click listener to avoid immediate dismissal from the dblclick
-  setTimeout(() => {
-    document.addEventListener('click', onClickOutside, true);
-  }, 100);
+  setTimeout(() => document.addEventListener('click', onClickOutside, true), 100);
   window.addEventListener('scroll', onScroll, true);
   document.addEventListener('keydown', onKeydown);
 
@@ -308,6 +416,10 @@ function showTooltip(html: string, x: number, y: number): void {
     () => document.removeEventListener('keydown', onKeydown),
   );
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 export function showLookupTooltip(data: LookupResponse, x: number, y: number): void {
   showTooltip(renderTooltipContent(data), x, y);
