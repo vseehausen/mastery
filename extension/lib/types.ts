@@ -18,19 +18,41 @@ export interface LookupResponse {
   stage: ProgressStage;
   is_new: boolean;
   vocabulary_id: string;
+  provisional?: boolean;
 }
 
 export type ProgressStage = 'new' | 'practicing' | 'stabilizing' | 'known' | 'mastered';
 
+export type TooltipDetail = 'compact' | 'standard' | 'full';
+
 export interface StatsResponse {
   total_words: number;
+  words_this_week: number;
+  streak_days: number;
+  stage_counts: StageCounts;
   page_words: PageWord[];
+  recent_words: RecentWord[];
+}
+
+export interface StageCounts {
+  new: number;
+  practicing: number;
+  stabilizing: number;
+  known: number;
+  mastered: number;
 }
 
 export interface PageWord {
   lemma: string;
   translation: string;
   stage: ProgressStage;
+}
+
+export interface RecentWord {
+  lemma: string;
+  translation: string;
+  stage: ProgressStage;
+  captured_at: string; // ISO timestamp
 }
 
 export interface ErrorResponse {
@@ -47,6 +69,7 @@ export interface CacheEntry {
   stage: ProgressStage;
   lookupCount: number;
   lastAccessed: number; // Unix timestamp for LRU eviction
+  provisional?: boolean;
   // Enrichment fields (may be populated after initial lookup)
   englishDefinition?: string;
   partOfSpeech?: string | null;

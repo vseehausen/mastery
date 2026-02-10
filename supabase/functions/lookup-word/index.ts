@@ -39,6 +39,7 @@ interface LookupResponse {
   stage: string;
   is_new: boolean;
   vocabulary_id: string;
+  provisional: boolean;
 }
 
 /** PGRST116 = "The result contains 0 rows" — expected for .single() with no match. */
@@ -136,7 +137,7 @@ async function handleLookup(req: Request, userId: string): Promise<Response> {
   await createEncounter(client, vocabularyId, userId, url, title, sentence);
 
   if (!globalEntry) {
-    const { translation } = await translateWord(raw_word, nativeLang);
+    const { translation } = await translateWord(raw_word, nativeLang, sentence);
     triggerEnrichment([vocabularyId], nativeLang);
     const stage = isNew ? 'new' : await getVocabularyStage(client, vocabularyId, userId);
     return jsonResponse(buildLookupResponse({
@@ -291,6 +292,7 @@ function buildLookupResponse(params: {
       stage,
       is_new,
       vocabulary_id,
+      provisional: false,
     };
   }
 
@@ -306,6 +308,7 @@ function buildLookupResponse(params: {
     stage,
     is_new,
     vocabulary_id,
+    provisional: true,
   };
 }
 
@@ -319,16 +322,162 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
   const nativeLang = url.searchParams.get('native_lang') || DEFAULT_NATIVE_LANG;
   const client = createSupabaseClient(req);
 
-  const { count: totalCount, error: totalErr } = await client
-    .from('vocabulary')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .is('deleted_at', null);
+  // Calculate start of current week (Monday 00:00 UTC)
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay();
+  const daysToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+  const mondayStart = new Date(now);
+  mondayStart.setUTCDate(now.getUTCDate() - daysToMonday);
+  mondayStart.setUTCHours(0, 0, 0, 0);
+  const mondayIso = mondayStart.toISOString();
 
-  if (totalErr) {
-    console.error('[lookup-word] batch-status total count failed:', totalErr);
+  // Parallel queries for metrics
+  const [
+    totalCountResult,
+    weekCountResult,
+    encounterDatesResult,
+    allCardsResult,
+    recentVocabResult,
+  ] = await Promise.all([
+    // Total words count
+    client
+      .from('vocabulary')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('deleted_at', null),
+
+    // Words this week count
+    client
+      .from('vocabulary')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', mondayIso)
+      .is('deleted_at', null),
+
+    // All encounter dates for streak calculation
+    client
+      .from('encounters')
+      .select('occurred_at')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('occurred_at', { ascending: false }),
+
+    // All learning cards for stage counts
+    client
+      .from('learning_cards')
+      .select('vocabulary_id, state, stability')
+      .eq('user_id', userId)
+      .is('deleted_at', null),
+
+    // Recent 5 words
+    client
+      .from('vocabulary')
+      .select('id, word, global_dictionary_id, created_at')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
+
+  if (totalCountResult.error) {
+    console.error('[lookup-word] batch-status total count failed:', totalCountResult.error);
   }
 
+  if (weekCountResult.error) {
+    console.error('[lookup-word] batch-status week count failed:', weekCountResult.error);
+  }
+
+  // Calculate streak days
+  let streakDays = 0;
+  if (encounterDatesResult.data && encounterDatesResult.data.length > 0) {
+    const uniqueDates = new Set<string>();
+    for (const enc of encounterDatesResult.data) {
+      const date = new Date(enc.occurred_at);
+      const dateStr = date.toISOString().split('T')[0];
+      uniqueDates.add(dateStr);
+    }
+
+    const sortedDates = Array.from(uniqueDates).sort().reverse();
+    const today = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < sortedDates.length; i++) {
+      const expectedDate = new Date();
+      expectedDate.setUTCDate(expectedDate.getUTCDate() - i);
+      const expectedDateStr = expectedDate.toISOString().split('T')[0];
+
+      if (sortedDates.includes(expectedDateStr)) {
+        streakDays++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Calculate stage counts
+  const stageCounts = { new: 0, practicing: 0, stabilizing: 0, known: 0, mastered: 0 };
+  if (allCardsResult.data) {
+    for (const card of allCardsResult.data) {
+      const stage = mapCardToStage(card);
+      if (stage in stageCounts) {
+        stageCounts[stage as keyof typeof stageCounts]++;
+      }
+    }
+  }
+
+  // Build recent words
+  let recentWords: Array<{ lemma: string; translation: string; stage: string; captured_at: string }> = [];
+  if (recentVocabResult.data && recentVocabResult.data.length > 0) {
+    const recentVocabIds = recentVocabResult.data.map((v: { id: string }) => v.id);
+
+    const [recentCardsResult, globalDictResult] = await Promise.all([
+      client
+        .from('learning_cards')
+        .select('vocabulary_id, state, stability')
+        .eq('user_id', userId)
+        .in('vocabulary_id', recentVocabIds)
+        .is('deleted_at', null),
+
+      (async () => {
+        const globalDictIds = recentVocabResult.data
+          .filter((v: { global_dictionary_id: string | null }) => v.global_dictionary_id)
+          .map((v: { global_dictionary_id: string }) => v.global_dictionary_id);
+
+        if (globalDictIds.length > 0) {
+          return client
+            .from('global_dictionary')
+            .select('id, lemma, translations')
+            .in('id', globalDictIds);
+        }
+        return { data: [], error: null };
+      })(),
+    ]);
+
+    const recentCardMap = new Map(
+      (recentCardsResult.data || []).map((c: { vocabulary_id: string; state: number; stability: number }) =>
+        [c.vocabulary_id, mapCardToStage(c)]
+      )
+    );
+
+    const recentTranslationMap = new Map<string, { lemma: string; translation: string }>();
+    if (globalDictResult.data) {
+      for (const gd of globalDictResult.data) {
+        const primary = gd.translations?.[nativeLang]?.primary;
+        recentTranslationMap.set(gd.id, { lemma: gd.lemma, translation: primary || '' });
+      }
+    }
+
+    recentWords = recentVocabResult.data.map((v: { id: string; word: string; global_dictionary_id: string | null; created_at: string }) => {
+      const gdInfo = v.global_dictionary_id ? recentTranslationMap.get(v.global_dictionary_id) : null;
+      return {
+        lemma: gdInfo?.lemma || v.word,
+        translation: gdInfo?.translation || '',
+        stage: recentCardMap.get(v.id) || 'new',
+        captured_at: v.created_at,
+      };
+    });
+  }
+
+  // Calculate page words (existing logic)
   let pageWords: Array<{ lemma: string; translation: string; stage: string }> = [];
 
   if (pageUrl) {
@@ -415,7 +564,11 @@ async function handleBatchStatus(req: Request, userId: string): Promise<Response
   }
 
   return jsonResponse({
-    total_words: totalCount || 0,
+    total_words: totalCountResult.count || 0,
+    words_this_week: weekCountResult.count || 0,
+    streak_days: streakDays,
+    stage_counts: stageCounts,
     page_words: pageWords,
+    recent_words: recentWords,
   });
 }

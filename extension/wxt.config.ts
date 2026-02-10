@@ -9,9 +9,9 @@ export default defineConfig({
   manifest: {
     name: 'Mastery — Vocabulary Capture',
     description: 'Double-click any word to translate, learn, and master it.',
-    permissions: ['activeTab', 'contextMenus', 'storage'],
+    permissions: ['activeTab', 'contextMenus', 'storage', 'identity'],
   },
-  runner: {
+  webExt: {
     chromiumProfile: './.wxt/chrome-profile',
   },
 });

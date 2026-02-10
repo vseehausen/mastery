@@ -1,4 +1,4 @@
-import type { LookupResponse, ProgressStage } from '@/lib/types';
+import type { LookupResponse, ProgressStage, TooltipDetail } from '@/lib/types';
 import appCss from '@/entrypoints/app.css?inline';
 
 const TOOLTIP_ID = 'mastery-tooltip-host';
@@ -174,6 +174,30 @@ function createStyles(): string {
       color: var(--muted-foreground);
     }
 
+    /* ---- Context sentence ---- */
+    .context {
+      margin-top: calc(var(--spacing) * 2);
+      font-family: var(--font-serif);
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.6;
+      color: var(--muted-foreground);
+    }
+
+    .context-label {
+      font-family: var(--font-sans);
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--dim);
+      margin-bottom: 2px;
+    }
+
+    .context-translated {
+      margin-top: 2px;
+      font-style: italic;
+      color: var(--dim);
+    }
+
     /* ---- Footer ---- */
     .footer {
       margin-top: calc(var(--spacing) * 3);
@@ -277,11 +301,24 @@ function renderBadge(stage: ProgressStage): string {
 const CHECK_SVG =
   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
-function renderTooltipContent(data: LookupResponse): string {
-  const { stage, pronunciation, part_of_speech, english_definition, is_new } = data;
-  const hasIPA = !!pronunciation;
+/**
+ * Render tooltip content based on the detail level:
+ *
+ * | Element             | Compact | Standard | Full |
+ * |---------------------|---------|----------|------|
+ * | Raw word + badge    | Yes     | Yes      | Yes  |
+ * | IPA pronunciation   | No      | Yes      | Yes  |
+ * | Translation + POS   | Yes     | Yes      | Yes  |
+ * | Definition          | No      | Yes      | Yes  |
+ * | Context sentence    | No      | No       | Yes  |
+ * | Footer              | Yes     | Yes      | Yes  |
+ */
+function renderTooltipContent(data: LookupResponse, detail: TooltipDetail = 'standard'): string {
+  const { stage, pronunciation, part_of_speech, english_definition, is_new, context_original, context_translated } = data;
+  const showIPA = detail !== 'compact' && !!pronunciation;
+  const showDef = detail !== 'compact' && !!english_definition;
+  const showContext = detail === 'full' && (!!context_original || !!context_translated);
   const hasPOS = !!part_of_speech;
-  const hasDef = !!english_definition;
   const review = REVIEW_TEXT[stage];
 
   return `
@@ -289,18 +326,24 @@ function renderTooltipContent(data: LookupResponse): string {
       <div class="tooltip" style="--sc:var(--stage-${stage});--sbg:var(--stage-${stage}-bg)">
         <div class="accent-bar"></div>
         <div class="tooltip-body">
-          <div class="header${hasIPA ? '' : ' header--no-ipa'}">
+          <div class="header${showIPA ? '' : ' header--no-ipa'}">
             <span class="raw-word">${escapeHtml(data.raw_word)}</span>
             ${renderBadge(stage)}
           </div>
-          ${hasIPA ? `<div class="ipa">${escapeHtml(pronunciation)}</div>` : ''}
+          ${showIPA ? `<div class="ipa">${escapeHtml(pronunciation)}</div>` : ''}
           <div class="translation-row">
             <span class="translation">${escapeHtml(data.translation)}</span>
             ${hasPOS ? `<span class="pos">${escapeHtml(part_of_speech!)}</span>` : ''}
           </div>
-          ${hasDef ? `
+          ${showDef ? `
           <div class="divider"></div>
           <div class="definition">${escapeHtml(english_definition)}</div>
+          ` : ''}
+          ${showContext ? `
+          <div class="context">
+            ${context_original ? `<div>${formatContext(context_original)}</div>` : ''}
+            ${context_translated ? `<div class="context-translated">${formatContext(context_translated)}</div>` : ''}
+          </div>
           ` : ''}
           <div class="footer">
             <div class="footer-left">
@@ -359,6 +402,11 @@ function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+/** Format context text: converts *word* markers to bold */
+function formatContext(text: string): string {
+  return escapeHtml(text).replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
 }
 
 // ---------------------------------------------------------------------------
@@ -442,8 +490,8 @@ function showTooltip(html: string, x: number, y: number): void {
 // Public API
 // ---------------------------------------------------------------------------
 
-export function showLookupTooltip(data: LookupResponse, x: number, y: number): void {
-  showTooltip(renderTooltipContent(data), x, y);
+export function showLookupTooltip(data: LookupResponse, x: number, y: number, detail: TooltipDetail = 'standard'): void {
+  showTooltip(renderTooltipContent(data, detail), x, y);
 }
 
 export function showSignInTooltip(x: number, y: number): void {
