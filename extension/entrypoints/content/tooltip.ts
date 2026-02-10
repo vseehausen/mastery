@@ -77,7 +77,7 @@ function createStyles(): string {
     }
 
     .tooltip-body {
-      padding: var(--tt-spacing-3) 14px 14px;
+      padding: 12px 14px 14px;
     }
 
     /* ---- Header: raw word + badge ---- */
@@ -87,12 +87,12 @@ function createStyles(): string {
       justify-content: space-between;
     }
 
-    .header--no-ipa { margin-bottom: var(--tt-spacing-1); }
+    .header--no-ipa { margin-bottom: 4px; }
 
     .raw-word {
-      font-family: var(--tt-font-serif);
-      font-size: var(--tt-font-size-sm);
-      font-weight: var(--tt-font-weight-normal);
+      font-family: var(--font-serif);
+      font-size: 14px;
+      font-weight: 400;
       line-height: 1;
       color: var(--muted-foreground);
     }
@@ -102,11 +102,11 @@ function createStyles(): string {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 10px;
-      font-weight: var(--tt-font-weight-semibold);
+      font-weight: 600;
       line-height: 1;
-      padding: 3px var(--tt-spacing-2) 3px 6px;
+      padding: 3px 8px 3px 6px;
       border-radius: var(--radius-badge);
       background: var(--sbg);
       color: var(--sc);
@@ -126,13 +126,13 @@ function createStyles(): string {
 
     /* ---- IPA ---- */
     .ipa {
-      font-family: var(--tt-font-mono);
-      font-size: var(--tt-font-size-xs);
-      font-weight: var(--tt-font-weight-normal);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 400;
       line-height: 1;
       color: var(--dim);
       margin-top: 1px;
-      margin-bottom: var(--tt-spacing-1);
+      margin-bottom: 4px;
     }
 
     /* ---- Translation + part-of-speech ---- */
@@ -143,17 +143,17 @@ function createStyles(): string {
     }
 
     .translation {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 19px;
-      font-weight: var(--tt-font-weight-semibold);
-      line-height: var(--tt-line-height-tight);
+      font-weight: 600;
+      line-height: 1.2;
       color: var(--card-foreground);
     }
 
     .pos {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 10px;
-      font-weight: var(--tt-font-weight-normal);
+      font-weight: 400;
       line-height: 1;
       color: var(--dim);
     }
@@ -162,14 +162,14 @@ function createStyles(): string {
     .divider {
       height: 1px;
       background: var(--muted);
-      margin: 10px 0 var(--tt-spacing-2);
+      margin: 10px 0 8px;
     }
 
     .definition {
-      font-family: var(--tt-font-serif);
+      font-family: var(--font-serif);
       font-size: 12px;
       font-style: italic;
-      font-weight: var(--tt-font-weight-normal);
+      font-weight: 400;
       line-height: 1.6;
       color: var(--muted-foreground);
     }
@@ -190,33 +190,33 @@ function createStyles(): string {
     }
 
     .footer-text {
-      font-family: var(--tt-font-ui);
-      font-size: var(--tt-font-size-xs);
-      font-weight: var(--tt-font-weight-normal);
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 400;
       line-height: 1;
       color: var(--muted-foreground);
     }
 
     .footer-review {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 10px;
-      font-weight: var(--tt-font-weight-normal);
+      font-weight: 400;
       line-height: 1;
       color: var(--dim);
     }
 
     /* ---- Loading state ---- */
-    .state-body { padding: 14px var(--tt-spacing-4); }
+    .state-body { padding: 14px 16px; }
 
     .loading {
       display: flex;
       align-items: center;
-      gap: var(--tt-spacing-2);
+      gap: 8px;
     }
 
     .spinner {
-      width: var(--tt-spacing-4);
-      height: var(--tt-spacing-4);
+      width: 16px;
+      height: 16px;
       border: 2px solid var(--border);
       border-top-color: var(--muted-foreground);
       border-radius: 50%;
@@ -226,36 +226,36 @@ function createStyles(): string {
     @keyframes mastery-spin { to { transform: rotate(360deg); } }
 
     .loading-text {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 13px;
-      font-weight: var(--tt-font-weight-normal);
+      font-weight: 400;
       line-height: 1;
       color: var(--muted-foreground);
     }
 
     /* ---- Error / sign-in states ---- */
     .error-text {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 13px;
-      font-weight: var(--tt-font-weight-normal);
-      line-height: var(--tt-line-height-normal);
+      font-weight: 400;
+      line-height: 1.4;
       color: var(--destructive);
     }
 
     .sign-in-title {
-      font-family: var(--tt-font-ui);
-      font-size: var(--tt-font-size-base);
-      font-weight: var(--tt-font-weight-semibold);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 600;
       line-height: 1;
       color: var(--card-foreground);
-      margin-bottom: var(--tt-spacing-2);
+      margin-bottom: 8px;
     }
 
     .sign-in-text {
-      font-family: var(--tt-font-ui);
+      font-family: var(--font-sans);
       font-size: 13px;
-      font-weight: var(--tt-font-weight-normal);
-      line-height: var(--tt-line-height-normal);
+      font-weight: 400;
+      line-height: 1.4;
       color: var(--muted-foreground);
     }
   `;

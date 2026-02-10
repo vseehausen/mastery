@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Literata', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
 @theme inline {
   /* Base shadcn tokens */
   --color-background: var(--background);
@@ -55,11 +61,13 @@
    Light mode (default)
    :root       → popup/options pages
    .tooltip-root → content script shadow DOM
+
+   Values from mobile/lib/core/theme/color_tokens.dart
    ================================================================ */
 
 :root,
 .tooltip-root {
-  /* Base colors (Zinc palette) */
+  /* Base colors (Zinc palette — matching mobile) */
   --background: #ffffff;
   --foreground: #09090b; /* zinc-950 */
   --card: #ffffff;
@@ -110,36 +118,6 @@
   --radius-card: 12px;
   --radius-badge: 5px;
 
-  /* Font stacks (prefixed to avoid Tailwind's --font-serif/--font-mono) */
-  --tt-font-serif: 'Literata', Georgia, serif;
-  --tt-font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --tt-font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-
-  /* Typography scale (mapped from mobile/lib/core/theme/typography_tokens.dart) */
-  --tt-font-size-xs: 11px;
-  --tt-font-size-sm: 14px;
-  --tt-font-size-base: 16px;
-  --tt-font-size-lg: 18px;
-  --tt-font-size-xl: 24px;
-  --tt-font-size-2xl: 28px;
-
-  --tt-font-weight-normal: 400;
-  --tt-font-weight-medium: 500;
-  --tt-font-weight-semibold: 600;
-  --tt-font-weight-bold: 700;
-
-  --tt-line-height-tight: 1.2;
-  --tt-line-height-snug: 1.3;
-  --tt-line-height-normal: 1.4;
-  --tt-line-height-relaxed: 1.5;
-
-  /* Spacing scale (mapped from mobile/lib/core/theme/spacing.dart) */
-  --tt-spacing-1: 4px;
-  --tt-spacing-2: 8px;
-  --tt-spacing-3: 12px;
-  --tt-spacing-4: 16px;
-  --tt-spacing-5: 20px;
-  --tt-spacing-6: 24px;
 }
 
 /* ================================================================
