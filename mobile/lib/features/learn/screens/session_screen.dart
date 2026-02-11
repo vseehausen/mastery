@@ -65,6 +65,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Completer<void>? _fetchCompleter;
   int _newWordsQueued = 0;
   int _newWordCap = 0;
+  int _maxItems = 0;
 
   LearningSessionModel? _session;
   int _currentItemIndex = 0;
@@ -173,6 +174,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
+      // Store maxItems limit for enforcement
+      _maxItems = params.maxItems;
+
       // Step 2: Fetch initial batch of cards only
       // For quick review, use specified item count and newWordCap=0
       final int effectiveNewWordCap;
@@ -258,6 +262,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ? initialItems.length
               : params.estimatedItemCount;
         }
+
         setState(() {
           _items = initialItems;
           _estimatedTotalItems = estimate;
@@ -292,6 +297,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // Skip prefetching in quick review mode — fixed item count
     if (widget.isQuickReview) return;
 
+    // Stop prefetching if we've reached the maxItems limit
+    if (_maxItems > 0 && _items.length >= _maxItems) return;
+
     if (!force) {
       final remaining = _items.length - _currentItemIndex - 1;
       if (remaining >= _prefetchThreshold || _isFetchingMore) return;
@@ -310,9 +318,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     try {
       final planner = ref.read(sessionPlannerProvider);
+      // Calculate how many items we can still fetch without exceeding maxItems
+      final remainingSlots = _maxItems > 0 ? _maxItems - _items.length : _batchSize;
+      final effectiveBatchSize = remainingSlots > 0
+          ? (remainingSlots < _batchSize ? remainingSlots : _batchSize)
+          : 0;
+
+      if (effectiveBatchSize <= 0) {
+        // Already at max capacity
+        return;
+      }
+
       final newItems = await planner.fetchBatch(
         userId: userId,
-        batchSize: _batchSize,
+        batchSize: effectiveBatchSize,
         excludeCardIds: _fetchedCardIds,
         newWordsAlreadyQueued: _newWordsQueued,
         newWordCap: _newWordCap,
@@ -328,8 +347,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             _items = [..._items, ...newItems];
           }
           // Self-correct estimate: if batch returned fewer items than
-          // requested, we've exhausted the pool — true total is _items.length
-          if (newItems.length < _batchSize) {
+          // requested, or we've hit maxItems, true total is _items.length
+          if (newItems.length < effectiveBatchSize ||
+              (_maxItems > 0 && _items.length >= _maxItems)) {
             _estimatedTotalItems = _items.length;
           }
         });
@@ -471,11 +491,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
 
     // Show transition feedback immediately if stage progressed
-    // Skip New → Practicing transitions (invisible per design brief)
     if (stageAfter != stageBefore &&
-        stageAfter.index > stageBefore.index &&
-        !(stageBefore == ProgressStage.captured &&
-            stageAfter == ProgressStage.practicing)) {
+        stageAfter.index > stageBefore.index) {
       final transition = StageTransition(
         vocabularyId: currentItem.vocabularyId,
         wordText: currentItem.displayWord,
@@ -935,6 +952,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return RecallCard(
           word: card.displayWord,
           answer: cueContent.answer,
+          alternatives: _getAlternatives(card),
           context: card.encounterContext,
           onGrade: _handleRecallGrade,
         );
@@ -994,6 +1012,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return RecallCard(
           word: card.displayWord,
           answer: cueContent.answer,
+          alternatives: _getAlternatives(card),
           context: card.encounterContext,
           onGrade: _handleRecallGrade,
         );
@@ -1023,5 +1042,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final correctIndex = options.indexOf(correctWord);
 
     return (options: options, correctIndex: correctIndex);
+  }
+
+  /// Get alternative translations from the session card
+  List<String>? _getAlternatives(SessionCard card) {
+    // Get alternatives from the first available language
+    // In a real app, this would use the user's language preference
+    if (card.translations.isEmpty) return null;
+    final firstLang = card.translations.values.first;
+    return firstLang.alternatives.isNotEmpty ? firstLang.alternatives : null;
   }
 }

@@ -33,6 +33,7 @@ class _VocabularyDetailScreenState
     extends ConsumerState<VocabularyDetailScreen> {
   bool _enrichmentTriggered = false;
   bool _isReEnriching = false;
+  bool _enrichmentFailed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +44,6 @@ class _VocabularyDetailScreenState
       appBar: AppBar(
         leading: MasteryBackButton.back(
           onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: vocabAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
-          data: (vocab) => Text(vocab?.displayWord ?? ''),
         ),
         actions: [
           // Edit icon in header
@@ -100,6 +96,17 @@ class _VocabularyDetailScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Word display
+                  Text(
+                    vocab.displayWord,
+                    style: const TextStyle(
+                      fontSize: AppTypography.fontSize2xl,
+                      fontWeight: AppTypography.fontWeightBold,
+                      letterSpacing: AppTypography.letterSpacingTight,
+                      height: AppTypography.lineHeightTight,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
                   // Metadata line: stage · reviews · next review
                   _buildMetadataLine(vocab, learningCard),
                   const SizedBox(height: AppSpacing.s10), // 40
@@ -584,25 +591,56 @@ class _VocabularyDetailScreenState
   /// Enrichment placeholder (simpler)
   Widget _buildEnrichmentPlaceholder() {
     final colors = context.masteryColors;
-    return Row(
-      children: [
-        SizedBox(
-          width: AppSpacing.s4,
-          height: AppSpacing.s4,
-          child: CircularProgressIndicator(
-            strokeWidth: AppBorderWidth.medium,
-            color: colors.mutedForeground,
+
+    if (_enrichmentFailed) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Enrichment failed',
+            style: TextStyle(
+              fontSize: AppTypography.fontSizeSm,
+              color: colors.mutedForeground,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.s3),
-        Text(
-          'Generating meanings...',
-          style: TextStyle(
-            fontSize: AppTypography.fontSizeSm,
-            color: colors.mutedForeground,
+          const SizedBox(height: AppSpacing.s3),
+          ShadButton.outline(
+            onPressed: () {
+              setState(() {
+                _enrichmentTriggered = false;
+                _enrichmentFailed = false;
+              });
+              _requestEnrichment(widget.vocabularyId);
+            },
+            child: const Text('Retry'),
           ),
-        ),
-      ],
+        ],
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: AppSpacing.s10,
+            height: AppSpacing.s10,
+            child: CircularProgressIndicator(
+              strokeWidth: AppBorderWidth.thick,
+              color: colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s5),
+          Text(
+            'Enriching...',
+            style: TextStyle(
+              fontSize: AppTypography.fontSizeBase,
+              fontWeight: AppTypography.fontWeightMedium,
+              color: colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -803,9 +841,12 @@ class _VocabularyDetailScreenState
       // Refresh the global dictionary data after enrichment
       if (result.enrichedCount > 0) {
         ref.invalidate(globalDictionaryProvider(vocabularyId));
+      } else if (result.enrichedCount == 0 && result.failedCount > 0) {
+        setState(() => _enrichmentFailed = true);
       }
     } catch (e) {
       debugPrint('[VocabularyDetail] Enrichment error: $e');
+      setState(() => _enrichmentFailed = true);
     }
   }
 

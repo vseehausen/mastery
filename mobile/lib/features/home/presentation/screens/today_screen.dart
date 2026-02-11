@@ -83,7 +83,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final colors = context.masteryColors;
     final hasItems = ref.watch(hasItemsToReviewProvider);
     final completedToday = ref.watch(hasCompletedTodayProvider);
-    final streak = ref.watch(currentStreakProvider);
     final dueCount = ref.watch(dueItemCountProvider);
     final sessionStats = ref.watch(todaySessionStatsProvider);
     final nextReview = ref.watch(nextReviewLabelProvider);
@@ -93,7 +92,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
     final hasItemsToPractice = hasItems.valueOrNull ?? false;
     final isCompleted = completedToday.valueOrNull ?? false;
-    final streakCount = streak.valueOrNull ?? 0;
     final itemsDue = dueCount.valueOrNull ?? 0;
     final totalVocab = vocabCount.valueOrNull ?? 0;
     final dailyTimeTarget = userPrefs.valueOrNull?.dailyTimeTargetMinutes ?? 5;
@@ -104,7 +102,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           onRefresh: () async {
             ref.invalidate(hasItemsToReviewProvider);
             ref.invalidate(hasCompletedTodayProvider);
-            ref.invalidate(currentStreakProvider);
             ref.invalidate(dueItemCountProvider);
             ref.invalidate(todaySessionStatsProvider);
             ref.invalidate(nextReviewLabelProvider);
@@ -152,30 +149,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     ),
                   ],
                 ),
-
-                // Streak
-                if (streakCount > 0) ...[
-                  const SizedBox(height: AppSpacing.s3),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(text: '\u{1F525} '),
-                        TextSpan(
-                          text: '$streakCount',
-                          style: MasteryTextStyles.bodyBold.copyWith(
-                            color: colors.warning,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' day streak',
-                          style: MasteryTextStyles.body.copyWith(
-                            color: colors.warning,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
 
                 const SizedBox(height: AppSpacing.s6),
 
@@ -284,7 +257,7 @@ class _SessionCard extends StatelessWidget {
           child: ShadButton(
             size: ShadButtonSize.lg,
             onPressed: onStartSession,
-            child: const Text('Start session'),
+            child: Text('Start session · ~$dailyTimeTarget min'),
           ),
         ),
       ],

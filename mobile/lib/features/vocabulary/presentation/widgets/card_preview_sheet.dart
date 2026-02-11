@@ -243,27 +243,35 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
         widget: RecallCard(
           word: widget.word,
           answer: primaryTranslation,
+          alternatives: alternatives,
           onGrade: (_) {}, // No-op in preview mode
           isPreview: true,
         ),
       ),
     );
 
-    // 2. Recognition Card (translation + distractors)
-    final recognitionDistractors = _generateFallbackDistractors(alternatives);
-    cards.add(
-      _CardData(
-        label: 'Recognition',
-        color: MasteryColors.getCueColor(context, 'multiple_choice'),
-        widget: RecognitionCard(
-          word: widget.word,
-          correctAnswer: primaryTranslation,
-          distractors: recognitionDistractors,
-          onAnswer: (selected, isCorrect) {}, // No-op in preview mode
-          isPreview: true,
+    // 2. Recognition Card (multiple choice)
+    if (alternatives.isNotEmpty) {
+      // Use alternatives as distractors (take first 3, pad if needed)
+      final distractors = alternatives.take(3).toList();
+      while (distractors.length < 3) {
+        distractors.add('Alternative ${distractors.length + 1}');
+      }
+
+      cards.add(
+        _CardData(
+          label: 'Recognition',
+          color: MasteryColors.getCueColor(context, 'translation'),
+          widget: RecognitionCard(
+            word: widget.word,
+            correctAnswer: primaryTranslation,
+            distractors: distractors,
+            onAnswer: (selected, isCorrect) {}, // No-op in preview mode
+            isPreview: true,
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     // 3. Definition Cue Card
     cards.add(
@@ -340,14 +348,6 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     return cards;
   }
 
-  List<String> _generateFallbackDistractors(List<String> alternatives) {
-    // Use alternative translations as distractors, pad if needed
-    final distractors = alternatives.take(3).toList();
-    while (distractors.length < 3) {
-      distractors.add('alternative ${distractors.length + 1}');
-    }
-    return distractors;
-  }
 }
 
 /// Data class for card metadata
