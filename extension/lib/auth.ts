@@ -21,6 +21,7 @@ export async function signInWithOAuth(provider: OAuthProvider): Promise<{ error?
   try {
     const supabase = getSupabaseClient();
     const redirectUrl = browser.identity.getRedirectURL();
+    console.log('[Mastery] OAuth: redirect URL:', redirectUrl);
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -30,22 +31,41 @@ export async function signInWithOAuth(provider: OAuthProvider): Promise<{ error?
       },
     });
 
-    if (error) return { error: error.message };
-    if (!data.url) return { error: 'No OAuth URL returned' };
+    if (error) {
+      console.error('[Mastery] OAuth: Supabase error:', error.message);
+      return { error: error.message };
+    }
+    if (!data.url) {
+      console.error('[Mastery] OAuth: No OAuth URL returned');
+      return { error: 'No OAuth URL returned' };
+    }
+
+    console.log('[Mastery] OAuth: launching auth flow with URL:', data.url);
 
     const responseUrl = await browser.identity.launchWebAuthFlow({
       url: data.url,
       interactive: true,
     });
 
-    if (!responseUrl) return { error: 'OAuth flow was cancelled' };
+    console.log('[Mastery] OAuth: received response URL:', responseUrl);
+
+    if (!responseUrl) {
+      console.error('[Mastery] OAuth: flow cancelled');
+      return { error: 'OAuth flow was cancelled' };
+    }
 
     // Extract tokens from the callback URL hash fragment
     const hashParams = new URLSearchParams(new URL(responseUrl).hash.substring(1));
     const accessToken = hashParams.get('access_token');
     const refreshToken = hashParams.get('refresh_token');
 
+    console.log('[Mastery] OAuth: token extraction -', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+    });
+
     if (!accessToken || !refreshToken) {
+      console.error('[Mastery] OAuth: missing tokens in callback URL');
       return { error: 'No tokens found in OAuth callback' };
     }
 
@@ -54,10 +74,17 @@ export async function signInWithOAuth(provider: OAuthProvider): Promise<{ error?
       refresh_token: refreshToken,
     });
 
-    if (sessionError) return { error: sessionError.message };
+    if (sessionError) {
+      console.error('[Mastery] OAuth: session error:', sessionError.message);
+      return { error: sessionError.message };
+    }
+
+    console.log('[Mastery] OAuth: sign-in successful');
     return {};
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'OAuth sign-in failed' };
+    const errorMessage = err instanceof Error ? err.message : 'OAuth sign-in failed';
+    console.error('[Mastery] OAuth: exception:', errorMessage, err);
+    return { error: errorMessage };
   }
 }
 

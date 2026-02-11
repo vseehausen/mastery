@@ -26,3 +26,6 @@ web-ext.config.ts
 *.sln
 *.sw?
 .wxt/chrome-profile
+
+# Private keys
+*.pem

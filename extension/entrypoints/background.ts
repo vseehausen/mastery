@@ -1,5 +1,5 @@
 import { lookupWord, triggerEnrichmentIfNeeded, getSupabaseClient } from '@/lib/api-client';
-import { isAuthenticated } from '@/lib/auth';
+import { isAuthenticated, signInWithOAuth, type OAuthProvider } from '@/lib/auth';
 import { getCachedWord, setCachedWord, addPageWord, clearPageWords } from '@/lib/cache';
 import type {
   ContentMessage,
@@ -23,15 +23,33 @@ export default defineBackground(() => {
     });
   });
 
-  // Handle messages from content script
+  // Handle messages from content script and popup
   browser.runtime.onMessage.addListener(
-    (message: ContentMessage, _sender, sendResponse: (response: ServiceWorkerResponse) => void) => {
-      console.log('[Mastery] Background received message:', message.type);
+    (message: any, _sender, sendResponse: (response: any) => void) => {
+      console.log('[Mastery] ✨ NEW VERSION ✨ Background received message:', message.type, 'Full message:', message);
+
       if (message.type === 'lookup') {
         console.log('[Mastery] Handling lookup for:', message.payload.raw_word);
         handleLookup(message.payload).then(sendResponse);
-        return true; // Keep the message channel open for async response
+        return true;
       }
+
+      if (message.type === 'oauth') {
+        console.log('[Mastery] ⚡ OAUTH HANDLER TRIGGERED for provider:', message.provider);
+        signInWithOAuth(message.provider)
+          .then((result) => {
+            console.log('[Mastery] ✅ OAuth completed with result:', result);
+            sendResponse(result);
+          })
+          .catch((err) => {
+            console.error('[Mastery] ❌ OAuth failed with error:', err);
+            sendResponse({ error: err.message });
+          });
+        return true;
+      }
+
+      console.log('[Mastery] ⚠️ Unknown message type:', message.type);
+      return false;
     },
   );
 

@@ -116,13 +116,13 @@ function createStyles(): string {
     .badge-dots { display: flex; gap: 2px; }
 
     .badge-dot {
-      width: var(--spacing);
-      height: var(--spacing);
+      width: 3px;
+      height: 3px;
       border-radius: 50%;
     }
 
     .badge-dot--filled  { background: var(--sc); }
-    .badge-dot--empty   { background: var(--border); }
+    .badge-dot--empty   { background: var(--dim); }
 
     /* ---- IPA ---- */
     .ipa {

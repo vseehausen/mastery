@@ -135,12 +135,35 @@
   }
 
   async function handleOAuth(provider: OAuthProvider) {
+    console.log('[Mastery] Popup: handleOAuth called with provider:', provider);
     authError = '';
     authLoading = true;
-    const result = await signInWithOAuth(provider);
-    authLoading = false;
-    if (result.error) {
-      authError = result.error;
+    screen = 'loading';
+    try {
+      // Call OAuth through background script (more stable than popup context)
+      const result = await browser.runtime.sendMessage({ type: 'oauth', provider });
+      console.log('[Mastery] Popup: OAuth result:', result);
+      if (result.error) {
+        authLoading = false;
+        screen = 'auth';
+        authError = result.error;
+      } else {
+        // Manually reload session to trigger UI update
+        const supabase = getSupabaseClient();
+        const { data: { session: s } } = await supabase.auth.getSession();
+        session = s;
+        if (s) {
+          await loadStats();
+        } else {
+          authLoading = false;
+          screen = 'auth';
+        }
+      }
+    } catch (err) {
+      console.error('[Mastery] Popup: handleOAuth exception:', err);
+      authLoading = false;
+      screen = 'auth';
+      authError = err instanceof Error ? err.message : 'OAuth failed';
     }
   }
 
@@ -197,8 +220,9 @@
 <main class="w-80 min-h-[200px] bg-background text-foreground">
   <!-- ===== LOADING ===== -->
   {#if screen === 'loading'}
-    <div class="flex items-center justify-center p-8">
-      <span class="text-sm text-muted-foreground">Loading...</span>
+    <div class="flex flex-col items-center justify-center p-8 space-y-3">
+      <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm text-muted-foreground">{authLoading ? 'Signing in...' : 'Loading...'}</span>
     </div>
 
   <!-- ===== AUTH ===== -->
@@ -250,6 +274,13 @@
             </svg>
             Continue with Apple
           </Button>
+
+          <div class="flex items-center gap-3 py-1">
+            <Separator class="flex-1" />
+            <span class="text-xs text-muted-foreground">or</span>
+            <Separator class="flex-1" />
+          </div>
+
           <Button
             variant="outline"
             class="w-full"
@@ -260,7 +291,7 @@
               <rect width="20" height="16" x="2" y="4" rx="2"/>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
-            Sign in with email
+            Continue with email
           </Button>
         </div>
       </div>
@@ -290,7 +321,7 @@
             type="email"
             value={email}
             oninput={(e) => { email = (e.target as HTMLInputElement).value; }}
-            placeholder="Email"
+            placeholder="Email address"
             required
             disabled={authLoading}
           />
@@ -335,7 +366,7 @@
   {:else if screen === 'empty'}
     <div class="p-4">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center justify-between border-b border-border pb-3">
         <div class="flex items-center gap-2">
           <div class="flex gap-0.5">
             <div class="w-1 h-3 rounded-full bg-stage-new"></div>
@@ -353,7 +384,7 @@
       </div>
 
       <!-- Empty illustration -->
-      <div class="flex flex-col items-center text-center py-6 space-y-3">
+      <div class="flex flex-col items-center text-center py-6 space-y-3 mt-4">
         <div class="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
           <svg class="w-6 h-6 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
@@ -362,7 +393,7 @@
         </div>
         <div>
           <p class="text-sm font-medium">No words yet</p>
-          <p class="text-xs text-muted-foreground mt-1">Double-click any word on a webpage to look it up</p>
+          <p class="text-xs text-muted-foreground mt-1">Select any word on a webpage to look it up and start building your vocabulary.</p>
         </div>
       </div>
     </div>
@@ -371,7 +402,7 @@
   {:else if screen === 'dashboard'}
     <div class="p-4 space-y-4">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between border-b border-border pb-3">
         <div class="flex items-center gap-2">
           <div class="flex gap-0.5">
             <div class="w-1 h-3 rounded-full bg-stage-new"></div>
@@ -402,27 +433,30 @@
 
       <!-- Page context -->
       {#if pageWordCount > 0}
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
-            <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
-          </svg>
-          <span>{pageWordCount} word{pageWordCount !== 1 ? 's' : ''} captured on this page</span>
+        <div class="flex items-center justify-between py-3 px-1 border-b border-border">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+              <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+            </svg>
+            <span class="text-xs text-muted-foreground">This page</span>
+          </div>
+          <span class="text-xs font-semibold">{pageWordCount} word{pageWordCount !== 1 ? 's' : ''} captured</span>
         </div>
       {/if}
 
       <!-- Stats row -->
       {#if stats}
-        <div class="grid grid-cols-3 gap-2">
-          <div class="text-center py-2 px-1 bg-muted/50 rounded-lg">
+        <div class="flex">
+          <div class="flex-1 text-center py-3 border-r border-border">
             <div class="text-lg font-bold leading-none">{stats.total_words}</div>
             <div class="text-[10px] text-muted-foreground mt-1">Total</div>
           </div>
-          <div class="text-center py-2 px-1 bg-muted/50 rounded-lg">
+          <div class="flex-1 text-center py-3 border-r border-border">
             <div class="text-lg font-bold leading-none">{stats.words_this_week}</div>
             <div class="text-[10px] text-muted-foreground mt-1">This week</div>
           </div>
-          <div class="text-center py-2 px-1 bg-muted/50 rounded-lg">
+          <div class="flex-1 text-center py-3">
             <div class="text-lg font-bold leading-none">{stats.streak_days}</div>
             <div class="text-[10px] text-muted-foreground mt-1">Day streak</div>
           </div>
@@ -433,8 +467,8 @@
         {@const totalStaged = STAGES.reduce((sum, s) => sum + (stats!.stage_counts[s] || 0), 0)}
         {#if totalStaged > 0}
           <div class="space-y-2">
-            <div class="flex h-2 rounded-full overflow-hidden">
-              {#each STAGES as stage}
+            <div class="flex h-[5px] rounded-full overflow-hidden">
+              {#each [...STAGES].reverse() as stage}
                 {#if widths[stage] > 0}
                   <div
                     class="h-full transition-all"
@@ -448,7 +482,7 @@
               {#each STAGES as stage}
                 {#if stats.stage_counts[stage] > 0}
                   <div class="flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full" style:background={STAGE_COLORS[stage]}></span>
+                    <span class="w-[3px] h-[3px] rounded-full" style:background={STAGE_COLORS[stage]}></span>
                     <span class="text-[10px] text-muted-foreground">
                       {STAGE_LABELS[stage]} {stats.stage_counts[stage]}
                     </span>
@@ -463,19 +497,32 @@
         {#if stats.recent_words.length > 0}
           <div class="space-y-1">
             <h2 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recent</h2>
-            <ul class="space-y-0.5">
-              {#each stats.recent_words as word}
-                <li class="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50">
+            <ul>
+              {#each stats.recent_words as word, idx}
+                {@const stageIndex = STAGES.indexOf(word.stage)}
+                <li class="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 {idx < stats.recent_words.length - 1 ? 'border-b border-foreground/5' : ''}">
                   <div class="flex items-baseline gap-1.5 min-w-0">
-                    <span class="text-sm font-medium font-serif truncate">{word.lemma}</span>
+                    <span class="text-sm font-serif truncate">{word.lemma}</span>
                     <span class="text-xs text-muted-foreground truncate">{word.translation}</span>
                   </div>
                   <div class="flex items-center gap-2 shrink-0 ml-2">
                     <span class="text-[10px] text-muted-foreground">{timeAgo(word.captured_at)}</span>
-                    <span
-                      class="w-2 h-2 rounded-full"
-                      style:background={STAGE_COLORS[word.stage]}
-                    ></span>
+                    <div
+                      class="flex items-center gap-1 px-1.5 py-0.5 rounded relative"
+                      style:background="var(--stage-{word.stage}-bg)"
+                      style:color={STAGE_COLORS[word.stage]}
+                      style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {STAGE_COLORS[word.stage]} 15%, transparent)"
+                    >
+                      <div class="flex gap-0.5">
+                        {#each STAGES as _, dotIdx}
+                          <div
+                            class="w-[3px] h-[3px] rounded-full"
+                            style:background={dotIdx <= stageIndex ? STAGE_COLORS[word.stage] : 'var(--dim)'}
+                          ></div>
+                        {/each}
+                      </div>
+                      <span class="text-[9px] font-semibold">{STAGE_LABELS[word.stage]}</span>
+                    </div>
                   </div>
                 </li>
               {/each}
@@ -486,7 +533,7 @@
 
       <!-- Footer -->
       <p class="text-[10px] text-center text-muted-foreground/60 pt-1">
-        Select any word to look it up
+        Select any word on a webpage to look it up
       </p>
     </div>
 
@@ -494,7 +541,7 @@
   {:else if screen === 'settings'}
     <div class="p-4 space-y-4">
       <!-- Header -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 border-b border-border pb-3">
         <button
           class="text-muted-foreground hover:text-foreground transition-colors"
           onclick={() => { screen = 'dashboard'; }}
@@ -535,39 +582,61 @@
       <!-- Tooltip detail -->
       <div class="space-y-2">
         <span class="text-xs font-medium">Tooltip detail</span>
-        <div class="flex gap-1">
-          {#each (['compact', 'standard', 'full'] as const) as level}
+        <div class="text-[10px] text-muted-foreground">How much information to show on word lookup</div>
+        <div class="space-y-1.5">
+          {#each [
+            { value: 'compact', label: 'Compact', description: 'Translation only' },
+            { value: 'standard', label: 'Standard', description: 'Translation + definition' },
+            { value: 'full', label: 'Full', description: 'Translation + definition + context' }
+          ] as option}
             <button
-              class="flex-1 py-1.5 text-xs font-medium rounded-md transition-colors {settings.tooltipDetail === level ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}"
-              onclick={() => setTooltipDetail(level)}
+              class="w-full flex items-start gap-2.5 rounded-lg p-2.5 transition-colors {settings.tooltipDetail === option.value ? 'bg-muted border border-border' : 'border border-transparent'}"
+              onclick={() => setTooltipDetail(option.value as TooltipDetail)}
             >
-              {level.charAt(0).toUpperCase() + level.slice(1)}
+              <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 self-center {settings.tooltipDetail === option.value ? 'border-accent' : 'border-dim'}">
+                {#if settings.tooltipDetail === option.value}
+                  <div class="w-2 h-2 rounded-full bg-accent"></div>
+                {/if}
+              </div>
+              <div class="flex-1 text-left">
+                <div class="text-xs font-medium">{option.label}</div>
+                <div class="text-[10px] text-muted-foreground">{option.description}</div>
+              </div>
             </button>
           {/each}
         </div>
       </div>
 
+      <Separator />
+
       <!-- Auto-capture toggle -->
-      <div class="flex items-center justify-between">
-        <label for="auto-capture" class="text-xs font-medium">Auto-capture words</label>
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+          <label for="auto-capture" class="text-xs font-medium block">Auto-capture on select</label>
+          <div class="text-[10px] text-muted-foreground">Automatically save words when you select them</div>
+        </div>
         <Switch
           id="auto-capture"
           checked={settings.autoCapture}
           onchange={toggleAutoCapture}
+          class="shrink-0 mt-0.5"
         />
       </div>
 
+      <Separator />
+
       <!-- Pause on this site -->
       {#if currentDomain}
-        <div class="flex items-center justify-between">
-          <div>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1">
             <label for="pause-site" class="text-xs font-medium block">Pause on this site</label>
-            <span class="text-[10px] text-muted-foreground">{currentDomain}</span>
+            <div class="text-[10px] text-muted-foreground">Disable word capture on {currentDomain}</div>
           </div>
           <Switch
             id="pause-site"
             checked={isSitePaused}
             onchange={togglePauseSite}
+            class="shrink-0 mt-0.5"
           />
         </div>
       {/if}
@@ -576,10 +645,15 @@
 
       <!-- Sign out -->
       <button
-        class="text-xs text-muted-foreground hover:text-destructive transition-colors"
+        class="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-destructive transition-colors"
         onclick={handleLogout}
       >
-        Sign out
+        <span>Sign out</span>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" x2="9" y1="12" y2="12"/>
+        </svg>
       </button>
     </div>
   {/if}
