@@ -88,7 +88,7 @@
   --destructive: #dc2626; /* red-600 */
   --destructive-foreground: #ffffff;
   --border: #e4e4e7; /* zinc-200 */
-  --input: #ffffff;
+  --input: #e4e4e7; /* zinc-200 */
   --ring: #09090b; /* zinc-950 */
   --dim: #d4d4d8; /* zinc-300 */
   --radius: 0.5rem;
