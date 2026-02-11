@@ -16,7 +16,15 @@ import { translateWord, buildTranslations, type TranslationEntry } from '../_sha
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
 const BUFFER_TARGET = 10;
-const ENRICHMENT_VERSION = 3; // v3: Added quality rules (acronyms, circular definitions, disambiguation)
+
+// ENRICHMENT_VERSION: Increment this on EVERY change to enrichment logic, prompt, or output format.
+// This enables the /maintain endpoint to detect and re-enrich stale entries.
+// Version history:
+// - v1: Initial enrichment implementation
+// - v2: Added translation resolution logic
+// - v3: Added quality rules (acronyms, circular definitions, disambiguation)
+const ENRICHMENT_VERSION = 3;
+
 const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
 const MAINTAIN_CONCURRENCY = 10;
 const SOURCE_LANGUAGE = 'en';
