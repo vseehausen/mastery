@@ -16,6 +16,9 @@ import { translateWord, resolveTranslation } from '../_shared/translation.ts';
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
 const BUFFER_TARGET = 10;
+const ENRICHMENT_VERSION = 2;
+const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
+const MAINTAIN_CONCURRENCY = 10;
 
 // =============================================================================
 // Types
@@ -101,6 +104,15 @@ Deno.serve(async (req) => {
   const path = url.pathname.split('/').pop();
 
   try {
+    // Admin-key protected maintenance endpoint
+    if (req.method === 'POST' && path === 'maintain') {
+      const adminKey = Deno.env.get('ADMIN_API_KEY');
+      if (!adminKey || authHeader !== `Bearer ${adminKey}`) {
+        return unauthorizedResponse();
+      }
+      return await handleMaintain(await req.json());
+    }
+
     if (isServiceRoleKey) {
       if (req.method === 'POST' && path === 'request') {
         return await handleEnrichRequestServerSide(await req.json());

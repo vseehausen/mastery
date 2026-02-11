@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/mastery_back_button.dart';
 import '../../core/widgets/progress_stage_badge.dart';
 import '../../data/services/progress_stage_service.dart';
 import '../../domain/models/encounter.dart';
@@ -40,6 +41,9 @@ class _VocabularyDetailScreenState
 
     return Scaffold(
       appBar: AppBar(
+        leading: MasteryBackButton.back(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: vocabAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, _) => const SizedBox.shrink(),

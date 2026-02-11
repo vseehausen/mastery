@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/widgets/mastery_back_button.dart';
 import '../../../../domain/models/global_dictionary.dart';
 
 /// Full-screen modal editor for meaning translations and definitions.
@@ -112,8 +113,7 @@ class _MeaningEditorState extends State<MeaningEditor> {
         backgroundColor: colors.background.withValues(alpha: 0.8),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, size: 20, color: colors.mutedForeground),
+        leading: MasteryBackButton.close(
           onPressed: _handleCancel,
         ),
         title: Text(

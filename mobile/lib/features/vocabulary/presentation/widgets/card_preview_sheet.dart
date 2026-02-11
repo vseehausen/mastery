@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/widgets/mastery_back_button.dart';
 import '../../../../domain/models/global_dictionary.dart';
 import '../../../../providers/supabase_provider.dart';
 import '../../../learn/widgets/cloze_cue_card.dart';
@@ -74,8 +75,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
                     color: colors.foreground,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
+                MasteryBackButton.close(
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],

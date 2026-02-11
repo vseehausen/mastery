@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/widgets/mastery_back_button.dart';
 import '../../../providers/supabase_provider.dart';
 import '../../sync/presentation/screens/sync_status_screen.dart';
 
@@ -17,6 +18,9 @@ class NoItemsReadyScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: MasteryBackButton.back(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('No Items Ready'),
         backgroundColor: Colors.transparent,
       ),

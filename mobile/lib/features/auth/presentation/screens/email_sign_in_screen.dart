@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../widgets/auth_logo.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/theme/color_tokens.dart';
+import '../../../../core/widgets/mastery_back_button.dart';
 import '../../../../providers/auth_provider.dart';
 import 'email_sign_up_screen.dart';
 
@@ -35,7 +36,13 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     final colors = context.masteryColors;
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: MasteryBackButton.back(
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(

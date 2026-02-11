@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/app_defaults.dart';
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/widgets/mastery_back_button.dart';
 import '../../../../domain/models/user_preferences.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/dev_mode_provider.dart';
@@ -56,8 +57,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         backgroundColor: context.masteryColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.masteryColors.foreground),
+        leading: MasteryBackButton.back(
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

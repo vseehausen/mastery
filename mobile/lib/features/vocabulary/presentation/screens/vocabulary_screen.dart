@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/word_card.dart';
 import '../../../../core/widgets/loading_skeleton.dart';
+import '../../../../core/widgets/mastery_back_button.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../data/services/progress_stage_service.dart';
@@ -49,11 +50,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: colors.foreground,
-                    ),
+                  MasteryBackButton.back(
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Text(

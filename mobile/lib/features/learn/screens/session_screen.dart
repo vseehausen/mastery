@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/app_defaults.dart';
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/widgets/mastery_back_button.dart';
 import '../../../data/services/progress_stage_service.dart';
 import '../../../data/services/review_write_queue.dart';
 import '../../../data/services/supabase_data_service.dart';
@@ -854,9 +855,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
               child: Row(
                 children: [
-                  IconButton(
+                  MasteryBackButton.close(
                     onPressed: _handleClosePressed,
-                    icon: Icon(Icons.close, color: colors.mutedForeground),
                   ),
                   Expanded(
                     child: SessionProgressBar(

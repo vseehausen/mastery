@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/mastery_back_button.dart';
+
 class OAuthLoadingScreen extends StatelessWidget {
   const OAuthLoadingScreen({super.key, required this.onCancel});
 
@@ -11,8 +13,7 @@ class OAuthLoadingScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
+        leading: MasteryBackButton.back(
           onPressed: onCancel,
         ),
       ),
