@@ -27,6 +27,11 @@ enabled = true
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
+# Chrome extension redirect URL (extension ID: nnldhgipedjllgmpamcfdclhgkaofpgj)
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "https://nnldhgipedjllgmpamcfdclhgkaofpgj.chromiumapp.org/",
+]
 
 [auth.email]
 enable_signup = true
