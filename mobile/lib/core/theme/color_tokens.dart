@@ -414,6 +414,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     Color? destructiveForeground,
     Color? muted,
     Color? mutedForeground,
+    Color? subtleForeground,
     Color? border,
     Color? input,
     Color? ring,

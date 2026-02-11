@@ -108,7 +108,7 @@ class _VocabularyScreenNewState extends ConsumerState<VocabularyScreenNew> {
                   final stageMap = <String, ProgressStage>{};
                   final learningCards = learningCardsAsync.valueOrNull ?? [];
                   for (final card in learningCards) {
-                    stageMap[card.vocabularyId] = stageService.calculateStage(
+                    stageMap[card.vocabularyId] = card.progressStage ?? stageService.calculateStage(
                       card: card,
                       // Conservative: without batch query, assume 0.
                       // Known/Mastered detection happens during sessions.

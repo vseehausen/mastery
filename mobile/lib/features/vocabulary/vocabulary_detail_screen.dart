@@ -282,7 +282,7 @@ class _VocabularyDetailScreenState
   ) {
     final colors = context.masteryColors;
     final stageService = ProgressStageService();
-    final stage = stageService.calculateStage(
+    final stage = learningCard?.progressStage ?? stageService.calculateStage(
       card: learningCard,
       nonTranslationSuccessCount: 0,
     );

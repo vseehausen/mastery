@@ -2,16 +2,6 @@
 
 This document tracks known issues and improvement opportunities discovered during manual testing sessions. Items are grouped by category for easier prioritization and implementation planning.
 
-## Data/Sync Bugs
-
-- **Desync between session cards and vocab enrichment data**
-  - Issue: Session cards may show outdated or mismatched information compared to the latest vocabulary enrichment data
-  - Impact: User sees inconsistent information during learning sessions
-
-- **Result page status mismatch (known vs stabilizing)**
-  - Issue: Post-session result page displays incorrect status for words (e.g., showing "known" when should be "stabilizing")
-  - Impact: Misleading feedback about learning progress
-
 ## Enrichment Quality
 
 - **Recognition card needs L1 confusables (not alternative translations)**
