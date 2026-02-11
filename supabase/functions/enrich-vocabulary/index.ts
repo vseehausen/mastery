@@ -11,7 +11,7 @@ import { jsonResponse, errorResponse, unauthorizedResponse } from '../_shared/re
 import { normalize } from '../_shared/normalize.ts';
 import { resolveGlobalEntry, resolveByLemma, linkVocabulary, upsertVariant } from '../_shared/global-dictionary.ts';
 import { mergeIfDuplicate } from '../_shared/vocabulary-lifecycle.ts';
-import { translateWord, resolveTranslation } from '../_shared/translation.ts';
+import { translateWord, buildTranslations, type TranslationEntry } from '../_shared/translation.ts';
 
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
@@ -19,6 +19,7 @@ const BUFFER_TARGET = 10;
 const ENRICHMENT_VERSION = 2;
 const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
 const MAINTAIN_CONCURRENCY = 10;
+const SOURCE_LANGUAGE = 'en';
 
 // =============================================================================
 // Types
@@ -82,10 +83,9 @@ interface AIEnhancement {
   best_native_translation: string | null;
 }
 
-interface TranslationEntry {
-  primary: string;
-  alternatives: string[];
-  source: string;
+interface MaintainRequestBody {
+  batch_size?: number;
+  native_language_code?: string;
 }
 
 // =============================================================================
@@ -246,6 +246,133 @@ async function handleStatus(userId: string): Promise<Response> {
 }
 
 // =============================================================================
+// POST /enrich-vocabulary/maintain (admin-key protected)
+// =============================================================================
+
+async function handleMaintain(body: MaintainRequestBody): Promise<Response> {
+  const batchSize = Math.min(body.batch_size || MAINTAIN_DEFAULT_BATCH_SIZE, 100);
+  const nativeLanguageCode = body.native_language_code || 'de';
+  const client = createServiceClient();
+
+  // Fetch stale global_dictionary entries
+  const { data: staleEntries, error: fetchError } = await client
+    .from('global_dictionary')
+    .select('id, word, stem, lemma, language_code')
+    .or(`enrichment_version.is.null,enrichment_version.lt.${ENRICHMENT_VERSION}`)
+    .order('updated_at', { ascending: true })
+    .limit(batchSize);
+
+  if (fetchError) {
+    console.error('[maintain] Failed to fetch stale entries:', fetchError);
+    return errorResponse('Failed to fetch stale entries', 500);
+  }
+
+  if (!staleEntries || staleEntries.length === 0) {
+    return jsonResponse({ updated: 0, failed: 0, remaining: 0 });
+  }
+
+  // Count total remaining (including current batch)
+  const { count: remainingCount } = await client
+    .from('global_dictionary')
+    .select('id', { count: 'exact', head: true })
+    .or(`enrichment_version.is.null,enrichment_version.lt.${ENRICHMENT_VERSION}`);
+
+  const totalRemaining = remainingCount || 0;
+
+  console.log(`[maintain] Processing ${staleEntries.length} stale entries (${totalRemaining} total remaining)`);
+
+  let updated = 0;
+  let failed = 0;
+
+  // Process in chunks of MAINTAIN_CONCURRENCY using Promise.allSettled
+  for (let i = 0; i < staleEntries.length; i += MAINTAIN_CONCURRENCY) {
+    const chunk = staleEntries.slice(i, i + MAINTAIN_CONCURRENCY);
+    const results = await Promise.allSettled(
+      chunk.map(entry => maintainEntry(client, entry, nativeLanguageCode))
+    );
+
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        updated++;
+      } else {
+        failed++;
+        if (result.status === 'rejected') {
+          console.error('[maintain] Entry failed:', result.reason);
+        }
+      }
+    }
+  }
+
+  const remaining = totalRemaining - updated;
+  console.log(`[maintain] Done: updated=${updated}, failed=${failed}, remaining=${remaining}`);
+
+  return jsonResponse({ updated, failed, remaining });
+}
+
+async function maintainEntry(
+  client: SupabaseClient,
+  entry: { id: string; word: string; stem: string | null; lemma: string | null; language_code: string },
+  nativeLanguageCode: string,
+): Promise<boolean> {
+  // Find best encounter context from any vocabulary linked to this global_dict_id
+  const { data: vocabRows } = await client
+    .from('vocabulary')
+    .select('id, user_id')
+    .eq('global_dictionary_id', entry.id)
+    .is('deleted_at', null)
+    .limit(1);
+
+  let context: string | null = null;
+  if (vocabRows && vocabRows.length > 0) {
+    const { data: encounters } = await client
+      .from('encounters')
+      .select('context')
+      .eq('vocabulary_id', vocabRows[0].id)
+      .not('context', 'is', null)
+      .order('occurred_at', { ascending: false })
+      .limit(1);
+
+    if (encounters && encounters.length > 0) {
+      context = encounters[0].context;
+    }
+  }
+
+  // Translate
+  const { translation, source: translationSource } = await translateWord(
+    entry.word, nativeLanguageCode, context ?? undefined,
+  );
+
+  // AI enhance
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiKey) throw new Error('OPENAI_API_KEY not configured');
+
+  const aiEnhancement = await getOpenAIEnhancement(
+    { word: entry.word, stem: entry.stem }, context, openaiKey, translation, nativeLanguageCode,
+  );
+  if (!aiEnhancement) throw new Error(`AI enhancement returned null for "${entry.word}"`);
+
+  // Build translations and enrichment payload
+  const lemma = normalize(aiEnhancement.stem);
+  const translations = buildTranslations(nativeLanguageCode, translation, translationSource, aiEnhancement);
+  const updatePayload = {
+    ...buildEnrichmentPayload(aiEnhancement, lemma, translations),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: updateError } = await client
+    .from('global_dictionary')
+    .update(updatePayload)
+    .eq('id', entry.id);
+
+  if (updateError) {
+    throw new Error(`Failed to update entry ${entry.id}: ${updateError.message}`);
+  }
+
+  console.log(`[maintain] ✓ Updated "${entry.word}" → v${ENRICHMENT_VERSION}`);
+  return true;
+}
+
+// =============================================================================
 // Shared word processing loop
 // =============================================================================
 
@@ -296,6 +423,99 @@ async function processWords(
 // Phase 4: Upsert global_dictionary + word_variants, link + merge
 // =============================================================================
 
+/**
+ * Build enrichment payload from AI enhancement and translations.
+ * Consolidates the duplicated payload construction from enrichWord() and maintainEntry().
+ */
+function buildEnrichmentPayload(
+  aiEnhancement: AIEnhancement,
+  lemma: string,
+  translations: Record<string, TranslationEntry>,
+): Record<string, unknown> {
+  return {
+    word: aiEnhancement.stem,
+    stem: aiEnhancement.stem,
+    lemma,
+    part_of_speech: aiEnhancement.part_of_speech,
+    english_definition: aiEnhancement.english_definition,
+    synonyms: aiEnhancement.synonyms,
+    antonyms: aiEnhancement.antonyms,
+    confusables: aiEnhancement.confusables.map(c => ({
+      word: c.word,
+      explanation: c.explanation,
+      disambiguation_sentence: c.disambiguation_sentence,
+    })),
+    example_sentences: aiEnhancement.example_sentences,
+    pronunciation_ipa: aiEnhancement.pronunciation_ipa,
+    translations,
+    cefr_level: aiEnhancement.cefr_level,
+    confidence: aiEnhancement.confidence,
+    enrichment_version: ENRICHMENT_VERSION,
+  };
+}
+
+/**
+ * Upsert global_dictionary entry with three-branch logic:
+ * 1. Reuse existing entry (if found and not forcing)
+ * 2. Force-update existing entry (if found and forcing)
+ * 3. Insert new entry (with race-condition handling)
+ * Returns globalDictId on success, null on failure.
+ */
+async function upsertGlobalDictEntry(
+  client: SupabaseClient,
+  lemma: string,
+  payload: Record<string, unknown>,
+  forceReEnrich: boolean,
+): Promise<string | null> {
+  const existingLemma = await resolveByLemma(client, lemma, SOURCE_LANGUAGE);
+
+  if (existingLemma && !forceReEnrich) {
+    console.log(`[enrich-vocabulary] Reusing existing global_dictionary for lemma "${lemma}"`);
+    return existingLemma.id;
+  }
+
+  if (existingLemma) {
+    // Force re-enrich: update existing entry with fresh data
+    const { error: updateError } = await client
+      .from('global_dictionary')
+      .update({ ...payload, updated_at: new Date().toISOString() })
+      .eq('id', existingLemma.id);
+
+    if (updateError) {
+      console.error('[enrich-vocabulary] Failed to update global_dictionary entry:', updateError);
+      return null;
+    }
+    console.log(`[enrich-vocabulary] Updated global_dictionary for lemma "${lemma}"`);
+    return existingLemma.id;
+  }
+
+  // Insert new global_dictionary entry
+  const globalDictId = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  const { error: insertError } = await client
+    .from('global_dictionary')
+    .insert({ id: globalDictId, ...payload, created_at: now, updated_at: now })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    if (insertError.code === '23505') {
+      console.log(`[enrich-vocabulary] Race condition, fetching existing entry for lemma "${lemma}"`);
+      const raceEntry = await resolveByLemma(client, lemma, SOURCE_LANGUAGE);
+      if (!raceEntry) {
+        console.error('[enrich-vocabulary] Failed to fetch race-condition entry');
+        return null;
+      }
+      return raceEntry.id;
+    }
+    console.error('[enrich-vocabulary] Failed to insert global_dictionary entry:', insertError);
+    return null;
+  }
+
+  return globalDictId;
+}
+
 async function enrichWord(
   word: VocabWord,
   nativeLanguageCode: string,
@@ -304,7 +524,7 @@ async function enrichWord(
   forceReEnrich = false,
 ): Promise<EnrichedWord | null> {
   // Check word_variants → global_dictionary for existing entry
-  const existingEntry = await resolveGlobalEntry(client, word.word, 'en');
+  const existingEntry = await resolveGlobalEntry(client, word.word, SOURCE_LANGUAGE);
   if (existingEntry && !forceReEnrich) {
     console.log(`[enrich-vocabulary] Found existing global_dictionary entry for "${word.word}"`);
     await linkVocabulary(client, word.id, existingEntry.id);
@@ -340,92 +560,21 @@ async function enrichWord(
   const lemma = normalize(aiEnhancement.stem);
   const normalizedWord = normalize(word.word);
 
-  // Build enrichment payload
-  const resolved = resolveTranslation(translation, translationSource, aiEnhancement);
-  const aiAlternatives = aiEnhancement.native_alternatives || [];
-  const allAlternatives = [...new Set([...resolved.alternatives, ...aiAlternatives])]
-    .filter(a => a.toLowerCase() !== resolved.primary.toLowerCase());
-
-  const translations: Record<string, TranslationEntry> = {
-    [nativeLanguageCode]: {
-      primary: resolved.primary,
-      alternatives: allAlternatives,
-      source: resolved.source,
-    }
-  };
-
+  // Build translations and enrichment payload
+  const translations = buildTranslations(nativeLanguageCode, translation, translationSource, aiEnhancement);
   const enrichmentPayload = {
-    word: aiEnhancement.stem,
-    stem: aiEnhancement.stem,
-    lemma,
-    language_code: 'en',
-    part_of_speech: aiEnhancement.part_of_speech,
-    english_definition: aiEnhancement.english_definition,
-    synonyms: aiEnhancement.synonyms,
-    antonyms: aiEnhancement.antonyms,
-    confusables: aiEnhancement.confusables.map(c => ({
-      word: c.word,
-      explanation: c.explanation,
-      disambiguation_sentence: c.disambiguation_sentence,
-    })),
-    example_sentences: aiEnhancement.example_sentences,
-    pronunciation_ipa: aiEnhancement.pronunciation_ipa,
-    translations,
-    cefr_level: aiEnhancement.cefr_level,
-    confidence: aiEnhancement.confidence,
+    ...buildEnrichmentPayload(aiEnhancement, lemma, translations),
+    language_code: SOURCE_LANGUAGE,
   };
 
-  // Check if lemma already exists in global_dictionary
-  let globalDictId: string;
-  const existingLemma = await resolveByLemma(client, lemma, 'en');
-
-  if (existingLemma && !forceReEnrich) {
-    globalDictId = existingLemma.id;
-    console.log(`[enrich-vocabulary] Reusing existing global_dictionary for lemma "${lemma}"`);
-  } else if (existingLemma) {
-    // Force re-enrich: update existing entry with fresh data
-    globalDictId = existingLemma.id;
-    const { error: updateError } = await client
-      .from('global_dictionary')
-      .update({ ...enrichmentPayload, updated_at: new Date().toISOString() })
-      .eq('id', globalDictId);
-
-    if (updateError) {
-      console.error('[enrich-vocabulary] Failed to update global_dictionary entry:', updateError);
-      return null;
-    }
-    console.log(`[enrich-vocabulary] Updated global_dictionary for lemma "${lemma}"`);
-  } else {
-    // Insert new global_dictionary entry
-    globalDictId = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    const { error: insertError } = await client
-      .from('global_dictionary')
-      .insert({ id: globalDictId, ...enrichmentPayload, created_at: now, updated_at: now })
-      .select('id')
-      .single();
-
-    if (insertError) {
-      if (insertError.code === '23505') {
-        console.log(`[enrich-vocabulary] Race condition, fetching existing entry for lemma "${lemma}"`);
-        const raceEntry = await resolveByLemma(client, lemma, 'en');
-        if (!raceEntry) {
-          console.error('[enrich-vocabulary] Failed to fetch race-condition entry');
-          return null;
-        }
-        globalDictId = raceEntry.id;
-      } else {
-        console.error('[enrich-vocabulary] Failed to insert global_dictionary entry:', insertError);
-        return null;
-      }
-    }
-  }
+  // Upsert global_dictionary entry
+  const globalDictId = await upsertGlobalDictEntry(client, lemma, enrichmentPayload, forceReEnrich);
+  if (!globalDictId) return null;
 
   // Create word_variants mappings
-  await upsertVariant(client, 'en', normalizedWord, globalDictId);
+  await upsertVariant(client, SOURCE_LANGUAGE, normalizedWord, globalDictId);
   if (lemma !== normalizedWord) {
-    await upsertVariant(client, 'en', lemma, globalDictId);
+    await upsertVariant(client, SOURCE_LANGUAGE, lemma, globalDictId);
   }
 
   // Link vocabulary and merge duplicates
@@ -441,7 +590,7 @@ async function enrichWord(
 // =============================================================================
 
 async function getOpenAIEnhancement(
-  word: VocabWord,
+  word: { word: string; stem: string | null },
   context: string | null,
   apiKey: string,
   primaryTranslation: string,
@@ -479,6 +628,11 @@ IMPORTANT for example_sentences and disambiguation_sentence:
 - The "sentence" field should contain the complete sentence for reference
 - Example: For "ubiquitous" → { "sentence": "Wi-Fi has become so ubiquitous.", "before": "Wi-Fi has become so ", "blank": "ubiquitous", "after": "." }
 
+QUALITY RULES (CRITICAL):
+1. ACRONYMS: If the word is an acronym (e.g., "TLC", "FAQ", "ASAP"), identify it as such and provide both the expanded form and its meaning. Example: "TLC" → "Tender Loving Care: careful and kind attention given to someone or something"
+2. CIRCULAR DEFINITIONS: The english_definition MUST NOT contain the target word or any of its variants (stem, inflections). Use different vocabulary to explain the meaning.
+3. DISAMBIGUATION SENTENCES: The disambiguation_sentence should NOT contain the target word. Use only the confusable word in the blank to demonstrate the distinction clearly.
+
 Word: ${word.word}
 Stem: ${word.stem || word.word}
 Context: ${context || 'none'}
@@ -508,6 +662,29 @@ Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
   if (!content) throw new Error('No content in OpenAI response');
 
   const parsed = JSON.parse(content);
+
+  // Validate quality rules
+  const targetWord = word.word.toLowerCase();
+  const stem = (parsed.stem || word.word).toLowerCase();
+  const definition = (parsed.english_definition || '').toLowerCase();
+
+  // Rule 2: Check for circular definitions
+  if (definition.includes(targetWord) || definition.includes(stem)) {
+    console.warn(`[enrichment-quality] Circular definition detected for "${word.word}": "${parsed.english_definition}"`);
+  }
+
+  // Rule 3: Check disambiguation sentences for target word
+  if (Array.isArray(parsed.confusables)) {
+    for (const confusable of parsed.confusables) {
+      if (confusable.disambiguation_sentence) {
+        const disambigSentence = (confusable.disambiguation_sentence.sentence || '').toLowerCase();
+        if (disambigSentence.includes(targetWord) || disambigSentence.includes(stem)) {
+          console.warn(`[enrichment-quality] Disambiguation sentence contains target word "${word.word}": "${confusable.disambiguation_sentence.sentence}"`);
+        }
+      }
+    }
+  }
+
   return {
     stem: parsed.stem || word.word,
     english_definition: parsed.english_definition || '',

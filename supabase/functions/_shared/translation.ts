@@ -2,6 +2,12 @@
  * Shared translation functions for DeepL and Google Translate APIs
  */
 
+export interface TranslationEntry {
+  primary: string;
+  alternatives: string[];
+  source: string;
+}
+
 export async function getDeepLTranslation(
   word: string,
   targetLang: string,
@@ -137,4 +143,28 @@ export function resolveTranslation(
   }
 
   return { primary: machineTranslation, alternatives: [], source: machineSource };
+}
+
+/**
+ * Build translations object by merging resolved translation with AI alternatives.
+ * Consolidates the duplicated logic from enrichWord() and maintainEntry().
+ */
+export function buildTranslations(
+  nativeLanguageCode: string,
+  machineTranslation: string,
+  machineSource: string,
+  aiEnhancement: { best_native_translation?: string | null; confidence?: number; native_alternatives?: string[] } | null,
+): Record<string, TranslationEntry> {
+  const resolved = resolveTranslation(machineTranslation, machineSource, aiEnhancement);
+  const aiAlternatives = aiEnhancement?.native_alternatives || [];
+  const allAlternatives = [...new Set([...resolved.alternatives, ...aiAlternatives])]
+    .filter(a => a.toLowerCase() !== resolved.primary.toLowerCase());
+
+  return {
+    [nativeLanguageCode]: {
+      primary: resolved.primary,
+      alternatives: allAlternatives,
+      source: resolved.source,
+    },
+  };
 }
