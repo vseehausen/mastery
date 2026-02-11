@@ -103,10 +103,10 @@ function createStyles(): string {
       align-items: center;
       gap: var(--spacing);
       font-family: var(--font-sans);
-      font-size: var(--text-xs);
+      font-size: var(--text-xxs);
       font-weight: var(--font-weight-semibold);
       line-height: 1;
-      padding: var(--spacing) calc(var(--spacing) * 2) var(--spacing) 6px;
+      padding: calc(var(--spacing) + 1px) calc(var(--spacing) * 2) calc(var(--spacing) + 1px) 6px;
       border-radius: var(--radius-badge);
       background: var(--sbg);
       color: var(--sc);

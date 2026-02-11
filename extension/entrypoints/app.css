@@ -122,6 +122,7 @@
   --radius-badge: 5px;
 
   /* Typography (from mobile/lib/core/theme/typography_tokens.dart) */
+  --text-xxs: 10px;
   --text-xs: 11px;
   --text-sm: 14px;
   --text-base: 16px;

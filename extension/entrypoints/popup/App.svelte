@@ -508,12 +508,16 @@
                   <div class="flex items-center gap-2 shrink-0 ml-2">
                     <span class="text-[10px] text-muted-foreground">{timeAgo(word.captured_at)}</span>
                     <div
-                      class="flex items-center gap-1 px-1.5 py-0.5 rounded relative"
+                      class="inline-flex items-center leading-none font-semibold"
                       style:background="var(--stage-{word.stage}-bg)"
                       style:color={STAGE_COLORS[word.stage]}
                       style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {STAGE_COLORS[word.stage]} 15%, transparent)"
+                      style:gap="var(--spacing)"
+                      style:font-size="var(--text-xxs)"
+                      style:padding="calc(var(--spacing) + 1px) calc(var(--spacing) * 2) calc(var(--spacing) + 1px) 6px"
+                      style:border-radius="var(--radius-badge)"
                     >
-                      <div class="flex gap-0.5">
+                      <div class="flex" style:gap="2px">
                         {#each STAGES as _, dotIdx}
                           <div
                             class="w-[3px] h-[3px] rounded-full"
@@ -521,7 +525,7 @@
                           ></div>
                         {/each}
                       </div>
-                      <span class="text-[9px] font-semibold">{STAGE_LABELS[word.stage]}</span>
+                      <span>{STAGE_LABELS[word.stage]}</span>
                     </div>
                   </div>
                 </li>
