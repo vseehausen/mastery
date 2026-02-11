@@ -356,6 +356,13 @@ class _ProgressCard extends StatelessWidget {
         count: summary.stabilizingCount,
       ));
     }
+    if (summary.practicingCount > 0) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.s2));
+      rows.add(_TransitionRow(
+        stage: ProgressStage.practicing,
+        count: summary.practicingCount,
+      ));
+    }
 
     return Semantics(
       liveRegion: true,

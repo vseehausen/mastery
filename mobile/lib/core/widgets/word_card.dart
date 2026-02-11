@@ -52,14 +52,6 @@ class WordCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (isEnriched) ...[
-                            const SizedBox(width: 6),
-                            Icon(
-                              Icons.auto_awesome,
-                              size: 14,
-                              color: colors.warning,
-                            ),
-                          ],
                           if (progressStage != null) ...[
                             const SizedBox(width: 6),
                             ProgressStageBadge(

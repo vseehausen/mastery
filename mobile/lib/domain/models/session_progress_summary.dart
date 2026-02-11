@@ -14,6 +14,10 @@ class SessionProgressSummary {
   /// All stage transitions that occurred during the session.
   final List<StageTransition> transitions;
 
+  /// Count of words that reached Practicing stage.
+  int get practicingCount =>
+      transitions.where((t) => t.toStage == ProgressStage.practicing).length;
+
   /// Count of words that reached Stabilizing stage.
   int get stabilizingCount =>
       transitions.where((t) => t.toStage == ProgressStage.stabilizing).length;
@@ -40,6 +44,11 @@ class SessionProgressSummary {
     if (!hasTransitions) return '';
 
     final parts = <String>[];
+
+    if (practicingCount > 0) {
+      final wordLabel = practicingCount == 1 ? 'word' : 'words';
+      parts.add('$practicingCount $wordLabel moved to Practicing');
+    }
 
     if (stabilizingCount > 0) {
       final wordLabel = stabilizingCount == 1 ? 'word' : 'words';

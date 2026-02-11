@@ -21,36 +21,6 @@ void main() {
       expect(find.text('lasting for a very short time'), findsOneWidget);
     });
 
-    testWidgets('displays enriched icon when isEnriched is true', (
-      tester,
-    ) async {
-      await tester.pumpTestWidget(
-        WordCard(
-          word: 'test',
-          definition: 'test definition',
-          isEnriched: true,
-          onTap: () {},
-        ),
-      );
-
-      expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
-    });
-
-    testWidgets('does not display enriched icon when isEnriched is false', (
-      tester,
-    ) async {
-      await tester.pumpTestWidget(
-        WordCard(
-          word: 'test',
-          definition: 'test definition',
-          isEnriched: false,
-          onTap: () {},
-        ),
-      );
-
-      expect(find.byIcon(Icons.auto_awesome), findsNothing);
-    });
-
     testWidgets('calls onTap when tapped', (tester) async {
       var tapped = false;
 

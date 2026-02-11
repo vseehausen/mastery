@@ -13,6 +13,7 @@ class RecallCard extends StatefulWidget {
     required this.word,
     required this.answer,
     required this.onGrade,
+    this.alternatives,
     this.context,
     this.isPreview = false,
   });
@@ -22,6 +23,9 @@ class RecallCard extends StatefulWidget {
 
   /// The correct translation/definition
   final String answer;
+
+  /// Optional alternative translations
+  final List<String>? alternatives;
 
   /// Optional context sentence
   final String? context;
@@ -126,13 +130,28 @@ class _RecallCardState extends State<RecallCard> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: colors.border),
               ),
-              child: Text(
-                widget.answer,
-                style: MasteryTextStyles.displayLarge.copyWith(
-                  fontSize: 28,
-                  color: colors.foreground,
-                ),
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.answer,
+                    style: MasteryTextStyles.displayLarge.copyWith(
+                      fontSize: 28,
+                      color: colors.foreground,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (widget.alternatives != null && widget.alternatives!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.alternatives!.join(', '),
+                      style: MasteryTextStyles.caption.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
               ),
             ),
 

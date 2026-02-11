@@ -306,7 +306,7 @@ void main() {
         expect(summary.toDisplayString(), '');
       });
 
-      test('ignores non-significant transitions', () {
+      test('shows practicing transitions', () {
         final transitions = [
           StageTransition(
             vocabularyId: '1',
@@ -324,7 +324,7 @@ void main() {
 
         final summary = SessionProgressSummary(transitions);
 
-        expect(summary.toDisplayString(), '');
+        expect(summary.toDisplayString(), '1 word moved to Practicing');
       });
     });
 

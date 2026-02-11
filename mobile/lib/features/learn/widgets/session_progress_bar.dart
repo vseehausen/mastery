@@ -30,6 +30,8 @@ class SessionProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.masteryColors;
     final progress = totalItems > 0 ? completedItems / totalItems : 0.0;
+    // Clamp displayed values to prevent showing completion beyond total
+    final displayCompleted = completedItems.clamp(0, totalItems);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,8 +51,8 @@ class SessionProgressBar extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             isQuickReview
-                ? 'Quick review • $completedItems/$totalItems'
-                : '$completedItems of $totalItems items',
+                ? 'Quick review • $displayCompleted/$totalItems'
+                : '$displayCompleted of $totalItems items',
             style: MasteryTextStyles.caption.copyWith(
               color: colors.mutedForeground,
             ),
