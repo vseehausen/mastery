@@ -48,8 +48,10 @@
 ```css
 --muted-light: #F4F4F5;
 --muted-dark: #27272A;
---muted-foreground-light: #71717A;
---muted-foreground-dark: #A1A1AA;
+--muted-foreground-light: #52525B;
+--muted-foreground-dark: #BABAC1;
+--subtle-foreground-light: #A1A1AA;
+--subtle-foreground-dark: #71717A;
 ```
 
 ### Form
@@ -131,6 +133,7 @@
 ```css
 --font-family-sans: Plus Jakarta Sans;
 --font-family-mono: JetBrains Mono;
+--font-family-serif: Literata;
 ```
 
 ### Font Size

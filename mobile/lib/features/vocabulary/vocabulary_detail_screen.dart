@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/theme/tokens.dart';
@@ -38,7 +39,9 @@ class _VocabularyDetailScreenState
   @override
   Widget build(BuildContext context) {
     final vocabAsync = ref.watch(vocabularyByIdProvider(widget.vocabularyId));
-    final globalDictAsync = ref.watch(globalDictionaryProvider(widget.vocabularyId));
+    final globalDictAsync = ref.watch(
+      globalDictionaryProvider(widget.vocabularyId),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -74,6 +77,7 @@ class _VocabularyDetailScreenState
   }
 
   Widget _buildContent(BuildContext context, VocabularyModel vocab) {
+    final colors = context.masteryColors;
     final encounterAsync = ref.watch(mostRecentEncounterProvider(vocab.id));
     final globalDictAsync = ref.watch(globalDictionaryProvider(vocab.id));
     final learningCardAsync = ref.watch(
@@ -91,26 +95,123 @@ class _VocabularyDetailScreenState
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s5, AppSpacing.s0, AppSpacing.s5, AppSpacing.s5,
+                AppSpacing.s5,
+                AppSpacing.s0,
+                AppSpacing.s5,
+                AppSpacing.s5,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Word display
-                  Text(
-                    vocab.displayWord,
-                    style: const TextStyle(
-                      fontSize: AppTypography.fontSize2xl,
-                      fontWeight: AppTypography.fontWeightBold,
-                      letterSpacing: AppTypography.letterSpacingTight,
-                      height: AppTypography.lineHeightTight,
-                    ),
+                  // Header: Headword + Badge/Meta
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left: Headword
+                      Expanded(
+                        child: Text(
+                          vocab.displayWord,
+                          style: GoogleFonts.literata(
+                            fontSize: 30,
+                            fontWeight: AppTypography.fontWeightMedium,
+                            color: colors.foreground,
+                          ),
+                        ),
+                      ),
+                      // Right: Badge + metadata
+                      Transform.translate(
+                        offset: const Offset(0, 8),
+                        child: _buildHeaderMetadata(vocab, learningCard),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.s3),
-                  // Metadata line: stage · reviews · next review
-                  _buildMetadataLine(vocab, learningCard),
-                  const SizedBox(height: AppSpacing.s10), // 40
 
+                  // L2 synonyms (if available)
+                  globalDictAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                    data: (globalDict) {
+                      if (globalDict == null || globalDict.synonyms.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+                        child: Text(
+                          globalDict.synonyms.join(' · '),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // IPA + POS line (if available)
+                  globalDictAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                    data: (globalDict) {
+                      if (globalDict == null) return const SizedBox.shrink();
+
+                      final hasIpa =
+                          globalDict.pronunciationIpa != null &&
+                          globalDict.pronunciationIpa!.isNotEmpty;
+                      final hasPos =
+                          globalDict.partOfSpeech != null &&
+                          globalDict.partOfSpeech!.isNotEmpty;
+
+                      if (!hasIpa && !hasPos) return const SizedBox.shrink();
+
+                      final parts = <InlineSpan>[];
+
+                      if (hasIpa) {
+                        parts.add(
+                          TextSpan(
+                            text: globalDict.pronunciationIpa,
+                            style: TextStyle(
+                              fontFamily: AppTypography.fontFamilyMono,
+                              fontSize: 12,
+                              color: colors.subtleForeground,
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (hasIpa && hasPos) {
+                        parts.add(
+                          TextSpan(
+                            text: ' · ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.subtleForeground,
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (hasPos) {
+                        parts.add(
+                          TextSpan(
+                            text: globalDict.partOfSpeech!.toLowerCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.subtleForeground,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+                        child: Text.rich(TextSpan(children: parts)),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: AppSpacing.s5), // 20
                   // MEANING AREA (sectioned)
                   if (_isReEnriching)
                     Padding(
@@ -124,7 +225,8 @@ class _VocabularyDetailScreenState
                     loading: () => _buildLoadingIndicator(),
                     error: (_, _) => _buildErrorMessage(
                       'Couldn\'t load meaning. Please try again.',
-                      onRetry: () => ref.invalidate(globalDictionaryProvider(vocab.id)),
+                      onRetry: () =>
+                          ref.invalidate(globalDictionaryProvider(vocab.id)),
                     ),
                     data: (globalDict) => _buildMeaningContent(globalDict),
                   ),
@@ -142,7 +244,7 @@ class _VocabularyDetailScreenState
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: AppSpacing.s12), // 48
+                          const SizedBox(height: AppSpacing.s5), // 20
                           _buildContextContent(encounter),
                         ],
                       );
@@ -173,8 +275,8 @@ class _VocabularyDetailScreenState
     );
   }
 
-  /// Compact metadata line: stage · reviews · next review
-  Widget _buildMetadataLine(
+  /// Header metadata: badge + compact stats on the right
+  Widget _buildHeaderMetadata(
     VocabularyModel vocab,
     LearningCardModel? learningCard,
   ) {
@@ -185,40 +287,19 @@ class _VocabularyDetailScreenState
       nonTranslationSuccessCount: 0,
     );
 
-    final metaStyle = TextStyle(
-      fontSize: AppTypography.fontSizeXs,
-      fontWeight: AppTypography.fontWeightMedium,
-      color: colors.mutedForeground,
-    );
-
-    final parts = <Widget>[
-      ProgressStageBadge(stage: stage, compact: true),
-    ];
-
-    if (learningCard != null) {
-      parts.addAll([
-        _metaDot(colors),
-        Text('${learningCard.reps} reviews', style: metaStyle),
-        _metaDot(colors),
-        Text(_formatNextReview(learningCard.due), style: metaStyle),
-      ]);
-    }
-
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: AppSpacing.s1,
-      children: parts,
-    );
-  }
-
-  Widget _metaDot(MasteryColorScheme colors) {
-    return Text(
-      ' · ',
-      style: TextStyle(
-        fontSize: AppTypography.fontSizeXs,
-        fontWeight: AppTypography.fontWeightMedium,
-        color: colors.mutedForeground,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ProgressStageBadge(stage: stage, compact: true),
+        if (learningCard != null) ...[
+          const SizedBox(height: AppSpacing.s1),
+          Text(
+            '${learningCard.reps} reviews · ${_formatNextReview(learningCard.due)}',
+            style: TextStyle(fontSize: 10, color: colors.subtleForeground),
+          ),
+        ],
+      ],
     );
   }
 
@@ -248,28 +329,14 @@ class _VocabularyDetailScreenState
       key: ValueKey(globalDict.id),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Part of speech as uppercase label
-        if (globalDict.partOfSpeech != null) ...[
-          Text(
-            globalDict.partOfSpeech!.toUpperCase(),
-            style: TextStyle(
-              fontSize: AppTypography.fontSizeXs,
-              fontWeight: AppTypography.fontWeightMedium,
-              color: colors.mutedForeground,
-              letterSpacing: AppTypography.letterSpacingWide,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s3), // 12
-        ],
-
         // Primary translation
         Text(
           primaryTranslation,
-          style: const TextStyle(
-            fontSize: AppTypography.fontSize2xl, // 28
+          style: GoogleFonts.literata(
+            fontSize: AppTypography.fontSizeXl, // 24
             fontWeight: AppTypography.fontWeightSemibold,
-            letterSpacing: AppTypography.letterSpacingTight,
-            height: AppTypography.lineHeightTight,
+            color: colors.foreground,
+            height: 1.2,
           ),
         ),
 
@@ -278,39 +345,14 @@ class _VocabularyDetailScreenState
           const SizedBox(height: AppSpacing.s1), // 4
           Text(
             alternatives.join(' · '),
-            style: TextStyle(
-              fontSize: AppTypography.fontSizeBase, // 16
-              color: colors.mutedForeground,
-            ),
+            style: TextStyle(fontSize: 13, color: colors.mutedForeground),
           ),
         ],
-
-        // Suggest edit button
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.s1),
-          child: TextButton(
-            onPressed: () => _openMeaningEditor(globalDict),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor: colors.mutedForeground,
-            ),
-            child: Text(
-              'Suggest edit',
-              style: TextStyle(
-                fontSize: AppTypography.fontSizeXs,
-                fontWeight: AppTypography.fontWeightMedium,
-                color: colors.mutedForeground,
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
 
-  /// Definition section — label + definition + synonyms
+  /// Definition section — definition only
   Widget _buildDefinitionSection(GlobalDictionaryModel globalDict) {
     final colors = context.masteryColors;
 
@@ -323,37 +365,11 @@ class _VocabularyDetailScreenState
           Text(
             globalDict.englishDefinition!,
             style: TextStyle(
-              fontSize: AppTypography.fontSizeLg,
-              fontWeight: AppTypography.fontWeightMedium,
-              height: AppTypography.lineHeightRelaxed,
-              color: colors.foreground,
+              fontSize: AppTypography.fontSizeSm, // 14
+              color: colors.mutedForeground,
+              height: 1.7,
             ),
           ),
-
-        // Synonyms with "Similar:" label
-        if (globalDict.synonyms.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s4), // 16
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Similar: ',
-                  style: TextStyle(
-                    fontSize: AppTypography.fontSizeSm, // 14
-                    color: colors.mutedForeground,
-                  ),
-                ),
-                TextSpan(
-                  text: globalDict.synonyms.join(', '),
-                  style: TextStyle(
-                    fontSize: AppTypography.fontSizeSm, // 14
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -364,6 +380,8 @@ class _VocabularyDetailScreenState
       return _buildEnrichmentPlaceholder();
     }
 
+    final colors = context.masteryColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -372,8 +390,10 @@ class _VocabularyDetailScreenState
           duration: AppAnimation.duration300,
           child: _buildTranslationSection(globalDict),
         ),
-        const SizedBox(height: AppSpacing.s12), // 48
-
+        const SizedBox(height: AppSpacing.s4), // 16
+        // Separator
+        Container(height: 1, color: colors.border),
+        const SizedBox(height: AppSpacing.s4), // 16
         // Definition section
         AnimatedSwitcher(
           duration: AppAnimation.duration300,
@@ -408,11 +428,11 @@ class _VocabularyDetailScreenState
               // Quote text
               Text(
                 '"${encounter.context}"',
-                style: TextStyle(
-                  fontSize: AppTypography.fontSizeLg, // 18
+                style: GoogleFonts.literata(
+                  fontSize: AppTypography.fontSizeSm, // 14
                   fontStyle: FontStyle.italic,
                   color: colors.mutedForeground,
-                  height: AppTypography.lineHeightRelaxed,
+                  height: 1.7,
                 ),
               ),
 
@@ -425,7 +445,7 @@ class _VocabularyDetailScreenState
                     style: TextStyle(
                       fontSize: AppTypography.fontSizeXs,
                       fontWeight: AppTypography.fontWeightMedium,
-                      color: colors.mutedForeground,
+                      color: colors.subtleForeground,
                     ),
                   ),
                 ),
@@ -442,8 +462,8 @@ class _VocabularyDetailScreenState
                             '— ${source.author}',
                             style: TextStyle(
                               fontSize: AppTypography.fontSizeXs,
-                              fontWeight: AppTypography.fontWeightMedium,
-                              color: colors.mutedForeground,
+                              fontWeight: AppTypography.fontWeightNormal,
+                              color: colors.subtleForeground,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -452,8 +472,9 @@ class _VocabularyDetailScreenState
                           source.title,
                           style: TextStyle(
                             fontSize: AppTypography.fontSizeXs,
-                            fontWeight: AppTypography.fontWeightMedium,
-                            color: colors.mutedForeground,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: AppTypography.fontWeightNormal,
+                            color: colors.subtleForeground,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -490,38 +511,41 @@ class _VocabularyDetailScreenState
             children: [
               // Preview Cards - outlined button
               OutlinedButton(
-                  onPressed: hasDict
-                      ? () {
-                          showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => CardPreviewSheet(
-                              vocabularyId: vocab.id,
-                              word: vocab.displayWord,
-                            ),
-                          );
-                        }
-                      : null,
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s4,
-                      vertical: AppSpacing.s3,
-                    ),
+                onPressed: hasDict
+                    ? () {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => CardPreviewSheet(
+                            vocabularyId: vocab.id,
+                            word: vocab.displayWord,
+                          ),
+                        );
+                      }
+                    : null,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colors.border),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.visibility_outlined, size: AppTypography.fontSizeLg),
-                      SizedBox(width: AppSpacing.s2),
-                      Text('Preview'),
-                    ],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s4,
+                    vertical: AppSpacing.s3,
                   ),
                 ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.visibility_outlined,
+                      size: AppTypography.fontSizeLg,
+                    ),
+                    SizedBox(width: AppSpacing.s2),
+                    Text('Preview'),
+                  ],
+                ),
+              ),
               const SizedBox(width: AppSpacing.s3),
 
               // Actions menu (feedback + re-generate)
@@ -856,22 +880,23 @@ class _VocabularyDetailScreenState
         fullscreenDialog: true,
         builder: (_) => MeaningEditor(
           globalDict: globalDict,
-          onSave: ({
-            required String translation,
-            required String definition,
-            required String partOfSpeech,
-            required List<String> synonyms,
-            required List<String> alternativeTranslations,
-          }) {
-            Navigator.of(context).pop();
-            _handleOverrideSave(
-              translation: translation,
-              definition: definition,
-              partOfSpeech: partOfSpeech,
-              synonyms: synonyms,
-              alternativeTranslations: alternativeTranslations,
-            );
-          },
+          onSave:
+              ({
+                required String translation,
+                required String definition,
+                required String partOfSpeech,
+                required List<String> synonyms,
+                required List<String> alternativeTranslations,
+              }) {
+                Navigator.of(context).pop();
+                _handleOverrideSave(
+                  translation: translation,
+                  definition: definition,
+                  partOfSpeech: partOfSpeech,
+                  synonyms: synonyms,
+                  alternativeTranslations: alternativeTranslations,
+                );
+              },
           onCancel: () => Navigator.of(context).pop(),
         ),
       ),
@@ -903,10 +928,7 @@ class _VocabularyDetailScreenState
     ref.invalidate(primaryTranslationsMapProvider);
   }
 
-  Widget _buildDevInfoSection(
-    GlobalDictionaryModel globalDict,
-    WidgetRef ref,
-  ) {
+  Widget _buildDevInfoSection(GlobalDictionaryModel globalDict, WidgetRef ref) {
     final devMode = ref.watch(devModeProvider);
 
     if (!devMode) {

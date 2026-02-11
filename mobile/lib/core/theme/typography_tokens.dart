@@ -24,6 +24,7 @@ abstract final class AppTypography {
 
   static const String fontFamilySans = 'Plus Jakarta Sans';
   static const String fontFamilyMono = 'JetBrains Mono';
+  static const String fontFamilySerif = 'Literata';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FONT SIZE

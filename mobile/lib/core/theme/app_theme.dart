@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'color_tokens.dart';
 import 'text_styles.dart';
-import 'typography_tokens.dart';
 
 /// Mastery app theme configuration using shadcn_ui
 /// Stone palette + Amber accent design system v1.0.0
@@ -144,7 +144,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: MasteryColors.backgroundLight,
-      fontFamily: AppTypography.fontFamilySans,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
       extensions: const [MasteryColorScheme.light],
     );
   }
@@ -154,7 +154,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: MasteryColors.backgroundDark,
-      fontFamily: AppTypography.fontFamilySans,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
       extensions: const [MasteryColorScheme.dark],
     );
   }

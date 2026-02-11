@@ -73,8 +73,11 @@ class MasteryColors {
   static const Color mutedLight = Color(0xFFF4F4F5); // zinc-100
   static const Color mutedDark = Color(0xFF27272A); // zinc-800
 
-  static const Color mutedForegroundLight = Color(0xFF71717A); // zinc-500
-  static const Color mutedForegroundDark = Color(0xFFA1A1AA); // zinc-400
+  static const Color mutedForegroundLight = Color(0xFF52525B); // zinc-600
+  static const Color mutedForegroundDark = Color(0xFFBABAC1); // ~zinc-350
+
+  static const Color subtleForegroundLight = Color(0xFFA1A1AA); // zinc-400
+  static const Color subtleForegroundDark = Color(0xFF71717A); // zinc-500
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FORM / INTERACTIVE
@@ -221,6 +224,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     required this.destructiveForeground,
     required this.muted,
     required this.mutedForeground,
+    required this.subtleForeground,
     required this.border,
     required this.input,
     required this.ring,
@@ -268,6 +272,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
   // Neutral
   final Color muted;
   final Color mutedForeground;
+  final Color subtleForeground;
 
   // Form
   final Color border;
@@ -319,6 +324,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     destructiveForeground: MasteryColors.destructiveForegroundLight,
     muted: MasteryColors.mutedLight,
     mutedForeground: MasteryColors.mutedForegroundLight,
+    subtleForeground: MasteryColors.subtleForegroundLight,
     border: MasteryColors.borderLight,
     input: MasteryColors.inputLight,
     ring: MasteryColors.ringLight,
@@ -363,6 +369,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
     destructiveForeground: MasteryColors.destructiveForegroundDark,
     muted: MasteryColors.mutedDark,
     mutedForeground: MasteryColors.mutedForegroundDark,
+    subtleForeground: MasteryColors.subtleForegroundDark,
     border: MasteryColors.borderDark,
     input: MasteryColors.inputDark,
     ring: MasteryColors.ringDark,
@@ -452,6 +459,7 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
           destructiveForeground ?? this.destructiveForeground,
       muted: muted ?? this.muted,
       mutedForeground: mutedForeground ?? this.mutedForeground,
+      subtleForeground: subtleForeground ?? this.subtleForeground,
       border: border ?? this.border,
       input: input ?? this.input,
       ring: ring ?? this.ring,
@@ -526,6 +534,11 @@ class MasteryColorScheme extends ThemeExtension<MasteryColorScheme> {
       )!,
       muted: Color.lerp(muted, other.muted, t)!,
       mutedForeground: Color.lerp(mutedForeground, other.mutedForeground, t)!,
+      subtleForeground: Color.lerp(
+        subtleForeground,
+        other.subtleForeground,
+        t,
+      )!,
       border: Color.lerp(border, other.border, t)!,
       input: Color.lerp(input, other.input, t)!,
       ring: Color.lerp(ring, other.ring, t)!,

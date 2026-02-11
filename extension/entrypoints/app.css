@@ -21,6 +21,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -80,7 +81,8 @@
   --secondary: #f4f4f5; /* zinc-100 */
   --secondary-foreground: #09090b; /* zinc-950 */
   --muted: #f4f4f5; /* zinc-100 */
-  --muted-foreground: #71717a; /* zinc-500 */
+  --muted-foreground: #52525b; /* zinc-600 */
+  --subtle-foreground: #a1a1aa; /* zinc-400 */
   --accent: #4f46e5; /* indigo-600 */
   --accent-foreground: #ffffff;
   --destructive: #dc2626; /* red-600 */
@@ -154,7 +156,8 @@
   --secondary: #27272a; /* zinc-800 */
   --secondary-foreground: #fafafa; /* zinc-50 */
   --muted: #27272a; /* zinc-800 */
-  --muted-foreground: #a1a1aa; /* zinc-400 */
+  --muted-foreground: #babac1; /* ~zinc-350 */
+  --subtle-foreground: #71717a; /* zinc-500 */
   --accent: #6366f1; /* indigo-500 */
   --accent-foreground: #ffffff;
   --destructive: #f87171; /* red-400 */
@@ -207,7 +210,8 @@
     --secondary: #27272a;
     --secondary-foreground: #fafafa;
     --muted: #27272a;
-    --muted-foreground: #a1a1aa;
+    --muted-foreground: #babac1;
+    --subtle-foreground: #71717a;
     --accent: #6366f1;
     --accent-foreground: #ffffff;
     --destructive: #f87171;
