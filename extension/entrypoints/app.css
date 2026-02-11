@@ -194,6 +194,59 @@
 }
 
 /* ================================================================
+   Dark mode — system preference (popup)
+   ================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b; /* zinc-950 */
+    --foreground: #fafafa; /* zinc-50 */
+    --card: #18181b; /* zinc-900 */
+    --card-foreground: #fafafa; /* zinc-50 */
+    --popover: #18181b; /* zinc-900 */
+    --popover-foreground: #fafafa; /* zinc-50 */
+    --primary: #fafafa; /* zinc-50 */
+    --primary-foreground: #09090b; /* zinc-950 */
+    --secondary: #27272a; /* zinc-800 */
+    --secondary-foreground: #fafafa; /* zinc-50 */
+    --muted: #27272a; /* zinc-800 */
+    --muted-foreground: #babac1; /* ~zinc-350 */
+    --subtle-foreground: #71717a; /* zinc-500 */
+    --accent: #6366f1; /* indigo-500 */
+    --accent-foreground: #ffffff;
+    --destructive: #f87171; /* red-400 */
+    --destructive-foreground: #fef2f2; /* red-50 */
+    --border: #27272a; /* zinc-800 */
+    --input: #27272a; /* zinc-800 */
+    --ring: #a1a1aa; /* zinc-400 */
+    --dim: #52525b; /* zinc-600 */
+
+    --success: #059669; /* emerald-600 */
+    --success-foreground: #ffffff;
+    --success-muted: #064e3b;
+    --warning: #d97706; /* amber-600 */
+    --warning-foreground: #ffffff;
+    --warning-muted: #451a03;
+    --info: #60a5fa; /* blue-400 */
+    --info-foreground: #172554;
+
+    --stage-new: #a8a29e; /* stone-400 */
+    --stage-new-bg: #292524; /* stone-800 */
+    --stage-practicing: #a3e635; /* lime-400 */
+    --stage-practicing-bg: #1a2e05; /* lime-950 */
+    --stage-stabilizing: #2dd4bf; /* teal-400 */
+    --stage-stabilizing-bg: #134e4a; /* teal-900 */
+    --stage-known: #60a5fa; /* blue-400 */
+    --stage-known-bg: #1e3a5f; /* blue-900 */
+    --stage-mastered: #fbbf24; /* amber-400 */
+    --stage-mastered-bg: #451a03; /* amber-950 */
+    --stage-dot-empty: #3f3f46; /* zinc-700 */
+
+    --shadow-alpha: 0.45;
+  }
+}
+
+/* ================================================================
    Dark mode — system preference (content script shadow DOM)
    ================================================================ */
 
