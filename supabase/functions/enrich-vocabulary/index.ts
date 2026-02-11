@@ -16,7 +16,7 @@ import { translateWord, buildTranslations, type TranslationEntry } from '../_sha
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
 const BUFFER_TARGET = 10;
-const ENRICHMENT_VERSION = 2;
+const ENRICHMENT_VERSION = 3; // v3: Added quality rules (acronyms, circular definitions, disambiguation)
 const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
 const MAINTAIN_CONCURRENCY = 10;
 const SOURCE_LANGUAGE = 'en';
