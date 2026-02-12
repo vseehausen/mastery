@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,9 +64,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   bool _isFetchingMore = false;
   bool _initStarted = false;
   Completer<void>? _fetchCompleter;
-  int _newWordsQueued = 0;
-  int _newWordCap = 0;
   int _maxItems = 0;
+
+  // Retry queue for "Again" cards
+  final List<PlannedItem> _retryQueue = [];
+  final Map<String, int> _retryAttempts = {};
 
   LearningSessionModel? _session;
   int _currentItemIndex = 0;
@@ -145,8 +148,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
       }
 
-      // Get user preferences
-      final prefs = await dataService.getOrCreatePreferences(userId);
+      // Try to use prefetch data for instant start (both normal and quick review)
+      SessionPrefetch? prefetchData;
+      try {
+        prefetchData = await ref.read(sessionPrefetchProvider.future);
+      } catch (_) {
+        // Prefetch failed — fall back to fresh computation below
+      }
+
+      // Get user preferences (from prefetch if available)
+      final prefs = prefetchData?.preferences ??
+          await dataService.getOrCreatePreferences(userId);
       final dailyTimeTargetMinutes =
           prefs['daily_time_target_minutes'] as int? ??
           AppDefaults.sessionDefault;
@@ -154,15 +166,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           prefs['new_words_per_session'] as int? ??
           AppDefaults.newWordsDefault;
 
-      // Step 1: Compute lightweight session params (no card data)
-      // For quick review, derive item count from time target and force review-only
+      // Step 1: Get session params (from prefetch if available)
       final int timeTarget = dailyTimeTargetMinutes;
 
-      final params = await planner.computeSessionParams(
-        userId: userId,
-        timeTargetMinutes: timeTarget,
-        newWordsPerSession: newWordsPerSession,
-      );
+      final params = prefetchData?.params ??
+          await planner.computeSessionParams(
+            userId: userId,
+            timeTargetMinutes: timeTarget,
+            newWordsPerSession: newWordsPerSession,
+          );
 
       if (params.maxItems <= 0) {
         if (mounted) {
@@ -177,31 +189,39 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Store maxItems limit for enforcement
       _maxItems = params.maxItems;
 
-      // Step 2: Fetch initial batch of cards only
-      // For quick review, use specified item count and newWordCap=0
-      final int effectiveNewWordCap;
-      final int effectiveBatchSize;
+      // Step 2: Get initial batch (from prefetch if available, else fetch fresh)
+      // Normal session: front-load new words in initial batch (reviewLimit = maxItems - newWordCap, newLimit = newWordCap)
+      // Quick review: binary logic based on dueCount (if dueCount > 0: reviews only, else: new words only)
+      final int reviewLimit;
+      final int newLimit;
+
       if (widget.isQuickReview) {
-        effectiveNewWordCap = 0;
-        effectiveBatchSize = timeTarget; // e.g., 3, 5, or 8 items
+        final quickReviewSize = timeTarget; // e.g., 3, 5, or 8 items
+        if (params.dueCount > 0) {
+          // Has due reviews: reviews only
+          reviewLimit = quickReviewSize;
+          newLimit = 0;
+        } else {
+          // No due reviews: new words only
+          reviewLimit = 0;
+          newLimit = quickReviewSize;
+        }
       } else {
-        effectiveNewWordCap = params.newWordCap;
-        effectiveBatchSize = _initialBatchSize;
+        // Front-load new words, clamp so reviewLimit never goes negative
+        final cappedNew = min(params.newWordCap, params.maxItems);
+        reviewLimit = params.maxItems - cappedNew;
+        newLimit = cappedNew;
       }
 
-      final initialItems = await planner.fetchBatch(
-        userId: userId,
-        batchSize: effectiveBatchSize,
-        newWordCap: effectiveNewWordCap,
-      );
-
-      debugPrint('[Session] Initial batch: ${initialItems.length} items');
-      for (final item in initialItems) {
-        debugPrint(
-          '[Session] Card: word=${item.word}, state=${item.isNewWord ? 0 : "review"}, '
-          'cueType=${item.cueType}',
-        );
-      }
+      // For normal sessions, use prefetched items. For quick review, always
+      // fetch fresh (different limits than the prefetched batch).
+      final initialItems = (!widget.isQuickReview && prefetchData != null)
+          ? prefetchData.initialItems
+          : await planner.fetchBatch(
+              userId: userId,
+              reviewLimit: reviewLimit,
+              newLimit: newLimit,
+            );
 
       if (initialItems.isEmpty) {
         if (mounted) {
@@ -213,11 +233,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
-      // Track fetched card IDs and count new words
-      var newWords = 0;
+      // Track fetched card IDs
       for (final item in initialItems) {
         _fetchedCardIds.add(item.cardId);
-        if (item.isNewWord) newWords++;
       }
 
       // Create new session if needed
@@ -266,8 +284,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         setState(() {
           _items = initialItems;
           _estimatedTotalItems = estimate;
-          _newWordsQueued = newWords;
-          _newWordCap = effectiveNewWordCap;
           _session = activeSession;
           _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
           _currentItemIndex = 0;
@@ -278,9 +294,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         });
         _startElapsedTimer();
       }
-    } catch (e, stackTrace) {
-      debugPrint('[Session] Failed to initialize session: $e');
-      debugPrint('[Session] $stackTrace');
+    } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -329,12 +343,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
+      // Prefetches are reviews-only (newLimit=0) with excludeIds
       final newItems = await planner.fetchBatch(
         userId: userId,
-        batchSize: effectiveBatchSize,
+        reviewLimit: effectiveBatchSize,
+        newLimit: 0, // Reviews-only for prefetch
         excludeCardIds: _fetchedCardIds,
-        newWordsAlreadyQueued: _newWordsQueued,
-        newWordCap: _newWordCap,
       );
 
       if (mounted) {
@@ -342,7 +356,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           if (newItems.isNotEmpty) {
             for (final item in newItems) {
               _fetchedCardIds.add(item.cardId);
-              if (item.isNewWord) _newWordsQueued++;
             }
             _items = [..._items, ...newItems];
           }
@@ -362,7 +375,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         );
       }
     } catch (e) {
-      debugPrint('[Session] Prefetch failed: $e');
+      // Prefetch failure is silent - session continues with current batch
     } finally {
       _isFetchingMore = false;
       _fetchCompleter?.complete();
@@ -440,6 +453,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       _reviewsPresented++;
     }
 
+    // Retry queue logic: Add "Again" cards (rating < 3) to retry queue
+    // Cap at 2 attempts per card
+    if (rating < 3) {
+      final attempts = _retryAttempts[currentItem.cardId] ?? 0;
+      if (attempts < 2) {
+        _retryQueue.add(currentItem);
+        _retryAttempts[currentItem.cardId] = attempts + 1;
+        _estimatedTotalItems++;
+      }
+    }
+
     final elapsedSecondsSnapshot = _elapsedSeconds;
     final itemsCompletedSnapshot = reviewedIndex + 1;
     final newWordsPresentedSnapshot = _newWordsPresented;
@@ -502,10 +526,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
       _stageTransitions.add(transition);
       _showStageTransitionFeedback(stageAfter, currentItem.displayWord);
-      debugPrint(
-        '[Session] Stage transition: ${currentItem.word} '
-        '${stageBefore.displayName} → ${stageAfter.displayName}',
-      );
     }
 
     // Persist review in the background with pre-computed stage data.
@@ -537,13 +557,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       ),
     );
 
-    // Move to next item (or complete) without waiting for network writes.
+    // Move to next item (or drain retry queue, or complete) without waiting for network writes.
     final nextIndex = reviewedIndex + 1;
     if (nextIndex >= _items.length) {
-      await _maybePrefetchMore(force: true);
-      if (nextIndex >= _items.length) {
-        await _completeSession();
-        return;
+      // Main items exhausted - check retry queue
+      if (_retryQueue.isNotEmpty) {
+        // Drain retry queue: add retry items to main queue
+        if (!mounted) return;
+        setState(() {
+          _items.addAll(_retryQueue);
+          _retryQueue.clear();
+        });
+        // Continue with next item (first retry)
+      } else {
+        // No retry items - try prefetching more
+        await _maybePrefetchMore(force: true);
+        if (nextIndex >= _items.length) {
+          // No more items available - complete session
+          await _completeSession();
+          return;
+        }
       }
     } else {
       unawaited(_maybePrefetchMore());
@@ -612,11 +645,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           cueType: currentItem.cueType?.toDbString(),
         );
       });
-    } catch (error, stackTrace) {
+    } catch (error) {
       // Layer 2: All retries failed — enqueue for later
-      debugPrint('[Session] All retries failed, enqueueing write: $error');
-      debugPrint('[Session] $stackTrace');
-
       await queue.enqueue(
         QueuedReviewWrite(
           cardId: currentItem.cardId,
@@ -716,7 +746,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         );
       });
     } catch (error) {
-      debugPrint('[Session] Queue drain failed: $error');
       // Silent failure — queue will retry on next app start
     }
   }
@@ -754,6 +783,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     ref.invalidate(hasCompletedTodayProvider);
     ref.invalidate(todayProgressProvider);
     ref.invalidate(currentStreakProvider);
+    ref.invalidate(sessionPrefetchProvider);
 
     setState(() {
       _isSessionComplete = true;

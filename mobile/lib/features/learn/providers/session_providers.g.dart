@@ -145,6 +145,28 @@ final nextReviewLabelProvider = AutoDisposeFutureProvider<String?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef NextReviewLabelRef = AutoDisposeFutureProviderRef<String?>;
+String _$sessionPrefetchHash() => r'4e79697b41a7fa4d5a0f03f49dd3dd5dbe3c0700';
+
+/// Prefetch provider that computes session params and fetches initial batch.
+/// This runs proactively on home screen so session start is instant.
+/// Returns null if user is not authenticated or no items available.
+///
+/// Copied from [sessionPrefetch].
+@ProviderFor(sessionPrefetch)
+final sessionPrefetchProvider =
+    AutoDisposeFutureProvider<SessionPrefetch?>.internal(
+      sessionPrefetch,
+      name: r'sessionPrefetchProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$sessionPrefetchHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SessionPrefetchRef = AutoDisposeFutureProviderRef<SessionPrefetch?>;
 String _$activeSessionHash() => r'9a67a4fc6f7b0026ac1b8372a03874cc33dbacea';
 
 /// Provides the currently active session, if any

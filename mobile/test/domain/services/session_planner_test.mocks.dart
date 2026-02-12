@@ -136,15 +136,33 @@ class MockSupabaseDataService extends _i1.Mock
   @override
   _i3.Future<List<Map<String, dynamic>>> getSessionCards(
     String? userId, {
-    int? limit = 50,
+    required int? reviewLimit,
+    required int? newLimit,
+    List<String>? excludeIds = const [],
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#getSessionCards, [userId], {#limit: limit}),
+            Invocation.method(
+              #getSessionCards,
+              [userId],
+              {
+                #reviewLimit: reviewLimit,
+                #newLimit: newLimit,
+                #excludeIds: excludeIds,
+              },
+            ),
             returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
               <Map<String, dynamic>>[],
             ),
           )
           as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<bool> hasBrandNewWord(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#hasBrandNewWord, [userId]),
+            returnValue: _i3.Future<bool>.value(false),
+          )
+          as _i3.Future<bool>);
 
   @override
   _i3.Future<List<Map<String, dynamic>>> getLearningCards(String? userId) =>

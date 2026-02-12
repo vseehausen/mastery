@@ -6,6 +6,7 @@ import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
 import '../../../domain/models/stage_transition.dart';
+import '../../../domain/services/session_planner.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
 import '../../../providers/supabase_provider.dart';
@@ -139,6 +140,91 @@ Future<String?> nextReviewLabel(Ref ref) async {
   if (diff.inDays == 0) return 'Next review later today';
   if (diff.inDays == 1) return 'Next review tomorrow';
   return 'Next review in ${diff.inDays} days';
+}
+
+// =============================================================================
+// Session Prefetch Provider
+// =============================================================================
+
+/// Prefetch data for instant session start.
+/// Holds session params, initial batch of items, prefs, and due count.
+class SessionPrefetch {
+  const SessionPrefetch({
+    required this.params,
+    required this.initialItems,
+    required this.preferences,
+    required this.dueCount,
+    required this.availableNewWords,
+  });
+
+  /// Session parameters (capacity, new word cap, etc.)
+  final SessionParams params;
+
+  /// Initial batch of planned items (ready to display immediately)
+  final List<PlannedItem> initialItems;
+
+  /// User preferences map
+  final Map<String, dynamic> preferences;
+
+  /// Count of due items (for UI display)
+  final int dueCount;
+
+  /// Count of available new words (enriched and ready to learn)
+  final int availableNewWords;
+}
+
+/// Prefetch provider that computes session params and fetches initial batch.
+/// This runs proactively on home screen so session start is instant.
+/// Returns null if user is not authenticated or no items available.
+@riverpod
+Future<SessionPrefetch?> sessionPrefetch(Ref ref) async {
+  final currentUser = ref.watch(currentUserProvider);
+  final userId = currentUser.valueOrNull?.id;
+  if (userId == null) return null;
+
+  final dataService = ref.watch(supabaseDataServiceProvider);
+  final planner = ref.watch(sessionPlannerProvider);
+
+  // Get user preferences
+  final prefs = await dataService.getOrCreatePreferences(userId);
+  final timeTargetMinutes = prefs['daily_time_target_minutes'] as int? ??
+      AppDefaults.sessionDefault;
+  final newWordsPerSession = prefs['new_words_per_session'] as int? ??
+      AppDefaults.newWordsDefault;
+
+  // Compute session params
+  final params = await planner.computeSessionParams(
+    userId: userId,
+    timeTargetMinutes: timeTargetMinutes,
+    newWordsPerSession: newWordsPerSession,
+  );
+
+  // If no capacity, return null
+  if (params.maxItems <= 0 || params.estimatedItemCount <= 0) {
+    return null;
+  }
+
+  // Get available new words count for UI display
+  final availableNewWords = await dataService.countEnrichedNewWords(userId);
+
+  // Fetch initial batch: front-load all new words alongside reviews
+  const initialBatchSize = 5;
+  final initialItems = await planner.fetchBatch(
+    userId: userId,
+    reviewLimit: initialBatchSize,
+    newLimit: params.newWordCap,
+  );
+
+  // If no items fetched, return null
+  if (initialItems.isEmpty) return null;
+
+  return SessionPrefetch(
+    params: params,
+    initialItems: initialItems,
+    preferences: prefs,
+    dueCount: params.dueCount,
+    availableNewWords: availableNewWords,
+  );
 }
 
 // =============================================================================

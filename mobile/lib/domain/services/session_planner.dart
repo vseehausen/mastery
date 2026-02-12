@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'dart:math' show min;
 
 import '../../data/services/supabase_data_service.dart';
@@ -25,6 +24,7 @@ class SessionParams {
     required this.newWordCap,
     required this.estimatedSecondsPerItem,
     required this.estimatedItemCount,
+    required this.dueCount,
   });
 
   /// Total session capacity (number of items that fit in the time budget)
@@ -38,6 +38,9 @@ class SessionParams {
 
   /// Estimated actual items available (overdue reviews + capped new words)
   final int estimatedItemCount;
+
+  /// Count of cards currently due for review (same as overdueCount)
+  final int dueCount;
 }
 
 /// Service for building time-boxed session plans
@@ -72,6 +75,7 @@ class SessionPlanner {
         newWordCap: 0,
         estimatedSecondsPerItem: 0,
         estimatedItemCount: 0,
+        dueCount: 0,
       );
     }
 
@@ -93,14 +97,23 @@ class SessionPlanner {
       );
     }
 
-    final newWordCap = shouldSuppress
-        ? 0
-        : NewWordsPerSession.getNewWordCap(
-            newWordsPerSession,
-            timeTargetMinutes,
-          );
+    // Check for brand-new word when suppressed
+    int newWordCap;
+    if (shouldSuppress) {
+      final hasBrandNew = await _dataService.hasBrandNewWord(userId);
+      newWordCap = hasBrandNew ? 1 : 0;
+    } else {
+      newWordCap = NewWordsPerSession.getNewWordCap(
+        newWordsPerSession,
+        timeTargetMinutes,
+      );
+    }
+
+    // Clamp newWordCap so it never exceeds total session capacity
+    newWordCap = min(newWordCap, maxItems);
 
     final availableNewWords = await _dataService.countEnrichedNewWords(userId);
+
     final estimatedItemCount = min<int>(
       maxItems,
       overdueCount + min<int>(newWordCap, availableNewWords),
@@ -111,48 +124,34 @@ class SessionPlanner {
       newWordCap: newWordCap,
       estimatedSecondsPerItem: estimatedSecondsPerItem,
       estimatedItemCount: estimatedItemCount,
+      dueCount: overdueCount,
     );
   }
 
   /// Fetch a batch of cards for incremental session loading.
   ///
-  /// [batchSize] — how many new items to return.
-  /// [excludeCardIds] — card IDs already queued locally (for dedup).
-  /// [newWordsAlreadyQueued] — how many new words are already in the queue.
-  /// [newWordCap] — max new words allowed across the whole session.
+  /// [reviewLimit] — maximum number of review cards to fetch.
+  /// [newLimit] — maximum number of new cards to fetch.
+  /// [excludeCardIds] — card IDs already queued locally (for server-side dedup).
   Future<List<PlannedItem>> fetchBatch({
     required String userId,
-    required int batchSize,
+    required int reviewLimit,
+    required int newLimit,
     Set<String> excludeCardIds = const {},
-    int newWordsAlreadyQueued = 0,
-    int newWordCap = 0,
   }) async {
-    // Fetch extra cards to account for dedup filtering
-    final fetchLimit = batchSize + excludeCardIds.length;
     final cardsData = await _dataService.getSessionCards(
       userId,
-      limit: fetchLimit,
+      reviewLimit: reviewLimit,
+      newLimit: newLimit,
+      excludeIds: excludeCardIds.toList(),
     );
+
     final allCards = cardsData.map(SessionCard.fromJson).toList();
 
-    // Filter out already-fetched cards
-    final freshCards = excludeCardIds.isEmpty
-        ? allCards
-        : allCards.where((c) => !excludeCardIds.contains(c.cardId)).toList();
-
-    // Separate by type and build items (same order as buildSessionPlan)
+    // Build planned items
     final items = <PlannedItem>[];
-    var newWordCount = newWordsAlreadyQueued;
 
-    for (final card in freshCards) {
-      if (items.length >= batchSize) break;
-
-      // Enforce new word cap
-      if (card.state == 0) {
-        if (newWordCount >= newWordCap) continue;
-        newWordCount++;
-      }
-
+    for (final card in allCards) {
       final cueType = _cueSelector.selectCueType(
         card: card,
       );
@@ -209,25 +208,27 @@ class SessionPlanner {
       );
     }
 
-    // Compute new word cap based on new-words-per-session setting (or 0 if suppressed)
-    final newWordCap = shouldSuppress
-        ? 0
-        : NewWordsPerSession.getNewWordCap(
-            newWordsPerSession,
-            timeTargetMinutes,
-          );
+    // Compute new word cap based on new-words-per-session setting
+    // If suppressed, check for brand-new word guarantee
+    int newWordCap;
+    if (shouldSuppress) {
+      final hasBrandNew = await _dataService.hasBrandNewWord(userId);
+      newWordCap = hasBrandNew ? 1 : 0;
+    } else {
+      newWordCap = NewWordsPerSession.getNewWordCap(
+        newWordsPerSession,
+        timeTargetMinutes,
+      );
+    }
 
-    // Fetch session cards with all data in ONE query
+    // Fetch session cards using new RPC signature
     final cardsData = await _dataService.getSessionCards(
       userId,
-      limit: maxItems * 2, // Fetch extra to filter
+      reviewLimit: maxItems,
+      newLimit: newWordCap,
+      excludeIds: [],
     );
     final allCards = cardsData.map(SessionCard.fromJson).toList();
-
-    developer.log(
-      'getSessionCards returned ${allCards.length} cards',
-      name: 'SessionPlanner',
-    );
 
     // Separate cards by type
     final dueCards = <SessionCard>[];
@@ -307,19 +308,6 @@ class SessionPlanner {
       );
       newWordCount++;
     }
-
-    // Log session composition
-    final cueTypeCounts = <String, int>{};
-    for (final item in items) {
-      final key = item.cueType?.name ?? 'translation';
-      cueTypeCounts[key] = (cueTypeCounts[key] ?? 0) + 1;
-    }
-    developer.log(
-      'Session plan: ${items.length} items, '
-      'cueTypes=$cueTypeCounts, '
-      'reviews=$reviewCount, leeches=$leechCount, new=$newWordCount',
-      name: 'SessionPlanner',
-    );
 
     // Compute estimated duration
     final estimatedDurationSeconds = (items.length * estimatedSecondsPerItem)

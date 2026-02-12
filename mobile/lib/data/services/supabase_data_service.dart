@@ -189,13 +189,46 @@ class SupabaseDataService {
   /// Uses RPC to fetch cards with embedded vocabulary, meanings, cues in one query.
   Future<List<Map<String, dynamic>>> getSessionCards(
     String userId, {
-    int limit = 50,
+    required int reviewLimit,
+    required int newLimit,
+    List<String> excludeIds = const [],
   }) async {
     final response = await _client.rpc<List<dynamic>>(
       'get_session_cards',
-      params: {'p_user_id': userId, 'p_limit': limit},
+      params: {
+        'p_user_id': userId,
+        'p_review_limit': reviewLimit,
+        'p_new_limit': newLimit,
+        'p_exclude_ids': excludeIds.isEmpty
+            ? '{}'
+            : '{${excludeIds.join(',')}}',
+      },
     );
-    return List<Map<String, dynamic>>.from(response);
+
+    final result = List<Map<String, dynamic>>.from(response);
+    return result;
+  }
+
+  /// Check if there is at least one brand-new word (state=0, enriched, created in last 24h)
+  Future<bool> hasBrandNewWord(String userId) async {
+    final enrichedIds = await getEnrichedVocabularyIds(userId);
+    if (enrichedIds.isEmpty) return false;
+
+    final oneDayAgo = DateTime.now().toUtc().subtract(
+      const Duration(hours: 24),
+    );
+    final response = await _client
+        .from('learning_cards')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('state', 0)
+        .isFilter('deleted_at', null)
+        .inFilter('vocabulary_id', enrichedIds)
+        .gte('created_at', oneDayAgo.toIso8601String())
+        .limit(1);
+
+    final list = List<Map<String, dynamic>>.from(response as List);
+    return list.isNotEmpty;
   }
 
   /// Get all learning cards for a user
@@ -587,7 +620,9 @@ class SupabaseDataService {
   }
 
   /// Get today's completed session stats (items reviewed + accuracy)
-  Future<({int itemsReviewed, double? accuracyPercent})?> getTodaySessionStats(String userId) async {
+  Future<({int itemsReviewed, double? accuracyPercent})?> getTodaySessionStats(
+    String userId,
+  ) async {
     final today = DateTime.now().toUtc();
     final startOfDay = DateTime.utc(today.year, today.month, today.day);
 

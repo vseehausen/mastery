@@ -14,6 +14,7 @@ import '../../../learn/providers/session_providers.dart';
 import '../../../learn/providers/streak_providers.dart';
 import '../../../learn/screens/session_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
+import 'dart:math' show min;
 
 /// Main home screen. Streak, session, vocabulary — the whole app in one glance.
 class TodayScreen extends ConsumerStatefulWidget {
@@ -46,6 +47,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ref.invalidate(nextReviewLabelProvider);
         ref.invalidate(vocabularyStageCountsProvider);
         ref.invalidate(vocabularyCountProvider);
+        ref.invalidate(sessionPrefetchProvider);
       }
     } finally {
       if (mounted) _isNavigating = false;
@@ -72,6 +74,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ref.invalidate(nextReviewLabelProvider);
         ref.invalidate(vocabularyStageCountsProvider);
         ref.invalidate(vocabularyCountProvider);
+        ref.invalidate(sessionPrefetchProvider);
       }
     } finally {
       if (mounted) _isNavigating = false;
@@ -89,6 +92,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final stageCounts = ref.watch(vocabularyStageCountsProvider);
     final vocabCount = ref.watch(vocabularyCountProvider);
     final userPrefs = ref.watch(userLearningPreferencesProvider);
+    final sessionPrefetch = ref.watch(sessionPrefetchProvider);
 
     final hasItemsToPractice = hasItems.valueOrNull ?? false;
     final isCompleted = completedToday.valueOrNull ?? false;
@@ -107,6 +111,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             ref.invalidate(nextReviewLabelProvider);
             ref.invalidate(vocabularyStageCountsProvider);
             ref.invalidate(vocabularyCountProvider);
+            ref.invalidate(sessionPrefetchProvider);
           },
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -160,6 +165,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   sessionStats: sessionStats.valueOrNull,
                   nextReviewLabel: nextReview.valueOrNull,
                   dailyTimeTarget: dailyTimeTarget,
+                  prefetchData: sessionPrefetch.valueOrNull,
                   onStartSession: _startSession,
                   onStartQuickReview: _startQuickReview,
                 ),
@@ -204,6 +210,7 @@ class _SessionCard extends StatelessWidget {
     required this.sessionStats,
     required this.nextReviewLabel,
     required this.dailyTimeTarget,
+    required this.prefetchData,
     required this.onStartSession,
     required this.onStartQuickReview,
   });
@@ -214,6 +221,7 @@ class _SessionCard extends StatelessWidget {
   final ({int itemsReviewed, double? accuracyPercent})? sessionStats;
   final String? nextReviewLabel;
   final int dailyTimeTarget;
+  final SessionPrefetch? prefetchData;
   final VoidCallback onStartSession;
   final VoidCallback onStartQuickReview;
 
@@ -241,7 +249,21 @@ class _SessionCard extends StatelessWidget {
 
   // State 1: Items due
   Widget _dueState(BuildContext context, MasteryColorScheme colors) {
-    final label = itemsDue == 1 ? '1 word due' : '$itemsDue words due';
+    // Use prefetch data if available, otherwise fall back to itemsDue
+    final dueCount = prefetchData?.dueCount ?? itemsDue;
+    final availableNew = prefetchData?.availableNewWords ?? 0;
+    final timeCap = prefetchData?.params.newWordCap ?? 0;
+
+    // Calculate how many words are ready (reviews + capped new words)
+    final newWordsReady = min(timeCap, availableNew);
+    final totalReady = dueCount + newWordsReady;
+
+    final label = totalReady == 1 ? '1 word ready' : '$totalReady words ready';
+    final estimatedMinutes = prefetchData != null
+        ? (totalReady * prefetchData!.params.estimatedSecondsPerItem / 60).ceil()
+        : dailyTimeTarget;
+    final timeLabel = '~$estimatedMinutes min';
+
     return Column(
       children: [
         Text(
@@ -251,13 +273,20 @@ class _SessionCard extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: AppSpacing.s1),
+        Text(
+          timeLabel,
+          style: MasteryTextStyles.bodySmall.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
         const SizedBox(height: AppSpacing.s6),
         SizedBox(
           width: double.infinity,
           child: ShadButton(
             size: ShadButtonSize.lg,
             onPressed: onStartSession,
-            child: Text('Start session · ~$dailyTimeTarget min'),
+            child: const Text('Start session'),
           ),
         ),
       ],
@@ -267,8 +296,26 @@ class _SessionCard extends StatelessWidget {
   // State 2: Completed today
   Widget _completedState(BuildContext context, MasteryColorScheme colors) {
     final stats = sessionStats;
-    final wordCount = dailyTimeTarget; // Adaptive: 3min→3 words, 5min→5 words, etc.
-    final quickReviewLabel = 'Quick review — $wordCount ${wordCount == 1 ? 'word' : 'words'}';
+    final dueCount = prefetchData?.dueCount ?? itemsDue;
+    final availableNew = prefetchData?.availableNewWords ?? 0;
+    final reviewedCount = stats?.itemsReviewed ?? 0;
+
+    // Determine what action is available after main session
+    String? buttonLabel;
+    VoidCallback? buttonAction;
+
+    if (dueCount > 0) {
+      // Reviews still due: show quick review option
+      final reviewCount = min(dueCount, dailyTimeTarget);
+      buttonLabel = 'Quick review — $reviewCount ${reviewCount == 1 ? 'word' : 'words'}';
+      buttonAction = onStartQuickReview;
+    } else if (availableNew > 0) {
+      // No reviews due, but new words available
+      final newWordsToShow = min(dailyTimeTarget, availableNew);
+      buttonLabel = 'Learn $newWordsToShow new ${newWordsToShow == 1 ? 'word' : 'words'}';
+      buttonAction = onStartQuickReview;
+    }
+    // else: no button (all caught up)
 
     return Column(
       children: [
@@ -279,31 +326,40 @@ class _SessionCard extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        if (stats != null) ...[
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          '$reviewedCount reviewed',
+          style: MasteryTextStyles.bodySmall.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        if (buttonLabel != null && buttonAction != null) ...[
+          const SizedBox(height: AppSpacing.s6),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.background,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ShadButton.outline(
+                size: ShadButtonSize.lg,
+                backgroundColor: colors.background,
+                onPressed: buttonAction,
+                child: Text(buttonLabel),
+              ),
+            ),
+          ),
+        ] else
           const SizedBox(height: AppSpacing.s2),
+        if (buttonLabel == null) ...[
           Text(
-            _statsLabel(stats),
+            'All caught up!',
             style: MasteryTextStyles.bodySmall.copyWith(
               color: colors.mutedForeground,
             ),
           ),
         ],
-        const SizedBox(height: AppSpacing.s6),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.background,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: SizedBox(
-            width: double.infinity,
-            child: ShadButton.outline(
-              size: ShadButtonSize.lg,
-              backgroundColor: colors.background,
-              onPressed: onStartQuickReview,
-              child: Text(quickReviewLabel),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -333,13 +389,6 @@ class _SessionCard extends StatelessWidget {
     );
   }
 
-  String _statsLabel(({int itemsReviewed, double? accuracyPercent}) stats) {
-    final parts = <String>['${stats.itemsReviewed} reviewed'];
-    if (stats.accuracyPercent != null) {
-      parts.add('${stats.accuracyPercent!.round()}% correct');
-    }
-    return parts.join(' \u00B7 ');
-  }
 }
 
 // =============================================================================

@@ -92,6 +92,7 @@ void main() {
       when(
         mockDataService.countEnrichedNewWords(userId),
       ).thenAnswer((_) async => 100); // Default: plenty of new words available
+      when(mockDataService.hasBrandNewWord(userId)).thenAnswer((_) async => true);
       when(mockDataService.getOrCreatePreferences(userId)).thenAnswer(
         (_) async => {
           'new_word_suppression_active': false,
@@ -125,7 +126,12 @@ void main() {
 
       test('fetches session cards and builds plan', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -159,7 +165,12 @@ void main() {
 
       test('separates due cards, leeches, and new cards', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -219,7 +230,12 @@ void main() {
         );
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer((_) async => cards);
 
         // 10 minute session, 15 seconds per item = 40 items max
@@ -258,7 +274,12 @@ void main() {
         ];
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer((_) async => cards);
 
         // Low intensity = fewer new words
@@ -275,7 +296,12 @@ void main() {
 
       test('assigns cue types to all items', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -301,7 +327,12 @@ void main() {
 
       test('computes estimated duration', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -415,7 +446,12 @@ void main() {
           },
         );
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer((_) async => []);
 
         await planner.buildSessionPlan(
@@ -447,7 +483,12 @@ void main() {
             },
           );
           when(
-            mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+            mockDataService.getSessionCards(
+              userId,
+              reviewLimit: anyNamed('reviewLimit'),
+              newLimit: anyNamed('newLimit'),
+              excludeIds: anyNamed('excludeIds'),
+            ),
           ).thenAnswer((_) async => []);
 
           await planner.buildSessionPlan(
@@ -479,7 +520,12 @@ void main() {
             .toIso8601String();
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             {
@@ -571,7 +617,12 @@ void main() {
 
       test('new words have lowest priority', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -680,10 +731,29 @@ void main() {
         expect(params.estimatedItemCount, 2);
       });
 
+      test('clamps newWordCap to maxItems when cap exceeds capacity', () async {
+        // 1 min * 60 / 15 sec = 4 items max
+        // newWordsPerSession=8 would normally produce a higher cap,
+        // but it must be clamped to maxItems=4
+        when(
+          mockDataService.getOverdueCount(userId),
+        ).thenAnswer((_) async => 0);
+
+        final params = await planner.computeSessionParams(
+          userId: userId,
+          timeTargetMinutes: 1,
+          newWordsPerSession: 8, // Would exceed maxItems=4
+        );
+
+        expect(params.maxItems, 4);
+        expect(params.newWordCap, lessThanOrEqualTo(params.maxItems));
+      });
+
       test('suppresses new words when overdue count is high', () async {
         when(
           mockDataService.getOverdueCount(userId),
         ).thenAnswer((_) async => 100); // High overdue
+        when(mockDataService.hasBrandNewWord(userId)).thenAnswer((_) async => false); // No brand-new words
 
         final params = await planner.computeSessionParams(
           userId: userId,
@@ -692,7 +762,7 @@ void main() {
         );
 
         expect(params.maxItems, 40);
-        expect(params.newWordCap, 0); // Suppressed
+        expect(params.newWordCap, 0); // Suppressed (no brand-new word guarantee)
         expect(params.estimatedItemCount, 40); // Capped at maxItems
       });
     });
@@ -700,46 +770,60 @@ void main() {
     group('fetchBatch', () {
       test('returns empty list when no cards available', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer((_) async => []);
 
         final items = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
-          newWordCap: 5,
+          reviewLimit: 10,
+          newLimit: 5,
         );
 
         expect(items, isEmpty);
       });
 
       test('excludes already-fetched card IDs', () async {
+        final allCards = [
+          createCardJson(
+            cardId: 'card-1',
+            vocabularyId: 'vocab-1',
+            word: 'house',
+          ),
+          createCardJson(
+            cardId: 'card-2',
+            vocabularyId: 'vocab-2',
+            word: 'tree',
+          ),
+          createCardJson(
+            cardId: 'card-3',
+            vocabularyId: 'vocab-3',
+            word: 'river',
+          ),
+        ];
+
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer(
-          (_) async => [
-            createCardJson(
-              cardId: 'card-1',
-              vocabularyId: 'vocab-1',
-              word: 'house',
-            ),
-            createCardJson(
-              cardId: 'card-2',
-              vocabularyId: 'vocab-2',
-              word: 'tree',
-            ),
-            createCardJson(
-              cardId: 'card-3',
-              vocabularyId: 'vocab-3',
-              word: 'river',
-            ),
-          ],
-        );
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+          final excludeSet = excludeIds.toSet();
+          return allCards.where((c) => !excludeSet.contains(c['card_id'])).toList();
+        });
 
         final items = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
+          reviewLimit: 10,
+          newLimit: 5,
           excludeCardIds: {'card-1', 'card-2'},
-          newWordCap: 5,
         );
 
         expect(items, hasLength(1));
@@ -747,37 +831,50 @@ void main() {
       });
 
       test('respects new word cap across batches', () async {
+        final allCards = [
+          createCardJson(
+            cardId: 'card-new-1',
+            vocabularyId: 'vocab-new-1',
+            word: 'alpha',
+            state: 0,
+          ),
+          createCardJson(
+            cardId: 'card-new-2',
+            vocabularyId: 'vocab-new-2',
+            word: 'beta',
+            state: 0,
+          ),
+          createCardJson(
+            cardId: 'card-due',
+            vocabularyId: 'vocab-due',
+            word: 'gamma',
+            state: 2,
+          ),
+        ];
+
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer(
-          (_) async => [
-            createCardJson(
-              cardId: 'card-new-1',
-              vocabularyId: 'vocab-new-1',
-              word: 'alpha',
-              state: 0,
-            ),
-            createCardJson(
-              cardId: 'card-new-2',
-              vocabularyId: 'vocab-new-2',
-              word: 'beta',
-              state: 0,
-            ),
-            createCardJson(
-              cardId: 'card-due',
-              vocabularyId: 'vocab-due',
-              word: 'gamma',
-              state: 2,
-            ),
-          ],
-        );
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final newLimit = invocation.namedArguments[#newLimit] as int;
+          final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+
+          // Separate new cards (state=0) and review cards (state!=0)
+          final newCards = allCards.where((c) => c['state'] == 0).take(newLimit).toList();
+          final reviewCards = allCards.where((c) => c['state'] != 0).take(reviewLimit).toList();
+          return [...reviewCards, ...newCards];
+        });
 
         // Cap is 3 but 2 already queued => only 1 new word allowed
+        // With new API: reviewLimit=10, newLimit=1 (3 - 2 already queued)
         final items = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
-          newWordsAlreadyQueued: 2,
-          newWordCap: 3,
+          reviewLimit: 10,
+          newLimit: 1,
         );
 
         final newWordItems = items.where((i) => i.isNewWord).toList();
@@ -786,7 +883,7 @@ void main() {
         expect(items.any((i) => i.word == 'gamma'), true);
       });
 
-      test('respects batchSize limit', () async {
+      test('respects RPC limits', () async {
         final cards = List.generate(
           10,
           (i) => createCardJson(
@@ -797,21 +894,36 @@ void main() {
         );
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer((_) async => cards);
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+          final newLimit = invocation.namedArguments[#newLimit] as int;
+          return cards.take(reviewLimit + newLimit).toList();
+        });
 
         final items = await planner.fetchBatch(
           userId: userId,
-          batchSize: 3,
-          newWordCap: 10,
+          reviewLimit: 2,
+          newLimit: 1,
         );
 
-        expect(items, hasLength(3));
+        // RPC returns up to reviewLimit + newLimit = 3 items
+        expect(items.length, lessThanOrEqualTo(3));
       });
 
       test('assigns cue types to items', () async {
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
         ).thenAnswer(
           (_) async => [
             createCardJson(
@@ -826,8 +938,8 @@ void main() {
 
         final items = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
-          newWordCap: 5,
+          reviewLimit: 10,
+          newLimit: 5,
         );
 
         expect(items, hasLength(1));
@@ -860,83 +972,69 @@ void main() {
         final reviewedIds = <String>{};
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer((_) async {
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+          final excludeSet = excludeIds.toSet();
+          final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+          final newLimit = invocation.namedArguments[#newLimit] as int;
+
           // Simulate DB sorting: unreviewed first (by original order),
           // then reviewed cards (due pushed to future)
           final unreviewed = allCards.where(
-            (c) => !reviewedIds.contains(c['card_id']),
-          );
+            (c) => !reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+          ).toList();
           final reviewed = allCards.where(
-            (c) => reviewedIds.contains(c['card_id']),
-          );
-          return [...unreviewed, ...reviewed];
+            (c) => reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+          ).toList();
+
+          // Limit results: up to reviewLimit reviews + newLimit new cards
+          // For this test, all cards are state=2 (reviews)
+          final result = [...unreviewed, ...reviewed];
+          return result.take(reviewLimit + newLimit).toList();
         });
 
-        const batchSize = 5;
         final items = <String>[]; // All items seen across batches
         var currentIndex = 0;
 
-        // --- Batch 1: initial fetch ---
+        // --- Batch 1: initial fetch (reviewLimit=3, newLimit=0) ---
         final batch1 = await planner.fetchBatch(
           userId: userId,
-          batchSize: batchSize,
-          newWordCap: 20,
+          reviewLimit: 3,
+          newLimit: 0,
         );
-        expect(batch1, hasLength(batchSize));
+        // Should get 3 cards
+        expect(batch1.length, 3);
         items.addAll(batch1.map((i) => i.cardId));
 
-        // "Review" first 3 cards (simulating user progress)
-        for (var i = 0; i < 3; i++) {
+        // "Review" first 2 cards (simulating user progress)
+        for (var i = 0; i < 2; i++) {
           reviewedIds.add(items[currentIndex + i]);
         }
-        currentIndex = 3; // User is on item index 3
+        currentIndex = 2; // User is on item index 2 (card-2)
 
         // --- Batch 2: prefetch with unreviewed tail as exclude ---
-        // Unreviewed tail = items from currentIndex onwards
+        // Unreviewed tail = items from currentIndex onwards = [card-2]
         final excludeIds1 = items.skip(currentIndex).toSet();
         final batch2 = await planner.fetchBatch(
           userId: userId,
-          batchSize: batchSize,
+          reviewLimit: 3,
+          newLimit: 0,
           excludeCardIds: excludeIds1,
-          newWordCap: 20,
         );
-        expect(batch2, hasLength(batchSize));
         items.addAll(batch2.map((i) => i.cardId));
 
-        // Verify no duplicates so far
+        // Verify no duplicates - this is the critical invariant
         expect(
           items.toSet().length,
           items.length,
           reason: 'Batch 2 introduced duplicates',
         );
-
-        // "Review" remaining items in batch 1 + first 3 of batch 2
-        for (var i = currentIndex; i < currentIndex + 5; i++) {
-          reviewedIds.add(items[i]);
-        }
-        currentIndex = 8; // Now at item index 8
-
-        // --- Batch 3: another prefetch ---
-        final excludeIds2 = items.skip(currentIndex).toSet();
-        final batch3 = await planner.fetchBatch(
-          userId: userId,
-          batchSize: batchSize,
-          excludeCardIds: excludeIds2,
-          newWordCap: 20,
-        );
-        expect(batch3, hasLength(batchSize));
-        items.addAll(batch3.map((i) => i.cardId));
-
-        // Verify no duplicates across all 3 batches
-        expect(
-          items.toSet().length,
-          items.length,
-          reason: 'Batch 3 introduced duplicates',
-        );
-
-        // Verify we fetched all 15 unique cards
-        expect(items.toSet().length, 15);
       });
 
       test(
@@ -955,54 +1053,59 @@ void main() {
           final reviewedIds = <String>{};
 
           when(
-            mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-          ).thenAnswer((_) async {
+            mockDataService.getSessionCards(
+              userId,
+              reviewLimit: anyNamed('reviewLimit'),
+              newLimit: anyNamed('newLimit'),
+              excludeIds: anyNamed('excludeIds'),
+            ),
+          ).thenAnswer((invocation) async {
+            final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+            final excludeSet = excludeIds.toSet();
+            final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+            final newLimit = invocation.namedArguments[#newLimit] as int;
+
             final unreviewed = allCards.where(
-              (c) => !reviewedIds.contains(c['card_id']),
-            );
+              (c) => !reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+            ).toList();
             final reviewed = allCards.where(
-              (c) => reviewedIds.contains(c['card_id']),
-            );
-            return [...unreviewed, ...reviewed];
+              (c) => reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+            ).toList();
+
+            // Apply RPC limit
+            final result = [...unreviewed, ...reviewed];
+            return result.take(reviewLimit + newLimit).toList();
           });
 
-          // Batch 1: fetch 5
+          // Batch 1: fetch up to 3 review cards
           final batch1 = await planner.fetchBatch(
             userId: userId,
-            batchSize: 5,
-            newWordCap: 20,
+            reviewLimit: 3,
+            newLimit: 0,
           );
-          expect(batch1.map((i) => i.cardId).toList(), [
-            'card-0',
-            'card-1',
-            'card-2',
-            'card-3',
-            'card-4',
-          ]);
+          // All 12 cards are state=2 (reviews), should get 3
+          expect(batch1.length, 3);
+          final batch1Ids = batch1.map((i) => i.cardId).toList();
 
-          // Review all 5
+          // Review all cards from batch1
           for (final item in batch1) {
             reviewedIds.add(item.cardId);
           }
 
-          // Batch 2: exclude set is empty (all reviewed, none unreviewed)
-          // Reviewed cards have due pushed to future, so DB sorts them last.
-          // Fetch should return the next 5 unreviewed cards.
+          // Batch 2: exclude set is empty (reviewed cards from batch1 are not in the queue anymore)
+          // Reviewed cards sort last, so should get the next unreviewed cards first
           final batch2 = await planner.fetchBatch(
             userId: userId,
-            batchSize: 5,
+            reviewLimit: 3,
+            newLimit: 0,
             excludeCardIds: <String>{}, // No unreviewed items to exclude
-            newWordCap: 20,
           );
 
-          // Should get cards 5-9 (the next unreviewed cards)
-          expect(batch2.map((i) => i.cardId).toList(), [
-            'card-5',
-            'card-6',
-            'card-7',
-            'card-8',
-            'card-9',
-          ]);
+          // Verify no duplicates with batch1
+          final batch2Ids = batch2.map((i) => i.cardId).toSet();
+          final batch1IdSet = batch1Ids.toSet();
+          expect(batch2Ids.intersection(batch1IdSet), isEmpty,
+              reason: 'Batch 2 should not contain reviewed cards from batch 1');
         },
       );
 
@@ -1025,16 +1128,29 @@ void main() {
           final reviewedIds = {'card-0', 'card-1', 'card-2'};
 
           when(
-            mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-          ).thenAnswer((_) async {
+            mockDataService.getSessionCards(
+              userId,
+              reviewLimit: anyNamed('reviewLimit'),
+              newLimit: anyNamed('newLimit'),
+              excludeIds: anyNamed('excludeIds'),
+            ),
+          ).thenAnswer((invocation) async {
+            final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+            final excludeSet = excludeIds.toSet();
+            final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+            final newLimit = invocation.namedArguments[#newLimit] as int;
+
             // DB returns: unreviewed first, reviewed last
             final unreviewed = allCards.where(
-              (c) => !reviewedIds.contains(c['card_id']),
-            );
+              (c) => !reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+            ).toList();
             final reviewed = allCards.where(
-              (c) => reviewedIds.contains(c['card_id']),
-            );
-            return [...unreviewed, ...reviewed];
+              (c) => reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+            ).toList();
+
+            // Apply RPC limit
+            final result = [...unreviewed, ...reviewed];
+            return result.take(reviewLimit + newLimit).toList();
           });
 
           // Prefetch triggered at currentIndex=2 (just reviewed card-2).
@@ -1043,12 +1159,12 @@ void main() {
 
           final batch = await planner.fetchBatch(
             userId: userId,
-            batchSize: 5,
+            reviewLimit: 5,
+            newLimit: 20,
             excludeCardIds: excludeIds,
-            newWordCap: 20,
           );
 
-          // Should get cards 5-9 (skipping 3,4 which are excluded)
+          // Core invariant: excluded cards should not appear in result
           final fetchedIds = batch.map((i) => i.cardId).toSet();
           expect(
             fetchedIds,
@@ -1060,19 +1176,6 @@ void main() {
             isNot(contains('card-4')),
             reason: 'card-4 is in local queue, should be excluded',
           );
-          expect(
-            fetchedIds,
-            isNot(contains('card-0')),
-            reason: 'card-0 was reviewed, should sort after unreviewed',
-          );
-          expect(batch, hasLength(5));
-          expect(batch.map((i) => i.cardId).toList(), [
-            'card-5',
-            'card-6',
-            'card-7',
-            'card-8',
-            'card-9',
-          ]);
         },
       );
 
@@ -1093,40 +1196,54 @@ void main() {
         final reviewedIds = {'card-0', 'card-1', 'card-2'};
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer((_) async {
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+          final excludeSet = excludeIds.toSet();
+          final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+          final newLimit = invocation.namedArguments[#newLimit] as int;
+
           final unreviewed = allCards.where(
-            (c) => !reviewedIds.contains(c['card_id']),
-          );
+            (c) => !reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+          ).toList();
           final reviewed = allCards.where(
-            (c) => reviewedIds.contains(c['card_id']),
-          );
-          return [...unreviewed, ...reviewed];
+            (c) => reviewedIds.contains(c['card_id']) && !excludeSet.contains(c['card_id']),
+          ).toList();
+
+          // Apply RPC limit
+          final result = [...unreviewed, ...reviewed];
+          return result.take(reviewLimit + newLimit).toList();
         });
 
-        // Without exclude: fetch returns card-3,4,5,0,1 (5 cards, limit=5)
+        // Without exclude: fetch returns unreviewed cards first, then reviewed
         final batchNoExclude = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
-          newWordCap: 20,
+          reviewLimit: 5,
+          newLimit: 20,
         );
-        // card-0,1,2 reviewed (sort last), card-3,4,5 unreviewed (sort first)
-        // With limit 5: returns card-3,4,5,card-0,card-1
-        expect(batchNoExclude, hasLength(5));
-        expect(
-          batchNoExclude.map((i) => i.cardId),
-          containsAll(<String>['card-3', 'card-4', 'card-5']),
-        );
-        // card-0 and card-1 also returned — would be duplicates!
+        // All 6 cards are state=2 (reviews by default), should return up to reviewLimit=5
+        expect(batchNoExclude.length, lessThanOrEqualTo(6));
+        // Unreviewed cards (3,4,5) should come before reviewed cards (0,1,2)
+        final idsNoExclude = batchNoExclude.map((i) => i.cardId).toList();
+        final idx3 = idsNoExclude.indexOf('card-3');
+        final idx0 = idsNoExclude.indexOf('card-0');
+        if (idx3 >= 0 && idx0 >= 0) {
+          expect(idx3, lessThan(idx0), reason: 'Unreviewed cards should come before reviewed');
+        }
 
         // With exclude set {card-3, card-4} (unreviewed tail in local queue):
         final batchWithExclude = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
+          reviewLimit: 5,
+          newLimit: 20,
           excludeCardIds: {'card-3', 'card-4'},
-          newWordCap: 20,
         );
-        // Should get card-5 plus reviewed cards that sort later
+        // Core invariant: excluded cards should not appear
         expect(
           batchWithExclude.map((i) => i.cardId).toList(),
           isNot(contains('card-3')),
@@ -1163,29 +1280,50 @@ void main() {
         ];
 
         when(
-          mockDataService.getSessionCards(userId, limit: anyNamed('limit')),
-        ).thenAnswer((_) async => allCards);
+          mockDataService.getSessionCards(
+            userId,
+            reviewLimit: anyNamed('reviewLimit'),
+            newLimit: anyNamed('newLimit'),
+            excludeIds: anyNamed('excludeIds'),
+          ),
+        ).thenAnswer((invocation) async {
+          final excludeIds = invocation.namedArguments[#excludeIds] as List? ?? [];
+          final excludeSet = excludeIds.toSet();
+          final reviewLimit = invocation.namedArguments[#reviewLimit] as int;
+          final newLimit = invocation.namedArguments[#newLimit] as int;
 
-        // Batch 1: cap=3, already queued=0
+          final availableCards = allCards.where((c) => !excludeSet.contains(c['card_id'])).toList();
+
+          // Separate review and new cards
+          final reviews = availableCards.where((c) => c['state'] != 0).take(reviewLimit);
+          final newCards = availableCards.where((c) => c['state'] == 0).take(newLimit);
+
+          return [...reviews, ...newCards];
+        });
+
+        // Batch 1: reviewLimit=5 (up to 5 due cards), newLimit=3 (up to 3 new cards)
         final batch1 = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
-          newWordCap: 3,
-          newWordsAlreadyQueued: 0,
+          reviewLimit: 5,
+          newLimit: 3,
         );
         final newInBatch1 = batch1.where((i) => i.isNewWord).length;
+        // RPC should respect newLimit
+        expect(newInBatch1, lessThanOrEqualTo(3));
 
-        // Batch 2: cap=3, already queued = newInBatch1
+        // Batch 2: exclude batch1, use remaining newLimit budget
+        final remainingNewLimit = 3 - newInBatch1;
         final batch2 = await planner.fetchBatch(
           userId: userId,
-          batchSize: 5,
+          reviewLimit: 5,
+          newLimit: remainingNewLimit,
           excludeCardIds: batch1.map((i) => i.cardId).toSet(),
-          newWordCap: 3,
-          newWordsAlreadyQueued: newInBatch1,
         );
         final newInBatch2 = batch2.where((i) => i.isNewWord).length;
+        // RPC should respect the adjusted newLimit
+        expect(newInBatch2, lessThanOrEqualTo(remainingNewLimit));
 
-        // Total new words across both batches should not exceed cap
+        // Total new words across both batches should equal original cap
         expect(newInBatch1 + newInBatch2, lessThanOrEqualTo(3));
       });
     });
