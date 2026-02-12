@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/effective_day.dart';
 import '../../../domain/models/streak.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/supabase_provider.dart';
@@ -22,18 +23,16 @@ Future<int> currentStreak(Ref ref) async {
 
   // Check if we need to reset - if last completed was not today or yesterday
   if (streak.lastCompletedDate != null) {
-    final today = DateTime.now().toUtc();
-    final yesterday = today.subtract(const Duration(days: 1));
-    final lastCompleted = streak.lastCompletedDate!;
+    final now = DateTime.now();
+    final today = effectiveToday();
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
 
-    final isToday =
-        lastCompleted.year == today.year &&
-        lastCompleted.month == today.month &&
-        lastCompleted.day == today.day;
+    final isToday = isSameEffectiveDay(streak.lastCompletedDate!, now);
+    final lastEffective = effectiveDate(streak.lastCompletedDate!);
     final isYesterday =
-        lastCompleted.year == yesterday.year &&
-        lastCompleted.month == yesterday.month &&
-        lastCompleted.day == yesterday.day;
+        lastEffective.year == yesterday.year &&
+        lastEffective.month == yesterday.month &&
+        lastEffective.day == yesterday.day;
 
     if (!isToday && !isYesterday) {
       // Reset streak
@@ -88,14 +87,11 @@ class StreakNotifier extends _$StreakNotifier {
     final streakData = await dataService.getOrCreateStreak(userId);
     final streak = StreakModel.fromJson(streakData);
 
-    final today = DateTime.now().toUtc();
+    final now = DateTime.now();
     final lastCompleted = streak.lastCompletedDate;
 
     // Check if already completed today
-    if (lastCompleted != null &&
-        lastCompleted.year == today.year &&
-        lastCompleted.month == today.month &&
-        lastCompleted.day == today.day) {
+    if (lastCompleted != null && isSameEffectiveDay(lastCompleted, now)) {
       // Already counted today, don't increment again
       return;
     }
@@ -110,7 +106,7 @@ class StreakNotifier extends _$StreakNotifier {
       id: streak.id,
       currentCount: newCount,
       longestCount: newLongest,
-      lastCompletedDate: today,
+      lastCompletedDate: now,
     );
 
     state = AsyncValue.data(newCount);
@@ -143,3 +139,4 @@ class StreakNotifier extends _$StreakNotifier {
     ref.invalidate(currentStreakProvider);
   }
 }
+

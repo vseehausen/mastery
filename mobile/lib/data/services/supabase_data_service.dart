@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/app_defaults.dart';
+import '../../core/effective_day.dart';
 import '../../domain/models/progress_stage.dart';
 
 /// Service that wraps Supabase queries for direct data access.
@@ -623,8 +624,7 @@ class SupabaseDataService {
   Future<({int itemsReviewed, double? accuracyPercent})?> getTodaySessionStats(
     String userId,
   ) async {
-    final today = DateTime.now().toUtc();
-    final startOfDay = DateTime.utc(today.year, today.month, today.day);
+    final startOfDay = effectiveDayStartUtc();
 
     final response = await _client
         .from('learning_sessions')

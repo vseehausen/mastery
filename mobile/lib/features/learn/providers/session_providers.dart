@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/app_defaults.dart';
+import '../../../core/effective_day.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
@@ -43,10 +44,7 @@ Future<bool> hasCompletedToday(Ref ref) async {
   if (lastCompletedStr == null) return false;
 
   final lastCompleted = DateTime.parse(lastCompletedStr);
-  final today = DateTime.now().toUtc();
-  return lastCompleted.year == today.year &&
-      lastCompleted.month == today.month &&
-      lastCompleted.day == today.day;
+  return isSameEffectiveDay(lastCompleted, DateTime.now());
 }
 
 /// Provides today's progress (0.0 to 1.0)

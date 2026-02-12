@@ -17,6 +17,10 @@ abstract final class AppDefaults {
   static const double retentionReinforced = 0.93;
   static const double retentionDefault = retentionBalanced;
 
+  // Day boundary: hour (local time) when a new day starts.
+  // Before this hour, activity counts toward the previous day.
+  static const int dayStartHour = 4;
+
   // Display
   static const String nativeLanguageCode = 'de';
 }
