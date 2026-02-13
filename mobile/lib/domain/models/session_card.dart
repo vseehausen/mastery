@@ -1,7 +1,7 @@
 import 'global_dictionary.dart';
 import 'learning_card.dart';
 
-export 'global_dictionary.dart' show ClozeText, Confusable, LanguageTranslations;
+export 'global_dictionary.dart' show ClozeText, Confusable, LanguageTranslations, UsageExample;
 
 /// A learning card with all data needed for a session.
 /// Returned by the get_session_cards RPC function, this model contains
@@ -27,6 +27,7 @@ class SessionCard {
     required this.antonyms,
     required this.confusables,
     required this.exampleSentences,
+    required this.usageExamples,
     this.pronunciationIpa,
     required this.translations,
     this.cefrLevel,
@@ -62,6 +63,7 @@ class SessionCard {
       antonyms: _parseStringList(json['antonyms']),
       confusables: _parseConfusables(json['confusables']),
       exampleSentences: _parseClozeTextList(json['example_sentences']),
+      usageExamples: _parseUsageExamples(json['usage_examples']),
       pronunciationIpa: json['pronunciation_ipa'] as String?,
       translations: _parseTranslations(json['translations']),
       cefrLevel: json['cefr_level'] as String?,
@@ -102,6 +104,7 @@ class SessionCard {
   final List<String> antonyms;
   final List<Confusable> confusables;
   final List<ClozeText> exampleSentences;
+  final List<UsageExample> usageExamples;
   final String? pronunciationIpa;
   final Map<String, LanguageTranslations> translations;
   final String? cefrLevel;
@@ -161,6 +164,14 @@ class SessionCard {
     if (value is! List) return [];
     return value
         .map((c) => ClozeText.fromJson(c as Map<String, dynamic>))
+        .toList();
+  }
+
+  static List<UsageExample> _parseUsageExamples(dynamic value) {
+    if (value == null) return [];
+    if (value is! List) return [];
+    return value
+        .map((e) => UsageExample.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 

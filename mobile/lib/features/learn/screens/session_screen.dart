@@ -29,11 +29,13 @@ import '../providers/streak_providers.dart';
 import '../widgets/cloze_cue_card.dart';
 import '../widgets/definition_cue_card.dart';
 import '../widgets/disambiguation_card.dart';
+import '../widgets/novel_cloze_cue_card.dart';
 import '../widgets/progress_micro_feedback.dart';
 import '../widgets/recall_card.dart';
 import '../widgets/recognition_card.dart';
 import '../widgets/session_progress_bar.dart';
 import '../widgets/synonym_cue_card.dart';
+import '../widgets/usage_recognition_card.dart';
 import 'session_complete_screen.dart';
 
 /// Main session screen for learning
@@ -528,9 +530,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       _localLapseDeltas[currentItem.cardId] = lapseDelta + 1;
     }
 
-    // Track hard method (disambiguation) success deltas
+    // Track hard method (disambiguation/usage recognition) success deltas
     final isHardMethodSuccess = rating >= 3 &&
-        currentItem.cueType == CueType.disambiguation;
+        (currentItem.cueType == CueType.disambiguation ||
+         currentItem.cueType == CueType.usageRecognition);
     if (isHardMethodSuccess) {
       _localHardMethodDeltas[currentItem.cardId] = hardMethodDelta + 1;
     }
@@ -1084,6 +1087,31 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           sentenceWithBlank: cueContent.prompt,
           targetWord: cueContent.answer,
           hintText: null,
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.novelCloze:
+        return NovelClozeCueCard(
+          sentenceWithBlank: cueContent.prompt,
+          targetWord: cueContent.answer,
+          hintText: null,
+          onGrade: _handleRecallGrade,
+        );
+      case CueType.usageRecognition:
+        if (card.usageExamples.isNotEmpty) {
+          final usage = card.usageExamples.first;
+          return UsageRecognitionCard(
+            word: card.displayWord,
+            correctSentence: usage.correctSentence.sentence,
+            incorrectSentences:
+                usage.incorrectSentences.map((s) => s.sentence).toList(),
+            onGrade: _handleRecallGrade,
+          );
+        }
+        // Fallback if no usage examples
+        return RecallCard(
+          word: card.displayWord,
+          answer: cueContent.answer,
+          context: card.encounterContext,
           onGrade: _handleRecallGrade,
         );
       case CueType.translation:

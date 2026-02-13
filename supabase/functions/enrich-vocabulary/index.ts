@@ -23,7 +23,8 @@ const BUFFER_TARGET = 10;
 // - v1: Initial enrichment implementation
 // - v2: Added translation resolution logic
 // - v3: Added quality rules (acronyms, circular definitions, disambiguation)
-const ENRICHMENT_VERSION = 3;
+// - v4: Expanded card types - novel cloze, usage recognition, L1 confusables, tiered distractors
+const ENRICHMENT_VERSION = 4;
 
 const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
 const MAINTAIN_CONCURRENCY = 10;
@@ -82,13 +83,20 @@ interface AIEnhancement {
     word: string;
     explanation: string;
     disambiguation_sentence: ClozeText;
+    disambiguation_sentences: ClozeText[];
+    l1_translation: string;
   }>;
   example_sentences: ClozeText[];
+  usage_examples: Array<{
+    correct_sentence: ClozeText;
+    incorrect_sentences: ClozeText[];
+  }>;
   pronunciation_ipa: string;
   cefr_level: string | null;
   confidence: number;
   native_alternatives: string[];
   best_native_translation: string | null;
+  confusable_translations: string[];
 }
 
 interface MaintainRequestBody {
@@ -451,9 +459,12 @@ function buildEnrichmentPayload(
     confusables: aiEnhancement.confusables.map(c => ({
       word: c.word,
       explanation: c.explanation,
-      disambiguation_sentence: c.disambiguation_sentence,
+      disambiguation_sentence: c.disambiguation_sentences?.[0] ?? c.disambiguation_sentence,
+      disambiguation_sentences: c.disambiguation_sentences ?? (c.disambiguation_sentence ? [c.disambiguation_sentence] : []),
+      l1_translation: c.l1_translation ?? '',
     })),
     example_sentences: aiEnhancement.example_sentences,
+    usage_examples: aiEnhancement.usage_examples ?? [],
     pronunciation_ipa: aiEnhancement.pronunciation_ipa,
     translations,
     cefr_level: aiEnhancement.cefr_level,
@@ -622,16 +633,23 @@ Given an English word and optional context sentence, return a JSON object with:
 - confusables: array of commonly confused words (max 3), each with:
   - word: the confusable English word
   - explanation: one-sentence distinction in English
-  - disambiguation_sentence: object with { "sentence": "full sentence", "before": "text before blank", "blank": "the target word", "after": "text after blank" }
-- example_sentences: array of 2-3 objects, each with { "sentence": "full sentence", "before": "text before blank", "blank": "word form used", "after": "text after blank" }
+  - disambiguation_sentences: array of 4 objects with { "sentence", "before", "blank", "after" }
+    Each sentence demonstrates the CONFUSABLE word (NOT the target) in context
+  - l1_translation: the ${langName} translation of this confusable word
+- example_sentences: array of 3 NOVEL objects (NOT the provided context), each with { "sentence": "full sentence", "before": "text before blank", "blank": "word form used", "after": "text after blank" }
+  Show the target word in DIFFERENT contexts than the encounter
+- usage_examples: array of 1 object with:
+  - correct_sentence: object with { "sentence", "before", "blank", "after" } showing CORRECT usage of the target word
+  - incorrect_sentences: array of 2 objects with { "sentence", "before", "blank", "after" } showing INCORRECT or AWKWARD usage of the target word
 - pronunciation_ipa: IPA pronunciation (e.g., /ˈwɜːrd/)
 - cefr_level: A1/A2/B1/B2/C1/C2 or null if uncertain
 - confidence: 0.0-1.0 indicating overall confidence
 - best_native_translation: the single best ${langName} translation for this word as used in the given context. Consider the context carefully — for polysemous words, pick the sense that matches. Return null if uncertain.
 - native_alternatives: 2-4 other valid ${langName} translations (not the best_native_translation, no trivial inflections like plural forms, no duplicates). If no good alternatives exist, return empty array [].
+- confusable_translations: 2-3 ${langName} words that LOOK SIMILAR to the correct translation but mean something different. Example: For "desert" → ${langName} "Wüste", confusables might be "Würste" (sausages), "wüsste" (would know). Return empty array if none.
 
-IMPORTANT for example_sentences and disambiguation_sentence:
-- Each sentence should demonstrate the target word in context
+IMPORTANT for all sentence objects (example_sentences, disambiguation_sentences, usage_examples):
+- Each sentence should demonstrate the word in context
 - Split the sentence into "before", "blank" (the word), and "after" parts
 - The "sentence" field should contain the complete sentence for reference
 - Example: For "ubiquitous" → { "sentence": "Wi-Fi has become so ubiquitous.", "before": "Wi-Fi has become so ", "blank": "ubiquitous", "after": "." }
@@ -639,7 +657,7 @@ IMPORTANT for example_sentences and disambiguation_sentence:
 QUALITY RULES (CRITICAL):
 1. ACRONYMS: If the word is an acronym (e.g., "TLC", "FAQ", "ASAP"), identify it as such and provide both the expanded form and its meaning. Example: "TLC" → "Tender Loving Care: careful and kind attention given to someone or something"
 2. CIRCULAR DEFINITIONS: The english_definition MUST NOT contain the target word or any of its variants (stem, inflections). Use different vocabulary to explain the meaning.
-3. DISAMBIGUATION SENTENCES: The disambiguation_sentence should NOT contain the target word. Use only the confusable word in the blank to demonstrate the distinction clearly.
+3. DISAMBIGUATION SENTENCES: The disambiguation_sentences should NOT contain the target word. Use only the confusable word in the blank to demonstrate the distinction clearly.
 
 Word: ${word.word}
 Stem: ${word.stem || word.word}
@@ -657,7 +675,7 @@ Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.3,
-      max_tokens: 1000,
+      max_tokens: 1500,
     }),
   });
 
@@ -684,10 +702,13 @@ Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
   // Rule 3: Check disambiguation sentences for target word
   if (Array.isArray(parsed.confusables)) {
     for (const confusable of parsed.confusables) {
-      if (confusable.disambiguation_sentence) {
-        const disambigSentence = (confusable.disambiguation_sentence.sentence || '').toLowerCase();
+      const sentences = Array.isArray(confusable.disambiguation_sentences)
+        ? confusable.disambiguation_sentences
+        : (confusable.disambiguation_sentence ? [confusable.disambiguation_sentence] : []);
+      for (const sent of sentences) {
+        const disambigSentence = (sent.sentence || '').toLowerCase();
         if (disambigSentence.includes(targetWord) || disambigSentence.includes(stem)) {
-          console.warn(`[enrichment-quality] Disambiguation sentence contains target word "${word.word}": "${confusable.disambiguation_sentence.sentence}"`);
+          console.warn(`[enrichment-quality] Disambiguation sentence contains target word "${word.word}": "${sent.sentence}"`);
         }
       }
     }
@@ -699,8 +720,19 @@ Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
     synonyms: parsed.synonyms || [],
     antonyms: parsed.antonyms || [],
     part_of_speech: parsed.part_of_speech || null,
-    confusables: parsed.confusables || [],
+    confusables: (parsed.confusables || []).map((c: Record<string, unknown>) => ({
+      word: c.word || '',
+      explanation: c.explanation || '',
+      disambiguation_sentence: Array.isArray(c.disambiguation_sentences) && c.disambiguation_sentences.length > 0
+        ? c.disambiguation_sentences[0]
+        : c.disambiguation_sentence || { sentence: '', before: '', blank: '', after: '' },
+      disambiguation_sentences: Array.isArray(c.disambiguation_sentences)
+        ? c.disambiguation_sentences
+        : (c.disambiguation_sentence ? [c.disambiguation_sentence] : []),
+      l1_translation: c.l1_translation || '',
+    })),
     example_sentences: parsed.example_sentences || [],
+    usage_examples: parsed.usage_examples || [],
     pronunciation_ipa: parsed.pronunciation_ipa || '',
     cefr_level: parsed.cefr_level || null,
     confidence: parsed.confidence || 0.9,
@@ -710,6 +742,9 @@ Machine ${langName} translation (may be incorrect): ${primaryTranslation}`;
     best_native_translation: (parsed.best_native_translation && typeof parsed.best_native_translation === 'string')
       ? parsed.best_native_translation
       : null,
+    confusable_translations: Array.isArray(parsed.confusable_translations)
+      ? parsed.confusable_translations.filter((a: string) => a && typeof a === 'string')
+      : [],
   };
 }
 

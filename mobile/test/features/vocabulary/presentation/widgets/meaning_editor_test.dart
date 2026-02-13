@@ -22,12 +22,14 @@ GlobalDictionaryModel _createGlobalDict({
       'en': LanguageTranslations(
         primary: primaryTranslation,
         alternatives: alternativeTranslations,
+        confusableAlternatives: const [],
       ),
     },
     synonyms: synonyms,
     antonyms: const [],
     confusables: const [],
     exampleSentences: const [],
+    usageExamples: const [],
   );
 }
 

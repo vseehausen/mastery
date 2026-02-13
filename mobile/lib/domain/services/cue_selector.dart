@@ -52,16 +52,17 @@ class CueSelector {
         );
 
       case CueType.definition:
-        return CueContent(
-          prompt: card.displayWord,
-          answer: card.englishDefinition,
-        );
-
       case CueType.synonym:
-        final synonym = card.synonyms.isNotEmpty ? card.synonyms.first : '';
+        // Method 6 (Open Recall): alternate between definition, translation, or synonym
+        final cueOptions = <String>[
+          card.englishDefinition,
+          card.primaryTranslation,
+          if (card.synonyms.isNotEmpty) card.synonyms.first,
+        ];
+        final selectedCue = cueOptions[_random.nextInt(cueOptions.length)];
         return CueContent(
-          prompt: card.displayWord,
-          answer: synonym,
+          prompt: selectedCue,
+          answer: card.displayWord,
         );
 
       case CueType.contextCloze:
@@ -92,9 +93,19 @@ class CueSelector {
         );
 
       case CueType.disambiguation:
-        // Use the first confusable's disambiguation sentence
+        // Use a random confusable's disambiguation sentence
         if (card.confusables.isNotEmpty) {
-          final confusable = card.confusables.first;
+          final confusable = card.confusables[_random.nextInt(card.confusables.length)];
+          // Prefer from disambiguation_sentences list, fall back to single
+          final sentences = confusable.disambiguationSentences;
+          if (sentences.isNotEmpty) {
+            final disambig = sentences[_random.nextInt(sentences.length)];
+            final clozePrompt = '${disambig.before}_____${disambig.after}';
+            return CueContent(
+              prompt: clozePrompt,
+              answer: disambig.blank,
+            );
+          }
           final disambig = confusable.disambiguationSentence;
           if (disambig != null) {
             final clozePrompt = '${disambig.before}_____${disambig.after}';
@@ -108,6 +119,34 @@ class CueSelector {
         return CueContent(
           prompt: card.displayWord,
           answer: card.englishDefinition,
+        );
+
+      case CueType.novelCloze:
+        // Use a random novel example sentence (skip first if it may be encounter)
+        if (card.exampleSentences.length > 1) {
+          final novelExamples = card.exampleSentences.sublist(1);
+          final example = novelExamples[_random.nextInt(novelExamples.length)];
+          final clozePrompt = '${example.before}_____${example.after}';
+          return CueContent(prompt: clozePrompt, answer: example.blank);
+        }
+        // Fallback to definition
+        return CueContent(
+          prompt: card.englishDefinition,
+          answer: card.displayWord,
+        );
+
+      case CueType.usageRecognition:
+        // Return correct sentence as prompt (widget handles options)
+        if (card.usageExamples.isNotEmpty) {
+          final usage = card.usageExamples.first;
+          return CueContent(
+            prompt: usage.correctSentence.sentence,
+            answer: card.displayWord,
+          );
+        }
+        return CueContent(
+          prompt: card.englishDefinition,
+          answer: card.primaryTranslation,
         );
     }
   }
@@ -124,24 +163,29 @@ class CueSelector {
     final hasEncounterContext = card.encounterContext != null &&
         card.encounterContext!.isNotEmpty;
     final hasConfusables = card.hasConfusables && card.confusables.isNotEmpty;
+    final hasNovelSentences = card.exampleSentences.length > 1;
+    final hasUsageExamples = card.usageExamples.isNotEmpty;
 
     final candidates = <_WeightedCue>[];
 
     if (stage == MaturityStage.growing) {
       candidates.addAll([
-        const _WeightedCue(CueType.translation, 70),
+        const _WeightedCue(CueType.translation, 60),
         const _WeightedCue(CueType.definition, 15),
         const _WeightedCue(CueType.synonym, 10),
-        if (hasEncounterContext) const _WeightedCue(CueType.contextCloze, 5),
+        if (hasEncounterContext) const _WeightedCue(CueType.contextCloze, 10),
+        if (hasNovelSentences) const _WeightedCue(CueType.novelCloze, 5),
       ]);
     } else {
       // Mature
       candidates.addAll([
-        const _WeightedCue(CueType.translation, 20),
-        const _WeightedCue(CueType.definition, 25),
-        const _WeightedCue(CueType.synonym, 20),
-        if (hasEncounterContext) const _WeightedCue(CueType.contextCloze, 15),
-        if (hasConfusables) const _WeightedCue(CueType.disambiguation, 20),
+        const _WeightedCue(CueType.translation, 15),
+        const _WeightedCue(CueType.definition, 20),
+        const _WeightedCue(CueType.synonym, 15),
+        if (hasEncounterContext) const _WeightedCue(CueType.contextCloze, 10),
+        if (hasNovelSentences) const _WeightedCue(CueType.novelCloze, 10),
+        if (hasConfusables) const _WeightedCue(CueType.disambiguation, 15),
+        if (hasUsageExamples) const _WeightedCue(CueType.usageRecognition, 15),
       ]);
     }
 

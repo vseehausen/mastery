@@ -257,6 +257,16 @@ kill -SIGUSR2 <PID>  # Hot restart (<1s, resets state)
 
 <!-- MANUAL ADDITIONS START -->
 
+## Product & Design Documents
+
+Accompanying product/design documents live in the sibling folder `../docs/mastery-strategy/` (not committed to this repo). Key files:
+
+- `development-roadmap.md` — Development roadmap with phase status
+- `12-learning-methods-spec.md` — Card type specifications (Methods 1–8)
+- `14-learning-system-product-spec.md` — Learning system product spec (stages, promotion, scheduling)
+- `15-session-architecture.md` — Session architecture (ordering, limits, quick review)
+- `16-onboarding-and-progress.md` — Onboarding & progress UI spec
+
 ## Desktop UI Stack
 
 - **Tailwind CSS v4**: `@import "tailwindcss"` in `src/app.css`

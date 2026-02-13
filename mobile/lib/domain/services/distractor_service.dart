@@ -1,97 +1,153 @@
 import 'dart:math';
 
 import '../../data/services/supabase_data_service.dart';
-import '../models/vocabulary.dart';
 
-/// Service for selecting distractor options for multiple choice questions
-/// Implements the contract from contracts/distractor-service.md
+/// Service for selecting distractor options for multiple choice questions.
+/// Implements 4-tier priority: confusables → morphological → same-stage → random.
 class DistractorService {
   DistractorService(this._dataService);
 
   final SupabaseDataService _dataService;
   final _random = Random();
 
-  /// Select distractors for a target vocabulary item
+  /// Select distractors for a target vocabulary item using tiered priority.
   ///
-  /// Args:
-  ///   targetItemId: The ID of the vocabulary item being tested
-  ///   userId: The user's ID
-  ///   excludeIds: IDs to exclude from selection (e.g., recent items)
-  ///   count: Number of distractors to return (default 3)
-  ///
-  /// Returns:
-  ///   List of distractor vocabulary items
+  /// Tier 1: L1 confusable translations (max 2)
+  /// Tier 2: Morphologically similar (same lemma, max 1)
+  /// Tier 4: Random from user's vocabulary (fill remaining)
   Future<List<Distractor>> selectDistractors({
     required String targetItemId,
     required String userId,
     List<String> excludeIds = const [],
     int count = 3,
   }) async {
-    // Get the target item to understand what we need
-    final targetData = await _dataService.getVocabularyById(targetItemId);
+    // Get the target item with global dictionary data
+    final targetData = await _dataService.getVocabularyWithGlobalDict(targetItemId);
     if (targetData == null) {
-      return [];
+      return _generateFallbackDistractors(count);
     }
-    final targetItem = VocabularyModel.fromJson(targetData);
 
-    // Get all vocabulary for this user (excluding target and excluded items)
-    final allVocabData = await _dataService.getVocabulary(userId);
-    final allVocabulary = allVocabData.map(VocabularyModel.fromJson).toList();
+    final targetWord = targetData['word'] as String? ?? '';
+    final targetStem = targetData['stem'] as String? ?? targetWord;
+    final gd = targetData['global_dictionary'];
 
-    final candidates = allVocabulary.where((v) {
-      if (v.id == targetItemId) return false;
-      if (excludeIds.contains(v.id)) return false;
-      // Exclude items with the same word or stem (avoid near-duplicate distractors)
-      if (v.word.toLowerCase() == targetItem.word.toLowerCase()) return false;
-      if (v.displayWord.toLowerCase() == targetItem.displayWord.toLowerCase()) {
-        return false;
+    // Extract confusable_alternatives and lemma from global_dictionary
+    final confusableAlts = <String>[];
+    String? targetLemma;
+    if (gd is Map<String, dynamic>) {
+      targetLemma = gd['lemma'] as String?;
+      final translations = gd['translations'];
+      if (translations is Map) {
+        for (final entry in translations.entries) {
+          final langData = entry.value;
+          if (langData is Map) {
+            final alts = langData['confusable_alternatives'];
+            if (alts is List) {
+              confusableAlts.addAll(alts.map((e) => e.toString().toLowerCase()));
+            }
+          }
+        }
       }
-      return true;
-    }).toList();
-
-    if (candidates.isEmpty) {
-      return _generateFallbackDistractors(targetItem, count);
     }
 
-    // Shuffle and take up to count items
-    candidates.shuffle(_random);
-    final selected = candidates.take(count).toList();
+    // Get all vocabulary with global dict for the user
+    final allVocabData = await _dataService.getVocabularyWithGlobalDictForUser(userId);
 
-    // If we don't have enough, generate fallbacks
-    if (selected.length < count) {
-      final fallbacks = _generateFallbackDistractors(
-        targetItem,
-        count - selected.length,
+    final tier1Confusables = <Distractor>[];
+    final tier2Morphological = <Distractor>[];
+    final tier4Random = <Distractor>[];
+
+    for (final item in allVocabData) {
+      final itemId = item['id'] as String;
+      if (itemId == targetItemId) continue;
+      if (excludeIds.contains(itemId)) continue;
+
+      final itemWord = item['word'] as String? ?? '';
+      final itemStem = item['stem'] as String? ?? itemWord;
+      if (itemWord.toLowerCase() == targetWord.toLowerCase()) continue;
+      if (itemStem.toLowerCase() == targetStem.toLowerCase()) continue;
+
+      final itemGd = item['global_dictionary'];
+      String? itemTranslation;
+      String? itemLemma;
+      if (itemGd is Map<String, dynamic>) {
+        itemLemma = itemGd['lemma'] as String?;
+        final itemTranslations = itemGd['translations'];
+        if (itemTranslations is Map) {
+          for (final entry in itemTranslations.entries) {
+            final langData = entry.value;
+            if (langData is Map && langData['primary'] is String) {
+              itemTranslation = langData['primary'] as String;
+              break;
+            }
+          }
+        }
+      }
+
+      final distractor = Distractor(
+        itemId: itemId,
+        surfaceForm: itemWord,
+        gloss: itemTranslation ?? itemStem,
       );
-      return [
-        ...selected.map(
-          (v) => Distractor(
-            itemId: v.id,
-            surfaceForm: v.word,
-            gloss: v.stem ?? v.word,
-          ),
-        ),
-        ...fallbacks,
-      ];
+
+      // Tier 1: Check if this item's translation is in target's confusable_alternatives
+      if (confusableAlts.isNotEmpty &&
+          itemTranslation != null &&
+          confusableAlts.contains(itemTranslation.toLowerCase())) {
+        tier1Confusables.add(distractor);
+        continue;
+      }
+
+      // Tier 2: Same lemma (morphological)
+      if (targetLemma != null &&
+          targetLemma.isNotEmpty &&
+          itemLemma != null &&
+          itemLemma == targetLemma) {
+        tier2Morphological.add(distractor);
+        continue;
+      }
+
+      // Tier 4: Random
+      tier4Random.add(distractor);
     }
 
-    return selected
-        .map(
-          (v) => Distractor(
-            itemId: v.id,
-            surfaceForm: v.word,
-            gloss: v.stem ?? v.word,
-          ),
-        )
-        .toList();
+    // Select from tiers in priority order
+    final selected = <Distractor>[];
+
+    // Tier 1: max 2 confusables
+    if (tier1Confusables.isNotEmpty) {
+      tier1Confusables.shuffle(_random);
+      selected.addAll(
+        tier1Confusables.take(min(2, count - selected.length)),
+      );
+    }
+
+    // Tier 2: max 1 morphological
+    if (selected.length < count && tier2Morphological.isNotEmpty) {
+      tier2Morphological.shuffle(_random);
+      selected.addAll(
+        tier2Morphological.take(min(1, count - selected.length)),
+      );
+    }
+
+    // Tier 4: fill remaining with random
+    if (selected.length < count && tier4Random.isNotEmpty) {
+      tier4Random.shuffle(_random);
+      selected.addAll(
+        tier4Random.take(count - selected.length),
+      );
+    }
+
+    // If still not enough, generate fallbacks
+    if (selected.length < count) {
+      selected.addAll(_generateFallbackDistractors(count - selected.length));
+    }
+
+    return selected;
   }
 
   /// Generate fallback distractors when not enough vocabulary exists
-  List<Distractor> _generateFallbackDistractors(
-    VocabularyModel target,
-    int count,
-  ) {
-    // Simple fallbacks - in production these would be from a larger pool
+  List<Distractor> _generateFallbackDistractors(int count) {
     final fallbacks = <String>[
       'something else',
       'another meaning',

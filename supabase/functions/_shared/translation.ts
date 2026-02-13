@@ -6,6 +6,7 @@ export interface TranslationEntry {
   primary: string;
   alternatives: string[];
   source: string;
+  confusable_alternatives?: string[];
 }
 
 export async function getDeepLTranslation(
@@ -153,18 +154,23 @@ export function buildTranslations(
   nativeLanguageCode: string,
   machineTranslation: string,
   machineSource: string,
-  aiEnhancement: { best_native_translation?: string | null; confidence?: number; native_alternatives?: string[] } | null,
+  aiEnhancement: { best_native_translation?: string | null; confidence?: number; native_alternatives?: string[]; confusable_translations?: string[] } | null,
 ): Record<string, TranslationEntry> {
   const resolved = resolveTranslation(machineTranslation, machineSource, aiEnhancement);
   const aiAlternatives = aiEnhancement?.native_alternatives || [];
   const allAlternatives = [...new Set([...resolved.alternatives, ...aiAlternatives])]
     .filter(a => a.toLowerCase() !== resolved.primary.toLowerCase());
 
-  return {
-    [nativeLanguageCode]: {
-      primary: resolved.primary,
-      alternatives: allAlternatives,
-      source: resolved.source,
-    },
+  const entry: TranslationEntry = {
+    primary: resolved.primary,
+    alternatives: allAlternatives,
+    source: resolved.source,
   };
+
+  const confusableAlts = aiEnhancement?.confusable_translations;
+  if (confusableAlts && confusableAlts.length > 0) {
+    entry.confusable_alternatives = confusableAlts;
+  }
+
+  return { [nativeLanguageCode]: entry };
 }

@@ -9,9 +9,11 @@ import '../../../../providers/supabase_provider.dart';
 import '../../../learn/widgets/cloze_cue_card.dart';
 import '../../../learn/widgets/definition_cue_card.dart';
 import '../../../learn/widgets/disambiguation_card.dart';
+import '../../../learn/widgets/novel_cloze_cue_card.dart';
 import '../../../learn/widgets/recall_card.dart';
 import '../../../learn/widgets/recognition_card.dart';
 import '../../../learn/widgets/synonym_cue_card.dart';
+import '../../../learn/widgets/usage_recognition_card.dart';
 
 /// Modal bottom sheet showing all card types for a vocabulary word
 /// Interactive preview mode - tap to reveal, but no grading saved
@@ -326,7 +328,9 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
     // 6. Disambiguation Card
     if (globalDict.confusables.isNotEmpty) {
       final confusable = globalDict.confusables.first;
-      final disambig = confusable.disambiguationSentence;
+      final disambig = confusable.disambiguationSentences.isNotEmpty
+          ? confusable.disambiguationSentences.first
+          : confusable.disambiguationSentence;
       if (disambig != null) {
         cards.add(
           _CardData(
@@ -337,12 +341,49 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
               options: [widget.word, confusable.word],
               correctIndex: 0,
               explanation: '',
-              onGrade: (_) {}, // No-op in preview mode
+              onGrade: (_) {},
               isPreview: true,
             ),
           ),
         );
       }
+    }
+
+    // 7. Novel Cloze Card
+    if (globalDict.exampleSentences.length > 1) {
+      final novelSentence = globalDict.exampleSentences[1];
+      final clozeSentence = '${novelSentence.before}_____${novelSentence.after}';
+      cards.add(
+        _CardData(
+          label: 'Novel Cloze',
+          color: MasteryColors.getCueColor(context, 'cloze'),
+          widget: NovelClozeCueCard(
+            sentenceWithBlank: clozeSentence,
+            targetWord: novelSentence.blank,
+            onGrade: (_) {},
+            isPreview: true,
+          ),
+        ),
+      );
+    }
+
+    // 8. Usage Recognition Card
+    if (globalDict.usageExamples.isNotEmpty) {
+      final usage = globalDict.usageExamples.first;
+      cards.add(
+        _CardData(
+          label: 'Usage Recognition',
+          color: MasteryColors.getCueColor(context, 'disambiguation'),
+          widget: UsageRecognitionCard(
+            word: widget.word,
+            correctSentence: usage.correctSentence.sentence,
+            incorrectSentences:
+                usage.incorrectSentences.map((c) => c.sentence).toList(),
+            onGrade: (_) {},
+            isPreview: true,
+          ),
+        ),
+      );
     }
 
     return cards;

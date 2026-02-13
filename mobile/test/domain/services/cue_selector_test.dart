@@ -15,6 +15,8 @@ void main() {
       double stability = 21.0,
       String? encounterContext,
       bool hasConfusables = false,
+      List<Map<String, dynamic>>? exampleSentences,
+      List<Map<String, dynamic>>? usageExamples,
     }) {
       return SessionCard.fromJson({
         'card_id': 'card-123',
@@ -44,22 +46,40 @@ void main() {
                     'blank': 'horse',
                     'after': ' is an animal.',
                   },
+                  'disambiguation_sentences': [
+                    {
+                      'sentence': 'A horse is an animal.',
+                      'before': 'A ',
+                      'blank': 'horse',
+                      'after': ' is an animal.',
+                    },
+                    {
+                      'sentence': 'The horse galloped.',
+                      'before': 'The ',
+                      'blank': 'horse',
+                      'after': ' galloped.',
+                    },
+                  ],
+                  'l1_translation': 'Pferd',
                 },
               ]
             : <Map<String, dynamic>>[],
-        'example_sentences': [
-          {
-            'sentence': 'This is my house.',
-            'before': 'This is my ',
-            'blank': 'house',
-            'after': '.',
-          },
-        ],
+        'example_sentences': exampleSentences ??
+            [
+              {
+                'sentence': 'This is my house.',
+                'before': 'This is my ',
+                'blank': 'house',
+                'after': '.',
+              },
+            ],
+        'usage_examples': usageExamples ?? <Map<String, dynamic>>[],
         'pronunciation_ipa': '/haʊs/',
         'translations': {
           'de': {
             'primary': 'Haus',
             'alternatives': ['Gebäude'],
+            'confusable_alternatives': ['Hase'],
           },
         },
         'cefr_level': 'A1',
@@ -132,19 +152,14 @@ void main() {
         });
 
         test('selects from growing weights', () {
-          // Run multiple times to verify weighted selection
           final results = <CueType>{};
           for (var i = 0; i < 100; i++) {
             final localSelector = CueSelector(random: Random(i));
-            final result = localSelector.selectCueType(
-              card: growingCard,
-            );
+            final result = localSelector.selectCueType(card: growingCard);
             results.add(result);
           }
 
-          // Growing cards should primarily get translation, definition, synonym
           expect(results, contains(CueType.translation));
-          // May or may not contain definition/synonym due to weights
         });
 
         test('includes contextCloze when hasEncounterContext is true', () {
@@ -154,18 +169,44 @@ void main() {
             encounterContext: 'I saw a beautiful house.',
           );
 
-          // Run multiple times to potentially hit contextCloze
           final results = <CueType>{};
           for (var i = 0; i < 200; i++) {
             final localSelector = CueSelector(random: Random(i));
-            final result = localSelector.selectCueType(
-              card: card,
-            );
+            final result = localSelector.selectCueType(card: card);
             results.add(result);
           }
 
-          // With 5% weight for contextCloze, we should see it eventually
           expect(results, contains(CueType.contextCloze));
+        });
+
+        test('includes novelCloze when multiple example sentences exist', () {
+          final card = createCard(
+            state: 2,
+            stability: 10.0,
+            exampleSentences: [
+              {
+                'sentence': 'This is my house.',
+                'before': 'This is my ',
+                'blank': 'house',
+                'after': '.',
+              },
+              {
+                'sentence': 'A house on the hill.',
+                'before': 'A ',
+                'blank': 'house',
+                'after': ' on the hill.',
+              },
+            ],
+          );
+
+          final results = <CueType>{};
+          for (var i = 0; i < 300; i++) {
+            final localSelector = CueSelector(random: Random(i));
+            final result = localSelector.selectCueType(card: card);
+            results.add(result);
+          }
+
+          expect(results, contains(CueType.novelCloze));
         });
       });
 
@@ -177,17 +218,13 @@ void main() {
         });
 
         test('selects from mature weights', () {
-          // Run multiple times to verify weighted selection
           final results = <CueType>{};
           for (var i = 0; i < 100; i++) {
             final localSelector = CueSelector(random: Random(i));
-            final result = localSelector.selectCueType(
-              card: matureCard,
-            );
+            final result = localSelector.selectCueType(card: matureCard);
             results.add(result);
           }
 
-          // Mature cards should get a variety of cue types
           expect(results, contains(CueType.translation));
           expect(results, contains(CueType.definition));
         });
@@ -199,18 +236,54 @@ void main() {
             hasConfusables: true,
           );
 
-          // Run multiple times to potentially hit disambiguation
           final results = <CueType>{};
           for (var i = 0; i < 200; i++) {
             final localSelector = CueSelector(random: Random(i));
-            final result = localSelector.selectCueType(
-              card: card,
-            );
+            final result = localSelector.selectCueType(card: card);
             results.add(result);
           }
 
-          // With 20% weight for disambiguation, we should see it
           expect(results, contains(CueType.disambiguation));
+        });
+
+        test('includes usageRecognition when usage examples exist', () {
+          final card = createCard(
+            state: 2,
+            stability: 30.0,
+            usageExamples: [
+              {
+                'correct_sentence': {
+                  'sentence': 'The house was large.',
+                  'before': 'The ',
+                  'blank': 'house',
+                  'after': ' was large.',
+                },
+                'incorrect_sentences': [
+                  {
+                    'sentence': 'He housed the ball.',
+                    'before': 'He ',
+                    'blank': 'housed',
+                    'after': ' the ball.',
+                  },
+                  {
+                    'sentence': 'She house her coat.',
+                    'before': 'She ',
+                    'blank': 'house',
+                    'after': ' her coat.',
+                  },
+                ],
+              },
+            ],
+          );
+
+          final results = <CueType>{};
+          for (var i = 0; i < 200; i++) {
+            final localSelector = CueSelector(random: Random(i));
+            final result = localSelector.selectCueType(card: card);
+            results.add(result);
+          }
+
+          expect(results, contains(CueType.usageRecognition));
         });
 
         test('includes contextCloze when hasEncounterContext is true', () {
@@ -220,17 +293,13 @@ void main() {
             encounterContext: 'I saw a beautiful house.',
           );
 
-          // Run multiple times to potentially hit contextCloze
           final results = <CueType>{};
           for (var i = 0; i < 200; i++) {
             final localSelector = CueSelector(random: Random(i));
-            final result = localSelector.selectCueType(
-              card: card,
-            );
+            final result = localSelector.selectCueType(card: card);
             results.add(result);
           }
 
-          // With 15% weight for contextCloze, we should see it
           expect(results, contains(CueType.contextCloze));
         });
       });
@@ -241,30 +310,26 @@ void main() {
         final matureCard = createCard(state: 2, stability: 30.0);
         final counts = <CueType, int>{};
 
-        // Run 1000 times to get a distribution
         for (var i = 0; i < 1000; i++) {
           final localSelector = CueSelector(random: Random(i));
-          final result = localSelector.selectCueType(
-            card: matureCard,
-          );
+          final result = localSelector.selectCueType(card: matureCard);
           counts[result] = (counts[result] ?? 0) + 1;
         }
 
-        // Mature weights: translation(20), definition(25), synonym(20)
-        // Total = 65 (without context/confusables)
-        // Expected percentages: translation ~31%, definition ~38%, synonym ~31%
+        // Mature weights: translation(15), definition(20), synonym(15)
+        // Total = 50 (without context/confusables/usage)
+        // Expected percentages: translation ~30%, definition ~40%, synonym ~30%
 
         final translationPct = (counts[CueType.translation] ?? 0) / 1000 * 100;
         final definitionPct = (counts[CueType.definition] ?? 0) / 1000 * 100;
         final synonymPct = (counts[CueType.synonym] ?? 0) / 1000 * 100;
 
-        // Allow reasonable variance
-        expect(translationPct, greaterThan(20));
-        expect(translationPct, lessThan(45));
+        expect(translationPct, greaterThan(15));
+        expect(translationPct, lessThan(50));
         expect(definitionPct, greaterThan(25));
-        expect(definitionPct, lessThan(50));
-        expect(synonymPct, greaterThan(20));
-        expect(synonymPct, lessThan(45));
+        expect(definitionPct, lessThan(55));
+        expect(synonymPct, greaterThan(15));
+        expect(synonymPct, lessThan(50));
       });
     });
 
@@ -283,7 +348,6 @@ void main() {
 
         final cue = selector.buildCueContent(card, CueType.contextCloze);
 
-        // Should use the pre-split example sentence
         expect(cue.prompt, 'This is my _____.');
         expect(cue.answer, 'house');
       });
@@ -308,7 +372,8 @@ void main() {
           'synonyms': ['home', 'dwelling'],
           'antonyms': <String>[],
           'confusables': <Map<String, dynamic>>[],
-          'example_sentences': <Map<String, dynamic>>[], // Empty!
+          'example_sentences': <Map<String, dynamic>>[],
+          'usage_examples': <Map<String, dynamic>>[],
           'pronunciation_ipa': '/haʊs/',
           'translations': {
             'de': {
@@ -326,7 +391,6 @@ void main() {
         final card = SessionCard.fromJson(cardJson);
         final cue = selector.buildCueContent(card, CueType.contextCloze);
 
-        // Should fall back to translation cue
         expect(cue.prompt, 'A building for human habitation');
         expect(cue.answer, 'Haus');
       });
@@ -336,8 +400,9 @@ void main() {
 
         final cue = selector.buildCueContent(card, CueType.disambiguation);
 
-        expect(cue.prompt, 'A _____ is an animal.');
+        // Should use one of the disambiguation sentences
         expect(cue.answer, 'horse');
+        expect(cue.prompt, contains('_____'));
       });
 
       test('disambiguation falls back to definition when no confusables', () {
@@ -358,22 +423,101 @@ void main() {
         expect(cue.answer, 'Haus');
       });
 
-      test('definition cue uses word and english definition', () {
+      test('definition/synonym cue alternates between definition, translation, synonym', () {
         final card = createCard();
 
-        final cue = selector.buildCueContent(card, CueType.definition);
+        // Run multiple times to see all options
+        final prompts = <String>{};
+        for (var i = 0; i < 100; i++) {
+          final localSelector = CueSelector(random: Random(i));
+          final cue = localSelector.buildCueContent(card, CueType.definition);
+          prompts.add(cue.prompt);
+        }
 
-        expect(cue.prompt, 'house');
-        expect(cue.answer, 'A building for human habitation');
+        // Should see definition, translation, and synonym as prompts
+        expect(prompts, contains('A building for human habitation'));
+        expect(prompts, contains('Haus'));
+        expect(prompts, contains('home'));
       });
 
-      test('synonym cue uses word and first synonym', () {
+      test('definition/synonym cue always answers with the target word', () {
         final card = createCard();
 
-        final cue = selector.buildCueContent(card, CueType.synonym);
+        for (var i = 0; i < 20; i++) {
+          final localSelector = CueSelector(random: Random(i));
+          final cue = localSelector.buildCueContent(card, CueType.definition);
+          expect(cue.answer, 'house');
+        }
+      });
 
-        expect(cue.prompt, 'house');
-        expect(cue.answer, 'home');
+      test('novelCloze uses non-first example sentence', () {
+        final card = createCard(
+          exampleSentences: [
+            {
+              'sentence': 'This is my house.',
+              'before': 'This is my ',
+              'blank': 'house',
+              'after': '.',
+            },
+            {
+              'sentence': 'A house on the hill.',
+              'before': 'A ',
+              'blank': 'house',
+              'after': ' on the hill.',
+            },
+          ],
+        );
+
+        final cue = selector.buildCueContent(card, CueType.novelCloze);
+
+        expect(cue.prompt, 'A _____ on the hill.');
+        expect(cue.answer, 'house');
+      });
+
+      test('novelCloze falls back to definition when only one sentence', () {
+        final card = createCard();
+
+        final cue = selector.buildCueContent(card, CueType.novelCloze);
+
+        expect(cue.prompt, 'A building for human habitation');
+        expect(cue.answer, 'house');
+      });
+
+      test('usageRecognition returns correct sentence as prompt', () {
+        final card = createCard(
+          usageExamples: [
+            {
+              'correct_sentence': {
+                'sentence': 'The house was large.',
+                'before': 'The ',
+                'blank': 'house',
+                'after': ' was large.',
+              },
+              'incorrect_sentences': [
+                {
+                  'sentence': 'He housed the ball.',
+                  'before': 'He ',
+                  'blank': 'housed',
+                  'after': ' the ball.',
+                },
+              ],
+            },
+          ],
+        );
+
+        final cue = selector.buildCueContent(card, CueType.usageRecognition);
+
+        expect(cue.prompt, 'The house was large.');
+        expect(cue.answer, 'house');
+      });
+
+      test('usageRecognition falls back when no usage examples', () {
+        final card = createCard();
+
+        final cue = selector.buildCueContent(card, CueType.usageRecognition);
+
+        expect(cue.prompt, 'A building for human habitation');
+        expect(cue.answer, 'Haus');
       });
     });
   });

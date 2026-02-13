@@ -27,6 +27,8 @@ class Confusable {
   const Confusable({
     required this.word,
     required this.disambiguationSentence,
+    required this.disambiguationSentences,
+    this.l1Translation,
   });
 
   factory Confusable.fromJson(Map<String, dynamic> json) {
@@ -36,14 +38,65 @@ class Confusable {
       disambig = ClozeText.fromJson(disambigJson);
     }
 
+    final disambigListJson = json['disambiguation_sentences'];
+    final disambigList = <ClozeText>[];
+    if (disambigListJson is List) {
+      for (final item in disambigListJson) {
+        if (item is Map<String, dynamic>) {
+          disambigList.add(ClozeText.fromJson(item));
+        }
+      }
+    }
+    // Backward compat: if no list but single sentence exists, use it
+    if (disambigList.isEmpty && disambig != null) {
+      disambigList.add(disambig);
+    }
+
     return Confusable(
       word: json['word'] as String,
-      disambiguationSentence: disambig,
+      disambiguationSentence: disambig ?? (disambigList.isNotEmpty ? disambigList.first : null),
+      disambiguationSentences: disambigList,
+      l1Translation: json['l1_translation'] as String?,
     );
   }
 
   final String word;
   final ClozeText? disambiguationSentence;
+  final List<ClozeText> disambiguationSentences;
+  final String? l1Translation;
+}
+
+/// A usage example with correct and incorrect sentences
+class UsageExample {
+  const UsageExample({
+    required this.correctSentence,
+    required this.incorrectSentences,
+  });
+
+  factory UsageExample.fromJson(Map<String, dynamic> json) {
+    final correctJson = json['correct_sentence'];
+    final correct = correctJson is Map<String, dynamic>
+        ? ClozeText.fromJson(correctJson)
+        : const ClozeText(sentence: '', before: '', blank: '', after: '');
+
+    final incorrectJson = json['incorrect_sentences'];
+    final incorrect = <ClozeText>[];
+    if (incorrectJson is List) {
+      for (final item in incorrectJson) {
+        if (item is Map<String, dynamic>) {
+          incorrect.add(ClozeText.fromJson(item));
+        }
+      }
+    }
+
+    return UsageExample(
+      correctSentence: correct,
+      incorrectSentences: incorrect,
+    );
+  }
+
+  final ClozeText correctSentence;
+  final List<ClozeText> incorrectSentences;
 }
 
 /// Translations for a specific language
@@ -51,17 +104,20 @@ class LanguageTranslations {
   const LanguageTranslations({
     required this.primary,
     required this.alternatives,
+    required this.confusableAlternatives,
   });
 
   factory LanguageTranslations.fromJson(Map<String, dynamic> json) {
     return LanguageTranslations(
       primary: json['primary'] as String? ?? '',
       alternatives: _parseStringList(json['alternatives']),
+      confusableAlternatives: _parseStringList(json['confusable_alternatives']),
     );
   }
 
   final String primary;
   final List<String> alternatives;
+  final List<String> confusableAlternatives;
 
   static List<String> _parseStringList(dynamic value) {
     if (value == null) return [];
@@ -86,6 +142,7 @@ class GlobalDictionaryModel {
     required this.antonyms,
     required this.confusables,
     required this.exampleSentences,
+    required this.usageExamples,
     this.cefrLevel,
     this.confidence,
   });
@@ -102,6 +159,7 @@ class GlobalDictionaryModel {
       antonyms: _parseStringList(json['antonyms']),
       confusables: _parseConfusables(json['confusables']),
       exampleSentences: _parseClozeTextList(json['example_sentences']),
+      usageExamples: _parseUsageExamples(json['usage_examples']),
       cefrLevel: json['cefr_level'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
     );
@@ -117,6 +175,7 @@ class GlobalDictionaryModel {
   final List<String> antonyms;
   final List<Confusable> confusables;
   final List<ClozeText> exampleSentences;
+  final List<UsageExample> usageExamples;
   final String? cefrLevel;
   final double? confidence;
 
@@ -151,6 +210,14 @@ class GlobalDictionaryModel {
     if (value is! List) return [];
     return value
         .map((c) => ClozeText.fromJson(c as Map<String, dynamic>))
+        .toList();
+  }
+
+  static List<UsageExample> _parseUsageExamples(dynamic value) {
+    if (value == null) return [];
+    if (value is! List) return [];
+    return value
+        .map((e) => UsageExample.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 

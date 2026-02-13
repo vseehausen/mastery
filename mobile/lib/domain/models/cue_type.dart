@@ -5,12 +5,16 @@ enum CueType {
   definition,
   synonym,
   contextCloze,
-  disambiguation;
+  disambiguation,
+  novelCloze,
+  usageRecognition;
 
   /// Whether this cue type uses objective measurement (time + correctness)
   /// instead of self-rating buttons.
   bool get usesObjectiveMeasurement =>
-      this == CueType.disambiguation || this == CueType.contextCloze;
+      this == CueType.disambiguation ||
+      this == CueType.contextCloze ||
+      this == CueType.usageRecognition;
 
   /// Whether this cue type uses self-rating buttons (Again/Hard/Good/Easy).
   bool get usesSelfRating => !usesObjectiveMeasurement;
@@ -28,6 +32,10 @@ enum CueType {
         return 'context_cloze';
       case CueType.disambiguation:
         return 'disambiguation';
+      case CueType.novelCloze:
+        return 'novel_cloze';
+      case CueType.usageRecognition:
+        return 'usage_recognition';
     }
   }
 
@@ -44,6 +52,10 @@ enum CueType {
         return CueType.contextCloze;
       case 'disambiguation':
         return CueType.disambiguation;
+      case 'novel_cloze':
+        return CueType.novelCloze;
+      case 'usage_recognition':
+        return CueType.usageRecognition;
       default:
         return CueType.translation;
     }

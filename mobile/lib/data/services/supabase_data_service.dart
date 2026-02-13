@@ -182,6 +182,30 @@ class SupabaseDataService {
         .eq('id', vocabularyId);
   }
 
+  /// Get a single vocabulary item with its global dictionary data
+  Future<Map<String, dynamic>?> getVocabularyWithGlobalDict(
+    String vocabularyId,
+  ) async {
+    final response = await _client
+        .from('vocabulary')
+        .select('*, global_dictionary(*)')
+        .eq('id', vocabularyId)
+        .maybeSingle();
+    return response;
+  }
+
+  /// Get all vocabulary items with global dictionary data for a user
+  Future<List<Map<String, dynamic>>> getVocabularyWithGlobalDictForUser(
+    String userId,
+  ) async {
+    final response = await _client
+        .from('vocabulary')
+        .select('*, global_dictionary(*)')
+        .eq('user_id', userId)
+        .isFilter('deleted_at', null);
+    return List<Map<String, dynamic>>.from(response as List);
+  }
+
   // ===========================================================================
   // Learning Cards
   // ===========================================================================
@@ -279,6 +303,8 @@ class SupabaseDataService {
           'synonym',
           'context_cloze',
           'disambiguation',
+          'novel_cloze',
+          'usage_recognition',
         ])
         .count(CountOption.exact);
 
