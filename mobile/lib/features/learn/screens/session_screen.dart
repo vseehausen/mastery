@@ -53,7 +53,6 @@ class SessionScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
-  static const _initialBatchSize = 5;
   static const _prefetchThreshold = 3;
   static const _batchSize = 5;
 
@@ -69,6 +68,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // Retry queue for "Again" cards
   final List<PlannedItem> _retryQueue = [];
   final Map<String, int> _retryAttempts = {};
+
+  // Bookend closer: held aside to serve as the very last card
+  PlannedItem? _closerItem;
 
   LearningSessionModel? _session;
   int _currentItemIndex = 0;
@@ -233,9 +235,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return;
       }
 
+      // Apply bookend ordering for emotional arc
+      final bookendResult = planner.applyBookendOrder(initialItems);
+      final orderedItems = bookendResult.ordered;
+      final closerItem = bookendResult.closer;
+
       // Track fetched card IDs
-      for (final item in initialItems) {
+      for (final item in orderedItems) {
         _fetchedCardIds.add(item.cardId);
+      }
+      if (closerItem != null) {
+        _fetchedCardIds.add(closerItem.cardId);
       }
 
       // Create new session if needed
@@ -261,28 +271,27 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       }
 
       // Load distractors for first item if it's recognition mode
-      if (initialItems.isNotEmpty && initialItems[0].isRecognition) {
+      if (orderedItems.isNotEmpty && orderedItems[0].isRecognition) {
         _currentDistractors = null;
-        await _loadDistractorsForItem(initialItems[0], userId);
+        await _loadDistractorsForItem(orderedItems[0], userId);
       }
 
       // Proactively replenish enrichment buffer (fire-and-forget)
       unawaited(ref.read(enrichmentServiceProvider).replenishIfNeeded(userId));
 
       if (mounted) {
-        // Self-correct estimate if initial batch is already smaller
+        // Estimate: ordered items + closer (if any)
         final int estimate;
         if (widget.isQuickReview) {
-          // Quick review: total items = initial batch (no prefetching)
-          estimate = initialItems.length;
+          estimate = orderedItems.length;
         } else {
-          estimate = initialItems.length < _initialBatchSize
-              ? initialItems.length
-              : params.estimatedItemCount;
+          // Full session fetched upfront; total = ordered + closer
+          estimate = orderedItems.length + (closerItem != null ? 1 : 0);
         }
 
         setState(() {
-          _items = initialItems;
+          _items = orderedItems;
+          _closerItem = closerItem;
           _estimatedTotalItems = estimate;
           _session = activeSession;
           _elapsedSeconds = activeSession?.elapsedSeconds ?? 0;
@@ -557,7 +566,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       ),
     );
 
-    // Move to next item (or drain retry queue, or complete) without waiting for network writes.
+    // Move to next item (or drain retry queue, serve closer, or complete).
     final nextIndex = reviewedIndex + 1;
     if (nextIndex >= _items.length) {
       // Main items exhausted - check retry queue
@@ -569,8 +578,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _retryQueue.clear();
         });
         // Continue with next item (first retry)
+      } else if (_closerItem != null) {
+        // Serve the bookend closer as the very last card
+        if (!mounted) return;
+        setState(() {
+          _items.add(_closerItem!);
+          _closerItem = null;
+        });
+        // Continue with closer item
       } else {
-        // No retry items - try prefetching more
+        // No retry items, no closer - try prefetching more
         await _maybePrefetchMore(force: true);
         if (nextIndex >= _items.length) {
           // No more items available - complete session

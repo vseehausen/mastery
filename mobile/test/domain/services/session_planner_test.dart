@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mastery/domain/models/planned_item.dart';
 import 'package:mastery/domain/models/session_card.dart';
 import 'package:mastery/domain/services/cue_selector.dart';
 import 'package:mastery/domain/services/session_planner.dart';
@@ -1325,6 +1326,377 @@ void main() {
 
         // Total new words across both batches should equal original cap
         expect(newInBatch1 + newInBatch2, lessThanOrEqualTo(3));
+      });
+    });
+
+    // =========================================================================
+    // Near-Promotion Score
+    // =========================================================================
+    group('nearPromotionScore', () {
+      SessionCard makeCard({
+        int state = 2,
+        int reps = 5,
+        double stability = 10.0,
+        int lapses = 0,
+        int nonTranslationSuccessCount = 0,
+      }) {
+        return SessionCard.fromJson({
+          'card_id': 'c1',
+          'vocabulary_id': 'v1',
+          'state': state,
+          'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+          'stability': stability,
+          'difficulty': 0.3,
+          'reps': reps,
+          'lapses': lapses,
+          'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+          'is_leech': false,
+          'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+          'word': 'test',
+          'stem': 'tes',
+          'english_definition': 'test def',
+          'part_of_speech': 'noun',
+          'synonyms': <String>[],
+          'antonyms': <String>[],
+          'confusables': <Map<String, dynamic>>[],
+          'example_sentences': <Map<String, dynamic>>[],
+          'translations': {
+            'en': {'primary': 'test', 'alternatives': <String>[]},
+          },
+          'overrides': <String, dynamic>{},
+          'has_confusables': false,
+          'non_translation_success_count': nonTranslationSuccessCount,
+        });
+      }
+
+      test('returns 0.0 for new cards (state == 0)', () {
+        final card = makeCard(state: 0, reps: 0, stability: 0.0);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('returns 0.0 for cards far from any promotion threshold', () {
+        // reps=1, state=1 (learning) — not near practicing→stabilizing
+        final card = makeCard(state: 1, reps: 1, stability: 0.2);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('scores practicing→stabilizing: reps=2, state=2, stability>=0.5, lapses<=2', () {
+        final card = makeCard(reps: 2, state: 2, stability: 0.8, lapses: 0);
+        final score = planner.nearPromotionScore(card);
+        expect(score, greaterThan(0.0));
+        expect(score, lessThanOrEqualTo(1.0));
+      });
+
+      test('practicing→stabilizing: higher stability → higher score', () {
+        final low = makeCard(reps: 2, state: 2, stability: 0.5, lapses: 0);
+        final high = makeCard(reps: 2, state: 2, stability: 0.9, lapses: 0);
+        expect(planner.nearPromotionScore(high), greaterThan(planner.nearPromotionScore(low)));
+      });
+
+      test('practicing→stabilizing: returns 0 when state != 2', () {
+        final card = makeCard(reps: 2, state: 1, stability: 0.8, lapses: 0);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('practicing→stabilizing: returns 0 when lapses > 2', () {
+        final card = makeCard(reps: 2, state: 2, stability: 0.8, lapses: 3);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('practicing→stabilizing: returns 0 when stability < 0.5', () {
+        final card = makeCard(reps: 2, state: 2, stability: 0.3, lapses: 0);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('stabilizing→known: returns 0.9 when stabilizing criteria met and nonTransSuccess=0', () {
+        final card = makeCard(
+          reps: 3, state: 2, stability: 1.0, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        expect(planner.nearPromotionScore(card), 0.9);
+      });
+
+      test('stabilizing→known: returns 0 when nonTransSuccess >= 1 (already promoted or not near)', () {
+        final card = makeCard(
+          reps: 3, state: 2, stability: 1.0, lapses: 0,
+          nonTranslationSuccessCount: 1,
+        );
+        // With nonTransSuccess=1, the stabilizing→known gate is already met,
+        // and this card won't match known→mastered thresholds either
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('known→mastered: scores when stability>=70, reps>=11, lapses<=1, state=2', () {
+        final card = makeCard(
+          reps: 11, state: 2, stability: 80.0, lapses: 1,
+          nonTranslationSuccessCount: 5,
+        );
+        final score = planner.nearPromotionScore(card);
+        expect(score, greaterThan(0.0));
+        expect(score, lessThanOrEqualTo(1.0));
+      });
+
+      test('known→mastered: higher stability → higher score', () {
+        final low = makeCard(reps: 11, state: 2, stability: 70.0, lapses: 0, nonTranslationSuccessCount: 5);
+        final high = makeCard(reps: 11, state: 2, stability: 89.0, lapses: 0, nonTranslationSuccessCount: 5);
+        expect(planner.nearPromotionScore(high), greaterThan(planner.nearPromotionScore(low)));
+      });
+
+      test('known→mastered: returns 0 when stability < 70', () {
+        final card = makeCard(reps: 11, state: 2, stability: 60.0, lapses: 0, nonTranslationSuccessCount: 5);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('known→mastered: returns 0 when lapses > 1', () {
+        final card = makeCard(reps: 11, state: 2, stability: 80.0, lapses: 2, nonTranslationSuccessCount: 5);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('known→mastered: at exact threshold returns score ~1.0', () {
+        final card = makeCard(reps: 12, state: 2, stability: 90.0, lapses: 0, nonTranslationSuccessCount: 5);
+        expect(planner.nearPromotionScore(card), closeTo(1.0, 0.01));
+      });
+    });
+
+    // =========================================================================
+    // Bookend Ordering
+    // =========================================================================
+    group('applyBookendOrder', () {
+      PlannedItem makeItem({
+        required String id,
+        int state = 2,
+        int reps = 5,
+        double stability = 10.0,
+        double difficulty = 0.3,
+        int lapses = 0,
+        int nonTranslationSuccessCount = 1,
+      }) {
+        final card = SessionCard.fromJson({
+          'card_id': id,
+          'vocabulary_id': 'v-$id',
+          'state': state,
+          'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+          'stability': stability,
+          'difficulty': difficulty,
+          'reps': reps,
+          'lapses': lapses,
+          'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+          'is_leech': false,
+          'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+          'word': 'word-$id',
+          'stem': 'stem-$id',
+          'english_definition': 'def $id',
+          'part_of_speech': 'noun',
+          'synonyms': <String>[],
+          'antonyms': <String>[],
+          'confusables': <Map<String, dynamic>>[],
+          'example_sentences': <Map<String, dynamic>>[],
+          'translations': {
+            'en': {'primary': 'trans-$id', 'alternatives': <String>[]},
+          },
+          'overrides': <String, dynamic>{},
+          'has_confusables': false,
+          'non_translation_success_count': nonTranslationSuccessCount,
+        });
+        return PlannedItem(
+          sessionCard: card,
+          interactionMode: 1,
+          priority: state == 0 ? 0.0 : 1.0,
+        );
+      }
+
+      test('returns empty list unchanged', () {
+        final result = planner.applyBookendOrder([]);
+        expect(result.ordered, isEmpty);
+        expect(result.closer, isNull);
+      });
+
+      test('0 candidates: easiest card held as closer', () {
+        // All cards are far from any promotion threshold
+        final items = [
+          makeItem(id: 'a', stability: 20.0, difficulty: 0.5),
+          makeItem(id: 'b', stability: 50.0, difficulty: 0.3), // Easiest (highest stability, lowest diff)
+          makeItem(id: 'c', stability: 30.0, difficulty: 0.4),
+        ];
+
+        final result = planner.applyBookendOrder(items);
+
+        expect(result.closer, isNotNull);
+        expect(result.closer!.cardId, 'b'); // Highest stability
+        expect(result.ordered, hasLength(2));
+        expect(result.ordered.map((i) => i.cardId), isNot(contains('b')));
+      });
+
+      test('0 candidates, stability tie: lower difficulty wins', () {
+        final items = [
+          makeItem(id: 'a', stability: 50.0, difficulty: 0.7),
+          makeItem(id: 'b', stability: 50.0, difficulty: 0.2), // Lower difficulty
+        ];
+
+        final result = planner.applyBookendOrder(items);
+        expect(result.closer!.cardId, 'b');
+      });
+
+      test('1 candidate: used as closer only', () {
+        final nearPromo = makeItem(
+          id: 'near',
+          reps: 2, state: 2, stability: 0.8, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        final regular = makeItem(id: 'reg', stability: 10.0);
+
+        final result = planner.applyBookendOrder([regular, nearPromo]);
+
+        expect(result.closer!.cardId, 'near');
+        expect(result.ordered, hasLength(1));
+        expect(result.ordered[0].cardId, 'reg');
+      });
+
+      test('2 candidates: 1 opener + 1 closer', () {
+        final np1 = makeItem(
+          id: 'np1', reps: 2, state: 2, stability: 0.9, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        final np2 = makeItem(
+          id: 'np2', reps: 2, state: 2, stability: 0.6, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        final reg = makeItem(id: 'reg', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, np1, np2]);
+
+        // Best candidate (np1, higher score) → opener
+        expect(result.ordered.first.cardId, 'np1');
+        // Second candidate → closer
+        expect(result.closer!.cardId, 'np2');
+        // Regular card stays in ordered
+        expect(result.ordered.map((i) => i.cardId), contains('reg'));
+        expect(result.ordered, hasLength(2));
+      });
+
+      test('3+ candidates: 2 openers + 1 closer, rest in core', () {
+        final np1 = makeItem(
+          id: 'np1', reps: 11, state: 2, stability: 89.0, lapses: 0,
+          nonTranslationSuccessCount: 5,
+        ); // known→mastered, high score
+        final np2 = makeItem(
+          id: 'np2', reps: 3, state: 2, stability: 1.0, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        ); // stabilizing→known, score=0.9
+        final np3 = makeItem(
+          id: 'np3', reps: 2, state: 2, stability: 0.8, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        ); // practicing→stabilizing, lower score
+        final np4 = makeItem(
+          id: 'np4', reps: 2, state: 2, stability: 0.6, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        ); // practicing→stabilizing, even lower
+        final reg = makeItem(id: 'reg', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, np1, np2, np3, np4]);
+
+        // Top 2 → openers (first two items)
+        expect(result.ordered[0].cardId, 'np1');
+        expect(result.ordered[1].cardId, 'np2');
+        // 3rd candidate → closer
+        expect(result.closer!.cardId, 'np3');
+        // 4th candidate + regular → in ordered core
+        final coreIds = result.ordered.skip(2).map((i) => i.cardId).toSet();
+        expect(coreIds, contains('np4'));
+        expect(coreIds, contains('reg'));
+      });
+
+      test('new words placed after openers', () {
+        final np = makeItem(
+          id: 'np', reps: 2, state: 2, stability: 0.8, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        final newWord = makeItem(id: 'new', state: 0, reps: 0, stability: 0.0);
+        final reg = makeItem(id: 'reg', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, newWord, np]);
+
+        // np → closer (only 1 candidate)
+        expect(result.closer!.cardId, 'np');
+        // New words should be in ordered list
+        expect(result.ordered.map((i) => i.cardId).toList(), contains('new'));
+      });
+
+      test('preserves all items: ordered + closer = original count', () {
+        final items = [
+          makeItem(id: 'a', stability: 20.0),
+          makeItem(id: 'b', stability: 30.0),
+          makeItem(id: 'c', state: 0, reps: 0, stability: 0.0),
+          makeItem(
+            id: 'd', reps: 2, state: 2, stability: 0.8, lapses: 0,
+            nonTranslationSuccessCount: 0,
+          ),
+          makeItem(
+            id: 'e', reps: 3, state: 2, stability: 1.0, lapses: 0,
+            nonTranslationSuccessCount: 0,
+          ),
+        ];
+
+        final result = planner.applyBookendOrder(items);
+
+        final totalCount = result.ordered.length + (result.closer != null ? 1 : 0);
+        expect(totalCount, items.length);
+      });
+
+      test('no duplicates in output', () {
+        final items = [
+          makeItem(id: 'a', stability: 5.0),
+          makeItem(id: 'b', stability: 30.0),
+          makeItem(
+            id: 'c', reps: 2, state: 2, stability: 0.8, lapses: 0,
+            nonTranslationSuccessCount: 0,
+          ),
+          makeItem(
+            id: 'd', reps: 3, state: 2, stability: 1.0, lapses: 0,
+            nonTranslationSuccessCount: 0,
+          ),
+          makeItem(
+            id: 'e', reps: 11, state: 2, stability: 80.0, lapses: 0,
+            nonTranslationSuccessCount: 5,
+          ),
+        ];
+
+        final result = planner.applyBookendOrder(items);
+
+        final allIds = result.ordered.map((i) => i.cardId).toList();
+        if (result.closer != null) allIds.add(result.closer!.cardId);
+        expect(allIds.toSet().length, allIds.length, reason: 'No duplicate card IDs');
+      });
+
+      test('single item: no candidate → item is closer (easiest)', () {
+        final item = makeItem(id: 'only', stability: 10.0);
+        final result = planner.applyBookendOrder([item]);
+
+        // Single review item, no near-promotion → goes to closer as easiest
+        expect(result.closer!.cardId, 'only');
+        expect(result.ordered, isEmpty);
+      });
+
+      test('single near-promotion item: becomes closer', () {
+        final np = makeItem(
+          id: 'np', reps: 2, state: 2, stability: 0.8, lapses: 0,
+          nonTranslationSuccessCount: 0,
+        );
+        final result = planner.applyBookendOrder([np]);
+
+        expect(result.closer!.cardId, 'np');
+        expect(result.ordered, isEmpty);
+      });
+
+      test('only new words: no closer (no review items)', () {
+        final items = [
+          makeItem(id: 'n1', state: 0, reps: 0, stability: 0.0),
+          makeItem(id: 'n2', state: 0, reps: 0, stability: 0.0),
+        ];
+        final result = planner.applyBookendOrder(items);
+
+        expect(result.closer, isNull);
+        expect(result.ordered, hasLength(2));
       });
     });
   });
