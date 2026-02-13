@@ -283,13 +283,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
       if (mounted) {
         // Estimate: ordered items + closer (if any)
-        final int estimate;
-        if (widget.isQuickReview) {
-          estimate = orderedItems.length;
-        } else {
-          // Full session fetched upfront; total = ordered + closer
-          estimate = orderedItems.length + (closerItem != null ? 1 : 0);
-        }
+        final estimate =
+            orderedItems.length + (closerItem != null ? 1 : 0);
 
         setState(() {
           _items = orderedItems;
