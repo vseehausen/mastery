@@ -19,6 +19,7 @@ import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/progress_stage.dart';
 import '../../../domain/models/session_card.dart';
 import '../../../domain/models/stage_transition.dart';
+import '../../../domain/services/response_time_rating.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
@@ -87,6 +88,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   int _reviewsPresented = 0;
   String? _loadingDistractorsForCardId;
   final Set<Future<void>> _pendingReviewWrites = <Future<void>>{};
+  ResponseTimeRating _responseTimeRating = const ResponseTimeRating();
 
   // Progress tracking
   final _progressStageService = ProgressStageService();
@@ -171,6 +173,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final newWordsPerSession =
           prefs['new_words_per_session'] as int? ??
           AppDefaults.newWordsDefault;
+
+      // Load calibrated MC response time thresholds
+      final thresholds =
+          await dataService.getMcResponseTimeThresholds(userId);
+      if (thresholds != null) {
+        _responseTimeRating = ResponseTimeRating(
+          fastThresholdMs: thresholds.fast,
+          slowThresholdMs: thresholds.slow,
+        );
+      }
 
       // Step 1: Get session params (from prefetch if available)
       final int timeTarget = dailyTimeTargetMinutes;
@@ -432,9 +444,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ? DateTime.now().difference(_itemStartTime!).inMilliseconds
         : 5000;
 
-    // Convert to rating: correct=Good, incorrect=Again
-    final rating = isCorrect ? ReviewRating.good : ReviewRating.again;
+    final rating =
+        _responseTimeRating.rate(responseTimeMs, isCorrect: isCorrect);
     await _processReview(rating, responseTimeMs);
+  }
+
+  void _handleObjectiveAnswer(bool isCorrect) {
+    final responseTimeMs = _itemStartTime != null
+        ? DateTime.now().difference(_itemStartTime!).inMilliseconds
+        : 5000;
+
+    final rating =
+        _responseTimeRating.rate(responseTimeMs, isCorrect: isCorrect);
+    _processReview(rating, responseTimeMs);
   }
 
   Future<void> _handleRecallGrade(int rating) async {
@@ -1080,7 +1102,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           options: options.options,
           correctIndex: options.correctIndex,
           explanation: '',
-          onGrade: _handleRecallGrade,
+          onAnswer: _handleObjectiveAnswer,
         );
       case CueType.contextCloze:
         return ClozeCueCard(
@@ -1104,7 +1126,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             correctSentence: usage.correctSentence.sentence,
             incorrectSentences:
                 usage.incorrectSentences.map((s) => s.sentence).toList(),
-            onGrade: _handleRecallGrade,
+            onAnswer: _handleObjectiveAnswer,
           );
         }
         // Fallback if no usage examples

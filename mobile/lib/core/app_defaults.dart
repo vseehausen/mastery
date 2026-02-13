@@ -21,6 +21,27 @@ abstract final class AppDefaults {
   // Before this hour, activity counts toward the previous day.
   static const int dayStartHour = 4;
 
+  // Response time → FSRS rating inference (MC cards)
+  // Correct answers below this threshold are rated Easy (strong recall).
+  static const int mcFastThresholdMs = 3000;
+  // Correct answers above this threshold are rated Hard (weak recall).
+  // Between fast and slow → Good.
+  static const int mcSlowThresholdMs = 8000;
+  // Response times above this are likely AFK/distracted — excluded from
+  // calibration data to avoid skewing percentiles.
+  static const int mcOutlierCeilingMs = 30000;
+  // Minimum correct MC reviews needed before switching from fixed thresholds
+  // to personalized percentile-based thresholds.
+  static const int mcCalibrationMinSamples = 30;
+  // Number of recent correct MC reviews to sample for percentile calculation.
+  static const int mcCalibrationHistorySize = 200;
+  // Percentile of the user's response time distribution used as the
+  // fast (Easy) threshold. Below p33 = faster than 2/3 of their answers.
+  static const double mcCalibrationFastPercentile = 0.33;
+  // Percentile used as the slow (Hard) threshold. Above p67 = slower
+  // than 2/3 of their answers.
+  static const double mcCalibrationSlowPercentile = 0.67;
+
   // Display
   static const String nativeLanguageCode = 'de';
 }

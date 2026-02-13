@@ -341,7 +341,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
               options: [widget.word, confusable.word],
               correctIndex: 0,
               explanation: '',
-              onGrade: (_) {},
+              onAnswer: (_) {},
               isPreview: true,
             ),
           ),
@@ -379,7 +379,7 @@ class _CardPreviewSheetState extends ConsumerState<CardPreviewSheet> {
             correctSentence: usage.correctSentence.sentence,
             incorrectSentences:
                 usage.incorrectSentences.map((c) => c.sentence).toList(),
-            onGrade: (_) {},
+            onAnswer: (_) {},
             isPreview: true,
           ),
         ),

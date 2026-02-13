@@ -933,6 +933,38 @@ class SupabaseDataService {
   }
 
   // ===========================================================================
+  // Response Time Calibration
+  // ===========================================================================
+
+  /// Fetch MC response time percentiles for personalized rating thresholds.
+  Future<({int fast, int slow})?> getMcResponseTimeThresholds(
+    String userId,
+  ) async {
+    final data = await _client
+        .from('review_logs')
+        .select('response_time_ms')
+        .eq('user_id', userId)
+        .eq('interaction_mode', 0)
+        .gte('rating', 3)
+        .gt('response_time_ms', 0)
+        .lt('response_time_ms', AppDefaults.mcOutlierCeilingMs)
+        .order('reviewed_at', ascending: false)
+        .limit(AppDefaults.mcCalibrationHistorySize);
+
+    final times = (data as List)
+        .map((r) => (r as Map<String, dynamic>)['response_time_ms'] as int)
+        .toList();
+    if (times.length < AppDefaults.mcCalibrationMinSamples) return null;
+
+    times.sort();
+    final p33 =
+        times[(times.length * AppDefaults.mcCalibrationFastPercentile).floor()];
+    final p67 =
+        times[(times.length * AppDefaults.mcCalibrationSlowPercentile).floor()];
+    return (fast: p33, slow: p67);
+  }
+
+  // ===========================================================================
   // Review Logs (Telemetry)
   // ===========================================================================
 

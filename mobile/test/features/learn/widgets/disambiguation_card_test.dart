@@ -13,7 +13,7 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (_) {},
+          onAnswer: (_) {},
         ),
       );
 
@@ -31,15 +31,15 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (_) {},
+          onAnswer: (_) {},
         ),
       );
 
       expect(find.text('A bank stores money.'), findsNothing);
     });
 
-    testWidgets('correct answer shows success feedback', (tester) async {
-      int? gradeReceived;
+    testWidgets('correct answer calls onAnswer(true)', (tester) async {
+      bool? correctReceived;
 
       await tester.pumpTestWidget(
         DisambiguationCard(
@@ -47,7 +47,7 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (rating) => gradeReceived = rating,
+          onAnswer: (isCorrect) => correctReceived = isCorrect,
         ),
       );
 
@@ -56,11 +56,11 @@ void main() {
 
       expect(find.textContaining('Correct'), findsOneWidget);
       expect(find.text('A bank stores money.'), findsOneWidget);
-      expect(gradeReceived, 3); // ReviewRating.good
+      expect(correctReceived, true);
     });
 
-    testWidgets('incorrect answer shows failure feedback', (tester) async {
-      int? gradeReceived;
+    testWidgets('incorrect answer calls onAnswer(false)', (tester) async {
+      bool? correctReceived;
 
       await tester.pumpTestWidget(
         DisambiguationCard(
@@ -68,7 +68,7 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (rating) => gradeReceived = rating,
+          onAnswer: (isCorrect) => correctReceived = isCorrect,
         ),
       );
 
@@ -77,11 +77,11 @@ void main() {
 
       expect(find.textContaining('Not quite'), findsOneWidget);
       expect(find.text('A bank stores money.'), findsOneWidget);
-      expect(gradeReceived, 1); // ReviewRating.again
+      expect(correctReceived, false);
     });
 
     testWidgets('disables options after selection', (tester) async {
-      int gradeCount = 0;
+      int answerCount = 0;
 
       await tester.pumpTestWidget(
         DisambiguationCard(
@@ -89,18 +89,18 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (_) => gradeCount++,
+          onAnswer: (_) => answerCount++,
         ),
       );
 
       await tester.tap(find.text('bank'));
       await tester.pumpAndSettle();
 
-      // Tap another option - should not trigger another grade
+      // Tap another option - should not trigger another callback
       await tester.tap(find.text('bench'));
       await tester.pumpAndSettle();
 
-      expect(gradeCount, 1);
+      expect(answerCount, 1);
     });
 
     testWidgets('highlights correct option after wrong answer', (tester) async {
@@ -110,7 +110,7 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (_) {},
+          onAnswer: (_) {},
         ),
       );
 
@@ -133,7 +133,7 @@ void main() {
               options: const ['bank', 'bench', 'blank'],
               correctIndex: 0,
               explanation: 'A bank stores money.',
-              onGrade: (_) {
+              onAnswer: (_) {
                 setState(() => sentence = 'She sat on the ___.');
               },
             );
@@ -144,7 +144,7 @@ void main() {
       await tester.tap(find.text('bank'));
       await tester.pumpAndSettle();
 
-      // After grade callback triggers state change, widget should reset
+      // After answer callback triggers state change, widget should reset
       expect(find.text('She sat on the ___.'), findsOneWidget);
     });
 
@@ -156,7 +156,7 @@ void main() {
           options: const ['bank', 'bench', 'blank'],
           correctIndex: 0,
           explanation: 'A bank stores money.',
-          onGrade: (_) {},
+          onAnswer: (_) {},
           isPreview: true,
         ),
       );

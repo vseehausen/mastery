@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../domain/services/srs_scheduler.dart';
 
 /// Card for usage recognition exercises (Method 7).
 /// Shows 3 shuffled sentences (1 correct + 2 incorrect); user picks the correct one.
@@ -14,14 +13,14 @@ class UsageRecognitionCard extends StatefulWidget {
     required this.word,
     required this.correctSentence,
     required this.incorrectSentences,
-    required this.onGrade,
+    required this.onAnswer,
     this.isPreview = false,
   });
 
   final String word;
   final String correctSentence;
   final List<String> incorrectSentences;
-  final void Function(int rating) onGrade;
+  final void Function(bool isCorrect) onAnswer;
   final bool isPreview;
 
   @override
@@ -74,10 +73,7 @@ class _UsageRecognitionCardState extends State<UsageRecognitionCard> {
       _selectedIndex = index;
     });
 
-    final rating = index == _correctIndex
-        ? ReviewRating.good
-        : ReviewRating.again;
-    widget.onGrade(rating);
+    widget.onAnswer(index == _correctIndex);
   }
 
   @override

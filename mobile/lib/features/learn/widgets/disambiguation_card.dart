@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/color_tokens.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../domain/services/srs_scheduler.dart';
 
 /// Card for disambiguation multiple-choice prompts.
 /// Shows a cloze sentence with options; user picks the correct word.
@@ -13,7 +12,7 @@ class DisambiguationCard extends StatefulWidget {
     required this.options,
     required this.correctIndex,
     required this.explanation,
-    required this.onGrade,
+    required this.onAnswer,
     this.isPreview = false,
   });
 
@@ -29,8 +28,8 @@ class DisambiguationCard extends StatefulWidget {
   /// Explanation shown after answering
   final String explanation;
 
-  /// Callback when user answers (ReviewRating.good for correct, .again for wrong)
-  final void Function(int rating) onGrade;
+  /// Callback when user answers (true = correct, false = incorrect)
+  final void Function(bool isCorrect) onAnswer;
 
   /// Preview mode - pre-selects correct answer to show explanation
   final bool isPreview;
@@ -70,10 +69,7 @@ class _DisambiguationCardState extends State<DisambiguationCard> {
       _selectedIndex = index;
     });
 
-    final rating = index == widget.correctIndex
-        ? ReviewRating.good
-        : ReviewRating.again;
-    widget.onGrade(rating);
+    widget.onAnswer(index == widget.correctIndex);
   }
 
   @override
