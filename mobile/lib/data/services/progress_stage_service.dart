@@ -15,18 +15,24 @@ class ProgressStageService {
   /// Parameters:
   /// - [card]: The learning card with FSRS metrics (null if word not reviewed yet)
   /// - [nonTranslationSuccessCount]: Count of successful non-translation reviews
+  /// - [lapsesLast8]: Lapse count in the last 8 reviews (windowed); falls back to card.lapses if null
+  /// - [lapsesLast12]: Lapse count in the last 12 reviews (windowed); falls back to card.lapses if null
+  /// - [hardMethodSuccessCount]: Count of successful disambiguation reviews
   ///
   /// Returns the appropriate [ProgressStage] based on deterministic rules.
   ///
   /// Stage logic:
-  /// - No card → New (word exists but not reviewed)
+  /// - No card → Captured (word exists but not reviewed)
   /// - reps >= 1 → Practicing (first review completed)
-  /// - stability >= 1.0 && reps >= 3 && lapses <= 2 && state == 2 → Stabilizing
+  /// - stability >= 1.0 && lapsesLast8 <= 2 && state == 2 → Stabilizing
   /// - Stabilizing criteria + nonTranslationSuccessCount >= 1 → Known
-  /// - stability >= 90 && reps >= 12 && lapses <= 1 && state == 2 → Mastered
+  /// - stability >= 90 && lapsesLast12 <= 1 && state == 2 && hardMethodSuccessCount >= 1 → Mastered
   ProgressStage calculateStage({
     required LearningCardModel? card,
     required int nonTranslationSuccessCount,
+    int? lapsesLast8,
+    int? lapsesLast12,
+    int hardMethodSuccessCount = 0,
   }) {
     final stopwatch = Stopwatch()..start();
 
@@ -36,30 +42,32 @@ class ProgressStageService {
         return ProgressStage.captured;
       }
 
+      final effectiveLapsesLast8 = lapsesLast8 ?? card.lapses;
+      final effectiveLapsesLast12 = lapsesLast12 ?? card.lapses;
+
       // Check for Mastered (highest tier, most restrictive)
-      // Requires: exceptional stability (90+ days), many reps (12+), minimal lapses (0-1)
+      // Requires: exceptional stability (90+ days), windowed lapses (≤1 in last 12),
+      // review state, and at least one hard method (disambiguation) success
       if (card.stability >= 90.0 &&
-          card.reps >= 12 &&
-          card.lapses <= 1 &&
-          card.state == 2) {
+          effectiveLapsesLast12 <= 1 &&
+          card.state == 2 &&
+          hardMethodSuccessCount >= 1) {
         return ProgressStage.mastered;
       }
 
       // Check for Known (requires non-translation success + stabilizing criteria)
       // Non-translation success = retrieved from definition/synonym/context cues (production recall)
       if (card.stability >= 1.0 &&
-          card.reps >= 3 &&
-          card.lapses <= 2 &&
+          effectiveLapsesLast8 <= 2 &&
           card.state == 2 &&
           nonTranslationSuccessCount >= 1) {
         return ProgressStage.known;
       }
 
       // Check for Stabilizing (memory consolidating, graduated from initial learning)
-      // Requires: moderate stability (1+ days), multiple successful reviews (3+), low lapses (≤2)
+      // Requires: moderate stability (1+ days), low windowed lapses (≤2 in last 8), review state
       if (card.stability >= 1.0 &&
-          card.reps >= 3 &&
-          card.lapses <= 2 &&
+          effectiveLapsesLast8 <= 2 &&
           card.state == 2) {
         return ProgressStage.stabilizing;
       }

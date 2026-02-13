@@ -34,6 +34,9 @@ class SessionCard {
     this.encounterContext,
     required this.hasConfusables,
     required this.nonTranslationSuccessCount,
+    required this.lapsesLast8,
+    required this.lapsesLast12,
+    required this.hardMethodSuccessCount,
   });
 
   factory SessionCard.fromJson(Map<String, dynamic> json) {
@@ -66,6 +69,9 @@ class SessionCard {
       encounterContext: json['encounter_context'] as String?,
       hasConfusables: json['has_confusables'] as bool? ?? false,
       nonTranslationSuccessCount: json['non_translation_success_count'] as int? ?? 0,
+      lapsesLast8: json['lapses_last_8'] as int? ?? json['lapses'] as int,
+      lapsesLast12: json['lapses_last_12'] as int? ?? json['lapses'] as int,
+      hardMethodSuccessCount: json['hard_method_success_count'] as int? ?? 0,
     );
   }
 
@@ -109,6 +115,9 @@ class SessionCard {
 
   // Progress tracking
   final int nonTranslationSuccessCount;
+  final int lapsesLast8;
+  final int lapsesLast12;
+  final int hardMethodSuccessCount;
 
   /// Get the primary translation for the user's language
   String get primaryTranslation {

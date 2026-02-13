@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mastery/domain/models/cue_type.dart';
 import 'package:mastery/domain/models/planned_item.dart';
 import 'package:mastery/domain/models/session_card.dart';
 import 'package:mastery/domain/services/cue_selector.dart';
@@ -1339,6 +1340,9 @@ void main() {
         double stability = 10.0,
         int lapses = 0,
         int nonTranslationSuccessCount = 0,
+        int? lapsesLast8,
+        int? lapsesLast12,
+        int? hardMethodSuccessCount,
       }) {
         return SessionCard.fromJson({
           'card_id': 'c1',
@@ -1366,6 +1370,9 @@ void main() {
           'overrides': <String, dynamic>{},
           'has_confusables': false,
           'non_translation_success_count': nonTranslationSuccessCount,
+          if (lapsesLast8 != null) 'lapses_last_8': lapsesLast8,
+          if (lapsesLast12 != null) 'lapses_last_12': lapsesLast12,
+          if (hardMethodSuccessCount != null) 'hard_method_success_count': hardMethodSuccessCount,
         });
       }
 
@@ -1380,7 +1387,7 @@ void main() {
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
-      test('scores practicing→stabilizing: reps=2, state=2, stability>=0.5, lapses<=2', () {
+      test('scores practicing→stabilizing: state=2, stability>=0.5, lapsesLast8<=2', () {
         final card = makeCard(reps: 2, state: 2, stability: 0.8, lapses: 0);
         final score = planner.nearPromotionScore(card);
         expect(score, greaterThan(0.0));
@@ -1398,13 +1405,32 @@ void main() {
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
-      test('practicing→stabilizing: returns 0 when lapses > 2', () {
-        final card = makeCard(reps: 2, state: 2, stability: 0.8, lapses: 3);
+      test('practicing→stabilizing: returns 0 when lapsesLast8 > 2', () {
+        final card = makeCard(reps: 2, state: 2, stability: 0.8, lapsesLast8: 3);
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
       test('practicing→stabilizing: returns 0 when stability < 0.5', () {
         final card = makeCard(reps: 2, state: 2, stability: 0.3, lapses: 0);
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
+      test('practicing→stabilizing uses windowed lapses: lifetime=5 but lapsesLast8=1', () {
+        final card = makeCard(
+          reps: 2, state: 2, stability: 0.8,
+          lapses: 5, // lifetime high
+          lapsesLast8: 1, // windowed low
+        );
+        final score = planner.nearPromotionScore(card);
+        expect(score, greaterThan(0.0));
+      });
+
+      test('practicing→stabilizing blocked by lapsesLast8>2', () {
+        final card = makeCard(
+          reps: 2, state: 2, stability: 0.8,
+          lapses: 0, // lifetime low
+          lapsesLast8: 3, // windowed high
+        );
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
@@ -1426,34 +1452,65 @@ void main() {
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
-      test('known→mastered: scores when stability>=70, reps>=11, lapses<=1, state=2', () {
+      test('known→mastered: scores when stability>=70, lapsesLast12<=1, state=2, hardMethodSuccess=0', () {
         final card = makeCard(
-          reps: 11, state: 2, stability: 80.0, lapses: 1,
+          reps: 5, state: 2, stability: 80.0,
+          lapses: 0, lapsesLast12: 1,
           nonTranslationSuccessCount: 5,
+          hardMethodSuccessCount: 0, // gate: one hard method success would unlock
         );
         final score = planner.nearPromotionScore(card);
         expect(score, greaterThan(0.0));
         expect(score, lessThanOrEqualTo(1.0));
       });
 
+      test('known→mastered: already has hardMethodSuccess → returns 0', () {
+        final card = makeCard(
+          reps: 5, state: 2, stability: 80.0,
+          lapses: 0, lapsesLast12: 0,
+          nonTranslationSuccessCount: 5,
+          hardMethodSuccessCount: 1, // already has it
+        );
+        // Card already meets the hardMethod gate, so it's either already Mastered
+        // (if stability>=90) or just near-promo by stability alone — but the
+        // near-promo logic requires hardMethodSuccessCount==0
+        expect(planner.nearPromotionScore(card), 0.0);
+      });
+
       test('known→mastered: higher stability → higher score', () {
-        final low = makeCard(reps: 11, state: 2, stability: 70.0, lapses: 0, nonTranslationSuccessCount: 5);
-        final high = makeCard(reps: 11, state: 2, stability: 89.0, lapses: 0, nonTranslationSuccessCount: 5);
+        final low = makeCard(
+          reps: 5, state: 2, stability: 70.0, lapses: 0,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        );
+        final high = makeCard(
+          reps: 5, state: 2, stability: 89.0, lapses: 0,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        );
         expect(planner.nearPromotionScore(high), greaterThan(planner.nearPromotionScore(low)));
       });
 
       test('known→mastered: returns 0 when stability < 70', () {
-        final card = makeCard(reps: 11, state: 2, stability: 60.0, lapses: 0, nonTranslationSuccessCount: 5);
+        final card = makeCard(
+          reps: 5, state: 2, stability: 60.0, lapses: 0,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        );
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
-      test('known→mastered: returns 0 when lapses > 1', () {
-        final card = makeCard(reps: 11, state: 2, stability: 80.0, lapses: 2, nonTranslationSuccessCount: 5);
+      test('known→mastered: returns 0 when lapsesLast12 > 1', () {
+        final card = makeCard(
+          reps: 5, state: 2, stability: 80.0,
+          lapses: 0, lapsesLast12: 2,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        );
         expect(planner.nearPromotionScore(card), 0.0);
       });
 
-      test('known→mastered: at exact threshold returns score ~1.0', () {
-        final card = makeCard(reps: 12, state: 2, stability: 90.0, lapses: 0, nonTranslationSuccessCount: 5);
+      test('known→mastered: at exact stability threshold returns score ~1.0', () {
+        final card = makeCard(
+          reps: 5, state: 2, stability: 90.0, lapses: 0,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        );
         expect(planner.nearPromotionScore(card), closeTo(1.0, 0.01));
       });
     });
@@ -1470,6 +1527,7 @@ void main() {
         double difficulty = 0.3,
         int lapses = 0,
         int nonTranslationSuccessCount = 1,
+        int? hardMethodSuccessCount,
       }) {
         final card = SessionCard.fromJson({
           'card_id': id,
@@ -1497,6 +1555,7 @@ void main() {
           'overrides': <String, dynamic>{},
           'has_confusables': false,
           'non_translation_success_count': nonTranslationSuccessCount,
+          if (hardMethodSuccessCount != null) 'hard_method_success_count': hardMethodSuccessCount,
         });
         return PlannedItem(
           sessionCard: card,
@@ -1576,9 +1635,9 @@ void main() {
 
       test('3+ candidates: 2 openers + 1 closer, rest in core', () {
         final np1 = makeItem(
-          id: 'np1', reps: 11, state: 2, stability: 89.0, lapses: 0,
-          nonTranslationSuccessCount: 5,
-        ); // known→mastered, high score
+          id: 'np1', reps: 5, state: 2, stability: 89.0, lapses: 0,
+          nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
+        ); // known→mastered, high score (needs hardMethodSuccess=0 for near-promo)
         final np2 = makeItem(
           id: 'np2', reps: 3, state: 2, stability: 1.0, lapses: 0,
           nonTranslationSuccessCount: 0,
@@ -1656,8 +1715,8 @@ void main() {
             nonTranslationSuccessCount: 0,
           ),
           makeItem(
-            id: 'e', reps: 11, state: 2, stability: 80.0, lapses: 0,
-            nonTranslationSuccessCount: 5,
+            id: 'e', reps: 5, state: 2, stability: 80.0, lapses: 0,
+            nonTranslationSuccessCount: 5, hardMethodSuccessCount: 0,
           ),
         ];
 
@@ -1697,6 +1756,193 @@ void main() {
 
         expect(result.closer, isNull);
         expect(result.ordered, hasLength(2));
+      });
+
+      test('near-mastered closer with confusables gets disambiguation cue', () {
+        // Near-mastered card with hardMethodSuccessCount=0 and confusables
+        final nearMastered = PlannedItem(
+          sessionCard: SessionCard.fromJson({
+            'card_id': 'nm',
+            'vocabulary_id': 'v-nm',
+            'state': 2,
+            'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+            'stability': 80.0,
+            'difficulty': 0.3,
+            'reps': 5,
+            'lapses': 0,
+            'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            'is_leech': false,
+            'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+            'word': 'affect',
+            'stem': 'affect',
+            'english_definition': 'to influence',
+            'part_of_speech': 'verb',
+            'synonyms': <String>[],
+            'antonyms': <String>[],
+            'confusables': [
+              {
+                'word': 'effect',
+                'disambiguation_sentence': {
+                  'sentence': 'The decision will affect everyone.',
+                  'before': 'The decision will ',
+                  'blank': 'affect',
+                  'after': ' everyone.',
+                },
+              },
+            ],
+            'example_sentences': <Map<String, dynamic>>[],
+            'translations': {
+              'en': {'primary': 'affect', 'alternatives': <String>[]},
+            },
+            'overrides': <String, dynamic>{},
+            'has_confusables': true,
+            'non_translation_success_count': 5,
+            'lapses_last_12': 0,
+            'hard_method_success_count': 0,
+          }),
+          interactionMode: 1,
+          priority: 1.0,
+          cueType: CueType.translation, // Originally assigned translation
+        );
+        final reg = makeItem(id: 'reg', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, nearMastered]);
+
+        // nearMastered should be the closer (only 1 candidate)
+        expect(result.closer!.cardId, 'nm');
+        // And its cue type should be overridden to disambiguation
+        expect(result.closer!.cueType, CueType.disambiguation);
+      });
+
+      test('near-known closer with translation cue gets non-translation cue', () {
+        // Near-known card: meets stabilizing criteria but nonTransSuccess=0
+        final nearKnown = PlannedItem(
+          sessionCard: SessionCard.fromJson({
+            'card_id': 'nk',
+            'vocabulary_id': 'v-nk',
+            'state': 2,
+            'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+            'stability': 1.5,
+            'difficulty': 0.3,
+            'reps': 3,
+            'lapses': 0,
+            'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            'is_leech': false,
+            'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+            'word': 'ubiquitous',
+            'stem': 'ubiquitous',
+            'english_definition': 'present everywhere',
+            'part_of_speech': 'adjective',
+            'synonyms': ['omnipresent', 'pervasive'],
+            'antonyms': <String>[],
+            'confusables': <Map<String, dynamic>>[],
+            'example_sentences': <Map<String, dynamic>>[],
+            'translations': {
+              'en': {'primary': 'ubiquitous', 'alternatives': <String>[]},
+            },
+            'overrides': <String, dynamic>{},
+            'has_confusables': false,
+            'non_translation_success_count': 0,
+          }),
+          interactionMode: 1,
+          priority: 1.0,
+          cueType: CueType.translation, // Originally assigned translation
+        );
+        final reg = makeItem(id: 'reg3', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, nearKnown]);
+
+        expect(result.closer!.cardId, 'nk');
+        // Should be overridden to a non-translation cue (synonym available)
+        expect(result.closer!.cueType, CueType.synonym);
+      });
+
+      test('near-known closer with non-translation cue keeps it', () {
+        // Near-known card already has a non-translation cue — no override needed
+        final nearKnown = PlannedItem(
+          sessionCard: SessionCard.fromJson({
+            'card_id': 'nk2',
+            'vocabulary_id': 'v-nk2',
+            'state': 2,
+            'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+            'stability': 1.5,
+            'difficulty': 0.3,
+            'reps': 3,
+            'lapses': 0,
+            'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            'is_leech': false,
+            'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+            'word': 'ubiquitous',
+            'stem': 'ubiquitous',
+            'english_definition': 'present everywhere',
+            'part_of_speech': 'adjective',
+            'synonyms': ['omnipresent'],
+            'antonyms': <String>[],
+            'confusables': <Map<String, dynamic>>[],
+            'example_sentences': <Map<String, dynamic>>[],
+            'translations': {
+              'en': {'primary': 'ubiquitous', 'alternatives': <String>[]},
+            },
+            'overrides': <String, dynamic>{},
+            'has_confusables': false,
+            'non_translation_success_count': 0,
+          }),
+          interactionMode: 1,
+          priority: 1.0,
+          cueType: CueType.definition, // Already non-translation
+        );
+        final reg = makeItem(id: 'reg4', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, nearKnown]);
+
+        expect(result.closer!.cardId, 'nk2');
+        // Already has non-translation cue, no override
+        expect(result.closer!.cueType, CueType.definition);
+      });
+
+      test('near-mastered bookend without confusables keeps original cue', () {
+        // Near-mastered card but no confusables — can't do disambiguation
+        final nearMastered = PlannedItem(
+          sessionCard: SessionCard.fromJson({
+            'card_id': 'nm2',
+            'vocabulary_id': 'v-nm2',
+            'state': 2,
+            'due': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+            'stability': 80.0,
+            'difficulty': 0.3,
+            'reps': 5,
+            'lapses': 0,
+            'last_review': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            'is_leech': false,
+            'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+            'word': 'house',
+            'stem': 'house',
+            'english_definition': 'a building',
+            'part_of_speech': 'noun',
+            'synonyms': <String>[],
+            'antonyms': <String>[],
+            'confusables': <Map<String, dynamic>>[],
+            'example_sentences': <Map<String, dynamic>>[],
+            'translations': {
+              'en': {'primary': 'house', 'alternatives': <String>[]},
+            },
+            'overrides': <String, dynamic>{},
+            'has_confusables': false,
+            'non_translation_success_count': 5,
+            'lapses_last_12': 0,
+            'hard_method_success_count': 0,
+          }),
+          interactionMode: 1,
+          priority: 1.0,
+          cueType: CueType.translation,
+        );
+        final reg = makeItem(id: 'reg2', stability: 10.0);
+
+        final result = planner.applyBookendOrder([reg, nearMastered]);
+
+        expect(result.closer!.cardId, 'nm2');
+        // No confusables → keep original cue
+        expect(result.closer!.cueType, CueType.translation);
       });
     });
   });

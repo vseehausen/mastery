@@ -95,6 +95,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   int _transitionFeedbackNonce = 0;
   // Track local count increments within session for accurate stage calculation
   final Map<String, int> _localSuccessCountDeltas = {};
+  final Map<String, int> _localLapseDeltas = {};
+  final Map<String, int> _localHardMethodDeltas = {};
 
   final _uuid = const Uuid();
 
@@ -488,9 +490,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final localDelta = _localSuccessCountDeltas[currentItem.cardId] ?? 0;
     final currentCount = baseCount + localDelta;
 
+    // Windowed lapse counts + local deltas
+    final baseLapsesLast8 = currentItem.sessionCard.lapsesLast8;
+    final baseLapsesLast12 = currentItem.sessionCard.lapsesLast12;
+    final lapseDelta = _localLapseDeltas[currentItem.cardId] ?? 0;
+    final currentLapsesLast8 = baseLapsesLast8 + lapseDelta;
+    final currentLapsesLast12 = baseLapsesLast12 + lapseDelta;
+
+    // Hard method success count + local deltas
+    final baseHardMethod = currentItem.sessionCard.hardMethodSuccessCount;
+    final hardMethodDelta = _localHardMethodDeltas[currentItem.cardId] ?? 0;
+    final currentHardMethod = baseHardMethod + hardMethodDelta;
+
     final stageBefore = _progressStageService.calculateStage(
       card: learningCard,
       nonTranslationSuccessCount: currentCount,
+      lapsesLast8: currentLapsesLast8,
+      lapsesLast12: currentLapsesLast12,
+      hardMethodSuccessCount: currentHardMethod,
     );
 
     final reviewResult = srsScheduler.reviewCard(
@@ -510,6 +527,23 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       _localSuccessCountDeltas[currentItem.cardId] = localDelta + 1;
     }
 
+    // Track lapse deltas for windowed counts
+    final isLapse = rating == 1;
+    if (isLapse) {
+      _localLapseDeltas[currentItem.cardId] = lapseDelta + 1;
+    }
+
+    // Track hard method (disambiguation) success deltas
+    final isHardMethodSuccess = rating >= 3 &&
+        currentItem.cueType == CueType.disambiguation;
+    if (isHardMethodSuccess) {
+      _localHardMethodDeltas[currentItem.cardId] = hardMethodDelta + 1;
+    }
+
+    final newLapsesLast8 = currentLapsesLast8 + (isLapse ? 1 : 0);
+    final newLapsesLast12 = currentLapsesLast12 + (isLapse ? 1 : 0);
+    final newHardMethod = currentHardMethod + (isHardMethodSuccess ? 1 : 0);
+
     final updatedCard = learningCard.copyWith(
       state: reviewResult.updatedCard.state,
       stability: reviewResult.updatedCard.stability,
@@ -521,6 +555,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final stageAfter = _progressStageService.calculateStage(
       card: updatedCard,
       nonTranslationSuccessCount: newCount,
+      lapsesLast8: newLapsesLast8,
+      lapsesLast12: newLapsesLast12,
+      hardMethodSuccessCount: newHardMethod,
     );
 
     // Show transition feedback immediately if stage progressed

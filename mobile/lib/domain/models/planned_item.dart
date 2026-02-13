@@ -46,6 +46,14 @@ class PlannedItem {
   /// Get the card ID
   String get cardId => sessionCard.cardId;
 
+  /// Create a copy with an overridden cue type.
+  PlannedItem withCueType(CueType type) => PlannedItem(
+    sessionCard: sessionCard,
+    interactionMode: interactionMode,
+    priority: priority,
+    cueType: type,
+  );
+
   @override
   String toString() {
     final mode = isRecognition ? 'MCQ' : 'Recall';

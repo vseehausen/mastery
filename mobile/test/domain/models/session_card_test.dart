@@ -136,6 +136,9 @@ void main() {
         'encounter_context': 'I saw a beautiful house.',
         'has_confusables': false,
         'non_translation_success_count': 5,
+        'lapses_last_8': 2,
+        'lapses_last_12': 3,
+        'hard_method_success_count': 1,
       };
     });
 
@@ -172,6 +175,9 @@ void main() {
       expect(card.encounterContext, 'I saw a beautiful house.');
       expect(card.hasConfusables, false);
       expect(card.nonTranslationSuccessCount, 5);
+      expect(card.lapsesLast8, 2);
+      expect(card.lapsesLast12, 3);
+      expect(card.hardMethodSuccessCount, 1);
     });
 
     test('fromJson handles null optional fields', () {
@@ -184,6 +190,7 @@ void main() {
         'encounter_context': null,
         'has_confusables': null,
         'non_translation_success_count': null,
+        'hard_method_success_count': null,
       };
 
       final card = SessionCard.fromJson(json);
@@ -195,6 +202,28 @@ void main() {
       expect(card.encounterContext, isNull);
       expect(card.hasConfusables, false);
       expect(card.nonTranslationSuccessCount, 0);
+      expect(card.hardMethodSuccessCount, 0);
+    });
+
+    test('fromJson falls back lapses_last_8/12 to lapses when absent', () {
+      final json = Map<String, dynamic>.from(validJson);
+      json.remove('lapses_last_8');
+      json.remove('lapses_last_12');
+
+      final card = SessionCard.fromJson(json);
+
+      // Should fall back to lapses value (1)
+      expect(card.lapsesLast8, 1);
+      expect(card.lapsesLast12, 1);
+    });
+
+    test('fromJson defaults hard_method_success_count to 0 when absent', () {
+      final json = Map<String, dynamic>.from(validJson);
+      json.remove('hard_method_success_count');
+
+      final card = SessionCard.fromJson(json);
+
+      expect(card.hardMethodSuccessCount, 0);
     });
 
     test('fromJson parses confusables correctly', () {

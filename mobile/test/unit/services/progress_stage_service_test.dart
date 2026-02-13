@@ -66,22 +66,6 @@ void main() {
         expect(stage, ProgressStage.practicing);
       });
 
-      test('returns Practicing for card with insufficient reps', () {
-        final card = _createCard(
-          reps: 2, // < 3
-          stability: 2.0,
-          lapses: 0,
-          state: 2,
-        );
-
-        final stage = service.calculateStage(
-          card: card,
-          nonTranslationSuccessCount: 0,
-        );
-
-        expect(stage, ProgressStage.practicing);
-      });
-
       test('returns Practicing for card with too many lapses', () {
         final card = _createCard(
           reps: 5,
@@ -140,7 +124,7 @@ void main() {
 
       test('returns Stabilizing at minimum thresholds', () {
         final card = _createCard(
-          reps: 3, // minimum
+          reps: 1, // reps no longer required for stabilizing
           stability: 1.0, // minimum
           lapses: 2, // maximum allowed
           state: 2,
@@ -202,6 +186,7 @@ void main() {
         final stage = service.calculateStage(
           card: card,
           nonTranslationSuccessCount: 1,
+          hardMethodSuccessCount: 1,
         );
 
         expect(stage, ProgressStage.mastered);
@@ -218,22 +203,7 @@ void main() {
         final stage = service.calculateStage(
           card: card,
           nonTranslationSuccessCount: 5,
-        );
-
-        expect(stage, ProgressStage.mastered);
-      });
-
-      test('returns Mastered at minimum thresholds', () {
-        final card = _createCard(
-          reps: 12, // minimum
-          stability: 90.0, // minimum
-          lapses: 1, // maximum allowed
-          state: 2,
-        );
-
-        final stage = service.calculateStage(
-          card: card,
-          nonTranslationSuccessCount: 0,
+          hardMethodSuccessCount: 3,
         );
 
         expect(stage, ProgressStage.mastered);
@@ -250,22 +220,7 @@ void main() {
         final stage = service.calculateStage(
           card: card,
           nonTranslationSuccessCount: 1,
-        );
-
-        expect(stage, ProgressStage.known); // not Mastered
-      });
-
-      test('returns Known when reps too low for Mastered', () {
-        final card = _createCard(
-          reps: 11, // just below threshold
-          stability: 90.0,
-          lapses: 1,
-          state: 2,
-        );
-
-        final stage = service.calculateStage(
-          card: card,
-          nonTranslationSuccessCount: 1,
+          hardMethodSuccessCount: 1,
         );
 
         expect(stage, ProgressStage.known); // not Mastered
@@ -282,6 +237,24 @@ void main() {
         final stage = service.calculateStage(
           card: card,
           nonTranslationSuccessCount: 1,
+          hardMethodSuccessCount: 1,
+        );
+
+        expect(stage, ProgressStage.known); // not Mastered
+      });
+
+      test('returns Known when hardMethodSuccessCount is 0', () {
+        final card = _createCard(
+          reps: 12,
+          stability: 90.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 1,
+          hardMethodSuccessCount: 0, // no disambiguation success
         );
 
         expect(stage, ProgressStage.known); // not Mastered
@@ -353,6 +326,7 @@ void main() {
         final stage = service.calculateStage(
           card: card,
           nonTranslationSuccessCount: 5,
+          hardMethodSuccessCount: 1,
         );
 
         expect(stage, ProgressStage.mastered);
@@ -383,6 +357,184 @@ void main() {
         );
 
         expect(stage, ProgressStage.stabilizing);
+      });
+    });
+
+    group('Aligned stage thresholds (windowed lapses)', () {
+      test('Mastered with windowed lapses: lifetime=5 but lapsesLast12=0', () {
+        final card = _createCard(
+          reps: 15,
+          stability: 100.0,
+          lapses: 5, // lifetime high
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 3,
+          lapsesLast12: 0, // windowed low
+          hardMethodSuccessCount: 1,
+        );
+
+        expect(stage, ProgressStage.mastered);
+      });
+
+      test('Mastered blocked by hardMethodSuccess=0', () {
+        final card = _createCard(
+          reps: 15,
+          stability: 100.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 3,
+          lapsesLast12: 0,
+          hardMethodSuccessCount: 0,
+        );
+
+        expect(stage, ProgressStage.known);
+      });
+
+      test('Mastered blocked by lapsesLast12=2', () {
+        final card = _createCard(
+          reps: 15,
+          stability: 100.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 3,
+          lapsesLast12: 2,
+          hardMethodSuccessCount: 1,
+        );
+
+        expect(stage, ProgressStage.known);
+      });
+
+      test('Mastered allowed at lapsesLast12=1', () {
+        final card = _createCard(
+          reps: 15,
+          stability: 100.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 3,
+          lapsesLast12: 1,
+          hardMethodSuccessCount: 1,
+        );
+
+        expect(stage, ProgressStage.mastered);
+      });
+
+      test('Mastered: reps no longer required', () {
+        final card = _createCard(
+          reps: 5, // low reps — used to block mastered
+          stability: 90.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 1,
+          lapsesLast12: 0,
+          hardMethodSuccessCount: 1,
+        );
+
+        expect(stage, ProgressStage.mastered);
+      });
+
+      test('Stabilizing without reps requirement', () {
+        final card = _createCard(
+          reps: 1, // low reps — used to block stabilizing
+          stability: 1.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 0,
+          lapsesLast8: 2,
+        );
+
+        expect(stage, ProgressStage.stabilizing);
+      });
+
+      test('Stabilizing blocked by lapsesLast8=3', () {
+        final card = _createCard(
+          reps: 5,
+          stability: 2.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 0,
+          lapsesLast8: 3,
+        );
+
+        expect(stage, ProgressStage.practicing);
+      });
+
+      test('Known: stabilizing criteria + nonTransSuccess=1', () {
+        final card = _createCard(
+          reps: 2,
+          stability: 1.5,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 1,
+          lapsesLast8: 1,
+        );
+
+        expect(stage, ProgressStage.known);
+      });
+
+      test('Fallback: no windowed params uses lifetime lapses', () {
+        final card = _createCard(
+          reps: 5,
+          stability: 2.0,
+          lapses: 1, // lifetime lapses used as fallback
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 0,
+          // no lapsesLast8/12 passed → falls back to card.lapses
+        );
+
+        expect(stage, ProgressStage.stabilizing);
+      });
+
+      test('Mastered fallback: no windowed params, lifetime lapses=0', () {
+        final card = _createCard(
+          reps: 15,
+          stability: 100.0,
+          lapses: 0,
+          state: 2,
+        );
+
+        final stage = service.calculateStage(
+          card: card,
+          nonTranslationSuccessCount: 3,
+          hardMethodSuccessCount: 1,
+          // no lapsesLast12 → falls back to card.lapses=0
+        );
+
+        expect(stage, ProgressStage.mastered);
       });
     });
 

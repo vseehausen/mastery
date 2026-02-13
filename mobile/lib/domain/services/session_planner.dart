@@ -5,6 +5,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../core/logging/decision_log.dart';
 import '../../data/services/supabase_data_service.dart';
+import '../models/cue_type.dart';
 import '../models/learning_enums.dart';
 import '../models/planned_item.dart';
 import '../models/session_card.dart';
@@ -379,32 +380,31 @@ class SessionPlanner {
   double nearPromotionScore(SessionCard card) {
     if (card.state == 0) return 0.0; // New cards can't be near-promotion
 
-    // Practicing → Stabilizing: reps >= 3, stability >= 1.0, lapses <= 2, state == 2
-    // Near-promotion signal: reps >= 2 && state == 2 && stability >= 0.5 && lapses <= 2
-    if (card.reps < 3 || card.stability < 1.0) {
+    // Practicing → Stabilizing: stability >= 1.0, lapsesLast8 <= 2, state == 2
+    // Near-promotion signal: state == 2 && stability >= 0.5 && lapsesLast8 <= 2
+    if (card.stability < 1.0) {
       // Could be Practicing stage
-      if (card.reps >= 2 && card.state == 2 && card.stability >= 0.5 && card.lapses <= 2) {
-        final repsRatio = (card.reps / 3.0).clamp(0.0, 1.0);
+      if (card.state == 2 && card.stability >= 0.5 && card.lapsesLast8 <= 2) {
         final stabilityRatio = (card.stability / 1.0).clamp(0.0, 1.0);
-        return ((repsRatio + stabilityRatio) / 2.0).clamp(0.0, 1.0);
+        return stabilityRatio.clamp(0.0, 1.0);
       }
     }
 
     // Stabilizing → Known: stabilizing criteria met + nonTranslationSuccessCount >= 1
     // Near-promotion signal: nonTranslationSuccessCount == 0 + stabilizing criteria met
-    final meetsStabilizing = card.stability >= 1.0 && card.reps >= 3 &&
-        card.lapses <= 2 && card.state == 2;
+    final meetsStabilizing = card.stability >= 1.0 &&
+        card.lapsesLast8 <= 2 && card.state == 2;
     if (meetsStabilizing && card.nonTranslationSuccessCount == 0) {
       // One non-translation success away from Known
       return 0.9;
     }
 
-    // Known → Mastered: stability >= 90, reps >= 12, lapses <= 1, state == 2
-    // Near-promotion signal: stability >= 70 && reps >= 11 && lapses <= 1 && state == 2
-    if (card.stability >= 70 && card.reps >= 11 && card.lapses <= 1 && card.state == 2) {
+    // Known → Mastered: stability >= 90, lapsesLast12 <= 1, state == 2, hardMethodSuccessCount >= 1
+    // Near-promotion signal: stability >= 70 && lapsesLast12 <= 1 && state == 2 && hardMethodSuccessCount == 0
+    if (card.stability >= 70 && card.lapsesLast12 <= 1 && card.state == 2 &&
+        card.hardMethodSuccessCount == 0) {
       final stabilityRatio = (card.stability / 90.0).clamp(0.0, 1.0);
-      final repsRatio = (card.reps / 12.0).clamp(0.0, 1.0);
-      return ((stabilityRatio + repsRatio) / 2.0).clamp(0.0, 1.0);
+      return stabilityRatio.clamp(0.0, 1.0);
     }
 
     return 0.0;
@@ -478,6 +478,13 @@ class SessionPlanner {
       }
     }
 
+    // Force disambiguation cue on bookend items that are near Mastered
+    // and still need a hard method success to unlock the gate.
+    for (var i = 0; i < openers.length; i++) {
+      openers[i] = _ensurePromotionCue(openers[i]);
+    }
+    closer = _ensurePromotionCue(closer);
+
     final ordered = [
       ...openers,
       ...newWords,
@@ -485,6 +492,43 @@ class SessionPlanner {
       ...reviews,
     ];
     return (ordered: ordered, closer: closer);
+  }
+
+  /// If a bookend item is near a promotion gate that requires a specific cue
+  /// type success, override its cue type to help unlock that gate.
+  ///
+  /// - Near Mastered (hardMethodSuccessCount == 0): force disambiguation
+  /// - Near Known (nonTranslationSuccessCount == 0): force non-translation cue
+  PlannedItem _ensurePromotionCue(PlannedItem item) {
+    final card = item.sessionCard;
+
+    // Near Mastered: needs hardMethodSuccess (disambiguation)
+    if (card.hardMethodSuccessCount == 0 &&
+        card.stability >= 70 &&
+        card.lapsesLast12 <= 1 &&
+        card.state == 2 &&
+        card.hasConfusables &&
+        card.confusables.isNotEmpty) {
+      return item.withCueType(CueType.disambiguation);
+    }
+
+    // Near Known: needs nonTranslationSuccess (any non-translation cue)
+    if (card.nonTranslationSuccessCount == 0 &&
+        card.stability >= 1.0 &&
+        card.lapsesLast8 <= 2 &&
+        card.state == 2 &&
+        item.cueType == CueType.translation) {
+      // Pick best available non-translation cue
+      if (card.hasConfusables && card.confusables.isNotEmpty) {
+        return item.withCueType(CueType.disambiguation);
+      }
+      if (card.synonyms.isNotEmpty) {
+        return item.withCueType(CueType.synonym);
+      }
+      return item.withCueType(CueType.definition);
+    }
+
+    return item;
   }
 
   /// Determine if new-word introduction should be suppressed (hysteresis logic)
