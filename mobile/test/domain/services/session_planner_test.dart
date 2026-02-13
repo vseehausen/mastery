@@ -1727,24 +1727,27 @@ void main() {
         expect(allIds.toSet().length, allIds.length, reason: 'No duplicate card IDs');
       });
 
-      test('single item: no candidate → item is closer (easiest)', () {
+      test('single item: stays in ordered (no closer split)', () {
         final item = makeItem(id: 'only', stability: 10.0);
         final result = planner.applyBookendOrder([item]);
 
-        // Single review item, no near-promotion → goes to closer as easiest
-        expect(result.closer!.cardId, 'only');
-        expect(result.ordered, isEmpty);
+        // Single item stays in ordered — not enough items for bookend split
+        expect(result.closer, isNull);
+        expect(result.ordered, hasLength(1));
+        expect(result.ordered[0].cardId, 'only');
       });
 
-      test('single near-promotion item: becomes closer', () {
+      test('single near-promotion item: stays in ordered', () {
         final np = makeItem(
           id: 'np', reps: 2, state: 2, stability: 0.8, lapses: 0,
           nonTranslationSuccessCount: 0,
         );
         final result = planner.applyBookendOrder([np]);
 
-        expect(result.closer!.cardId, 'np');
-        expect(result.ordered, isEmpty);
+        // Single item stays in ordered — not enough items for bookend split
+        expect(result.closer, isNull);
+        expect(result.ordered, hasLength(1));
+        expect(result.ordered[0].cardId, 'np');
       });
 
       test('only new words: no closer (no review items)', () {

@@ -417,6 +417,9 @@ class SessionPlanner {
   ) {
     if (items.isEmpty) return (ordered: items, closer: null);
 
+    // Need at least 2 items to split into ordered + closer
+    if (items.length == 1) return (ordered: items, closer: null);
+
     // Score all review items
     final scored = <(PlannedItem, double)>[];
     final newWords = <PlannedItem>[];
