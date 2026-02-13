@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'dart:math' show min;
 
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+import '../../core/logging/decision_log.dart';
 import '../../data/services/supabase_data_service.dart';
 import '../models/learning_enums.dart';
 import '../models/planned_item.dart';
@@ -118,6 +122,16 @@ class SessionPlanner {
       maxItems,
       overdueCount + min<int>(newWordCap, availableNewWords),
     );
+
+    DecisionLog.log('session_params', {
+      'max_items': maxItems,
+      'new_word_cap': newWordCap,
+      'overdue_count': overdueCount,
+      'suppressed': shouldSuppress,
+      'time_target_minutes': timeTargetMinutes,
+      'seconds_per_item': estimatedSecondsPerItem,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'session_params: max=$maxItems, due=$overdueCount, new=$newWordCap')));
 
     return SessionParams(
       maxItems: maxItems,
@@ -357,6 +371,120 @@ class SessionPlanner {
     final lapseWeight = 1 + (card.lapses / 20);
 
     return overdueDays * (1 - retrievability) * lapseWeight;
+  }
+
+  /// Compute a near-promotion score (0.0–1.0) for a review card.
+  /// Higher = closer to advancing to the next stage.
+  /// Returns 0.0 for new cards or cards not close to promotion.
+  double nearPromotionScore(SessionCard card) {
+    if (card.state == 0) return 0.0; // New cards can't be near-promotion
+
+    // Practicing → Stabilizing: reps >= 3, stability >= 1.0, lapses <= 2, state == 2
+    // Near-promotion signal: reps >= 2 && state == 2 && stability >= 0.5 && lapses <= 2
+    if (card.reps < 3 || card.stability < 1.0) {
+      // Could be Practicing stage
+      if (card.reps >= 2 && card.state == 2 && card.stability >= 0.5 && card.lapses <= 2) {
+        final repsRatio = (card.reps / 3.0).clamp(0.0, 1.0);
+        final stabilityRatio = (card.stability / 1.0).clamp(0.0, 1.0);
+        return ((repsRatio + stabilityRatio) / 2.0).clamp(0.0, 1.0);
+      }
+    }
+
+    // Stabilizing → Known: stabilizing criteria met + nonTranslationSuccessCount >= 1
+    // Near-promotion signal: nonTranslationSuccessCount == 0 + stabilizing criteria met
+    final meetsStabilizing = card.stability >= 1.0 && card.reps >= 3 &&
+        card.lapses <= 2 && card.state == 2;
+    if (meetsStabilizing && card.nonTranslationSuccessCount == 0) {
+      // One non-translation success away from Known
+      return 0.9;
+    }
+
+    // Known → Mastered: stability >= 90, reps >= 12, lapses <= 1, state == 2
+    // Near-promotion signal: stability >= 70 && reps >= 11 && lapses <= 1 && state == 2
+    if (card.stability >= 70 && card.reps >= 11 && card.lapses <= 1 && card.state == 2) {
+      final stabilityRatio = (card.stability / 90.0).clamp(0.0, 1.0);
+      final repsRatio = (card.reps / 12.0).clamp(0.0, 1.0);
+      return ((stabilityRatio + repsRatio) / 2.0).clamp(0.0, 1.0);
+    }
+
+    return 0.0;
+  }
+
+  /// Apply bookend ordering to a list of planned items.
+  /// Returns the reordered list and an optional closer item to serve last.
+  ({List<PlannedItem> ordered, PlannedItem? closer}) applyBookendOrder(
+    List<PlannedItem> items,
+  ) {
+    if (items.isEmpty) return (ordered: items, closer: null);
+
+    // Score all review items
+    final scored = <(PlannedItem, double)>[];
+    final newWords = <PlannedItem>[];
+    final reviews = <PlannedItem>[];
+
+    for (final item in items) {
+      if (item.isNewWord) {
+        newWords.add(item);
+      } else {
+        final score = nearPromotionScore(item.sessionCard);
+        if (score > 0.0) {
+          scored.add((item, score));
+        } else {
+          reviews.add(item);
+        }
+      }
+    }
+
+    // Sort candidates by score descending (best candidates first)
+    scored.sort((a, b) => b.$2.compareTo(a.$2));
+
+    final candidateCount = scored.length;
+
+    if (candidateCount == 0) {
+      // No near-promotion candidates — move easiest review to last position
+      // Easiest = highest stability, lowest difficulty
+      PlannedItem? easiest;
+      if (reviews.isNotEmpty) {
+        easiest = reviews.reduce((a, b) {
+          if (a.sessionCard.stability != b.sessionCard.stability) {
+            return a.sessionCard.stability > b.sessionCard.stability ? a : b;
+          }
+          return a.sessionCard.difficulty < b.sessionCard.difficulty ? a : b;
+        });
+        reviews.remove(easiest);
+      }
+      final ordered = [...reviews, ...newWords];
+      return (ordered: ordered, closer: easiest);
+    }
+
+    PlannedItem? closer;
+    final openers = <PlannedItem>[];
+    final remainingCandidates = <PlannedItem>[];
+
+    if (candidateCount == 1) {
+      // 1 candidate → closer only
+      closer = scored[0].$1;
+    } else if (candidateCount == 2) {
+      // 2 candidates → 1 opener + 1 closer
+      openers.add(scored[0].$1);
+      closer = scored[1].$1;
+    } else {
+      // 3+ candidates → 2 openers + 1 closer, rest in core
+      openers.add(scored[0].$1);
+      openers.add(scored[1].$1);
+      closer = scored[2].$1;
+      for (var i = 3; i < scored.length; i++) {
+        remainingCandidates.add(scored[i].$1);
+      }
+    }
+
+    final ordered = [
+      ...openers,
+      ...newWords,
+      ...remainingCandidates,
+      ...reviews,
+    ];
+    return (ordered: ordered, closer: closer);
   }
 
   /// Determine if new-word introduction should be suppressed (hysteresis logic)

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/logging/decision_log.dart';
 import '../../../../core/theme/color_tokens.dart';
 import '../../../../core/theme/radius_tokens.dart';
 import '../../../../core/theme/spacing.dart';
@@ -242,6 +246,22 @@ class _SessionCard extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, MasteryColorScheme colors) {
+    final String sessionResult;
+    if (isCompleted) {
+      sessionResult = 'completed';
+    } else if (hasItems) {
+      sessionResult = 'due';
+    } else {
+      sessionResult = 'nothing_due';
+    }
+    DecisionLog.log('session_check', {
+      'result': sessionResult,
+      'is_completed': isCompleted,
+      'has_items': hasItems,
+      'items_due': itemsDue,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'session_check: $sessionResult')));
+
     if (isCompleted) return _completedState(context, colors);
     if (hasItems) return _dueState(context, colors);
     return _nothingDueState(context, colors);

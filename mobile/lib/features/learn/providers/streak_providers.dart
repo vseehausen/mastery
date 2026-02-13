@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../core/effective_day.dart';
+import '../../../core/logging/decision_log.dart';
 import '../../../domain/models/streak.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/supabase_provider.dart';
@@ -42,8 +46,32 @@ Future<int> currentStreak(Ref ref) async {
         longestCount: streak.longestCount,
         lastCompletedDate: null,
       );
+      DecisionLog.log('streak_check', {
+        'result': 0,
+        'action': 'reset',
+        'last_completed_date': streak.lastCompletedDate?.toIso8601String(),
+        'is_today': false,
+        'is_yesterday': false,
+      });
+      unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'streak_check: reset')));
       return 0;
     }
+
+    DecisionLog.log('streak_check', {
+      'result': streak.currentCount,
+      'action': 'maintained',
+      'last_completed_date': streak.lastCompletedDate?.toIso8601String(),
+      'is_today': isToday,
+      'is_yesterday': isYesterday,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'streak_check: maintained (${streak.currentCount})')));
+  } else {
+    DecisionLog.log('streak_check', {
+      'result': streak.currentCount,
+      'action': 'no_history',
+      'last_completed_date': null,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'streak_check: no_history')));
   }
 
   return streak.currentCount;
@@ -92,7 +120,12 @@ class StreakNotifier extends _$StreakNotifier {
 
     // Check if already completed today
     if (lastCompleted != null && isSameEffectiveDay(lastCompleted, now)) {
-      // Already counted today, don't increment again
+      DecisionLog.log('streak_increment', {
+        'action': 'already_counted',
+        'old_count': streak.currentCount,
+        'new_count': streak.currentCount,
+      });
+      unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'streak_increment: already_counted')));
       return;
     }
 
@@ -108,6 +141,13 @@ class StreakNotifier extends _$StreakNotifier {
       longestCount: newLongest,
       lastCompletedDate: now,
     );
+
+    DecisionLog.log('streak_increment', {
+      'action': 'incremented',
+      'old_count': streak.currentCount,
+      'new_count': newCount,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'streak_increment: ${streak.currentCount} -> $newCount')));
 
     state = AsyncValue.data(newCount);
 

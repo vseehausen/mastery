@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/logging/decision_log.dart';
 import 'core/network/connectivity.dart';
 import 'core/supabase_client.dart';
 import 'core/theme/app_theme.dart';
@@ -21,29 +23,72 @@ void main() {
       await dotenv.load(fileName: '.env');
       try {
         await SupabaseConfig.initialize();
+        await DecisionLog.init(SupabaseConfig.client);
       } catch (e) {
         debugPrint('Supabase init failed: $e');
         // App can still run, will show auth screen
       }
       final sharedPreferences = await SharedPreferences.getInstance();
-      runApp(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-          ],
-          child: const MasteryApp(),
-        ),
-      );
+
+      final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
+      if (sentryDsn.isNotEmpty) {
+        await SentryFlutter.init(
+          (options) {
+            options.dsn = sentryDsn;
+            options.tracesSampleRate = 0.2;
+          },
+          appRunner: () => _runApp(sharedPreferences),
+        );
+      } else {
+        _runApp(sharedPreferences);
+      }
     },
     (error, stack) {
       debugPrint('Uncaught error: $error');
       debugPrint('Stack: $stack');
+      Sentry.captureException(error, stackTrace: stack);
     },
   );
 }
 
-class MasteryApp extends StatelessWidget {
+void _runApp(SharedPreferences sharedPreferences) {
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const MasteryApp(),
+    ),
+  );
+}
+
+class MasteryApp extends StatefulWidget {
   const MasteryApp({super.key});
+
+  @override
+  State<MasteryApp> createState() => _MasteryAppState();
+}
+
+class _MasteryAppState extends State<MasteryApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    DecisionLog.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      unawaited(DecisionLog.flush());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

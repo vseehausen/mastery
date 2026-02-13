@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../core/app_defaults.dart';
 import '../../../core/effective_day.dart';
+import '../../../core/logging/decision_log.dart';
 import '../../../domain/models/learning_session.dart';
 import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/session_plan.dart';
@@ -44,7 +48,16 @@ Future<bool> hasCompletedToday(Ref ref) async {
   if (lastCompletedStr == null) return false;
 
   final lastCompleted = DateTime.parse(lastCompletedStr);
-  return isSameEffectiveDay(lastCompleted, DateTime.now());
+  final now = DateTime.now();
+  final result = isSameEffectiveDay(lastCompleted, now);
+  DecisionLog.log('has_completed_today', {
+    'result': result,
+    'last_completed_date': lastCompletedStr,
+    'effective_today': effectiveToday().toIso8601String(),
+    'now': now.toIso8601String(),
+  });
+  unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'has_completed_today: $result')));
+  return result;
 }
 
 /// Provides today's progress (0.0 to 1.0)
@@ -118,7 +131,14 @@ Future<({int itemsReviewed, double? accuracyPercent})?> todaySessionStats(Ref re
   if (userId == null) return null;
 
   final dataService = ref.watch(supabaseDataServiceProvider);
-  return dataService.getTodaySessionStats(userId);
+  final stats = await dataService.getTodaySessionStats(userId);
+  DecisionLog.log('today_stats', {
+    'items_reviewed': stats?.itemsReviewed ?? 0,
+    'accuracy_percent': stats?.accuracyPercent,
+    'effective_day_start_utc': effectiveDayStartUtc().toIso8601String(),
+  });
+  unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'today_stats: ${stats?.itemsReviewed ?? 0} reviewed')));
+  return stats;
 }
 
 /// Provides the label for next review time (e.g. "Next review in 3 days")
@@ -199,22 +219,50 @@ Future<SessionPrefetch?> sessionPrefetch(Ref ref) async {
 
   // If no capacity, return null
   if (params.maxItems <= 0 || params.estimatedItemCount <= 0) {
+    DecisionLog.log('session_prefetch', {
+      'result': 'no_capacity',
+      'max_items': params.maxItems,
+      'estimated_item_count': params.estimatedItemCount,
+      'time_target_minutes': timeTargetMinutes,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'session_prefetch: no_capacity')));
     return null;
   }
 
   // Get available new words count for UI display
   final availableNewWords = await dataService.countEnrichedNewWords(userId);
 
-  // Fetch initial batch: front-load all new words alongside reviews
-  const initialBatchSize = 5;
+  // Fetch full session in one batch for optimal bookend ordering
+  final reviewLimit = params.maxItems - params.newWordCap;
   final initialItems = await planner.fetchBatch(
     userId: userId,
-    reviewLimit: initialBatchSize,
+    reviewLimit: reviewLimit < 0 ? 0 : reviewLimit,
     newLimit: params.newWordCap,
   );
 
   // If no items fetched, return null
-  if (initialItems.isEmpty) return null;
+  if (initialItems.isEmpty) {
+    DecisionLog.log('session_prefetch', {
+      'result': 'no_items',
+      'max_items': params.maxItems,
+      'new_word_cap': params.newWordCap,
+      'due_count': params.dueCount,
+      'time_target_minutes': timeTargetMinutes,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'session_prefetch: no_items')));
+    return null;
+  }
+
+  DecisionLog.log('session_prefetch', {
+    'result': 'available',
+    'max_items': params.maxItems,
+    'new_word_cap': params.newWordCap,
+    'due_count': params.dueCount,
+    'available_new_words': availableNewWords,
+    'initial_items_fetched': initialItems.length,
+    'time_target_minutes': timeTargetMinutes,
+  });
+  unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'session_prefetch: available (${initialItems.length} items)')));
 
   return SessionPrefetch(
     params: params,

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/logging/decision_log.dart';
 import '../../data/services/supabase_data_service.dart';
 
 /// Service that calls the enrich-vocabulary edge function.
@@ -20,18 +23,23 @@ class EnrichmentService {
   Future<void> replenishIfNeeded(String userId) async {
     final availableNewWords = await dataService.countEnrichedNewWords(userId);
     if (availableNewWords >= _replenishThreshold) {
-      debugPrint(
-        '[EnrichmentService] Buffer OK: $availableNewWords enriched new words (>= $_replenishThreshold)',
-      );
+      DecisionLog.log('enrichment_check', {
+        'action': 'buffer_ok',
+        'available_new_words': availableNewWords,
+        'threshold': _replenishThreshold,
+      });
+      unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'enrichment_check: buffer_ok ($availableNewWords)')));
       return;
     }
 
-    debugPrint(
-      '[EnrichmentService] Enrichment buffer low ($availableNewWords enriched new words < $_replenishThreshold), '
-      'triggering replenishment',
-    );
-
     final needed = (_bufferTarget - availableNewWords).clamp(1, 10);
+    DecisionLog.log('enrichment_check', {
+      'action': 'replenishing',
+      'available_new_words': availableNewWords,
+      'threshold': _replenishThreshold,
+      'needed': needed,
+    });
+    unawaited(Sentry.addBreadcrumb(Breadcrumb(message: 'enrichment_check: replenishing ($needed needed)')));
     await requestEnrichment(userId: userId, batchSize: needed);
   }
 

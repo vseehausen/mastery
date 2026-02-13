@@ -25,7 +25,7 @@ final dailyTimeTargetProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DailyTimeTargetRef = AutoDisposeFutureProviderRef<int>;
-String _$hasCompletedTodayHash() => r'33ff5036d6d4b3bf7e88f3ee354b3f7474624317';
+String _$hasCompletedTodayHash() => r'6279fcc0450f80bc7a5fdaf4d66ebca147c1dab6';
 
 /// Provides whether user has completed their session today
 ///
@@ -101,7 +101,7 @@ final dueItemCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DueItemCountRef = AutoDisposeFutureProviderRef<int>;
-String _$todaySessionStatsHash() => r'a6595556aa18e7b95d98b9a54ef38665fac1207f';
+String _$todaySessionStatsHash() => r'1452afca77a0ed64be1c20aca74283dfaa77ff70';
 
 /// Provides today's session stats (items reviewed + accuracy)
 ///
@@ -145,7 +145,7 @@ final nextReviewLabelProvider = AutoDisposeFutureProvider<String?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef NextReviewLabelRef = AutoDisposeFutureProviderRef<String?>;
-String _$sessionPrefetchHash() => r'4e79697b41a7fa4d5a0f03f49dd3dd5dbe3c0700';
+String _$sessionPrefetchHash() => r'5abcafb3354c4371992bbc4e0a0dc1dbd0df17e6';
 
 /// Prefetch provider that computes session params and fetches initial batch.
 /// This runs proactively on home screen so session start is instant.
