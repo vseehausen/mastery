@@ -30,6 +30,25 @@ class TodayScreen extends ConsumerStatefulWidget {
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   bool _isNavigating = false;
+  SessionPrefetch? _sessionPrefetchData;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to sessionPrefetchProvider changes and update local state
+    // This prevents rebuild loops while still keeping data fresh
+    ref.listenManual(
+      sessionPrefetchProvider,
+      (previous, next) {
+        if (mounted) {
+          setState(() {
+            _sessionPrefetchData = next.valueOrNull;
+          });
+        }
+      },
+      fireImmediately: true,
+    );
+  }
 
   Future<void> _startSession() async {
     if (_isNavigating) return;
@@ -96,7 +115,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final stageCounts = ref.watch(vocabularyStageCountsProvider);
     final vocabCount = ref.watch(vocabularyCountProvider);
     final userPrefs = ref.watch(userLearningPreferencesProvider);
-    final sessionPrefetch = ref.watch(sessionPrefetchProvider);
+    // Use local state instead of ref.watch to prevent rebuild loops
+    final sessionPrefetchData = _sessionPrefetchData;
 
     final hasItemsToPractice = hasItems.valueOrNull ?? false;
     final isCompleted = completedToday.valueOrNull ?? false;
@@ -169,7 +189,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   sessionStats: sessionStats.valueOrNull,
                   nextReviewLabel: nextReview.valueOrNull,
                   dailyTimeTarget: dailyTimeTarget,
-                  prefetchData: sessionPrefetch.valueOrNull,
+                  prefetchData: sessionPrefetchData,
                   onStartSession: _startSession,
                   onStartQuickReview: _startQuickReview,
                 ),
