@@ -12,6 +12,7 @@ import { normalize } from '../_shared/normalize.ts';
 import { resolveGlobalEntry, resolveByLemma, linkVocabulary, upsertVariant } from '../_shared/global-dictionary.ts';
 import { mergeIfDuplicate } from '../_shared/vocabulary-lifecycle.ts';
 import { translateWord, buildTranslations, type TranslationEntry } from '../_shared/translation.ts';
+import { generateAllAudio } from '../_shared/audio.ts';
 
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_BATCH_SIZE = 5;
@@ -24,7 +25,8 @@ const BUFFER_TARGET = 10;
 // - v2: Added translation resolution logic
 // - v3: Added quality rules (acronyms, circular definitions, disambiguation)
 // - v4: Expanded card types - novel cloze, usage recognition, L1 confusables, tiered distractors
-const ENRICHMENT_VERSION = 4;
+// - v5: Added TTS audio generation (US + GB accents)
+const ENRICHMENT_VERSION = 5;
 
 const MAINTAIN_DEFAULT_BATCH_SIZE = 20;
 const MAINTAIN_CONCURRENCY = 10;
@@ -370,8 +372,16 @@ async function maintainEntry(
   // Build translations and enrichment payload
   const lemma = normalize(aiEnhancement.stem);
   const translations = buildTranslations(nativeLanguageCode, translation, translationSource, aiEnhancement);
+
+  // Generate TTS audio for maintenance re-enrichment
+  const googleApiKey = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
+  let audioUrls: Record<string, string> = {};
+  if (googleApiKey) {
+    audioUrls = await generateAllAudio(aiEnhancement.stem, googleApiKey, client);
+  }
+
   const updatePayload = {
-    ...buildEnrichmentPayload(aiEnhancement, lemma, translations),
+    ...buildEnrichmentPayload(aiEnhancement, lemma, translations, audioUrls),
     updated_at: new Date().toISOString(),
   };
 
@@ -439,6 +449,11 @@ async function processWords(
 // Phase 4: Upsert global_dictionary + word_variants, link + merge
 // =============================================================================
 
+// =============================================================================
+// TTS Audio Generation (Google Cloud TTS)
+// =============================================================================
+
+
 /**
  * Build enrichment payload from AI enhancement and translations.
  * Consolidates the duplicated payload construction from enrichWord() and maintainEntry().
@@ -447,6 +462,7 @@ function buildEnrichmentPayload(
   aiEnhancement: AIEnhancement,
   lemma: string,
   translations: Record<string, TranslationEntry>,
+  audioUrls?: Record<string, string>,
 ): Record<string, unknown> {
   return {
     word: aiEnhancement.stem,
@@ -470,6 +486,7 @@ function buildEnrichmentPayload(
     cefr_level: aiEnhancement.cefr_level,
     confidence: aiEnhancement.confidence,
     enrichment_version: ENRICHMENT_VERSION,
+    audio_urls: audioUrls || {},
   };
 }
 
@@ -581,8 +598,16 @@ async function enrichWord(
 
   // Build translations and enrichment payload
   const translations = buildTranslations(nativeLanguageCode, translation, translationSource, aiEnhancement);
+
+  // Generate TTS audio (non-blocking — null on failure)
+  const googleApiKey = Deno.env.get('GOOGLE_TRANSLATE_API_KEY');
+  let audioUrls: Record<string, string> = {};
+  if (googleApiKey) {
+    audioUrls = await generateAllAudio(aiEnhancement.stem, googleApiKey, client);
+  }
+
   const enrichmentPayload = {
-    ...buildEnrichmentPayload(aiEnhancement, lemma, translations),
+    ...buildEnrichmentPayload(aiEnhancement, lemma, translations, audioUrls),
     language_code: SOURCE_LANGUAGE,
   };
 

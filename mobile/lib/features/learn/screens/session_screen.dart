@@ -19,12 +19,14 @@ import '../../../domain/models/planned_item.dart';
 import '../../../domain/models/progress_stage.dart';
 import '../../../domain/models/session_card.dart';
 import '../../../domain/models/stage_transition.dart';
+import '../../../domain/services/audio_service.dart';
 import '../../../domain/services/response_time_rating.dart';
 import '../../../domain/services/srs_scheduler.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/learning_providers.dart';
 import '../../../providers/review_write_queue_provider.dart';
 import '../../../providers/supabase_provider.dart';
+import '../providers/learning_preferences_providers.dart';
 import '../providers/session_providers.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/cloze_cue_card.dart';
@@ -89,6 +91,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   String? _loadingDistractorsForCardId;
   final Set<Future<void>> _pendingReviewWrites = <Future<void>>{};
   ResponseTimeRating _responseTimeRating = const ResponseTimeRating();
+  final AudioService _audioService = AudioService();
 
   // Progress tracking
   final _progressStageService = ProgressStageService();
@@ -114,6 +117,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   void dispose() {
     _elapsedTimer?.cancel();
     _transitionFeedbackTimer?.cancel();
+    _audioService.dispose();
     super.dispose();
   }
 
@@ -313,6 +317,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _itemStartTime = DateTime.now();
         });
         _startElapsedTimer();
+
+        // Prefetch audio for loaded items
+        final audioEnabled = prefs['audio_enabled'] as bool? ?? true;
+        final audioAccent = prefs['audio_accent'] as String? ?? 'us';
+        if (audioEnabled) {
+          unawaited(_audioService.prefetchForSession(
+            orderedItems.map((i) => i.sessionCard).toList(),
+            audioAccent,
+          ));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -386,6 +400,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             _estimatedTotalItems = _items.length;
           }
         });
+
+        // Prefetch audio for new batch
+        if (newItems.isNotEmpty) {
+          final audioPrefs = ref.read(learningPreferencesNotifierProvider);
+          if (audioPrefs.valueOrNull?.audioEnabled ?? true) {
+            unawaited(_audioService.prefetchForSession(
+              newItems.map((i) => i.sessionCard).toList(),
+              audioPrefs.valueOrNull?.audioAccent ?? 'us',
+            ));
+          }
+        }
       }
 
       if (newItems.isNotEmpty) {
@@ -622,6 +647,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         reviewsPresented: reviewsPresentedSnapshot,
       ),
     );
+
+    // Stop audio before advancing
+    unawaited(_audioService.stop());
 
     // Move to next item (or drain retry queue, serve closer, or complete).
     final nextIndex = reviewedIndex + 1;
@@ -1032,6 +1060,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
+  void _playWordAudio() {
+    final audioPrefs = ref.read(learningPreferencesNotifierProvider);
+    final prefs = audioPrefs.valueOrNull;
+    if (prefs == null || !prefs.audioEnabled) return;
+    if (_currentItemIndex >= _items.length) return;
+    final card = _items[_currentItemIndex].sessionCard;
+    _audioService.play(card.audioUrlFor(prefs.audioAccent));
+  }
+
   /// Build the card widget for the current item using SessionCard data.
   /// Uses CueSelector to build cue content at runtime from global dictionary data.
   Widget _buildItemCard(PlannedItem item, BuildContext context) {
@@ -1059,6 +1096,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           alternatives: _getAlternatives(card),
           context: card.encounterContext,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       }
 
@@ -1068,6 +1106,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         distractors: distractors,
         context: card.encounterContext,
         onAnswer: _handleRecognitionAnswer,
+        onCorrectReveal: _playWordAudio,
       );
     }
 
@@ -1079,12 +1118,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           targetWord: cueContent.answer,
           hintText: null,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       case CueType.synonym:
         return SynonymCueCard(
           synonymPhrase: cueContent.prompt,
           targetWord: cueContent.answer,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       case CueType.disambiguation:
         // For disambiguation, we need to parse confusables into options
@@ -1095,6 +1136,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             answer: cueContent.answer,
             context: card.encounterContext,
             onGrade: _handleRecallGrade,
+            onReveal: _playWordAudio,
           );
         }
         return DisambiguationCard(
@@ -1103,6 +1145,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           correctIndex: options.correctIndex,
           explanation: '',
           onAnswer: _handleObjectiveAnswer,
+          onAnswered: _playWordAudio,
         );
       case CueType.contextCloze:
         return ClozeCueCard(
@@ -1110,6 +1153,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           targetWord: cueContent.answer,
           hintText: null,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       case CueType.novelCloze:
         return NovelClozeCueCard(
@@ -1117,6 +1161,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           targetWord: cueContent.answer,
           hintText: null,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       case CueType.usageRecognition:
         if (card.usageExamples.isNotEmpty) {
@@ -1127,6 +1172,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             incorrectSentences:
                 usage.incorrectSentences.map((s) => s.sentence).toList(),
             onAnswer: _handleObjectiveAnswer,
+            onAnswered: _playWordAudio,
           );
         }
         // Fallback if no usage examples
@@ -1135,6 +1181,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           answer: cueContent.answer,
           context: card.encounterContext,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
       case CueType.translation:
       case null:
@@ -1144,6 +1191,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           alternatives: _getAlternatives(card),
           context: card.encounterContext,
           onGrade: _handleRecallGrade,
+          onReveal: _playWordAudio,
         );
     }
   }

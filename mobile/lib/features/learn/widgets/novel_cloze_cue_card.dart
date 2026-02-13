@@ -15,6 +15,7 @@ class NovelClozeCueCard extends StatefulWidget {
     required this.onGrade,
     this.hintText,
     this.isPreview = false,
+    this.onReveal,
   });
 
   final String sentenceWithBlank;
@@ -22,6 +23,9 @@ class NovelClozeCueCard extends StatefulWidget {
   final String? hintText;
   final void Function(int rating) onGrade;
   final bool isPreview;
+
+  /// Called when the answer is revealed
+  final VoidCallback? onReveal;
 
   @override
   State<NovelClozeCueCard> createState() => _NovelClozeCueCardState();
@@ -162,7 +166,10 @@ class _NovelClozeCueCardState extends State<NovelClozeCueCard> {
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: () => setState(() => _isRevealed = true),
+                onPressed: () {
+                  setState(() => _isRevealed = true);
+                  widget.onReveal?.call();
+                },
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),

@@ -44,4 +44,8 @@ abstract final class AppDefaults {
 
   // Display
   static const String nativeLanguageCode = 'de';
+
+  // Audio
+  static const bool audioEnabled = true;
+  static const String audioAccent = 'us';
 }

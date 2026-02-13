@@ -166,5 +166,47 @@ void main() {
       // Correct feedback shown
       expect(find.textContaining('Correct'), findsOneWidget);
     });
+
+    testWidgets('fires onAnswered callback when correct option selected',
+        (tester) async {
+      var answeredCount = 0;
+
+      await tester.pumpTestWidget(
+        DisambiguationCard(
+          clozeSentence: 'The ___ was full of money.',
+          options: const ['bank', 'bench', 'blank'],
+          correctIndex: 0,
+          explanation: 'A bank stores money.',
+          onAnswer: (_) {},
+          onAnswered: () => answeredCount++,
+        ),
+      );
+
+      await tester.tap(find.text('bank'));
+      await tester.pumpAndSettle();
+
+      expect(answeredCount, 1);
+    });
+
+    testWidgets('fires onAnswered callback when incorrect option selected',
+        (tester) async {
+      var answeredCount = 0;
+
+      await tester.pumpTestWidget(
+        DisambiguationCard(
+          clozeSentence: 'The ___ was full of money.',
+          options: const ['bank', 'bench', 'blank'],
+          correctIndex: 0,
+          explanation: 'A bank stores money.',
+          onAnswer: (_) {},
+          onAnswered: () => answeredCount++,
+        ),
+      );
+
+      await tester.tap(find.text('bench'));
+      await tester.pumpAndSettle();
+
+      expect(answeredCount, 1);
+    });
   });
 }

@@ -8,6 +8,7 @@ export interface GlobalDictEntry {
   pronunciation_ipa: string | null;
   part_of_speech: string | null;
   english_definition: string | null;
+  audio_urls?: Record<string, string> | null;
 }
 
 const GLOBAL_DICT_SELECT = 'id, lemma, translations, pronunciation_ipa, part_of_speech, english_definition';

@@ -97,6 +97,40 @@ class LearningPreferencesNotifier extends _$LearningPreferencesNotifier {
     ref.invalidate(userLearningPreferencesProvider);
   }
 
+  /// Update audio enabled preference
+  Future<void> updateAudioEnabled(bool enabled) async {
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser.valueOrNull?.id;
+    if (userId == null) return;
+
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      audioEnabled: enabled,
+    );
+
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
+    ref.invalidate(userLearningPreferencesProvider);
+  }
+
+  /// Update audio accent preference (us/gb)
+  Future<void> updateAudioAccent(String accent) async {
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser.valueOrNull?.id;
+    if (userId == null) return;
+
+    final dataService = ref.read(supabaseDataServiceProvider);
+    await dataService.updatePreferences(
+      userId: userId,
+      audioAccent: accent,
+    );
+
+    final prefsData = await dataService.getOrCreatePreferences(userId);
+    state = AsyncData(UserPreferencesModel.fromJson(prefsData));
+    ref.invalidate(userLearningPreferencesProvider);
+  }
+
   /// Update native language code
   Future<void> updateNativeLanguage(String code) async {
     final currentUser = ref.read(currentUserProvider);

@@ -14,6 +14,7 @@ class SynonymCueCard extends StatefulWidget {
     required this.targetWord,
     required this.onGrade,
     this.isPreview = false,
+    this.onReveal,
   });
 
   /// The synonym phrase shown as prompt
@@ -27,6 +28,9 @@ class SynonymCueCard extends StatefulWidget {
 
   /// Preview mode - hides grade buttons and saving message
   final bool isPreview;
+
+  /// Called when the answer is revealed
+  final VoidCallback? onReveal;
 
   @override
   State<SynonymCueCard> createState() => _SynonymCueCardState();
@@ -141,7 +145,10 @@ class _SynonymCueCardState extends State<SynonymCueCard> {
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: () => setState(() => _isRevealed = true),
+                onPressed: () {
+                  setState(() => _isRevealed = true);
+                  widget.onReveal?.call();
+                },
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),

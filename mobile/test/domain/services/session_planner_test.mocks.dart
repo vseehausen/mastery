@@ -134,6 +134,28 @@ class MockSupabaseDataService extends _i1.Mock
           as _i3.Future<void>);
 
   @override
+  _i3.Future<Map<String, dynamic>?> getVocabularyWithGlobalDict(
+    String? vocabularyId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getVocabularyWithGlobalDict, [vocabularyId]),
+            returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+          )
+          as _i3.Future<Map<String, dynamic>?>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getVocabularyWithGlobalDictForUser(
+    String? userId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getVocabularyWithGlobalDictForUser, [userId]),
+            returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
   _i3.Future<List<Map<String, dynamic>>> getSessionCards(
     String? userId, {
     required int? reviewLimit,
@@ -469,6 +491,8 @@ class MockSupabaseDataService extends _i1.Mock
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
+    bool? audioEnabled,
+    String? audioAccent,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updatePreferences, [], {
@@ -478,6 +502,8 @@ class MockSupabaseDataService extends _i1.Mock
               #newWordsPerSession: newWordsPerSession,
               #newWordSuppressionActive: newWordSuppressionActive,
               #nativeLanguageCode: nativeLanguageCode,
+              #audioEnabled: audioEnabled,
+              #audioAccent: audioAccent,
             }),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
@@ -587,6 +613,16 @@ class MockSupabaseDataService extends _i1.Mock
             ),
           )
           as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<({int fast, int slow})?> getMcResponseTimeThresholds(
+    String? userId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMcResponseTimeThresholds, [userId]),
+            returnValue: _i3.Future<({int fast, int slow})?>.value(),
+          )
+          as _i3.Future<({int fast, int slow})?>);
 
   @override
   _i3.Future<int> getReviewCount(String? userId) =>

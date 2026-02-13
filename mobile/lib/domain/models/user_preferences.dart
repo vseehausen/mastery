@@ -10,6 +10,8 @@ class UserPreferencesModel {
     this.newWordsPerSession = AppDefaults.newWordsDefault,
     this.newWordSuppressionActive = false,
     this.nativeLanguageCode = AppDefaults.nativeLanguageCode,
+    this.audioEnabled = AppDefaults.audioEnabled,
+    this.audioAccent = AppDefaults.audioAccent,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,6 +34,8 @@ class UserPreferencesModel {
       nativeLanguageCode:
           json['native_language_code'] as String? ??
           AppDefaults.nativeLanguageCode,
+      audioEnabled: json['audio_enabled'] as bool? ?? AppDefaults.audioEnabled,
+      audioAccent: json['audio_accent'] as String? ?? AppDefaults.audioAccent,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -44,6 +48,8 @@ class UserPreferencesModel {
   final int newWordsPerSession; // 3=few, 5=normal, 8=many
   final bool newWordSuppressionActive;
   final String nativeLanguageCode;
+  final bool audioEnabled;
+  final String audioAccent;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -56,6 +62,8 @@ class UserPreferencesModel {
       'new_words_per_session': newWordsPerSession,
       'new_word_suppression_active': newWordSuppressionActive,
       'native_language_code': nativeLanguageCode,
+      'audio_enabled': audioEnabled,
+      'audio_accent': audioAccent,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -69,6 +77,8 @@ class UserPreferencesModel {
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
+    bool? audioEnabled,
+    String? audioAccent,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -82,6 +92,8 @@ class UserPreferencesModel {
       newWordSuppressionActive:
           newWordSuppressionActive ?? this.newWordSuppressionActive,
       nativeLanguageCode: nativeLanguageCode ?? this.nativeLanguageCode,
+      audioEnabled: audioEnabled ?? this.audioEnabled,
+      audioAccent: audioAccent ?? this.audioAccent,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

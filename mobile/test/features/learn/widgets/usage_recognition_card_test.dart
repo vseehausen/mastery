@@ -195,5 +195,28 @@ void main() {
       // Correct feedback shown immediately
       expect(find.textContaining('Correct'), findsOneWidget);
     });
+
+    testWidgets('fires onAnswered callback when option selected',
+        (tester) async {
+      var answeredCount = 0;
+
+      await tester.pumpTestWidget(
+        UsageRecognitionCard(
+          word: 'abate',
+          correctSentence: 'The storm will abate by morning.',
+          incorrectSentences: const [
+            'She decided to abate the cake evenly.',
+            'He used a knife to abate the rope.',
+          ],
+          onAnswer: (_) {},
+          onAnswered: () => answeredCount++,
+        ),
+      );
+
+      await tester.tap(find.text('The storm will abate by morning.'));
+      await tester.pumpAndSettle();
+
+      expect(answeredCount, 1);
+    });
   });
 }

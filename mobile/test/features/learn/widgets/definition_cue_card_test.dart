@@ -154,5 +154,23 @@ void main() {
       expect(find.text('Good'), findsNothing);
       expect(find.text('Easy'), findsNothing);
     });
+
+    testWidgets('fires onReveal callback when answer is shown', (tester) async {
+      var revealCount = 0;
+
+      await tester.pumpTestWidget(
+        DefinitionCueCard(
+          definition: 'Test definition.',
+          targetWord: 'word',
+          onGrade: (_) {},
+          onReveal: () => revealCount++,
+        ),
+      );
+
+      await tester.tap(find.text('Show Answer'));
+      await tester.pumpAndSettle();
+
+      expect(revealCount, 1);
+    });
   });
 }

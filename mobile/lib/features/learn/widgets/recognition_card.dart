@@ -15,6 +15,7 @@ class RecognitionCard extends StatefulWidget {
     required this.onAnswer,
     this.context,
     this.isPreview = false,
+    this.onCorrectReveal,
   });
 
   /// The word being tested
@@ -35,6 +36,9 @@ class RecognitionCard extends StatefulWidget {
 
   /// Preview mode - pre-selects correct answer to show feedback state
   final bool isPreview;
+
+  /// Called when a correct answer is revealed
+  final VoidCallback? onCorrectReveal;
 
   @override
   State<RecognitionCard> createState() => _RecognitionCardState();
@@ -75,6 +79,10 @@ class _RecognitionCardState extends State<RecognitionCard> {
     setState(() {
       _selectedAnswer = answer;
     });
+
+    if (isCorrect) {
+      widget.onCorrectReveal?.call();
+    }
 
     // Delay before calling callback to show feedback
     Future.delayed(const Duration(milliseconds: 800), () {

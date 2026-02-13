@@ -730,6 +730,8 @@ class SupabaseDataService {
         'new_words_per_session': AppDefaults.newWordsDefault,
         'new_word_suppression_active': false,
         'native_language_code': AppDefaults.nativeLanguageCode,
+        'audio_enabled': AppDefaults.audioEnabled,
+        'audio_accent': AppDefaults.audioAccent,
         'created_at': now,
         'updated_at': now,
       };
@@ -748,6 +750,8 @@ class SupabaseDataService {
     int? newWordsPerSession,
     bool? newWordSuppressionActive,
     String? nativeLanguageCode,
+    bool? audioEnabled,
+    String? audioAccent,
   }) async {
     final updates = <String, dynamic>{
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -766,6 +770,12 @@ class SupabaseDataService {
     }
     if (nativeLanguageCode != null) {
       updates['native_language_code'] = nativeLanguageCode;
+    }
+    if (audioEnabled != null) {
+      updates['audio_enabled'] = audioEnabled;
+    }
+    if (audioAccent != null) {
+      updates['audio_accent'] = audioAccent;
     }
     await _client
         .from('user_learning_preferences')

@@ -16,6 +16,7 @@ class RecallCard extends StatefulWidget {
     this.alternatives,
     this.context,
     this.isPreview = false,
+    this.onReveal,
   });
 
   /// The word being tested
@@ -36,6 +37,9 @@ class RecallCard extends StatefulWidget {
 
   /// Preview mode - hides grade buttons and saving message
   final bool isPreview;
+
+  /// Called when the answer is revealed
+  final VoidCallback? onReveal;
 
   @override
   State<RecallCard> createState() => _RecallCardState();
@@ -66,6 +70,7 @@ class _RecallCardState extends State<RecallCard> {
     setState(() {
       _isRevealed = true;
     });
+    widget.onReveal?.call();
   }
 
   void _handleGrade(int rating) {

@@ -59,3 +59,5 @@ supabase/.branches/
 
 # Scripts test data
 scripts/translations/
+
+tmp_flutter_run.pid

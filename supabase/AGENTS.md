@@ -75,6 +75,17 @@ const supabase = createClient(
 );
 ```
 
+## Local-First Debugging (CRITICAL)
+
+**NEVER debug edge functions on production.** Always reproduce and fix issues locally first:
+
+1. `supabase start` → `supabase db reset` → `supabase functions serve --env-file supabase/.env.local --no-verify-jwt`
+2. Run e2e tests: `deno test --allow-all supabase/functions/tests/`
+3. Fix failures locally until all tests pass
+4. Only then deploy to production
+
+If a bug is reported from production, write a failing e2e test first, fix it locally, verify the test passes, then deploy.
+
 ## Local Edge Function Debugging
 
 ### Quick Start

@@ -11,10 +11,12 @@ import '../../domain/models/encounter.dart';
 import '../../domain/models/global_dictionary.dart';
 import '../../domain/models/learning_card.dart';
 import '../../domain/models/vocabulary.dart';
+import '../../domain/services/audio_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dev_mode_provider.dart';
 import '../../providers/learning_providers.dart';
 import '../../providers/supabase_provider.dart';
+import '../learn/providers/learning_preferences_providers.dart';
 import 'presentation/widgets/card_preview_sheet.dart';
 import 'presentation/widgets/dev_info_panel.dart';
 import 'presentation/widgets/meaning_editor.dart';
@@ -35,6 +37,13 @@ class _VocabularyDetailScreenState
   bool _enrichmentTriggered = false;
   bool _isReEnriching = false;
   bool _enrichmentFailed = false;
+  final AudioService _audioService = AudioService();
+
+  @override
+  void dispose() {
+    _audioService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +158,7 @@ class _VocabularyDetailScreenState
                     },
                   ),
 
-                  // IPA + POS line (if available)
+                  // IPA + POS + Audio line (if available)
                   globalDictAsync.when(
                     loading: () => const SizedBox.shrink(),
                     error: (_, _) => const SizedBox.shrink(),
@@ -162,8 +171,20 @@ class _VocabularyDetailScreenState
                       final hasPos =
                           globalDict.partOfSpeech != null &&
                           globalDict.partOfSpeech!.isNotEmpty;
+                      final prefs = ref.watch(
+                        userLearningPreferencesProvider,
+                      );
+                      final audioEnabled =
+                          prefs.valueOrNull?.audioEnabled ?? true;
+                      final audioAccent =
+                          prefs.valueOrNull?.audioAccent ?? 'us';
+                      final audioUrl = audioEnabled
+                          ? globalDict.audioUrlFor(audioAccent)
+                          : null;
 
-                      if (!hasIpa && !hasPos) return const SizedBox.shrink();
+                      if (!hasIpa && !hasPos && audioUrl == null) {
+                        return const SizedBox.shrink();
+                      }
 
                       final parts = <InlineSpan>[];
 
@@ -206,7 +227,28 @@ class _VocabularyDetailScreenState
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.s2),
-                        child: Text.rich(TextSpan(children: parts)),
+                        child: Row(
+                          children: [
+                            if (audioUrl != null)
+                              IconButton(
+                                onPressed: () =>
+                                    _audioService.play(audioUrl),
+                                icon: Icon(
+                                  Icons.volume_up,
+                                  size: 18,
+                                  color: colors.subtleForeground,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 40,
+                                ),
+                              ),
+                            if (parts.isNotEmpty)
+                              Text.rich(TextSpan(children: parts)),
+                          ],
+                        ),
                       );
                     },
                   ),

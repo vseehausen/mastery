@@ -15,6 +15,7 @@ class UsageRecognitionCard extends StatefulWidget {
     required this.incorrectSentences,
     required this.onAnswer,
     this.isPreview = false,
+    this.onAnswered,
   });
 
   final String word;
@@ -22,6 +23,9 @@ class UsageRecognitionCard extends StatefulWidget {
   final List<String> incorrectSentences;
   final void Function(bool isCorrect) onAnswer;
   final bool isPreview;
+
+  /// Called when user selects an answer
+  final VoidCallback? onAnswered;
 
   @override
   State<UsageRecognitionCard> createState() => _UsageRecognitionCardState();
@@ -73,6 +77,7 @@ class _UsageRecognitionCardState extends State<UsageRecognitionCard> {
       _selectedIndex = index;
     });
 
+    widget.onAnswered?.call();
     widget.onAnswer(index == _correctIndex);
   }
 

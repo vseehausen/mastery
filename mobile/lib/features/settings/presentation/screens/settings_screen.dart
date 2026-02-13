@@ -116,6 +116,23 @@ class SettingsScreen extends ConsumerWidget {
                 value: getLanguageEnglishName(prefs.nativeLanguageCode),
                 onTap: () => _showNativeLanguageSheet(context, ref, prefs),
               ),
+              SettingsListItem(
+                label: 'Word audio',
+                value: prefs.audioEnabled ? 'On' : 'Off',
+                onTap: () {
+                  ref
+                      .read(learningPreferencesNotifierProvider.notifier)
+                      .updateAudioEnabled(!prefs.audioEnabled);
+                },
+              ),
+              if (prefs.audioEnabled)
+                SettingsListItem(
+                  label: 'Accent',
+                  value: prefs.audioAccent == 'us'
+                      ? 'American English'
+                      : 'British English',
+                  onTap: () => _showAccentSheet(context, ref, prefs),
+                ),
             ],
           ),
 
@@ -609,6 +626,45 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showAccentSheet(
+    BuildContext context,
+    WidgetRef ref,
+    UserPreferencesModel prefs,
+  ) {
+    _showBottomSheet(
+      context: context,
+      title: 'Accent',
+      options: [
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'American English',
+          subtitle: 'US accent',
+          isSelected: prefs.audioAccent == 'us',
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateAudioAccent('us');
+            Navigator.pop(context);
+          },
+        ),
+        _buildSheetOption(
+          context: context,
+          ref: ref,
+          label: 'British English',
+          subtitle: 'UK accent',
+          isSelected: prefs.audioAccent == 'gb',
+          onTap: () {
+            ref
+                .read(learningPreferencesNotifierProvider.notifier)
+                .updateAudioAccent('gb');
+            Navigator.pop(context);
+          },
+        ),
+      ],
     );
   }
 

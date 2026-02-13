@@ -15,6 +15,7 @@ class ClozeCueCard extends StatefulWidget {
     required this.onGrade,
     this.hintText,
     this.isPreview = false,
+    this.onReveal,
   });
 
   /// The sentence with ___ blank
@@ -31,6 +32,9 @@ class ClozeCueCard extends StatefulWidget {
 
   /// Preview mode - hides grade buttons and saving message
   final bool isPreview;
+
+  /// Called when the answer is revealed
+  final VoidCallback? onReveal;
 
   @override
   State<ClozeCueCard> createState() => _ClozeCueCardState();
@@ -171,7 +175,10 @@ class _ClozeCueCardState extends State<ClozeCueCard> {
             SizedBox(
               width: double.infinity,
               child: ShadButton(
-                onPressed: () => setState(() => _isRevealed = true),
+                onPressed: () {
+                  setState(() => _isRevealed = true);
+                  widget.onReveal?.call();
+                },
                 size: ShadButtonSize.lg,
                 child: const Text('Show Answer'),
               ),

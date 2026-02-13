@@ -29,7 +29,7 @@ final userLearningPreferencesProvider =
 typedef UserLearningPreferencesRef =
     AutoDisposeFutureProviderRef<UserPreferencesModel?>;
 String _$learningPreferencesNotifierHash() =>
-    r'14e26ea58287cb3e35ea35e4279060de89a1e3b5';
+    r'fbea5606f02a534c20bebd6c8ca40817c86f2595';
 
 /// Notifier for managing user learning preferences
 ///

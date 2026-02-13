@@ -31,6 +31,7 @@ class SessionCard {
     this.pronunciationIpa,
     required this.translations,
     this.cefrLevel,
+    this.audioUrls,
     required this.overrides,
     this.encounterContext,
     required this.hasConfusables,
@@ -67,6 +68,9 @@ class SessionCard {
       pronunciationIpa: json['pronunciation_ipa'] as String?,
       translations: _parseTranslations(json['translations']),
       cefrLevel: json['cefr_level'] as String?,
+      audioUrls: (json['audio_urls'] as Map<String, dynamic>?)?.map(
+        (k, v) => MapEntry(k, v as String),
+      ),
       overrides: _parseOverrides(json['overrides']),
       encounterContext: json['encounter_context'] as String?,
       hasConfusables: json['has_confusables'] as bool? ?? false,
@@ -108,6 +112,7 @@ class SessionCard {
   final String? pronunciationIpa;
   final Map<String, LanguageTranslations> translations;
   final String? cefrLevel;
+  final Map<String, String>? audioUrls;
   final Map<String, dynamic> overrides;
 
   // Encounter data
@@ -139,6 +144,9 @@ class SessionCard {
 
     return '';
   }
+
+  /// Get audio URL for the given accent (us/gb)
+  String? audioUrlFor(String accent) => audioUrls?[accent];
 
   /// Whether this is a new word (state == 0)
   bool get isNewWord => state == 0;

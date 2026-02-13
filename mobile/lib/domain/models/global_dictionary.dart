@@ -145,6 +145,7 @@ class GlobalDictionaryModel {
     required this.usageExamples,
     this.cefrLevel,
     this.confidence,
+    this.audioUrls,
   });
 
   factory GlobalDictionaryModel.fromJson(Map<String, dynamic> json) {
@@ -162,6 +163,9 @@ class GlobalDictionaryModel {
       usageExamples: _parseUsageExamples(json['usage_examples']),
       cefrLevel: json['cefr_level'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
+      audioUrls: (json['audio_urls'] as Map<String, dynamic>?)?.map(
+        (k, v) => MapEntry(k, v as String),
+      ),
     );
   }
 
@@ -178,6 +182,10 @@ class GlobalDictionaryModel {
   final List<UsageExample> usageExamples;
   final String? cefrLevel;
   final double? confidence;
+  final Map<String, String>? audioUrls;
+
+  /// Get the audio URL for a given accent (e.g., 'us', 'gb').
+  String? audioUrlFor(String accent) => audioUrls?[accent];
 
   /// Get the primary translation for a given language code
   String? primaryTranslation(String languageCode) {

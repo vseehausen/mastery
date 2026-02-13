@@ -333,7 +333,7 @@ pnpm test                                   # Vitest unit tests
 - **Sonnet** (default): Complex logic, architecture, debugging, feature implementation
 - **Opus**: Rarely needed
 
-**Integration testing:** Supabase schema changes require integration tests in `supabase/functions/tests/`. Tests must gracefully skip if local Supabase isn't running.
+**Integration testing:** Supabase schema changes require integration tests in `supabase/functions/tests/`. Tests must gracefully skip if local Supabase isn't running. See `supabase/AGENTS.md` for local-first debugging workflow — never debug edge functions on production.
 
 ## Deployment Workflow
 
